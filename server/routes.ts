@@ -10,6 +10,9 @@ import crypto from "crypto";
 import path from "path";
 import fetch from "node-fetch";
 
+// Импортируем обработчики для G4F
+import { getProviders, processG4FRequest, g4fPage } from "./g4f-handlers.js";
+
 // Прокси-маршрут для ChatGPT
 async function setupChatGPTProxy(app: Express) {
   const ACCESS_TOKEN = process.env.ACCESS_TOKEN;
