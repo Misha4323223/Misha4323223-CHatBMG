@@ -89,8 +89,8 @@ app.post("/api/chat", async (req, res) => {
 });
 
 // 🚀 Старт сервера
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+const PORT = process.env.PROXY_PORT || 3333;
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`Прокси-сервер работает на http://localhost:${PORT}`);
   console.log(`Откройте в браузере чтобы начать работу`);
 });
