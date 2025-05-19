@@ -34,8 +34,24 @@ export default function AuthScreen() {
     setIsLoading(true);
     
     try {
-      const response = await apiRequest("POST", "/api/auth", { token: values.token });
+      console.log("Attempting authentication with token:", values.token);
+      
+      // Используем fetch напрямую для проверки и отладки
+      const response = await fetch("/api/auth", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ token: values.token })
+      });
+      
       const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || "Ошибка аутентификации");
+      }
+      
+      console.log("Authentication response:", data);
       
       // Store token and user info in local storage
       localStorage.setItem("access_token", values.token);
@@ -43,8 +59,8 @@ export default function AuthScreen() {
       
       // Show success toast
       toast({
-        title: "Authentication successful",
-        description: "Welcome to Proxy Chat!",
+        title: "Вход успешен",
+        description: "Добро пожаловать в Proxy Chat!",
       });
       
       // Redirect to chat page
@@ -55,8 +71,8 @@ export default function AuthScreen() {
       // Show error toast
       toast({
         variant: "destructive",
-        title: "Authentication failed",
-        description: error instanceof Error ? error.message : "Invalid access token. Please try again.",
+        title: "Ошибка входа",
+        description: error instanceof Error ? error.message : "Неверный токен доступа. Пожалуйста, попробуйте ещё раз.",
       });
     } finally {
       setIsLoading(false);
