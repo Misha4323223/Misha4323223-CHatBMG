@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>G4F Чат - Бесплатный ИИ</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #f0f4f8;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .card {
+      background-color: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+    .card-header {
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      color: white;
+      padding: 20px;
+    }
+    .card-content {
+      padding: 24px;
+    }
+    textarea {
+      width: 100%;
+      padding: 14px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      resize: vertical;
+      min-height: 140px;
+      font-size: 15px;
+      transition: border-color 0.2s;
+    }
+    textarea:focus {
+      border-color: #4f46e5;
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+    }
+    button {
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      color: white;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    button:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+    }
+    button:active:not(:disabled) {
+      transform: translateY(0);
+    }
+    button:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+    }
+    .response {
+      background-color: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 18px;
+      margin-top: 20px;
+      white-space: pre-wrap;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+    .loading {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s ease-in-out infinite;
+      margin-right: 10px;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .conversation {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-bottom: 20px;
+      max-height: 400px;
+      overflow-y: auto;
+      padding-right: 8px;
+    }
+    .message {
+      padding: 14px;
+      border-radius: 12px;
+      max-width: 85%;
+    }
+    .message-user {
+      align-self: flex-end;
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      color: white;
+    }
+    .message-bot {
+      align-self: flex-start;
+      background-color: #f1f5f9;
+      border: 1px solid #e2e8f0;
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 500;
+      margin-left: 8px;
+      background-color: #10b981;
+      color: white;
+    }
+    select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      background-color: white;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      font-size: 15px;
+    }
+    select:focus {
+      border-color: #4f46e5;
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+    }
+  </style>
+</head>
+<body class="min-h-screen py-8">
+  <div class="container">
+    <div class="card">
+      <div class="card-header">
+        <h1 class="text-2xl font-bold">G4F Чат <span class="badge">Бесплатно</span></h1>
+        <p class="text-sm opacity-90 mt-1">Доступ к моделям ИИ без API ключей</p>
+      </div>
+      <div class="card-content">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Модель</label>
+            <select id="modelSelect">
+              <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+              <option value="gpt-4">GPT-4</option>
+              <option value="llama2-70b">Llama 2 (70B)</option>
+              <option value="claude-v2">Claude v2</option>
+            </select>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Провайдер</label>
+            <select id="providerSelect">
+              <option value="auto">Автоматический выбор</option>
+              <!-- Другие провайдеры будут добавлены при загрузке страницы -->
+            </select>
+          </div>
+        </div>
+        
+        <div class="conversation" id="conversation">
+          <!-- Сообщения будут добавляться здесь -->
+        </div>
+        
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Ваше сообщение</label>
+          <textarea id="message" placeholder="Задайте вопрос ИИ..."></textarea>
+        </div>
+        
+        <div class="flex justify-between items-center">
+          <button id="sendButton" onclick="sendMessage()">
+            Отправить сообщение
+          </button>
+          
+          <button id="clearButton" onclick="clearConversation()" class="bg-gray-200 text-gray-700 hover:bg-gray-300">
+            Очистить чат
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Хранилище сообщений
+    let messages = [];
+    
+    // Загружаем провайдеров при запуске
+    window.onload = async function() {
+      // Добавляем приветственное сообщение
+      addMessageToConversation('bot', 'Привет! Я бесплатный ИИ-ассистент, работающий через библиотеку g4f. Задайте мне вопрос, и я постараюсь на него ответить.');
+      
+      // Загружаем доступных провайдеров
+      try {
+        const response = await fetch('/api/g4f/providers');
+        if (response.ok) {
+          const data = await response.json();
+          
+          // Обновляем селектор провайдеров
+          const providerSelect = document.getElementById('providerSelect');
+          const defaultOption = providerSelect.options[0]; // Сохраняем опцию "автоматический выбор"
+          
+          providerSelect.innerHTML = '';
+          providerSelect.appendChild(defaultOption);
+          
+          // Добавляем рабочие провайдеры
+          data.providers
+            .filter(p => p.working)
+            .sort((a, b) => a.name.localeCompare(b.name))
+            .forEach(provider => {
+              const option = document.createElement('option');
+              option.value = provider.name.toLowerCase();
+              option.textContent = provider.name;
+              providerSelect.appendChild(option);
+            });
+        }
+      } catch (error) {
+        console.error('Ошибка при загрузке провайдеров:', error);
+      }
+    };
+    
+    // Функция для отправки сообщения
+    async function sendMessage() {
+      const messageInput = document.getElementById('message');
+      const message = messageInput.value.trim();
+      const modelSelect = document.getElementById('modelSelect');
+      const providerSelect = document.getElementById('providerSelect');
+      const sendButton = document.getElementById('sendButton');
+      
+      // Проверяем, что сообщение не пустое
+      if (!message) {
+        alert('Пожалуйста, введите сообщение');
+        return;
+      }
+      
+      // Добавляем сообщение пользователя в чат
+      addMessageToConversation('user', message);
+      
+      // Очищаем поле ввода
+      messageInput.value = '';
+      
+      // Блокируем кнопку и показываем индикатор загрузки
+      sendButton.disabled = true;
+      sendButton.innerHTML = '<span class="loading"></span>Отправка...';
+      
+      try {
+        // Отправляем запрос к G4F API
+        const response = await fetch('/api/g4f/direct', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            message: message,
+            model: modelSelect.value,
+            provider: providerSelect.value
+          })
+        });
+        
+        // Обрабатываем ответ
+        if (!response.ok) {
+          throw new Error(`Ошибка API: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        // Извлекаем текст ответа
+        let responseText = '';
+        if (data.message && data.message.content && data.message.content.parts) {
+          responseText = data.message.content.parts.join('\n');
+        } else {
+          console.log("Необработанный ответ:", data);
+          responseText = 'Не удалось получить ответ от сервера';
+        }
+        
+        // Добавляем ответ в чат
+        addMessageToConversation('bot', responseText);
+        
+      } catch (error) {
+        console.error('Ошибка при запросе:', error);
+        
+        // Отображаем ошибку в чате
+        addMessageToConversation('bot', `Ошибка: ${error.message || 'Не удалось получить ответ'}`);
+      } finally {
+        // Восстанавливаем кнопку
+        sendButton.disabled = false;
+        sendButton.textContent = 'Отправить сообщение';
+      }
+    }
+    
+    // Функция для добавления сообщения в чат
+    function addMessageToConversation(type, text) {
+      const conversation = document.getElementById('conversation');
+      
+      // Создаем элемент сообщения
+      const messageElement = document.createElement('div');
+      messageElement.className = type === 'user' ? 'message message-user' : 'message message-bot';
+      messageElement.textContent = text;
+      
+      // Добавляем сообщение в контейнер
+      conversation.appendChild(messageElement);
+      
+      // Прокручиваем чат вниз
+      conversation.scrollTop = conversation.scrollHeight;
+      
+      // Добавляем сообщение в историю
+      messages.push({ type, text });
+    }
+    
+    // Функция очистки чата
+    function clearConversation() {
+      const conversation = document.getElementById('conversation');
+      conversation.innerHTML = '';
+      messages = [];
+      
+      // Добавляем приветственное сообщение
+      addMessageToConversation('bot', 'Привет! Я бесплатный ИИ-ассистент, работающий через библиотеку g4f. Задайте мне вопрос, и я постараюсь на него ответить.');
+    }
+    
+    // Добавляем обработчик нажатия Enter в текстовом поле
+    document.getElementById('message').addEventListener('keydown', function(event) {
+      if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        sendMessage();
+      }
+    });
+  </script>
+</body>
+</html>
