@@ -176,13 +176,7 @@
             'Authorization': `Bearer ${accessToken}`
           },
           body: JSON.stringify({
-            action: "next",
-            messages: [
-              { role: 'system', content: 'You are a helpful assistant.' },
-              { role: 'user', content: message }
-            ],
-            model: "text-davinci-002-render-sha",
-            parent_message_id: crypto.randomUUID()
+            message: message
           })
         });
         
@@ -200,7 +194,7 @@
         
         const data = await response.json();
         
-        // Проверяем наличие ответа в новом формате
+        // Проверяем наличие ответа в формате ChatGPT
         let responseText = '';
         if (data.message && data.message.content && data.message.content.parts) {
           responseText = data.message.content.parts.join('\n');
@@ -208,6 +202,7 @@
           // Обрабатываем также формат API OpenAI
           responseText = data.choices[0].message.content;
         } else {
+          console.log("Необработанный ответ от ChatGPT:", data);
           throw new Error('Получен пустой или неожиданный ответ от ChatGPT');
         }
         
