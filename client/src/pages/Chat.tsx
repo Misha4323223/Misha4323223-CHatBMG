@@ -201,9 +201,13 @@ export default function Chat() {
               connectionStatus={connectedStatus}
             />
           </>
-        ) : (
+        ) : activeTab === "proxy" ? (
           <div className="flex-1 p-4 overflow-y-auto">
             <ProxyPanel />
+          </div>
+        ) : (
+          <div className="flex-1 p-4 overflow-y-auto">
+            <ChatGPTPanel />
           </div>
         )}
       </div>
