@@ -98,51 +98,27 @@ async function setupChatGPTProxy(app: Express) {
   console.log("ChatGPT прокси настроен и готов к работе");
 }
 
-// Обработчик для G4F (будет перенаправлять запросы на G4F прокси)
-async function setupG4FProxy(app: Express) {
-  // Статический файл для демонстрации
-  app.get("/g4f", (req: Request, res: Response) => {
-    res.sendFile(path.join(process.cwd(), "g4f-demo.html"));
-  });
+// Настройка G4F интеграции напрямую в Express
+async function setupG4FIntegration(app: Express) {
+  // Маршрут для G4F интерфейса
+  app.get("/g4f", g4fPage);
   
-  // Маршрут для API G4F
-  app.post("/api/g4f/chat", async (req: Request, res: Response) => {
-    try {
-      // Перенаправляем запрос на G4F прокси
-      const response = await fetch("http://localhost:3334/api/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(req.body)
-      });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        return res.status(response.status).json({
-          error: `G4F API error: ${response.status}`,
-          message: errorText
-        });
-      }
-      
-      const data = await response.json();
-      res.json(data);
-    } catch (error: any) {
-      console.error("Ошибка G4F прокси:", error);
-      res.status(500).json({
-        error: "Ошибка G4F прокси-сервера",
-        message: error.message
-      });
-    }
-  });
+  // API для получения списка провайдеров
+  app.get("/api/g4f/providers", getProviders);
   
-  console.log("G4F прокси настроен и готов к работе");
+  // API для обработки запросов к G4F
+  app.post("/api/g4f/direct", processG4FRequest);
+  
+  // Для обратной совместимости 
+  app.post("/api/g4f/chat", processG4FRequest);
+  
+  console.log("G4F интеграция настроена и готова к работе");
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Настраиваем прокси для ChatGPT и G4F
   await setupChatGPTProxy(app);
-  await setupG4FProxy(app);
+  await setupG4FIntegration(app);
   
   // Create HTTP server
   const httpServer = createServer(app);
