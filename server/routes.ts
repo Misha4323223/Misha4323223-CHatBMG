@@ -7,7 +7,94 @@ import { authMiddleware } from "./middleware/auth";
 import { z } from "zod";
 import { authSchema, messageSchema } from "@shared/schema";
 
+// Прокси-маршрут для ChatGPT
+async function setupChatGPTProxy(app: Express) {
+  const ACCESS_TOKEN = process.env.ACCESS_TOKEN;
+  
+  if (!ACCESS_TOKEN) {
+    console.warn("Предупреждение: ACCESS_TOKEN не задан в .env файле");
+  }
+  
+  app.post("/api/chatgpt", async (req: Request, res: Response) => {
+    try {
+      // Получаем токен из переменной окружения или из заголовка запроса
+      const token = ACCESS_TOKEN || req.headers.authorization?.split(" ")[1];
+      
+      if (!token) {
+        return res.status(401).json({ error: "Не предоставлен токен доступа" });
+      }
+      
+      // Получаем сообщение от пользователя
+      const userMessage = req.body.message || "";
+      
+      if (!userMessage) {
+        return res.status(400).json({ error: "Отсутствует сообщение пользователя" });
+      }
+      
+      // Генерируем UUID для сообщения и сессии
+      const messageId = crypto.randomUUID();
+      const parentMessageId = crypto.randomUUID();
+      
+      // Формируем запрос к ChatGPT API в правильном формате
+      const response = await fetch("https://chat.openai.com/backend-api/conversation", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+          "Accept": "text/event-stream"
+        },
+        body: JSON.stringify({
+          action: "next",
+          messages: [
+            {
+              id: messageId,
+              author: { role: "user" },
+              content: { content_type: "text", parts: [userMessage] }
+            }
+          ],
+          model: "text-davinci-002-render-sha",
+          parent_message_id: parentMessageId
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("ChatGPT API error:", errorText);
+        
+        return res.status(response.status).json({ 
+          error: `OpenAI error ${response.status}`,
+          message: errorText
+        });
+      }
+
+      const data = await response.json();
+      res.json(data);
+
+    } catch (error: any) {
+      console.error("Ошибка прокси:", error);
+      res.status(500).json({ 
+        error: "Ошибка прокси-сервера", 
+        message: error.message 
+      });
+    }
+  });
+  
+  // Добавляем маршрут для проверки состояния прокси
+  app.get("/api/chatgpt/status", (req: Request, res: Response) => {
+    res.json({ 
+      status: "ok", 
+      message: "ChatGPT прокси-сервер работает",
+      tokenConfigured: !!ACCESS_TOKEN
+    });
+  });
+  
+  console.log("ChatGPT прокси настроен и готов к работе");
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Настраиваем прокси для ChatGPT
+  await setupChatGPTProxy(app);
   // Create HTTP server
   const httpServer = createServer(app);
   
