@@ -23,9 +23,10 @@ const ProxyPanel = () => {
   const { toast } = useToast();
 
   // Запрос конфигурации прокси
-  const { data: proxyConfig, isLoading: isConfigLoading } = useQuery<ProxyConfig>({
+  const { data: proxyConfig, isLoading: isConfigLoading, refetch: refetchProxyConfig } = useQuery<ProxyConfig>({
     queryKey: ["/api/proxy/config"],
-    retry: 1
+    retry: 1,
+    enabled: !!localStorage.getItem("access_token") // Запрос активируется только при наличии токена
   });
 
   // Обработка запроса через прокси
@@ -39,10 +40,31 @@ const ProxyPanel = () => {
       return;
     }
 
+    // Проверяем наличие токена доступа
+    const token = localStorage.getItem("access_token");
+    if (!token) {
+      toast({
+        variant: "destructive",
+        title: "Требуется авторизация",
+        description: "Войдите в систему, чтобы использовать прокси-сервер"
+      });
+      return;
+    }
+
     setIsLoading(true);
     setResponse(null);
 
     try {
+      // Проверяем конфигурацию прокси
+      if (!proxyConfig) {
+        await refetchProxyConfig();
+      }
+      
+      // Проверяем статус прокси-сервера
+      if (proxyConfig && !proxyConfig.proxyEnabled) {
+        throw new Error("Прокси-сервер не настроен. Сначала настройте PROXY_API_KEY в файле .env");
+      }
+
       // Формируем путь для прокси-запроса
       let proxyUrl = url.trim();
       
@@ -55,11 +77,23 @@ const ProxyPanel = () => {
       const encodedUrl = encodeURIComponent(proxyUrl);
       const proxyPath = `/proxy/${encodedUrl}`;
       
+      console.log(`Отправка прокси-запроса: ${method} ${proxyPath}`);
+      
+      // Подготавливаем тело запроса
+      let requestData;
+      if (method !== "GET" && requestBody) {
+        try {
+          requestData = JSON.parse(requestBody);
+        } catch (e) {
+          throw new Error("Неверный формат JSON в теле запроса");
+        }
+      }
+      
       // Выполняем запрос через прокси
       const res = await apiRequest(
         method,
         proxyPath,
-        method !== "GET" && requestBody ? JSON.parse(requestBody) : undefined
+        method !== "GET" && requestData ? requestData : undefined
       );
       
       // Обрабатываем ответ
@@ -87,7 +121,7 @@ const ProxyPanel = () => {
         description: error instanceof Error ? error.message : "Не удалось выполнить запрос через прокси"
       });
       
-      setResponse(error instanceof Error ? error.message : "Ошибка запроса");
+      setResponse(`Ошибка: ${error instanceof Error ? error.message : "Не удалось выполнить запрос"}`);
     } finally {
       setIsLoading(false);
     }
