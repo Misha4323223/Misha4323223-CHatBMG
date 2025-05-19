@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import AuthScreen from "@/pages/AuthScreen";
 import Chat from "@/pages/Chat";
+import SimpleChatGPT from "@/pages/SimpleChatGPT";
 import { useEffect } from "react";
 
 function Router() {
@@ -59,7 +60,8 @@ function Router() {
   return (
     <Switch>
       <Route path="/auth" component={AuthScreen} />
-      <Route path="/" component={Chat} />
+      <Route path="/" component={SimpleChatGPT} />
+      <Route path="/chatgpt" component={SimpleChatGPT} />
       <Route path="/chat" component={Chat} />
       <Route component={NotFound} />
     </Switch>

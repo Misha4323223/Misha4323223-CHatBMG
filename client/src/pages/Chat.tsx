@@ -19,20 +19,27 @@ export default function Chat() {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserWithInitials | null>(null);
   const [connectedStatus, setConnectedStatus] = useState<"connected" | "disconnected">("connected");
+  const [currentUser, setCurrentUser] = useState<UserWithInitials | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   
-  // Get current user from localStorage
-  const currentUserData = localStorage.getItem("user");
-  const currentUser = currentUserData ? JSON.parse(currentUserData) as UserWithInitials : null;
-  
-  // Get token from localStorage
-  const token = localStorage.getItem("access_token");
-  
-  // Redirect if no token or user data
+  // Загрузка данных пользователя и токена из localStorage
   useEffect(() => {
-    if (!token || !currentUser) {
+    const currentUserData = localStorage.getItem("user");
+    const tokenData = localStorage.getItem("access_token");
+    
+    if (currentUserData) {
+      setCurrentUser(JSON.parse(currentUserData) as UserWithInitials);
+    }
+    
+    if (tokenData) {
+      setToken(tokenData);
+    }
+    
+    // Проверка наличия токена и данных пользователя
+    if (!tokenData || !currentUserData) {
       setLocation("/");
     }
-  }, [token, currentUser, setLocation]);
+  }, [setLocation]);
   
   // Fetch users
   const { data: users = [] } = useQuery<UserWithInitials[]>({
