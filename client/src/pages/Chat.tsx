@@ -10,6 +10,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { MessageWithSender, UserWithInitials } from "@shared/schema";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { queryClient } from "@/lib/queryClient";
 
 export default function Chat() {
   const [location, setLocation] = useLocation();
