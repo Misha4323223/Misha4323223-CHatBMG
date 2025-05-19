@@ -7,6 +7,8 @@ import { authMiddleware } from "./middleware/auth";
 import { z } from "zod";
 import { authSchema, messageSchema } from "@shared/schema";
 import crypto from "crypto";
+import path from "path";
+import fetch from "node-fetch";
 
 // Прокси-маршрут для ChatGPT
 async function setupChatGPTProxy(app: Express) {
@@ -93,9 +95,52 @@ async function setupChatGPTProxy(app: Express) {
   console.log("ChatGPT прокси настроен и готов к работе");
 }
 
+// Обработчик для G4F (будет перенаправлять запросы на G4F прокси)
+async function setupG4FProxy(app: Express) {
+  // Статический файл для демонстрации
+  app.get("/g4f", (req: Request, res: Response) => {
+    res.sendFile(path.join(process.cwd(), "g4f-demo.html"));
+  });
+  
+  // Маршрут для API G4F
+  app.post("/api/g4f/chat", async (req: Request, res: Response) => {
+    try {
+      // Перенаправляем запрос на G4F прокси
+      const response = await fetch("http://localhost:3334/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(req.body)
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        return res.status(response.status).json({
+          error: `G4F API error: ${response.status}`,
+          message: errorText
+        });
+      }
+      
+      const data = await response.json();
+      res.json(data);
+    } catch (error: any) {
+      console.error("Ошибка G4F прокси:", error);
+      res.status(500).json({
+        error: "Ошибка G4F прокси-сервера",
+        message: error.message
+      });
+    }
+  });
+  
+  console.log("G4F прокси настроен и готов к работе");
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Настраиваем прокси для ChatGPT
+  // Настраиваем прокси для ChatGPT и G4F
   await setupChatGPTProxy(app);
+  await setupG4FProxy(app);
+  
   // Create HTTP server
   const httpServer = createServer(app);
   
