@@ -1,7 +1,7 @@
 // Простой JavaScript обработчик для G4F
 import path from 'path';
 import { fileURLToPath } from 'url';
-import g4f from 'g4f';
+import { G4F } from 'g4f';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -18,14 +18,13 @@ export async function handleSimpleG4F(req, res) {
     
     console.log(`Запрос к Simple G4F: сообщение=${userMessage.substring(0, 30)}...`);
     
-    // Создаем запрос к G4F
+    // Создаем запрос к G4F с использованием правильного класса
     try {
-      // Использование более безопасного доступа к API
-      const g4fApi = g4f;
-      const response = await g4fApi.ChatCompletion.create({
-        model: "gpt-3.5-turbo",
-        messages: [{ role: "user", content: userMessage }]
-      });
+      // Создаем экземпляр G4F
+      const g4f = new G4F();
+      
+      // Вызываем метод chat для отправки сообщения
+      const response = await g4f.chat(userMessage);
       
       console.log("Ответ от G4F получен:", response.substring(0, 30) + "...");
       
