@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,14 @@ export default function ChatGPTPanel() {
   const [isLoading, setIsLoading] = useState(false);
   const [response, setResponse] = useState<string | null>(null);
   const { toast } = useToast();
+  
+  // Автоматически установить токен из localStorage
+  useEffect(() => {
+    const token = localStorage.getItem("access_token");
+    if (token) {
+      setChatgptToken(token);
+    }
+  }, []);
 
   // Функция для вызова ChatGPT через прокси-сервер
   const handleSendToChatGPT = async () => {
@@ -25,11 +33,14 @@ export default function ChatGPTPanel() {
       return;
     }
 
-    if (!chatgptToken.trim()) {
+    // Используем токен из localStorage, если он не установлен вручную
+    const token = chatgptToken.trim() || localStorage.getItem("access_token");
+    
+    if (!token) {
       toast({
         variant: "destructive",
         title: "Требуется Access Token",
-        description: "Введите ваш Access Token от OpenAI для использования ChatGPT"
+        description: "Не найден токен доступа. Пожалуйста, войдите в систему заново."
       });
       return;
     }
@@ -44,7 +55,7 @@ export default function ChatGPTPanel() {
         "/api/chatgpt",
         {
           message: message.trim(),
-          chatgptToken: chatgptToken.trim()
+          chatgptToken: token
         }
       );
 
@@ -86,26 +97,11 @@ export default function ChatGPTPanel() {
       <CardHeader>
         <CardTitle>ChatGPT</CardTitle>
         <CardDescription>
-          Используйте ваш access_token от OpenAI для общения с ChatGPT
+          Отправляйте запросы к ChatGPT через безопасный прокси-сервер
         </CardDescription>
       </CardHeader>
       
       <CardContent className="space-y-4">
-        {/* Access Token */}
-        <div className="space-y-2">
-          <Label htmlFor="access-token">OpenAI Access Token</Label>
-          <Input
-            id="access-token"
-            type="password"
-            placeholder="Введите ваш access_token от chat.openai.com"
-            value={chatgptToken}
-            onChange={(e) => setChatgptToken(e.target.value)}
-            className="font-mono text-sm"
-          />
-          <p className="text-xs text-muted-foreground">
-            Ваш токен нигде не сохраняется и используется только для отправки запросов к API
-          </p>
-        </div>
         
         {/* Сообщение */}
         <div className="space-y-2">
