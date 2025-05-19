@@ -4,6 +4,7 @@ import { User, WSEventType } from "@shared/schema";
 import Sidebar from "@/components/Sidebar";
 import ChatArea from "@/components/ChatArea";
 import ProxyPanel from "@/components/ProxyPanel";
+import ChatGPTPanel from "@/components/ChatGPTPanel";
 import { useWebSocket } from "@/lib/useWebSocket";
 import { useMessages } from "@/lib/useMessages";
 import { useQuery } from "@tanstack/react-query";
@@ -173,6 +174,7 @@ export default function Chat() {
           <TabsList>
             <TabsTrigger value="chat">Чат</TabsTrigger>
             <TabsTrigger value="proxy">Прокси</TabsTrigger>
+            <TabsTrigger value="chatgpt">ChatGPT</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>

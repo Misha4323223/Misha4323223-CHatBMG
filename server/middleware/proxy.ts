@@ -6,10 +6,84 @@ export function setupProxyMiddleware(app: Express) {
   // Получаем переменные окружения
   const proxyApiKey = process.env.PROXY_API_KEY || "";
   const proxyServiceUrl = process.env.PROXY_SERVICE_URL || "https://api.example.com";
+  
+  // ChatGPT API константы
+  const CHATGPT_API_URL = "https://api.openai.com/v1/chat/completions";
+  const CHATGPT_MODEL = "gpt-3.5-turbo";
 
   if (!proxyApiKey) {
     console.warn("WARNING: PROXY_API_KEY not set in .env file");
   }
+  
+  // Специальный маршрут для ChatGPT API
+  app.post("/api/chatgpt", async (req: Request, res: Response) => {
+    try {
+      // Проверяем аутентификацию пользователя
+      const authHeader = req.headers.authorization;
+      
+      if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        return res.status(401).json({ message: "Authentication required for ChatGPT API" });
+      }
+      
+      const token = authHeader.split(" ")[1];
+      const user = await storage.getUserByToken(token);
+      
+      if (!user) {
+        return res.status(401).json({ message: "Invalid token for ChatGPT request" });
+      }
+      
+      // Получаем токен ChatGPT из запроса
+      const chatgptToken = req.body.chatgptToken;
+      
+      if (!chatgptToken) {
+        return res.status(400).json({ message: "ChatGPT access token is required" });
+      }
+      
+      // Получаем сообщение для отправки
+      const { message } = req.body;
+      
+      if (!message) {
+        return res.status(400).json({ message: "Message is required" });
+      }
+      
+      // Формируем запрос к ChatGPT API
+      const response = await fetch(CHATGPT_API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${chatgptToken}`
+        },
+        body: JSON.stringify({
+          model: CHATGPT_MODEL,
+          messages: [
+            { role: "system", content: "You are a helpful assistant." },
+            { role: "user", content: message }
+          ]
+        })
+      });
+      
+      // Проверяем результат запроса
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("ChatGPT API error:", errorData);
+        return res.status(response.status).json({
+          message: "Error from ChatGPT API",
+          error: errorData
+        });
+      }
+      
+      // Получаем и отправляем ответ
+      const chatGptResponse = await response.json();
+      return res.status(200).json(chatGptResponse);
+      
+    } catch (error) {
+      console.error("ChatGPT proxy error:", error);
+      return res.status(500).json({
+        message: "Internal server error processing ChatGPT request",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
 
   // Middleware для маршрута конфигурации прокси
   app.get("/api/proxy/config", async (req: Request, res: Response) => {
