@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ChatGPT Proxy</title>
+  <title>ChatGPT Прокси</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body {
@@ -98,8 +98,8 @@
   <div class="container">
     <div class="card">
       <div class="card-header">
-        <h1 class="text-xl font-bold">ChatGPT Proxy</h1>
-        <p class="text-sm opacity-80">Отправляйте запросы к ChatGPT через ваш access token</p>
+        <h1 class="text-xl font-bold">ChatGPT Прокси</h1>
+        <p class="text-sm opacity-80">Отправляйте запросы к ChatGPT через ваш access token (требуется CORS-расширение)</p>
       </div>
       <div class="card-content">
         <div class="token-input">
@@ -168,21 +168,26 @@
       sendButton.innerHTML = '<span class="loading"></span>Отправка...';
       
       try {
-        // Используем официальный API ChatGPT
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        // Используем напрямую API ChatGPT (требуется расширение для обхода CORS)
+        const response = await fetch('https://chat.openai.com/backend-api/conversation', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${accessToken}`
+            'Authorization': `Bearer ${accessToken}`,
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+            'Accept': 'text/event-stream'
           },
           body: JSON.stringify({
-            model: 'gpt-3.5-turbo',
+            action: "next",
             messages: [
-              { role: 'system', content: 'You are a helpful assistant.' },
-              { role: 'user', content: message }
+              {
+                id: generateUUID(),
+                author: { role: "user" },
+                content: { content_type: "text", parts: [message] }
+              }
             ],
-            max_tokens: 1500,
-            temperature: 0.7
+            model: "text-davinci-002-render-sha",
+            parent_message_id: generateUUID()
           })
         });
         
@@ -200,13 +205,13 @@
         
         const data = await response.json();
         
-        // Проверяем наличие ответа в формате OpenAI API
+        // Проверяем наличие ответа в формате ChatGPT
         let responseText = '';
-        if (data.choices && data.choices.length > 0 && data.choices[0].message) {
-          responseText = data.choices[0].message.content;
+        if (data.message && data.message.content && data.message.content.parts) {
+          responseText = data.message.content.parts.join('\n');
         } else {
-          console.log("Необработанный ответ от OpenAI API:", data);
-          throw new Error('Получен пустой или неожиданный ответ от API');
+          console.log("Необработанный ответ от ChatGPT:", data);
+          throw new Error('Получен пустой или неожиданный ответ от ChatGPT');
         }
         
         // Отображаем ответ
