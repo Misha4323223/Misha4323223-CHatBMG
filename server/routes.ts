@@ -10,8 +10,8 @@ import crypto from "crypto";
 import path from "path";
 import fetch from "node-fetch";
 
-// Импортируем обработчики для G4F
-import { getProviders, processG4FRequest, g4fPage } from "./g4f-handlers.js";
+// Импортируем простые обработчики для G4F
+import { handleSimpleG4F, simpleG4FPage } from "./simple-g4f.js";
 
 // Прокси-маршрут для ChatGPT
 async function setupChatGPTProxy(app: Express) {
@@ -100,19 +100,16 @@ async function setupChatGPTProxy(app: Express) {
 
 // Настройка G4F интеграции напрямую в Express
 async function setupG4FIntegration(app: Express) {
-  // Маршрут для G4F интерфейса
-  app.get("/g4f", g4fPage);
-  
-  // API для получения списка провайдеров
-  app.get("/api/g4f/providers", getProviders);
+  // Маршрут для простого G4F интерфейса
+  app.get("/g4f", simpleG4FPage);
   
   // API для обработки запросов к G4F
-  app.post("/api/g4f/direct", processG4FRequest);
+  app.post("/api/g4f/simple", handleSimpleG4F);
   
   // Для обратной совместимости 
-  app.post("/api/g4f/chat", processG4FRequest);
+  app.post("/api/g4f/chat", handleSimpleG4F);
   
-  console.log("G4F интеграция настроена и готова к работе");
+  console.log("Простая G4F интеграция настроена и готова к работе");
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
