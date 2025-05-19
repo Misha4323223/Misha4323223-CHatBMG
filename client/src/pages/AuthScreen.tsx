@@ -97,12 +97,15 @@ export default function AuthScreen() {
                   <FormLabel className="text-sm font-medium text-neutral-700">Access Token</FormLabel>
                   <FormControl>
                     <Input
-                      type="password"
-                      placeholder="Enter your access token"
+                      type="text"
+                      placeholder="Введите valid_token_alex"
                       className="w-full px-4 py-2 border border-neutral-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                       {...field}
                     />
                   </FormControl>
+                  <div className="text-xs text-gray-500 mt-1">
+                    Подсказка: Используйте один из тестовых токенов: valid_token_alex, valid_token_maria, valid_token_david
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
