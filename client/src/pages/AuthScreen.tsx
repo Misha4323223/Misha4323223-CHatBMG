@@ -98,13 +98,13 @@ export default function AuthScreen() {
                   <FormControl>
                     <Input
                       type="text"
-                      placeholder="Введите valid_token_alex"
+                      placeholder="Введите токен доступа от OpenAI"
                       className="w-full px-4 py-2 border border-neutral-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                       {...field}
                     />
                   </FormControl>
                   <div className="text-xs text-gray-500 mt-1">
-                    Подсказка: Используйте один из тестовых токенов: valid_token_alex, valid_token_maria, valid_token_david
+                    Подсказка: Вставьте ваш токен доступа от OpenAI
                   </div>
                   <FormMessage />
                 </FormItem>
