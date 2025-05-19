@@ -1,0 +1,11 @@
+version: '3'
+
+services:
+  chatgpt-proxy:
+    build: .
+    ports:
+      - "3334:3334"
+    environment:
+      - PROXY_PORT=3334
+      - ACCESS_TOKEN=${ACCESS_TOKEN}
+    restart: unless-stopped

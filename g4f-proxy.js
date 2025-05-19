@@ -112,7 +112,7 @@ app.post('/api/chat', async (req, res) => {
 });
 
 // Запуск сервера
-const PORT = process.env.PROXY_PORT || 3333;
+const PORT = process.env.PROXY_PORT || 3334; // Изменяем порт, чтобы не конфликтовал с основным приложением
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`G4F Прокси-сервер работает на порту ${PORT}`);
   console.log(`Откройте http://localhost:${PORT}/ в браузере`);
