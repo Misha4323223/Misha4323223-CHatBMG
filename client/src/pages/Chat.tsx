@@ -3,11 +3,13 @@ import { useLocation } from "wouter";
 import { User, WSEventType } from "@shared/schema";
 import Sidebar from "@/components/Sidebar";
 import ChatArea from "@/components/ChatArea";
+import ProxyPanel from "@/components/ProxyPanel";
 import { useWebSocket } from "@/lib/useWebSocket";
 import { useMessages } from "@/lib/useMessages";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { MessageWithSender, UserWithInitials } from "@shared/schema";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Chat() {
   const [location, setLocation] = useLocation();
@@ -138,6 +140,8 @@ export default function Chat() {
   
   if (!currentUser) return null;
   
+  const [activeTab, setActiveTab] = useState("chat");
+
   return (
     <div className="h-screen flex flex-col bg-neutral-100 text-neutral-900">
       {/* Header */}
@@ -162,25 +166,43 @@ export default function Chat() {
         </div>
       </header>
       
+      {/* Вкладки */}
+      <div className="bg-white border-b border-neutral-200 px-4 py-1">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList>
+            <TabsTrigger value="chat">Чат</TabsTrigger>
+            <TabsTrigger value="proxy">Прокси</TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
+      
       {/* Main Content */}
-      <div className="flex flex-1 h-[calc(100%-56px)] overflow-hidden">
-        <Sidebar 
-          users={users.filter(user => user.id !== currentUser.id)}
-          currentUser={currentUser}
-          selectedUser={selectedUser}
-          onSelectUser={setSelectedUser}
-          isOpen={isMobileSidebarOpen}
-          onToggle={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
-        />
-        
-        <ChatArea 
-          messages={messages}
-          currentUser={currentUser}
-          selectedUser={selectedUser}
-          onSendMessage={handleSendMessage}
-          onOpenSidebar={() => setIsMobileSidebarOpen(true)}
-          connectionStatus={connectedStatus}
-        />
+      <div className="flex flex-1 h-[calc(100%-100px)] overflow-hidden">
+        {activeTab === "chat" ? (
+          <>
+            <Sidebar 
+              users={users.filter(user => user.id !== currentUser.id)}
+              currentUser={currentUser}
+              selectedUser={selectedUser}
+              onSelectUser={setSelectedUser}
+              isOpen={isMobileSidebarOpen}
+              onToggle={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
+            />
+            
+            <ChatArea 
+              messages={messages}
+              currentUser={currentUser}
+              selectedUser={selectedUser}
+              onSendMessage={handleSendMessage}
+              onOpenSidebar={() => setIsMobileSidebarOpen(true)}
+              connectionStatus={connectedStatus}
+            />
+          </>
+        ) : (
+          <div className="flex-1 p-4 overflow-y-auto">
+            <ProxyPanel />
+          </div>
+        )}
       </div>
     </div>
   );
