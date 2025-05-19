@@ -4,6 +4,7 @@ import fetch from 'node-fetch';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import crypto from 'crypto';
 
 // Настройка приложения
 const app = express();
@@ -95,7 +96,7 @@ app.post('/api/chat', async (req, res) => {
 });
 
 // Запуск сервера
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PROXY_PORT || 3333;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Прокси-сервер работает на порту ${PORT}`);
   console.log(`Откройте http://localhost:${PORT}/ в браузере`);
