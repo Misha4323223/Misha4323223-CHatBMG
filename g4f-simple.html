@@ -112,6 +112,14 @@
       background-color: #f1f5f9;
       border: 1px solid #e2e8f0;
     }
+    .message-system {
+      align-self: center;
+      background-color: #f8fafc;
+      border: 1px solid #cbd5e1;
+      color: #64748b;
+      font-size: 12px;
+      padding: 6px 10px;
+    }
     .badge {
       display: inline-block;
       padding: 4px 8px;
@@ -141,6 +149,17 @@
           <textarea id="message" placeholder="Задайте вопрос ИИ..."></textarea>
         </div>
         
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Выберите модель</label>
+          <select id="modelSelect" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none">
+            <option value="gpt-3.5-turbo" selected>GPT-3.5 Turbo (по умолчанию)</option>
+            <option value="gpt-4">GPT-4 (если доступен)</option>
+            <option value="claude-2">Claude 2 (если доступен)</option>
+            <option value="llama-2">Llama 2 (если доступен)</option>
+          </select>
+          <p class="text-xs text-gray-500 mt-1">Доступность моделей зависит от провайдеров G4F</p>
+        </div>
+        
         <div class="flex justify-between items-center">
           <button id="sendButton" onclick="sendMessage()">
             Отправить сообщение
@@ -167,7 +186,9 @@
     // Функция для отправки сообщения
     async function sendMessage() {
       const messageInput = document.getElementById('message');
+      const modelSelect = document.getElementById('modelSelect');
       const message = messageInput.value.trim();
+      const model = modelSelect.value;
       const sendButton = document.getElementById('sendButton');
       
       // Проверяем, что сообщение не пустое
@@ -179,6 +200,10 @@
       // Добавляем сообщение пользователя в чат
       addMessageToConversation('user', message);
       
+      // Добавляем информацию о выбранной модели
+      const modelInfo = `Модель: ${model}`;
+      addMessageToConversation('system', modelInfo);
+      
       // Очищаем поле ввода
       messageInput.value = '';
       
@@ -187,14 +212,15 @@
       sendButton.innerHTML = '<span class="loading"></span>Отправка...';
       
       try {
-        // Отправляем запрос к G4F API
+        // Отправляем запрос к G4F API с указанием модели
         const response = await fetch('/api/g4f/simple', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            message: message
+            message: message,
+            model: model
           })
         });
         

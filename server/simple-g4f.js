@@ -23,8 +23,13 @@ export async function handleSimpleG4F(req, res) {
       // Создаем экземпляр G4F
       const g4f = new G4F();
       
+      // Получаем модель из запроса или используем gpt-3.5-turbo по умолчанию
+      const model = req.body.model || "gpt-3.5-turbo";
+      console.log(`Используемая модель: ${model}`);
+      
       // Вызываем метод chat для отправки сообщения
-      const response = await g4f.chat(userMessage);
+      // Библиотека G4F попытается использовать указанную модель через доступные провайдеры
+      const response = await g4f.chat(userMessage, { model });
       
       console.log("Ответ от G4F получен:", response.substring(0, 30) + "...");
       
