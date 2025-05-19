@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ChatGPT Proxy</title>
+  <title>ChatGPT Прокси</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body {
@@ -98,8 +98,8 @@
   <div class="container">
     <div class="card">
       <div class="card-header">
-        <h1 class="text-xl font-bold">ChatGPT Proxy</h1>
-        <p class="text-sm opacity-80">Отправляйте запросы к ChatGPT через безопасный прокси-сервер</p>
+        <h1 class="text-xl font-bold">ChatGPT Прокси</h1>
+        <p class="text-sm opacity-80">Отправляйте запросы к ChatGPT через наш прокси-сервер</p>
       </div>
       <div class="card-content">
         <div class="token-input">
@@ -168,7 +168,7 @@
       sendButton.innerHTML = '<span class="loading"></span>Отправка...';
       
       try {
-        // Используем локальный прокси-сервер для запросов
+        // Отправляем запрос через наш прокси-сервер
         const response = await fetch('/api/chat', {
           method: 'POST',
           headers: {
@@ -198,9 +198,6 @@
         let responseText = '';
         if (data.message && data.message.content && data.message.content.parts) {
           responseText = data.message.content.parts.join('\n');
-        } else if (data.choices && data.choices.length > 0) {
-          // Обрабатываем также формат API OpenAI
-          responseText = data.choices[0].message.content;
         } else {
           console.log("Необработанный ответ от ChatGPT:", data);
           throw new Error('Получен пустой или неожиданный ответ от ChatGPT');

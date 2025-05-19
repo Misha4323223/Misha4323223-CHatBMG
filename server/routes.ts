@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupWebSocket } from "./ws";
@@ -6,6 +6,7 @@ import { setupProxyMiddleware } from "./middleware/proxy";
 import { authMiddleware } from "./middleware/auth";
 import { z } from "zod";
 import { authSchema, messageSchema } from "@shared/schema";
+import crypto from "crypto";
 
 // Прокси-маршрут для ChatGPT
 async function setupChatGPTProxy(app: Express) {
