@@ -7,6 +7,7 @@ import NotFound from "@/pages/not-found";
 import AuthScreen from "@/pages/AuthScreen";
 import Chat from "@/pages/Chat";
 import SimpleChatGPT from "@/pages/SimpleChatGPT";
+import G4FChat from "@/pages/G4FChat";
 import { useEffect } from "react";
 
 function Router() {
@@ -63,6 +64,7 @@ function Router() {
       <Route path="/" component={SimpleChatGPT} />
       <Route path="/chatgpt" component={SimpleChatGPT} />
       <Route path="/chat" component={Chat} />
+      <Route path="/g4f" component={G4FChat} />
       <Route component={NotFound} />
     </Switch>
   );
