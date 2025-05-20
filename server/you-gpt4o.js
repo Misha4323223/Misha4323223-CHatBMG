@@ -20,52 +20,105 @@ export async function handleYouGPT4oRequest(req, res) {
     log(`Запрос к You/GPT-4o: сообщение=${userMessage.substring(0, 30)}...`, 'you-gpt4o');
     
     try {
-      // Используем Python G4F API для отправки запроса с провайдером You
-      const response = await fetch('http://localhost:5001/api/python/g4f/chat', {
+      // Пробуем через API несколько провайдеров последовательно
+      const providers = ['You', 'Qwen_Qwen_2_5', 'Gemini', 'OpenAIFM', 'GeekGpt'];
+      
+      // Перебираем провайдеры, пока не получим успешный ответ
+      for (const provider of providers) {
+        log(`Пробуем провайдера: ${provider}${provider === 'You' ? ' с моделью gpt-4o' : ''}`, 'you-gpt4o');
+        
+        try {
+          // Используем Python G4F API для отправки запроса с выбранным провайдером
+          const response = await fetch('http://localhost:5001/api/python/g4f/chat', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              message: userMessage,
+              provider: provider,
+              model: provider === 'You' ? 'gpt-4o' : undefined,
+              max_retries: 1
+            })
+          });
+          
+          if (!response.ok) {
+            log(`Провайдер ${provider} вернул ошибку: ${response.status}`, 'you-gpt4o');
+            continue;
+          }
+          
+          const data = await response.json();
+          
+          // Если получили локальную имитацию, пропускаем этого провайдера
+          if (data.provider === 'local_fallback') {
+            log(`Провайдер ${provider} вернул имитацию, пробуем другого`, 'you-gpt4o');
+            continue;
+          }
+          
+          log(`Успешный ответ от провайдера ${data.provider}`, 'you-gpt4o');
+          
+          // Формируем ответ в формате ChatGPT для совместимости с фронтендом
+          const formattedResponse = {
+            message: {
+              content: {
+                content_type: "text",
+                parts: [data.response]
+              }
+            },
+            provider: data.provider || provider,
+            model: data.model || (provider === 'You' ? 'gpt-4o' : 'неизвестная модель')
+          };
+          
+          return res.json(formattedResponse);
+        } catch (providerError) {
+          log(`Ошибка при использовании провайдера ${provider}: ${providerError.message}`, 'you-gpt4o');
+          continue;
+        }
+      }
+      
+      // Если все провайдеры не сработали, отправляем общий запрос
+      log('Пробуем общий запрос без указания провайдера', 'you-gpt4o');
+      
+      const fallbackResponse = await fetch('http://localhost:5001/api/python/g4f/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           message: userMessage,
-          provider: 'You',
-          model: 'gpt-4o',
-          max_retries: 2
+          max_retries: 3
         })
       });
       
-      if (!response.ok) {
-        throw new Error(`Ошибка API: ${response.status}`);
+      if (!fallbackResponse.ok) {
+        throw new Error(`Ошибка API: ${fallbackResponse.status}`);
       }
       
-      const data = await response.json();
+      const fallbackData = await fallbackResponse.json();
       
-      log(`Ответ от You/GPT-4o получен: ${data.response.substring(0, 30)}...`, 'you-gpt4o');
-      
-      // Формируем ответ в формате ChatGPT для совместимости с фронтендом
       const formattedResponse = {
         message: {
           content: {
             content_type: "text",
-            parts: [data.response]
+            parts: [fallbackData.response]
           }
         },
-        provider: data.provider || "You",
-        model: data.model || "gpt-4o"
+        provider: fallbackData.provider || "автоматический выбор",
+        model: fallbackData.model || "автоматический выбор"
       };
       
-      res.json(formattedResponse);
+      return res.json(formattedResponse);
     } catch (innerError) {
-      log(`Ошибка при использовании You/GPT-4o: ${innerError.message}`, 'you-gpt4o');
+      log(`Ошибка при использовании всех провайдеров: ${innerError.message}`, 'you-gpt4o');
       
       // Отправляем ошибку клиенту
       res.status(500).json({ 
-        error: "Ошибка при обработке запроса You/GPT-4o", 
+        error: "Ошибка при обработке запроса через все доступные провайдеры", 
         message: innerError.message 
       });
     }
   } catch (error) {
-    log(`Непредвиденная ошибка You/GPT-4o: ${error.message}`, 'you-gpt4o');
+    log(`Непредвиденная ошибка в обработчике: ${error.message}`, 'you-gpt4o');
     
     res.status(500).json({ 
       error: "Непредвиденная ошибка при обработке запроса", 
