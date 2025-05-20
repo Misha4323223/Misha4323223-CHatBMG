@@ -137,7 +137,7 @@ def chat():
             return process_with_provider(provider_name, model_name, messages, max_retries)
         
         # Приоритетные провайдеры, которые наиболее стабильны, начиная с тех, что точно работают
-        priority_providers = ['You', 'Qwen_Qwen_2_5', 'GeekGpt', 'OpenAIFM', 'Blackbox', 'Gemini', 'GeminiPro', 'MyShell', 'FreeGpt', 'Liaobots']
+        priority_providers = ['GeekGpt', 'OpenAIFM', 'Qwen_Qwen_2_5', 'Gemini', 'GeminiPro', 'MyShell', 'Blackbox', 'FreeGpt', 'You', 'Liaobots']
         
         # Пробуем сначала приоритетные провайдеры
         for provider in priority_providers:
@@ -203,6 +203,11 @@ def process_with_provider(provider_name, model_name, messages, max_retries=3):
                     if model:
                         create_params['model'] = model
                         logger.info(f"Используем специальную модель {model} для провайдера {provider_name}")
+            
+            # Специальные настройки для провайдера You (требуется путь к Chrome)
+            if provider_name == "You":
+                create_params['browser_executable_path'] = "/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium"
+                logger.info(f"Задаем путь к Chromium для провайдера {provider_name}")
             
             # Запрос к API
             logger.info(f"Создаем запрос с параметрами: {create_params}")
