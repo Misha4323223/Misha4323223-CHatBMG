@@ -3,7 +3,6 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import dotenv from "dotenv";
 import { initPythonG4FApi } from './python-g4f-bridge.js';
-import * as textApi from '../start-text-g4f.js';
 
 // Загрузка переменных окружения из файла .env
 dotenv.config();
@@ -56,14 +55,7 @@ app.use((req, res, next) => {
     log(`❌ Ошибка при инициализации Python G4F API: ${error.message}`);
   }
   
-  // Инициализация текстового G4F API
-  try {
-    log("Инициализация Text G4F API...");
-    await textApi.startTextApi();
-    log("✅ Text G4F API успешно инициализирован");
-  } catch (error) {
-    log(`❌ Ошибка при инициализации Text G4F API: ${error.message}`);
-  }
+
   
   const server = await registerRoutes(app);
 
