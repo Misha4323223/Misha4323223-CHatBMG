@@ -183,13 +183,13 @@ async function setupG4FIntegration(app: Express) {
   // API для прямого доступа к ChatGPT через ACCESS_TOKEN
   app.post("/api/chatgpt/direct", handleChatGPTRequest);
   
-  // Прокси для текстового API (работает с локальным Python сервером)
+  // Улучшенный текстовый API (фильтрует HTML/XML в ответах)
   app.post("/api/text/chat", async (req, res) => {
     try {
       console.log(`Запрос к текстовому API: ${JSON.stringify(req.body).substring(0, 100)}...`);
       
-      // Перенаправляем запрос на наш текстовый Python сервер
-      const response = await fetch('http://localhost:5002/api/text/chat', {
+      // Используем обычный Python G4F API, но дополнительно фильтруем ответы
+      const response = await fetch('http://localhost:5001/api/python/g4f/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -200,8 +200,32 @@ async function setupG4FIntegration(app: Express) {
       // Получаем ответ
       const data = await response.json();
       
+      // Проверяем, содержит ли ответ HTML теги
+      const containsHtml = typeof data.response === 'string' && 
+        /<\s*[a-z][^>]*>/i.test(data.response);
+      
+      if (containsHtml) {
+        console.log(`Ответ от ${data.provider} содержит HTML/XML, заменяем на текстовый`);
+        
+        // Если содержит HTML, возвращаем сообщение об этом
+        return res.json({
+          response: 'Получен ответ с HTML-разметкой, которая не поддерживается в текстовом режиме. Пожалуйста, попробуйте задать другой вопрос.',
+          provider: 'text_filter',
+          model: data.model || 'неизвестно'
+        });
+      }
+      
+      // Если это локальный фоллбек, также меняем сообщение
+      if (data.provider === 'local_fallback') {
+        return res.json({
+          response: 'К сожалению, ни один из провайдеров текстового API не доступен. Пожалуйста, повторите попытку позже.',
+          provider: 'text_fallback',
+          model: 'none'
+        });
+      }
+      
       // Отправляем ответ клиенту
-      res.status(response.status).json(data);
+      return res.json(data);
       
     } catch (error) {
       console.error('Ошибка при обращении к текстовому API:', error);
@@ -209,31 +233,52 @@ async function setupG4FIntegration(app: Express) {
       // В случае ошибки возвращаем информативное сообщение
       res.status(500).json({
         error: `Ошибка при обращении к текстовому API: ${error.message}`,
-        response: 'Извините, произошла ошибка при обращении к текстовому API. Попробуйте позже.',
+        response: 'Извините, произошла ошибка при обработке текстового запроса. Пожалуйста, повторите попытку позже.',
         provider: 'error',
         model: 'none'
       });
     }
   });
   
-  // Прокси для получения провайдеров
+  // API для получения провайдеров для текстового режима
   app.get("/api/text/providers", async (req, res) => {
     try {
-      // Перенаправляем запрос на наш текстовый Python сервер
-      const response = await fetch('http://localhost:5002/api/text/providers');
+      // Используем стандартный список провайдеров, но фильтруем его
+      const response = await fetch('http://localhost:5001/api/python/g4f/providers');
       
-      // Получаем ответ
+      if (!response.ok) {
+        throw new Error(`Ошибка запроса: ${response.status}`);
+      }
+      
       const data = await response.json();
       
-      // Отправляем ответ клиенту
-      res.status(response.status).json(data);
+      // Фильтруем провайдеров - только работающие и не требующие авторизации
+      const textProviders = data.providers
+        .filter(provider => {
+          if (!provider.working || provider.needs_auth) return false;
+          
+          // Исключаем провайдеров TTS и генерации изображений
+          const name = provider.name.toLowerCase();
+          return !name.includes('tts') && !name.includes('image');
+        })
+        .map(provider => ({
+          name: provider.name,
+          model: provider.default_model || 'неизвестно',
+          working: true
+        }));
+      
+      // Отправляем отфильтрованный список
+      res.json({
+        providers: textProviders,
+        count: textProviders.length
+      });
       
     } catch (error) {
-      console.error('Ошибка при получении списка провайдеров:', error);
+      console.error('Ошибка при получении списка текстовых провайдеров:', error);
       
       // В случае ошибки возвращаем пустой список
       res.status(500).json({
-        error: `Ошибка при получении списка провайдеров: ${error.message}`,
+        error: `Ошибка при получении списка текстовых провайдеров: ${error.message}`,
         providers: [],
         count: 0
       });
