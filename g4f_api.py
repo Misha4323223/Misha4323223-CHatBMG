@@ -110,20 +110,24 @@ def chat():
         
         # Получаем параметры запроса
         message = data.get('message', '')
-        model_name = data.get('model', 'gpt_3_5_turbo')
+        model_name = data.get('model') # Не используем дефолтную модель gpt_3_5_turbo, т.к. она не работает
         provider_name = data.get('provider')
         max_retries = data.get('max_retries', 3)
         
         if not message:
             return jsonify({'error': 'Отсутствует сообщение'}), 400
         
-        logger.info(f"Запрос к G4F: модель={model_name}, сообщение='{message[:30]}...'")
+        logger.info(f"Запрос к G4F: модель={model_name or 'auto'}, сообщение='{message[:30]}...'")
         
         # Пытаемся найти ответ в кэше
-        cache_key = f"{model_name}:{message}"
+        cache_key = f"{model_name or 'auto'}:{message}"
         if cache_key in response_cache:
             logger.info(f"Возвращаем кэшированный ответ для '{message[:30]}...'")
-            return jsonify({'response': response_cache[cache_key], 'source': 'cache'})
+            return jsonify({
+                'response': response_cache[cache_key], 
+                'provider': 'cache', 
+                'model': model_name or 'auto'
+            })
         
         # Подготавливаем сообщения
         messages = [{"role": "user", "content": message}]
@@ -132,7 +136,21 @@ def chat():
         if provider_name:
             return process_with_provider(provider_name, model_name, messages, max_retries)
         
-        # Иначе пробуем несколько провайдеров
+        # Приоритетные провайдеры, которые наиболее стабильны 
+        priority_providers = ['ChatGPTBrowser', 'FreeGpt', 'Liaobots', 'You', 'Qwen_Qwen_2_5', 'OpenAIFM', 'Blackbox']
+        
+        # Пробуем сначала приоритетные провайдеры
+        for provider in priority_providers:
+            logger.info(f"Пробуем приоритетного провайдера: {provider}")
+            result = process_with_provider(provider, None, messages, max_retries=1)
+            
+            # Если это не ошибка (не кортеж) или это ошибка, но не 404/400 
+            if not isinstance(result, tuple) or (isinstance(result, tuple) and result[1] not in [404, 400]):
+                return result
+        
+        # Если ни один из приоритетных провайдеров не сработал,
+        # пробуем другие провайдеры через стандартный метод
+        logger.warning("Ни один из приоритетных провайдеров не сработал, пробуем другие")
         return try_multiple_providers(model_name, messages, max_retries)
         
     except Exception as e:
@@ -158,12 +176,36 @@ def process_with_provider(provider_name, model_name, messages, max_retries=3):
             
             logger.info(f"Попытка {attempt+1} с провайдером {provider_name}")
             
+            # Параметры запроса
+            create_params = {
+                'messages': messages,
+                'provider': provider_class
+            }
+            
+            # Добавляем модель только если она явно указана
+            # или используем модель по умолчанию для провайдера
+            if model_name:
+                create_params['model'] = model_name
+            else:
+                # Для некоторых провайдеров указываем модели, которые точно работают
+                provider_model_map = {
+                    'ChatGPTBrowser': 'gpt-4o',
+                    'FreeGpt': 'gemini-1.5-pro',
+                    'Liaobots': 'claude-3-5-sonnet-20241022',
+                    'AItianhu': 'gpt-3.5-turbo',
+                    'You': 'gpt-4',
+                    'Qwen_Qwen_2_5': None  # Будет использована дефолтная модель
+                }
+                
+                if provider_name in provider_model_map:
+                    model = provider_model_map[provider_name]
+                    if model:
+                        create_params['model'] = model
+                        logger.info(f"Используем специальную модель {model} для провайдера {provider_name}")
+            
             # Запрос к API
-            response = g4f.ChatCompletion.create(
-                model=model_name,
-                messages=messages,
-                provider=provider_class
-            )
+            logger.info(f"Создаем запрос с параметрами: {create_params}")
+            response = g4f.ChatCompletion.create(**create_params)
             
             if response:
                 logger.info(f"Получен ответ от {provider_name}: '{response[:30]}...'")
