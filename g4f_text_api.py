@@ -22,13 +22,13 @@ CACHE_TTL = 600  # 10 минут
 
 # Список известных текстовых моделей для каждого провайдера
 PROVIDER_MODEL_MAPPING = {
+    "You": "gpt-4o",  # Улучшаем до полной версии gpt-4o
     "Qwen_Qwen_2_5": "qwen-2.5",
     "OpenAIFM": "gpt-3.5-turbo",
     "HuggingFace": "openchat_3.5",
     "Aichat": "gpt-3.5-turbo",
     "FreeGpt": "gemini-1.5-pro",
     "Blackbox": "gemini-1.5-pro",
-    "You": "gpt-4o-mini",
     "GptGo": "gpt-3.5-turbo",
 }
 
@@ -107,8 +107,15 @@ def get_working_provider_models():
     provider_models_cache = provider_models
     last_cache_update = current_time
     
-    # Перемешиваем список для распределения нагрузки
-    random.shuffle(provider_models_cache)
+    # Сортируем список так, чтобы You был первым
+    you_providers = [p for p in provider_models_cache if p["name"] == "You"]
+    other_providers = [p for p in provider_models_cache if p["name"] != "You"]
+    
+    # Перемешиваем только остальных провайдеров
+    random.shuffle(other_providers)
+    
+    # Объединяем списки: You в начале, остальные после
+    provider_models_cache = you_providers + other_providers
     
     return provider_models_cache
 
