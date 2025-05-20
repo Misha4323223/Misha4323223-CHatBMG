@@ -136,9 +136,14 @@ async function setupG4FIntegration(app: Express) {
     res.sendFile(path.join(process.cwd(), "text-only-gpt.html"));
   });
   
+  // Маршрут для упрощенного текстового интерфейса (максимально надежный)
+  app.get("/simple", (req, res) => {
+    res.sendFile(path.join(process.cwd(), "text-gpt-simple.html"));
+  });
+  
   // Устанавливаем корневой маршрут для нашего бесплатного ChatGPT
   app.get("/", (req, res) => {
-    res.sendFile(path.join(process.cwd(), "text-only-gpt.html"));
+    res.sendFile(path.join(process.cwd(), "text-gpt-simple.html"));
   });
   
   // Маршрут для ультра-простого чата (работает в любом окружении)
