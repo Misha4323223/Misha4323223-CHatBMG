@@ -211,13 +211,18 @@ def process_with_provider(provider_name, model_name, messages, max_retries=3):
             
             # Специальные настройки для провайдера You
             if provider_name == "You":
-                # Используем nodriver вместо Chrome
-                create_params['use_alternative_driver'] = True  
-                create_params['headless'] = True
-                create_params['async_mode'] = False
-                # Используем модель, которая точно поддерживается провайдером You
-                create_params['model'] = 'gpt-4o'  # Одна из поддерживаемых моделей
-                logger.info(f"Используем nodriver и модель gpt-4o для провайдера {provider_name}")
+                # Настраиваем специальные параметры для You
+                try:
+                    # Указываем модель gpt-4o для провайдера You
+                    create_params['model'] = 'gpt-4o'
+                    # Настройки для selenium/chrome
+                    create_params['headless'] = True
+                    create_params['async_mode'] = False
+                    logger.info(f"Используем провайдер {provider_name} с моделью gpt-4o")
+                except Exception as e:
+                    logger.error(f"Ошибка при настройке You: {e}")
+                    # Если не удалось настроить You, переходим к следующему провайдеру
+                    raise Exception(f"Не удалось настроить провайдер {provider_name}: {e}")
             
             # Запрос к API
             logger.info(f"Создаем запрос с параметрами: {create_params}")

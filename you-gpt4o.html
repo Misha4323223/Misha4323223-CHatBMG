@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>You GPT-4o - Бесплатный доступ к GPT-4</title>
+    <meta name="description" content="Бесплатный чат с You GPT-4o без API ключа. Доступ к новейшей модели GPT-4 через провайдер You.">
+    <meta name="author" content="G4F team">
+    
+    <style>
+        :root {
+            --primary-color: #4a56e2;
+            --primary-dark: #3a46c2;
+            --secondary-color: #6c63ff;
+            --success-color: #28a745;
+            --error-color: #dc3545;
+            --background-color: #f9fafc;
+            --text-color: #333;
+            --input-bg: #fff;
+            --border-color: #ddd;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --max-width: 800px;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --primary-color: #5e68fa;
+                --primary-dark: #4a54e6;
+                --secondary-color: #8c85ff;
+                --background-color: #1a1a2e;
+                --text-color: #f0f0f0;
+                --input-bg: #252538;
+                --border-color: #40405c;
+                --shadow-color: rgba(0, 0, 0, 0.3);
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--background-color);
+            padding: 1rem;
+            margin: 0 auto;
+            max-width: var(--max-width);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 1.75rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            display: inline-block;
+        }
+
+        p {
+            margin-bottom: 1rem;
+            color: var(--text-color);
+            opacity: 0.9;
+        }
+
+        .subtitle {
+            font-size: 0.95rem;
+            opacity: 0.8;
+            margin-bottom: 0.5rem;
+        }
+
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            border-radius: 0.5rem;
+            border: 1px solid var(--border-color);
+            background-color: var(--input-bg);
+            overflow: hidden;
+            box-shadow: 0 4px 6px var(--shadow-color);
+            margin-bottom: 1rem;
+        }
+
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            min-height: 60vh;
+            max-height: 60vh;
+        }
+
+        .message {
+            padding: 0.75rem 1rem;
+            border-radius: 0.75rem;
+            max-width: 85%;
+            position: relative;
+            animation: fadeIn 0.3s ease;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .user-message {
+            align-self: flex-end;
+            background: linear-gradient(120deg, var(--primary-color), var(--primary-dark));
+            color: white;
+            border-bottom-right-radius: 0;
+        }
+
+        .bot-message {
+            align-self: flex-start;
+            background-color: rgba(100, 100, 100, 0.1);
+            border-bottom-left-radius: 0;
+        }
+
+        .message-info {
+            font-size: 0.7rem;
+            margin-top: 0.25rem;
+            opacity: 0.7;
+        }
+
+        .user-message .message-info {
+            text-align: right;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .bot-message .message-info {
+            text-align: left;
+            color: var(--text-color);
+        }
+
+        .input-container {
+            display: flex;
+            padding: 0.75rem;
+            border-top: 1px solid var(--border-color);
+            background-color: var(--input-bg);
+            position: relative;
+        }
+
+        #user-input {
+            flex: 1;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            font-family: inherit;
+            font-size: 1rem;
+            background-color: var(--input-bg);
+            color: var(--text-color);
+            resize: none;
+            min-height: 60px;
+            max-height: 150px;
+            outline: none;
+            transition: border-color 0.2s;
+            overflow-y: auto;
+        }
+
+        #user-input:focus {
+            border-color: var(--primary-color);
+        }
+
+        .send-button {
+            margin-left: 0.5rem;
+            padding: 0 1rem;
+            background: linear-gradient(120deg, var(--primary-color), var(--primary-dark));
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .send-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .send-button:active {
+            transform: translateY(0);
+        }
+
+        .send-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .status {
+            padding: 0.75rem;
+            text-align: center;
+            font-size: 0.9rem;
+            color: var(--text-color);
+            opacity: 0.9;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .status-online {
+            color: var(--success-color);
+        }
+
+        .status-offline {
+            color: var(--error-color);
+        }
+
+        .typing-indicator {
+            display: flex;
+            column-gap: 0.5rem;
+            padding-left: 0.5rem;
+        }
+
+        .typing-indicator span {
+            height: 7px;
+            width: 7px;
+            background: var(--text-color);
+            display: block;
+            border-radius: 50%;
+            opacity: 0.4;
+        }
+
+        .typing-indicator span:nth-child(1) {
+            animation: typing 1s infinite;
+        }
+
+        .typing-indicator span:nth-child(2) {
+            animation: typing 1s 0.2s infinite;
+        }
+
+        .typing-indicator span:nth-child(3) {
+            animation: typing 1s 0.4s infinite;
+        }
+
+        @keyframes typing {
+            0%, 100% {
+                transform: translateY(0px);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .error-message {
+            color: var(--error-color);
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            background-color: rgba(220, 53, 69, 0.1);
+            border: 1px solid rgba(220, 53, 69, 0.3);
+        }
+
+        .api-info {
+            font-size: 0.8rem;
+            text-align: center;
+            margin-top: 1rem;
+            padding: 0.5rem;
+            opacity: 0.7;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 0.5rem;
+            }
+            .message {
+                max-width: 90%;
+            }
+            h1 {
+                font-size: 1.5rem;
+            }
+        }
+
+        footer {
+            margin-top: 1rem;
+            text-align: center;
+            font-size: 0.8rem;
+            opacity: 0.7;
+        }
+
+        .provider-info {
+            margin-top: 0.25rem;
+            font-style: italic;
+        }
+
+        /* Добавляем иконку для кнопки отправки */
+        .send-icon {
+            width: 24px;
+            height: 24px;
+            fill: white;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>You GPT-4o Чат</h1>
+        <p class="subtitle">Бесплатный доступ к новейшей модели GPT-4o через провайдер You</p>
+    </header>
+
+    <div class="chat-container">
+        <div class="messages" id="messages">
+            <div class="message bot-message">
+                Привет! Я GPT-4o, работаю через провайдер You. Задайте мне любой вопрос, и я постараюсь на него ответить.
+                <div class="message-info">You (GPT-4o) • сейчас</div>
+            </div>
+        </div>
+        <div class="status" id="status">
+            <span id="status-indicator" class="status-offline">⚪ Проверка соединения...</span>
+        </div>
+        <div class="input-container">
+            <textarea id="user-input" placeholder="Введите ваше сообщение..." rows="3"></textarea>
+            <button id="send-button" class="send-button">
+                <svg class="send-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <div id="error-container" class="error-message hidden"></div>
+
+    <div class="api-info">
+        <p>Этот интерфейс использует провайдер You и модель GPT-4o через g4f, не требуя API ключа OpenAI</p>
+        <p class="provider-info" id="provider-info">Модель: GPT-4o</p>
+    </div>
+
+    <footer>
+        <p>Создано с помощью g4f (GPT4Free) • Без необходимости API ключа</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const messagesContainer = document.getElementById('messages');
+            const userInput = document.getElementById('user-input');
+            const sendButton = document.getElementById('send-button');
+            const statusIndicator = document.getElementById('status-indicator');
+            const errorContainer = document.getElementById('error-container');
+            const providerInfo = document.getElementById('provider-info');
+            let isProcessing = false;
+
+            // Проверка статуса сервера
+            checkServerStatus();
+
+            // Подключение обработчиков событий
+            sendButton.addEventListener('click', sendMessage);
+            userInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+
+            // Автофокус на поле ввода
+            userInput.focus();
+
+            // Функция проверки статуса сервера
+            async function checkServerStatus() {
+                try {
+                    const response = await fetch('/api/python/g4f/providers');
+                    if (response.ok) {
+                        statusIndicator.textContent = '🟢 Подключено';
+                        statusIndicator.className = 'status-online';
+                        
+                        // Получаем информацию о провайдерах
+                        const data = await response.json();
+                        
+                        // Проверяем наличие провайдера You
+                        const youProvider = data.providers.find(p => p.name === 'You');
+                        if (youProvider) {
+                            if (youProvider.working) {
+                                providerInfo.textContent = `Модель: GPT-4o через провайдер You (работает)`;
+                            } else {
+                                providerInfo.textContent = `Модель: GPT-4o через провайдер You (не работает)`;
+                                showError('Внимание: провайдер You в данный момент недоступен. Будет использован альтернативный провайдер.');
+                            }
+                        }
+                    } else {
+                        statusIndicator.textContent = '🔴 Не подключено';
+                        statusIndicator.className = 'status-offline';
+                        showError('Не удалось подключиться к серверу. Возможно, сервер не запущен или перегружен.');
+                    }
+                } catch (error) {
+                    statusIndicator.textContent = '🔴 Ошибка соединения';
+                    statusIndicator.className = 'status-offline';
+                    showError(`Ошибка при проверке статуса сервера: ${error.message}`);
+                }
+            }
+
+            // Функция отправки сообщения
+            async function sendMessage() {
+                const message = userInput.value.trim();
+                if (!message || isProcessing) return;
+
+                // Блокируем отправку сообщений на время обработки
+                isProcessing = true;
+                sendButton.disabled = true;
+                userInput.disabled = true;
+
+                // Добавляем сообщение пользователя в чат
+                addMessage(message, 'user');
+
+                // Очищаем поле ввода
+                userInput.value = '';
+
+                // Добавляем индикатор загрузки
+                const loadingMessage = document.createElement('div');
+                loadingMessage.className = 'message bot-message';
+                loadingMessage.innerHTML = '<div class="typing-indicator"><span></span><span></span><span></span></div>';
+                messagesContainer.appendChild(loadingMessage);
+                scrollToBottom();
+
+                try {
+                    // Отправляем запрос на сервер
+                    const response = await fetch('/api/you-gpt4o', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ message })
+                    });
+
+                    // Удаляем индикатор загрузки
+                    messagesContainer.removeChild(loadingMessage);
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        
+                        // Проверяем наличие ответа
+                        let botMessage;
+                        if (data.message && data.message.content && data.message.content.parts) {
+                            botMessage = data.message.content.parts[0];
+                        } else if (data.response) {
+                            botMessage = data.response;
+                        } else if (data.error) {
+                            botMessage = `Ошибка: ${data.error}. ${data.message || ''}`;
+                        } else {
+                            botMessage = 'Не удалось получить ответ в ожидаемом формате.';
+                        }
+
+                        // Добавляем информацию о провайдере
+                        const providerName = data.provider || 'You';
+                        const modelName = data.model || 'gpt-4o';
+                        
+                        // Добавляем ответ бота в чат
+                        addMessage(botMessage, 'bot', `${providerName} (${modelName})`);
+                    } else {
+                        // Обработка ошибки
+                        const errorData = await response.json();
+                        const errorMessage = errorData.message || errorData.error || 'Неизвестная ошибка';
+                        addMessage(`Ошибка: ${errorMessage}`, 'bot', 'Система');
+                        showError(`Ошибка при получении ответа: ${errorMessage}`);
+                    }
+                } catch (error) {
+                    // Удаляем индикатор загрузки, если он еще присутствует
+                    if (messagesContainer.contains(loadingMessage)) {
+                        messagesContainer.removeChild(loadingMessage);
+                    }
+                    
+                    // Добавляем сообщение об ошибке
+                    addMessage(`Произошла ошибка при обработке запроса: ${error.message}`, 'bot', 'Система');
+                    showError(`Ошибка: ${error.message}`);
+                } finally {
+                    // Разблокируем отправку сообщений
+                    isProcessing = false;
+                    sendButton.disabled = false;
+                    userInput.disabled = false;
+                    userInput.focus();
+                }
+            }
+
+            // Функция добавления сообщения в чат
+            function addMessage(text, sender, senderInfo = '') {
+                const message = document.createElement('div');
+                message.className = `message ${sender}-message`;
+                
+                // Экранируем HTML-теги в тексте сообщения
+                const safeText = text
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#039;');
+                
+                // Форматируем код, если он есть в сообщении
+                const formattedText = formatCode(safeText);
+                
+                // Добавляем информацию о времени сообщения
+                const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const senderText = sender === 'user' ? 'Вы' : (senderInfo || 'You (GPT-4o)');
+                
+                message.innerHTML = `${formattedText}<div class="message-info">${senderText} • ${time}</div>`;
+                messagesContainer.appendChild(message);
+                scrollToBottom();
+            }
+
+            // Функция форматирования кода в сообщении
+            function formatCode(text) {
+                // Заменяем одинарные обратные кавычки для инлайн-кода
+                let formatted = text.replace(/`([^`]+)`/g, '<code style="background-color:rgba(0,0,0,0.1);padding:2px 4px;border-radius:3px;font-family:monospace;">$1</code>');
+                
+                // Заменяем блоки кода (тройные обратные кавычки)
+                formatted = formatted.replace(/```([\s\S]*?)```/g, '<pre style="background-color:rgba(0,0,0,0.1);padding:10px;border-radius:5px;overflow-x:auto;font-family:monospace;margin:10px 0;">$1</pre>');
+                
+                return formatted;
+            }
+
+            // Прокрутка контейнера сообщений к последнему сообщению
+            function scrollToBottom() {
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+
+            // Функция отображения ошибки
+            function showError(message) {
+                errorContainer.textContent = message;
+                errorContainer.classList.remove('hidden');
+                setTimeout(() => {
+                    errorContainer.classList.add('hidden');
+                }, 5000);
+            }
+        });
+    </script>
+</body>
+</html>
