@@ -2,6 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import dotenv from "dotenv";
+import { initPythonG4FApi } from './python-g4f-bridge.js';
 
 // Загрузка переменных окружения из файла .env
 dotenv.config();
@@ -41,6 +42,19 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Инициализация Python G4F API
+  try {
+    log("Инициализация Python G4F API...");
+    const pythonApiInitialized = await initPythonG4FApi();
+    if (pythonApiInitialized) {
+      log("✅ Python G4F API успешно инициализирован");
+    } else {
+      log("⚠️ Python G4F API не удалось инициализировать, будет использоваться локальная имитация");
+    }
+  } catch (error) {
+    log(`❌ Ошибка при инициализации Python G4F API: ${error.message}`);
+  }
+  
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
