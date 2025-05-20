@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Простой ИИ Чат</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    .chat-container {
+      max-width: 700px;
+      margin: 0 auto;
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #4a4a4a;
+    }
+    #chat-box {
+      height: 300px;
+      border: 1px solid #ddd;
+      padding: 10px;
+      margin-bottom: 10px;
+      overflow-y: auto;
+      border-radius: 5px;
+    }
+    #message-input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      box-sizing: border-box;
+    }
+    #send-button {
+      width: 100%;
+      padding: 10px;
+      background-color: #4169e1;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    #send-button:hover {
+      background-color: #3a5fcd;
+    }
+    .user-message {
+      background-color: #e3efff;
+      padding: 8px 12px;
+      border-radius: 15px;
+      margin: 5px 0;
+      max-width: 80%;
+      align-self: flex-end;
+      word-wrap: break-word;
+    }
+    .ai-message {
+      background-color: #f1f1f1;
+      padding: 8px 12px;
+      border-radius: 15px;
+      margin: 5px 0;
+      max-width: 80%;
+      align-self: flex-start;
+      word-wrap: break-word;
+    }
+    .message-container {
+      display: flex;
+      flex-direction: column;
+    }
+  </style>
+</head>
+<body>
+  <div class="chat-container">
+    <h1>Простой чат с ИИ</h1>
+    <div id="chat-box" class="message-container">
+      <!-- Сообщения будут здесь -->
+    </div>
+    <textarea id="message-input" placeholder="Введите ваше сообщение..." rows="3"></textarea>
+    <button id="send-button">Отправить</button>
+  </div>
+
+  <script>
+    // Получение ссылок на элементы страницы
+    const chatBox = document.getElementById('chat-box');
+    const messageInput = document.getElementById('message-input');
+    const sendButton = document.getElementById('send-button');
+
+    // Добавление приветственного сообщения
+    addMessage('ai', 'Привет! Я искусственный интеллект. Задайте мне вопрос, и я постараюсь на него ответить.');
+
+    // Обработчик нажатия кнопки отправки
+    sendButton.addEventListener('click', sendMessage);
+    
+    // Обработчик нажатия Enter
+    messageInput.addEventListener('keydown', function(event) {
+      if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        sendMessage();
+      }
+    });
+
+    // Функция отправки сообщения
+    function sendMessage() {
+      const message = messageInput.value.trim();
+      if (message === '') return;
+
+      // Добавляем сообщение пользователя в чат
+      addMessage('user', message);
+      
+      // Очищаем поле ввода
+      messageInput.value = '';
+
+      // Отображаем индикатор загрузки
+      const loadingMessage = addMessage('ai', 'Печатаю...');
+
+      // Отправляем запрос на сервер
+      fetch('/api/g4f/simple', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: message,
+          model: 'gpt-3.5-turbo'
+        }),
+      })
+      .then(response => response.json())
+      .then(data => {
+        // Удаляем сообщение о загрузке
+        chatBox.removeChild(loadingMessage);
+        
+        // Добавляем полученный ответ
+        addMessage('ai', data.response || 'Извините, я не смог обработать ваш запрос.');
+      })
+      .catch(error => {
+        // Удаляем сообщение о загрузке
+        chatBox.removeChild(loadingMessage);
+        
+        // Добавляем сообщение об ошибке
+        addMessage('ai', 'Произошла ошибка при обработке запроса. Пожалуйста, попробуйте еще раз.');
+        console.error('Error:', error);
+      });
+    }
+
+    // Функция добавления сообщения в чат
+    function addMessage(sender, text) {
+      const messageElement = document.createElement('div');
+      messageElement.className = sender === 'user' ? 'user-message' : 'ai-message';
+      messageElement.textContent = text;
+      
+      chatBox.appendChild(messageElement);
+      
+      // Прокрутка чата вниз
+      chatBox.scrollTop = chatBox.scrollHeight;
+      
+      return messageElement;
+    }
+  </script>
+</body>
+</html>
