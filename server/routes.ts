@@ -126,9 +126,14 @@ async function setupG4FIntegration(app: Express) {
     res.sendFile(path.join(process.cwd(), "static-chat.html"));
   });
   
+  // Маршрут для нашего реального GPT на основе Python G4F (без имитаций)
+  app.get("/realgpt", (req, res) => {
+    res.sendFile(path.join(process.cwd(), "real-gpt.html"));
+  });
+  
   // Устанавливаем корневой маршрут для нашего бесплатного ChatGPT
   app.get("/", (req, res) => {
-    res.sendFile(path.join(process.cwd(), "ultra-gpt.html"));
+    res.sendFile(path.join(process.cwd(), "real-gpt.html"));
   });
   
   // Маршрут для ультра-простого чата (работает в любом окружении)
