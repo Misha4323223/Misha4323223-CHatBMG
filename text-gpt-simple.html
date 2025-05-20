@@ -288,18 +288,18 @@
                 console.log('Отправка запроса к Python G4F API');
                 
                 // Отправляем запрос напрямую к Python G4F API
-                // Провайдеры и подходящие им модели - проверенные на работоспособность
+                // Провайдеры и подходящие им модели - оптимизированный порядок, начиная с работающих
                 const providerConfigs = [
-                    { provider: 'FreeGpt', model: 'gemini-1.5-pro' },
-                    { provider: 'Liaobots', model: 'claude-3.5-sonnet' }, // Исправлено название модели
-                    { provider: 'You', model: 'gpt-4o' }, // Используем поддерживаемую модель
-                    { provider: 'Qwen_Qwen_2_5', model: null }, // использовать модель по умолчанию
+                    { provider: 'Qwen_Qwen_2_5', model: null }, // использовать модель по умолчанию - РАБОТАЕТ
+                    { provider: 'You', model: 'gpt-4o' }, // Должен работать с установленными пакетами
+                    { provider: 'GeekGpt', model: null }, // использовать модель по умолчанию
                     { provider: 'OpenAIFM', model: null }, // использовать модель по умолчанию
                     { provider: 'Blackbox', model: null }, // использовать модель по умолчанию
                     { provider: 'Gemini', model: 'gemini-1.5-pro' },
                     { provider: 'GeminiPro', model: null }, // использовать модель по умолчанию
-                    { provider: 'GeekGpt', model: null }, // использовать модель по умолчанию
                     { provider: 'MyShell', model: null }, // использовать модель по умолчанию
+                    { provider: 'FreeGpt', model: 'gemini-1.5-pro' },
+                    { provider: 'Liaobots', model: 'claude-3.5-sonnet' }, // Требует оплату
                     { provider: 'RetryProvider', model: null } // Специальный провайдер, который перебирает другие
                 ];
                 
