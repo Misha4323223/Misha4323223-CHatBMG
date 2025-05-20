@@ -130,12 +130,17 @@ async function setupG4FIntegration(app: Express) {
   });
   
   // Маршрут для ультра ChatGPT - работает с ACCESS_TOKEN
-  app.get("/ultragpt", (req, res) => {
+  app.get("/chatapitoken", (req, res) => {
     res.sendFile(path.join(process.cwd(), "ultra-chatgpt.html"));
   });
   
   // Маршрут для полностью бесплатного ChatGPT через G4F
   app.get("/freegpt", freeGPTPage);
+  
+  // Маршрут для улучшенного интерфейса с локальной обработкой
+  app.get("/ultragpt", (req, res) => {
+    res.sendFile(path.join(process.cwd(), "ultra-gpt.html"));
+  });
   
   // API для бесплатного доступа к AI моделям
   app.post("/api/free/model", handleFreeModelRequest);
