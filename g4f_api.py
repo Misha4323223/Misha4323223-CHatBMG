@@ -137,7 +137,7 @@ def chat():
             return process_with_provider(provider_name, model_name, messages, max_retries)
         
         # Приоритетные провайдеры, которые наиболее стабильны 
-        priority_providers = ['ChatGPTBrowser', 'FreeGpt', 'Liaobots', 'You', 'Qwen_Qwen_2_5', 'OpenAIFM', 'Blackbox']
+        priority_providers = ['FreeGpt', 'Liaobots', 'You', 'Qwen_Qwen_2_5', 'OpenAIFM', 'Blackbox', 'Gemini', 'GeminiPro', 'GeekGpt', 'MyShell']
         
         # Пробуем сначала приоритетные провайдеры
         for provider in priority_providers:
@@ -189,12 +189,13 @@ def process_with_provider(provider_name, model_name, messages, max_retries=3):
             else:
                 # Для некоторых провайдеров указываем модели, которые точно работают
                 provider_model_map = {
-                    'ChatGPTBrowser': 'gpt-4o',
                     'FreeGpt': 'gemini-1.5-pro',
                     'Liaobots': 'claude-3-5-sonnet-20241022',
-                    'AItianhu': 'gpt-3.5-turbo',
                     'You': 'gpt-4',
-                    'Qwen_Qwen_2_5': None  # Будет использована дефолтная модель
+                    'Qwen_Qwen_2_5': None,  # Будет использована дефолтная модель
+                    'OpenAIFM': None,  # Будет использована дефолтная модель 
+                    'Blackbox': None,  # Будет использована дефолтная модель
+                    'Gemini': 'gemini-1.5-pro'
                 }
                 
                 if provider_name in provider_model_map:
