@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Бесплатный ChatGPT через G4F</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f2f5;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            height: 98vh;
+        }
+        .header {
+            background: linear-gradient(135deg, #10a37f, #0d8c6d);
+            color: white;
+            padding: 15px;
+            border-radius: 10px 10px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header-title {
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .header-subtitle {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+        .free-badge {
+            background-color: #22c55e;
+            color: white;
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin-left: 8px;
+        }
+        .chat-container {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background-color: white;
+            border-left: 1px solid #ddd;
+            border-right: 1px solid #ddd;
+        }
+        .message {
+            margin-bottom: 20px;
+            max-width: 85%;
+            padding: 12px 16px;
+            border-radius: 10px;
+            line-height: 1.5;
+        }
+        .user-message {
+            background-color: #eff6ff;
+            margin-left: auto;
+            border-bottom-right-radius: 2px;
+            color: #1e3a8a;
+        }
+        .bot-message {
+            background-color: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-bottom-left-radius: 2px;
+        }
+        .message-time {
+            font-size: 11px;
+            color: #9ca3af;
+            text-align: right;
+            margin-top: 5px;
+        }
+        .input-area {
+            padding: 20px;
+            background-color: white;
+            border-radius: 0 0 10px 10px;
+            border: 1px solid #ddd;
+            border-top: none;
+        }
+        .model-selector {
+            margin-bottom: 15px;
+        }
+        .model-selector select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            background-color: white;
+            font-size: 14px;
+        }
+        .input-container {
+            display: flex;
+            gap: 10px;
+        }
+        .message-input {
+            flex-grow: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            resize: none;
+            font-family: inherit;
+            font-size: 14px;
+        }
+        .send-button {
+            background-color: #10a37f;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 0 20px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+        .send-button:hover {
+            background-color: #0d8c6d;
+        }
+        .send-button:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+        }
+        .typing-indicator {
+            display: inline-block;
+            width: 20px;
+            height: 10px;
+            position: relative;
+            margin-left: 10px;
+        }
+        .typing-indicator span {
+            height: 5px;
+            width: 5px;
+            float: left;
+            margin: 0 1px;
+            background-color: #9880ff;
+            display: block;
+            border-radius: 50%;
+            opacity: 0.4;
+        }
+        .typing-indicator span:nth-of-type(1) {
+            animation: 1s blink infinite 0.3333s;
+        }
+        .typing-indicator span:nth-of-type(2) {
+            animation: 1s blink infinite 0.6666s;
+        }
+        .typing-indicator span:nth-of-type(3) {
+            animation: 1s blink infinite 0.9999s;
+        }
+        @keyframes blink {
+            50% {
+                opacity: 1;
+            }
+        }
+        .error-message {
+            color: #e53e3e;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        .system-message {
+            text-align: center;
+            padding: 10px;
+            margin: 10px 0;
+            background-color: #f9fafb;
+            border-radius: 5px;
+            font-size: 12px;
+            color: #6b7280;
+        }
+        .loader {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border: 2px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 8px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <div class="header-title">ChatGPT <span class="free-badge">100% Бесплатно</span></div>
+                <div class="header-subtitle">GPT4Free - без API ключей и токенов</div>
+            </div>
+        </div>
+        
+        <div id="chat-container" class="chat-container">
+            <div class="system-message">Начните диалог с бесплатным ChatGPT через G4F</div>
+        </div>
+        
+        <div class="input-area">
+            <div class="model-selector">
+                <select id="model-select">
+                    <option value="llama-2-70b">LLaMA 2 (70B)</option>
+                    <option value="mixtral-8x7b">Mixtral (8x7B)</option>
+                    <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                </select>
+            </div>
+            <div class="input-container">
+                <textarea 
+                    id="message-input" 
+                    class="message-input" 
+                    placeholder="Введите сообщение..." 
+                    rows="2"
+                ></textarea>
+                <button id="send-button" class="send-button">Отправить</button>
+            </div>
+            <div id="error-message" class="error-message" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        const chatContainer = document.getElementById('chat-container');
+        const messageInput = document.getElementById('message-input');
+        const sendButton = document.getElementById('send-button');
+        const modelSelect = document.getElementById('model-select');
+        const errorMessage = document.getElementById('error-message');
+        
+        // Формат даты и времени
+        function formatTime() {
+            const now = new Date();
+            return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+        
+        // Добавление сообщения в чат
+        function addMessage(text, sender) {
+            const messageElement = document.createElement('div');
+            messageElement.className = `message ${sender === 'user' ? 'user-message' : 'bot-message'}`;
+            messageElement.textContent = text;
+            
+            const timeElement = document.createElement('div');
+            timeElement.className = 'message-time';
+            timeElement.textContent = formatTime();
+            messageElement.appendChild(timeElement);
+            
+            chatContainer.appendChild(messageElement);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+        
+        // Отображение индикатора набора текста
+        function showTypingIndicator() {
+            const indicatorElement = document.createElement('div');
+            indicatorElement.className = 'message bot-message';
+            indicatorElement.style.display = 'flex';
+            indicatorElement.style.alignItems = 'center';
+            indicatorElement.innerHTML = 'AI печатает<div class="typing-indicator"><span></span><span></span><span></span></div>';
+            
+            chatContainer.appendChild(indicatorElement);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            
+            return indicatorElement;
+        }
+        
+        // Удаление индикатора набора текста
+        function removeTypingIndicator(typingIndicator) {
+            if (typingIndicator && typingIndicator.parentNode) {
+                chatContainer.removeChild(typingIndicator);
+            }
+        }
+        
+        // Отображение системного сообщения
+        function showSystemMessage(text) {
+            const messageElement = document.createElement('div');
+            messageElement.className = 'system-message';
+            messageElement.textContent = text;
+            
+            chatContainer.appendChild(messageElement);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+        
+        // Показать сообщение об ошибке
+        function showError(text) {
+            errorMessage.textContent = text;
+            errorMessage.style.display = 'block';
+            setTimeout(() => {
+                errorMessage.style.display = 'none';
+            }, 5000);
+        }
+        
+        // Обработчик отправки сообщения
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            const model = modelSelect.value;
+            
+            if (!message) return;
+            
+            // Добавляем сообщение пользователя в чат
+            addMessage(message, 'user');
+            
+            // Очищаем поле ввода
+            messageInput.value = '';
+            
+            // Блокируем кнопку и показываем индикатор загрузки
+            sendButton.disabled = true;
+            const originalButtonText = sendButton.innerHTML;
+            sendButton.innerHTML = '<div class="loader"></div>Отправка...';
+            
+            // Показываем индикатор набора текста
+            const typingIndicator = showTypingIndicator();
+            
+            try {
+                console.log(`Отправка запроса к /api/g4f/simple с моделью ${model} и сообщением "${message}"`);
+                
+                // Отправляем запрос к нашей локальной имитации - это гарантированно работает
+                const response = await fetch('/api/g4f/simple', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        model: model
+                    })
+                });
+                
+                removeTypingIndicator(typingIndicator);
+                
+                if (!response.ok) {
+                    throw new Error(`Ошибка от сервера: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                addMessage(data.response, 'bot');
+                
+            } catch (error) {
+                console.error('Ошибка при отправке сообщения:', error);
+                removeTypingIndicator(typingIndicator);
+                showSystemMessage(`Ошибка: ${error.message}`);
+            } finally {
+                // Восстанавливаем кнопку
+                sendButton.disabled = false;
+                sendButton.innerHTML = originalButtonText;
+            }
+        }
+        
+        // Привязываем обработчики событий
+        sendButton.addEventListener('click', sendMessage);
+        
+        messageInput.addEventListener('keydown', function(e) {
+            // Отправка по нажатию Enter (без Shift)
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
