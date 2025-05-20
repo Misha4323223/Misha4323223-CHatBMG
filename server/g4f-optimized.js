@@ -3,8 +3,8 @@
  * Использует только стабильные провайдеры и автоматически подбирает рабочие модели
  */
 
-const fetch = require('node-fetch');
-const { log } = require('./vite');
+import fetch from 'node-fetch';
+import { log } from './vite';
 
 /**
  * Получает список доступных провайдеров G4F
@@ -135,7 +135,9 @@ async function handleOptimizedG4F(req, res) {
   }
 }
 
-// Экспортируем API
-module.exports.getAvailableProviders = getAvailableProviders;
-module.exports.chatWithG4F = chatWithG4F;
-module.exports.handleOptimizedG4F = handleOptimizedG4F;
+// Экспортируем API используя ESM экспорт
+export {
+  getAvailableProviders,
+  chatWithG4F,
+  handleOptimizedG4F
+};

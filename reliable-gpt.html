@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Надежный ChatGPT</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            height: 95vh;
+        }
+        .header {
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
+            color: white;
+            padding: 15px;
+            border-radius: 10px 10px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header-title {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .header-subtitle {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+        .chat-container {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background-color: white;
+            border-left: 1px solid #e5e7eb;
+            border-right: 1px solid #e5e7eb;
+        }
+        .message {
+            margin-bottom: 20px;
+            max-width: 85%;
+            padding: 12px 16px;
+            border-radius: 10px;
+            line-height: 1.5;
+            position: relative;
+        }
+        .user-message {
+            background-color: #f0f8ff;
+            margin-left: auto;
+            border-bottom-right-radius: 2px;
+            color: #0c4a6e;
+        }
+        .bot-message {
+            background-color: #f6f8fa;
+            border: 1px solid #e5e7eb;
+            border-bottom-left-radius: 2px;
+        }
+        .message-time {
+            font-size: 11px;
+            color: #9ca3af;
+            text-align: right;
+            margin-top: 5px;
+        }
+        .message-provider {
+            font-size: 10px;
+            color: #9ca3af;
+            text-align: right;
+            margin-top: 2px;
+        }
+        .input-area {
+            padding: 20px;
+            background-color: white;
+            border-radius: 0 0 10px 10px;
+            border: 1px solid #e5e7eb;
+            border-top: none;
+        }
+        .input-container {
+            display: flex;
+            gap: 10px;
+        }
+        .message-input {
+            flex-grow: 1;
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 5px;
+            resize: none;
+            font-family: inherit;
+            font-size: 14px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .send-button {
+            background-color: #4f46e5;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 0 20px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+        .send-button:hover {
+            background-color: #4338ca;
+        }
+        .send-button:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+        }
+        .typing-indicator {
+            display: inline-block;
+            width: 20px;
+            height: 10px;
+            position: relative;
+            margin-left: 10px;
+        }
+        .typing-indicator span {
+            height: 5px;
+            width: 5px;
+            float: left;
+            margin: 0 1px;
+            background-color: #9880ff;
+            display: block;
+            border-radius: 50%;
+            opacity: 0.4;
+        }
+        .typing-indicator span:nth-of-type(1) {
+            animation: 1s blink infinite 0.3333s;
+        }
+        .typing-indicator span:nth-of-type(2) {
+            animation: 1s blink infinite 0.6666s;
+        }
+        .typing-indicator span:nth-of-type(3) {
+            animation: 1s blink infinite 0.9999s;
+        }
+        @keyframes blink {
+            50% {
+                opacity: 1;
+            }
+        }
+        .system-message {
+            text-align: center;
+            padding: 10px;
+            margin: 10px 0;
+            background-color: #f9fafb;
+            border-radius: 5px;
+            font-size: 12px;
+            color: #6b7280;
+        }
+        .free-badge {
+            background-color: #22c55e;
+            color: white;
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin-left: 8px;
+        }
+        .reliable-badge {
+            background-color: #6366f1;
+            color: white;
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin-left: 8px;
+        }
+        .copy-button {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            padding: 3px 6px;
+            border-radius: 4px;
+            border: none;
+            background-color: rgba(0, 0, 0, 0.1);
+            color: #333;
+            font-size: 10px;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .message:hover .copy-button {
+            opacity: 1;
+        }
+        .markdown-content code {
+            background-color: #f1f1f1;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        .markdown-content pre {
+            background-color: #f4f4f4;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .markdown-content pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <div class="header-title">ChatGPT <span class="free-badge">Бесплатно</span> <span class="reliable-badge">Надежно</span></div>
+                <div class="header-subtitle">Стабильный доступ к AI моделям через G4F</div>
+            </div>
+        </div>
+        
+        <div id="chat-container" class="chat-container">
+            <div class="system-message">Добро пожаловать! Задайте вопрос, чтобы начать общение с AI. Используются только проверенные и надежные провайдеры.</div>
+        </div>
+        
+        <div class="input-area">
+            <div class="input-container">
+                <textarea 
+                    id="message-input" 
+                    class="message-input" 
+                    placeholder="Введите сообщение..." 
+                    rows="3"
+                ></textarea>
+                <button id="send-button" class="send-button">Отправить</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const chatContainer = document.getElementById('chat-container');
+        const messageInput = document.getElementById('message-input');
+        const sendButton = document.getElementById('send-button');
+        
+        // Форматирование даты и времени
+        function formatTime() {
+            const now = new Date();
+            return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+        
+        // Добавление сообщения в чат
+        function addMessage(text, sender, metadata = {}) {
+            const messageElement = document.createElement('div');
+            messageElement.className = `message ${sender === 'user' ? 'user-message' : 'bot-message'}`;
+            
+            // Создаем кнопку копирования для ответов бота
+            if (sender === 'bot') {
+                const copyButton = document.createElement('button');
+                copyButton.className = 'copy-button';
+                copyButton.textContent = 'Копировать';
+                copyButton.onclick = () => {
+                    navigator.clipboard.writeText(text)
+                        .then(() => {
+                            copyButton.textContent = 'Скопировано!';
+                            setTimeout(() => {
+                                copyButton.textContent = 'Копировать';
+                            }, 2000);
+                        })
+                        .catch(err => {
+                            console.error('Ошибка при копировании:', err);
+                        });
+                };
+                messageElement.appendChild(copyButton);
+                
+                // Создаем контейнер для форматированного текста
+                const contentElement = document.createElement('div');
+                contentElement.className = 'markdown-content';
+                contentElement.innerHTML = formatMarkdown(text);
+                messageElement.appendChild(contentElement);
+            } else {
+                // Для сообщений пользователя просто используем текст
+                messageElement.textContent = text;
+            }
+            
+            const timeElement = document.createElement('div');
+            timeElement.className = 'message-time';
+            timeElement.textContent = formatTime();
+            messageElement.appendChild(timeElement);
+            
+            // Добавляем информацию о провайдере и модели, если это сообщение бота
+            if (sender === 'bot' && metadata.provider) {
+                const providerElement = document.createElement('div');
+                providerElement.className = 'message-provider';
+                providerElement.textContent = `Провайдер: ${metadata.provider}, Модель: ${metadata.model || 'неизвестно'}`;
+                messageElement.appendChild(providerElement);
+            }
+            
+            chatContainer.appendChild(messageElement);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+        
+        // Простое форматирование Markdown
+        function formatMarkdown(text) {
+            if (!text) return '';
+            
+            // Заменяем символы < и > на их HTML-эквиваленты
+            let formattedText = text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            
+            // Форматирование кода в блоках ```
+            formattedText = formattedText.replace(/```([^`]+)```/g, (match, codeContent) => {
+                return `<pre><code>${codeContent}</code></pre>`;
+            });
+            
+            // Форматирование inline кода `code`
+            formattedText = formattedText.replace(/`([^`]+)`/g, (match, codeContent) => {
+                return `<code>${codeContent}</code>`;
+            });
+            
+            // Заменяем переносы строк на <br>
+            formattedText = formattedText.replace(/\n/g, '<br>');
+            
+            // Форматирование жирного текста **text**
+            formattedText = formattedText.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+            
+            // Форматирование курсива *text*
+            formattedText = formattedText.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+            
+            return formattedText;
+        }
+        
+        // Отображение индикатора набора текста
+        function showTypingIndicator() {
+            const indicatorElement = document.createElement('div');
+            indicatorElement.id = 'typing-indicator';
+            indicatorElement.className = 'message bot-message';
+            indicatorElement.style.display = 'flex';
+            indicatorElement.style.alignItems = 'center';
+            indicatorElement.innerHTML = 'AI печатает<div class="typing-indicator"><span></span><span></span><span></span></div>';
+            
+            chatContainer.appendChild(indicatorElement);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            
+            return indicatorElement;
+        }
+        
+        // Удаление индикатора набора текста
+        function removeTypingIndicator() {
+            const indicator = document.getElementById('typing-indicator');
+            if (indicator) {
+                chatContainer.removeChild(indicator);
+            }
+        }
+        
+        // Отображение системного сообщения
+        function showSystemMessage(text) {
+            const messageElement = document.createElement('div');
+            messageElement.className = 'system-message';
+            messageElement.textContent = text;
+            
+            chatContainer.appendChild(messageElement);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+        
+        // Обработчик отправки сообщения
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            
+            if (!message) return;
+            
+            // Добавляем сообщение пользователя в чат
+            addMessage(message, 'user');
+            
+            // Очищаем поле ввода
+            messageInput.value = '';
+            
+            // Блокируем кнопку и показываем индикатор загрузки
+            sendButton.disabled = true;
+            const originalButtonText = sendButton.innerHTML;
+            sendButton.innerHTML = '⏳ Отправка...';
+            
+            // Показываем индикатор набора текста
+            showTypingIndicator();
+            
+            try {
+                const providerQueue = [
+                    { provider: 'Qwen_Qwen_2_5', model: null },
+                    { provider: 'You', model: 'gpt-4o' },
+                    { provider: 'GeekGpt', model: null },
+                    { provider: 'Gemini', model: 'gemini-1.5-pro' }
+                ];
+                
+                let response = null;
+                let data = null;
+                
+                // Перебираем провайдеров, пока не получим успешный ответ
+                for (const config of providerQueue) {
+                    try {
+                        console.log(`Пробуем провайдера: ${config.provider}${config.model ? ` с моделью ${config.model}` : ''}`);
+                        
+                        const requestBody = {
+                            message: message,
+                            provider: config.provider
+                        };
+                        
+                        // Добавляем модель только если она указана
+                        if (config.model) {
+                            requestBody.model = config.model;
+                        }
+                        
+                        response = await fetch('/api/python/g4f/chat', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(requestBody)
+                        });
+                        
+                        if (!response.ok) {
+                            console.log(`Провайдер ${config.provider} вернул ошибку ${response.status}`);
+                            continue;
+                        }
+                        
+                        data = await response.json();
+                        
+                        // Если это был локальный фоллбек, пробуем другого провайдера
+                        if (data.provider === 'local_fallback') {
+                            console.log(`Провайдер ${config.provider} вернул имитацию, пробуем другого`);
+                            continue;
+                        }
+                        
+                        // Если получили нормальный ответ
+                        console.log(`Получен успешный ответ от ${config.provider}`);
+                        break;
+                    } catch (err) {
+                        console.error(`Ошибка при использовании провайдера ${config.provider}:`, err);
+                        continue;
+                    }
+                }
+                
+                // Если не нашли рабочего провайдера, используем стандартный запрос без указания провайдера
+                if (!data) {
+                    console.log('Ни один провайдер не сработал, используем стандартный запрос');
+                    
+                    response = await fetch('/api/python/g4f/chat', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            message: message
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`Ошибка: ${response.status}`);
+                    }
+                    
+                    data = await response.json();
+                }
+                
+                // Удаляем индикатор набора текста
+                removeTypingIndicator();
+                
+                if (!data) {
+                    showSystemMessage('❌ Не удалось получить ответ от AI. Повторите попытку позже.');
+                    return;
+                }
+                
+                // Добавляем ответ в чат
+                addMessage(data.response, 'bot', {
+                    provider: data.provider,
+                    model: data.model
+                });
+                
+                // Если это был ответ от локального фоллбека, показываем сообщение об этом
+                if (data.provider === 'local_fallback') {
+                    showSystemMessage('⚠️ Это ответ локальной имитации, а не реального AI. Провайдеры G4F недоступны.');
+                }
+                
+            } catch (error) {
+                console.error('Ошибка при отправке запроса:', error);
+                
+                // Удаляем индикатор набора текста
+                removeTypingIndicator();
+                
+                // Показываем сообщение об ошибке
+                showSystemMessage(`❌ Ошибка: ${error.message}`);
+                
+            } finally {
+                // Восстанавливаем кнопку
+                sendButton.disabled = false;
+                sendButton.innerHTML = originalButtonText;
+            }
+        }
+        
+        // Привязываем обработчики событий
+        sendButton.addEventListener('click', sendMessage);
+        
+        messageInput.addEventListener('keydown', function(e) {
+            // Отправка по нажатию Enter (без Shift)
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
