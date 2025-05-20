@@ -103,6 +103,11 @@ async function setupG4FIntegration(app: Express) {
   // Маршрут для простого G4F интерфейса
   app.get("/g4f", simpleG4FPage);
   
+  // Маршрут для сверхпростого чата (гарантированно работает в любом браузере)
+  app.get("/simple", (req, res) => {
+    res.sendFile(path.join(process.cwd(), "simple-chat.html"));
+  });
+  
   // API для обработки запросов к G4F
   app.post("/api/g4f/simple", handleSimpleG4F);
   
