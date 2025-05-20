@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мини G4F Чат</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f2f5;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 10px;
+        }
+        .header {
+            background: linear-gradient(to right, #6366f1, #8b5cf6);
+            color: white;
+            padding: 15px;
+            text-align: center;
+            border-radius: 8px 8px 0 0;
+        }
+        .chat-area {
+            background-color: white;
+            padding: 15px;
+            border-radius: 0 0 8px 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 15px;
+            min-height: 300px;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+        .input-area {
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            resize: none;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #6366f1;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #4f46e5;
+        }
+        .user-msg {
+            background-color: #e9f5ff;
+            color: #333;
+            padding: 8px 12px;
+            border-radius: 15px;
+            margin-bottom: 10px;
+            max-width: 80%;
+            margin-left: auto;
+            word-wrap: break-word;
+        }
+        .ai-msg {
+            background-color: #f0f0f0;
+            color: #333;
+            padding: 8px 12px;
+            border-radius: 15px;
+            margin-bottom: 10px;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            background-color: white;
+        }
+        .spinner {
+            border: 3px solid rgba(0, 0, 0, 0.1);
+            border-top: 3px solid #6366f1;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .info {
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>G4F Чат</h2>
+            <p>Бесплатный доступ к ИИ</p>
+        </div>
+        
+        <div class="chat-area" id="chatArea">
+            <div class="ai-msg">Привет! Я бесплатный ИИ-помощник, работающий через G4F. Задайте мне вопрос, и я постараюсь помочь.</div>
+        </div>
+        
+        <div class="input-area">
+            <select id="modelSelect">
+                <option value="gpt-3.5-turbo">GPT-3.5 Turbo (стандартно)</option>
+                <option value="gpt-4">GPT-4 (если доступен)</option>
+                <option value="claude-2">Claude 2 (если доступен)</option>
+                <option value="llama-2">Llama 2 (если доступен)</option>
+            </select>
+            <textarea id="userInput" rows="3" placeholder="Введите ваше сообщение..."></textarea>
+            <button id="sendButton">Отправить</button>
+        </div>
+        
+        <div class="info">
+            Работает без API ключей, с использованием G4F версии 1.4.6
+        </div>
+    </div>
+
+    <script>
+        const chatArea = document.getElementById('chatArea');
+        const userInput = document.getElementById('userInput');
+        const sendButton = document.getElementById('sendButton');
+        const modelSelect = document.getElementById('modelSelect');
+        
+        // Отправка сообщения при нажатии на кнопку
+        sendButton.addEventListener('click', sendMessage);
+        
+        // Отправка сообщения при нажатии Enter
+        userInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+        
+        // Функция отправки сообщения
+        function sendMessage() {
+            const message = userInput.value.trim();
+            const model = modelSelect.value;
+            
+            if (!message) return;
+            
+            // Добавление сообщения пользователя в чат
+            addMessage('user', message);
+            
+            // Очистка поля ввода
+            userInput.value = '';
+            
+            // Блокировка кнопки и показ индикатора загрузки
+            sendButton.disabled = true;
+            const originalButtonText = sendButton.textContent;
+            sendButton.innerHTML = '<span class="spinner"></span> Отправка...';
+            
+            // Отправка запроса на сервер
+            fetch('/api/g4f/simple', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    message: message,
+                    model: model
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Добавление ответа в чат
+                addMessage('ai', data.response || 'Извините, не удалось получить ответ.');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                addMessage('ai', 'Произошла ошибка. Пожалуйста, попробуйте позже.');
+            })
+            .finally(() => {
+                // Разблокировка кнопки
+                sendButton.disabled = false;
+                sendButton.innerHTML = originalButtonText;
+            });
+        }
+        
+        // Функция добавления сообщения в чат
+        function addMessage(sender, text) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = sender === 'user' ? 'user-msg' : 'ai-msg';
+            messageDiv.textContent = text;
+            
+            chatArea.appendChild(messageDiv);
+            
+            // Прокрутка вниз
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+    </script>
+</body>
+</html>
