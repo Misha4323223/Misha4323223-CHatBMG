@@ -142,7 +142,7 @@ def chat():
             return process_with_provider(provider_name, model_name, messages, max_retries)
         
         # Приоритетные провайдеры, которые наиболее стабильны, начиная с тех, что точно работают
-        priority_providers = ['GeekGpt', 'OpenAIFM', 'Gemini', 'GeminiPro', 'Qwen_Qwen_2_5', 'MyShell', 'Blackbox', 'FreeGpt', 'Liaobots']
+        priority_providers = ['You', 'GeekGpt', 'OpenAIFM', 'Gemini', 'GeminiPro', 'Qwen_Qwen_2_5', 'MyShell', 'Blackbox', 'FreeGpt', 'Liaobots']
         
         # Пробуем сначала приоритетные провайдеры
         for provider in priority_providers:
@@ -226,7 +226,33 @@ def process_with_provider(provider_name, model_name, messages, max_retries=3):
             
             # Запрос к API
             logger.info(f"Создаем запрос с параметрами: {create_params}")
-            response = g4f.ChatCompletion.create(**create_params)
+            
+            # Для провайдера You делаем дополнительные настройки и попытки
+            if provider_name == "You":
+                logger.info(f"⭐ Приоритетный запрос к провайдеру You с GPT-4o")
+                try:
+                    # Импорт определения You из g4f для прямого использования
+                    import g4f.Provider.You
+                    You = g4f.Provider.You.You
+                    # Создаем параметры для прямого вызова
+                    direct_params = {
+                        'messages': messages,
+                        'model': 'gpt-4o'
+                    }
+                    logger.info(f"Прямой вызов провайдера You с параметрами: {direct_params}")
+                    # Пытаемся получить ответ напрямую
+                    response = g4f.ChatCompletion.create(
+                        model='gpt-4o',
+                        messages=messages,
+                        provider=You
+                    )
+                except Exception as e:
+                    logger.error(f"Прямой вызов You не удался: {e}")
+                    # Если прямой вызов не удался, используем стандартный метод
+                    response = g4f.ChatCompletion.create(**create_params)
+            else:
+                # Стандартный вызов для других провайдеров
+                response = g4f.ChatCompletion.create(**create_params)
             
             if response:
                 logger.info(f"Получен ответ от {provider_name}: '{response[:30]}...'")
