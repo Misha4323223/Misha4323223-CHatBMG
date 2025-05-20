@@ -119,9 +119,9 @@ async function setupG4FIntegration(app: Express) {
     res.sendFile(path.join(process.cwd(), "static-chat.html"));
   });
   
-  // Устанавливаем корневой маршрут для статического чата
+  // Устанавливаем корневой маршрут для нашего бесплатного ChatGPT
   app.get("/", (req, res) => {
-    res.sendFile(path.join(process.cwd(), "static-chat.html"));
+    res.sendFile(path.join(process.cwd(), "ultra-gpt.html"));
   });
   
   // Маршрут для ультра-простого чата (работает в любом окружении)
