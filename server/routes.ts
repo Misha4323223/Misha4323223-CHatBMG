@@ -186,18 +186,110 @@ async function setupG4FIntegration(app: Express) {
   // Улучшенный текстовый API (фильтрует HTML/XML в ответах)
   app.post("/api/text/chat", async (req, res) => {
     try {
-      console.log(`Запрос к текстовому API: ${JSON.stringify(req.body).substring(0, 100)}...`);
+      const { message, model = 'gpt-3.5-turbo', max_retries = 3 } = req.body;
+      console.log(`Запрос к текстовому API: ${JSON.stringify({message, model, max_retries}).substring(0, 100)}...`);
       
-      // Используем обычный Python G4F API, но дополнительно фильтруем ответы
+      // Получаем список провайдеров для поиска совместимого
+      const providersResponse = await fetch('http://localhost:5001/api/python/g4f/providers');
+      
+      if (!providersResponse.ok) {
+        throw new Error(`Ошибка при получении списка провайдеров: ${providersResponse.status}`);
+      }
+      
+      const providersData = await providersResponse.json();
+      
+      // Фильтруем только работающие провайдеры, не требующие авторизации
+      const workingProviders = providersData.providers
+        .filter(provider => provider.working && !provider.needs_auth)
+        .map(provider => provider.name);
+      
+      if (workingProviders.length === 0) {
+        return res.json({
+          response: 'К сожалению, нет доступных провайдеров. Пожалуйста, повторите попытку позже.',
+          provider: 'no_providers',
+          model: 'none'
+        });
+      }
+      
+      // Пытаемся последовательно использовать разные провайдеры
+      // Начинаем с первых 5 (для ускорения)
+      const providersList = workingProviders.slice(0, 5);
+      console.log(`Доступные провайдеры: ${providersList.join(', ')}`);
+      
+      let success = false;
+      let responseData = null;
+      
+      // Перебираем провайдеров
+      for (const provider of providersList) {
+        try {
+          console.log(`Пробуем провайдера: ${provider}`);
+          
+          // Используем конкретного провайдера для запроса
+          const response = await fetch('http://localhost:5001/api/python/g4f/chat', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              message,
+              provider,
+              max_retries: 1, // Для ускорения
+              model: 'auto' // Используем модель по умолчанию для провайдера
+            })
+          });
+          
+          if (!response.ok) {
+            console.log(`Провайдер ${provider} вернул ошибку: ${response.status}`);
+            continue;
+          }
+          
+          const data = await response.json();
+          
+          // Если ответ получен от локального фоллбека, попробуем другого провайдера
+          if (data.provider === 'local_fallback') {
+            console.log(`Провайдер ${provider} вернул фоллбек, пропускаем`);
+            continue;
+          }
+          
+          // Проверяем, содержит ли ответ HTML теги
+          const containsHtml = typeof data.response === 'string' && 
+            /<\s*[a-z][^>]*>/i.test(data.response);
+          
+          if (containsHtml) {
+            console.log(`Ответ от ${provider} содержит HTML/XML, пропускаем`);
+            continue;
+          }
+          
+          // Если дошли до этой точки, у нас есть успешный ответ
+          success = true;
+          responseData = data;
+          break;
+        } catch (err) {
+          console.error(`Ошибка при использовании провайдера ${provider}:`, err);
+          continue;
+        }
+      }
+      
+      // Если смогли получить ответ от какого-то провайдера
+      if (success && responseData) {
+        console.log(`Успешный ответ от провайдера ${responseData.provider}`);
+        return res.json(responseData);
+      }
+      
+      // Если ни один провайдер не сработал, пробуем общий запрос
+      console.log('Все провайдеры не работают, пробуем общий запрос');
+      
       const response = await fetch('http://localhost:5001/api/python/g4f/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(req.body)
+        body: JSON.stringify({
+          message,
+          max_retries: 3 // Больше попыток
+        })
       });
       
-      // Получаем ответ
       const data = await response.json();
       
       // Проверяем, содержит ли ответ HTML теги
@@ -205,9 +297,7 @@ async function setupG4FIntegration(app: Express) {
         /<\s*[a-z][^>]*>/i.test(data.response);
       
       if (containsHtml) {
-        console.log(`Ответ от ${data.provider} содержит HTML/XML, заменяем на текстовый`);
-        
-        // Если содержит HTML, возвращаем сообщение об этом
+        console.log(`Ответ содержит HTML/XML, заменяем на текстовый`);
         return res.json({
           response: 'Получен ответ с HTML-разметкой, которая не поддерживается в текстовом режиме. Пожалуйста, попробуйте задать другой вопрос.',
           provider: 'text_filter',
@@ -218,7 +308,7 @@ async function setupG4FIntegration(app: Express) {
       // Если это локальный фоллбек, также меняем сообщение
       if (data.provider === 'local_fallback') {
         return res.json({
-          response: 'К сожалению, ни один из провайдеров текстового API не доступен. Пожалуйста, повторите попытку позже.',
+          response: 'К сожалению, ни один из провайдеров текстового API не доступен. Пожалуйста, попробуйте задать другой вопрос или попробуйте позже.',
           provider: 'text_fallback',
           model: 'none'
         });
