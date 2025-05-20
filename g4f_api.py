@@ -137,7 +137,7 @@ def chat():
             return process_with_provider(provider_name, model_name, messages, max_retries)
         
         # Приоритетные провайдеры, которые наиболее стабильны, начиная с тех, что точно работают
-        priority_providers = ['Qwen_Qwen_2_5', 'You', 'GeekGpt', 'OpenAIFM', 'Blackbox', 'Gemini', 'GeminiPro', 'MyShell', 'FreeGpt', 'Liaobots']
+        priority_providers = ['You', 'Qwen_Qwen_2_5', 'GeekGpt', 'OpenAIFM', 'Blackbox', 'Gemini', 'GeminiPro', 'MyShell', 'FreeGpt', 'Liaobots']
         
         # Пробуем сначала приоритетные провайдеры
         for provider in priority_providers:
