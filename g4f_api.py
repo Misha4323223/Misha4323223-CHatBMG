@@ -187,11 +187,11 @@ def process_with_provider(provider_name, model_name, messages, max_retries=3):
             if model_name:
                 create_params['model'] = model_name
             else:
-                # Для некоторых провайдеров указываем модели, которые точно работают
+                # Для каждого провайдера указываем модели, которые точно работают
                 provider_model_map = {
                     'FreeGpt': 'gemini-1.5-pro',
-                    'Liaobots': 'claude-3-5-sonnet-20241022',
-                    'You': 'gpt-4',
+                    'Liaobots': 'claude-3.5-sonnet',  # Обновленное название, видное в логах
+                    'You': 'gpt-4o',  # Обновленное название, видное в логах
                     'Qwen_Qwen_2_5': None,  # Будет использована дефолтная модель
                     'OpenAIFM': None,  # Будет использована дефолтная модель 
                     'Blackbox': None,  # Будет использована дефолтная модель
