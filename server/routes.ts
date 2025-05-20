@@ -103,9 +103,12 @@ async function setupChatGPTProxy(app: Express) {
 // Настройка G4F интеграции напрямую в Express
 async function setupG4FIntegration(app: Express) {
   // Маршрут для простого G4F интерфейса
-  app.get("/g4f", simpleG4FPage);
+  app.get("/g4f", g4fPage);
   
-  // Маршрут для сверхпростого чата (гарантированно работает в любом браузере)
+  // Маршрут для страницы прямого доступа к ChatGPT
+  app.get("/chatgpt", chatGPTPage);
+  
+  // Маршрут для простого G4F чата
   app.get("/simple", (req, res) => {
     res.sendFile(path.join(process.cwd(), "simple-chat.html"));
   });
@@ -128,10 +131,16 @@ async function setupG4FIntegration(app: Express) {
   // API для обработки запросов к G4F
   app.post("/api/g4f/simple", handleSimpleG4F);
   
+  // API для полноценного G4F провайдера
+  app.post("/api/g4f/provider", handleG4FRequest);
+  
+  // API для прямого доступа к ChatGPT через ACCESS_TOKEN
+  app.post("/api/chatgpt/direct", handleChatGPTRequest);
+  
   // Для обратной совместимости 
   app.post("/api/g4f/chat", handleSimpleG4F);
   
-  console.log("Простая G4F интеграция настроена и готова к работе");
+  console.log("G4F и ChatGPT интеграция настроена и готова к работе");
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
