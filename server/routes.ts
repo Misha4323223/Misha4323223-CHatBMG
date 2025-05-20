@@ -22,6 +22,7 @@ import {
   handlePythonG4FModels,
   pythonG4FPage
 } from "./python-g4f-bridge.js";
+import { handleYouGPT4oRequest, youGPT4oPage } from "./you-gpt4o.js";
 
 // Используем стандартные обработчики без оптимизированного модуля
 
@@ -395,6 +396,12 @@ async function setupG4FIntegration(app: Express) {
       });
     }
   });
+  
+  // Маршрут для You GPT-4o интерфейса
+  app.get("/you-gpt4o", youGPT4oPage);
+  
+  // API для You GPT-4o (более новая модель GPT-4 через провайдер You)
+  app.post("/api/you-gpt4o", handleYouGPT4oRequest);
   
   // Для обратной совместимости 
   app.post("/api/g4f/chat", handleSimpleG4F);

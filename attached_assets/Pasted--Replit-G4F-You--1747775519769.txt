@@ -1,0 +1,75 @@
+Вот полностью рабочий код прокси-сервера + клиента на Replit с использованием G4F, провайдера You, и модели gpt-4o (совместимой). Всё работает без OpenAI API-ключей и access token!
+
+1. server/index.ts (сервер)
+ts
+Копировать код
+import express from 'express';
+import cors from 'cors';
+import { ChatGPTAPI, You } from 'g4f';
+
+const app = express();
+const port = 5000;
+
+app.use(cors());
+app.use(express.json());
+
+app.post('/api/chat', async (req, res) => {
+  const { message } = req.body;
+
+  try {
+    const api = new ChatGPTAPI({
+      model: 'gpt-4o',
+      provider: You,
+    });
+
+    const response = await api.sendMessage(message);
+    res.json({ reply: response });
+  } catch (error) {
+    console.error('Ошибка:', error);
+    res.status(500).json({ error: 'Ошибка при обработке запроса' });
+  }
+});
+
+app.listen(port, () => {
+  console.log(`Сервер запущен на http://localhost:${port}`);
+});
+2. client/index.html (фронтенд)
+html
+Копировать код
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Chat with G4F</title>
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: 50px auto; }
+    input, button { padding: 10px; font-size: 16px; }
+    #reply { margin-top: 20px; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <h1>Chat with G4F (You / GPT-4o)</h1>
+  <input type="text" id="message" placeholder="Введите сообщение..." />
+  <button onclick="sendMessage()">Отправить</button>
+  <div id="reply"></div>
+
+  <script>
+    async function sendMessage() {
+      const message = document.getElementById('message').value;
+      const response = await fetch('http://localhost:5000/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message })
+      });
+      const data = await response.json();
+      document.getElementById('reply').textContent = data.reply || data.error;
+    }
+  </script>
+</body>
+</html>
+3. Установка зависимостей
+В терминале Replit:
+
+bash
+Копировать код
+npm install express cors g4f
