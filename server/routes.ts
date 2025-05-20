@@ -10,8 +10,10 @@ import crypto from "crypto";
 import path from "path";
 import fetch from "node-fetch";
 
-// Импортируем простые обработчики для G4F
+// Импортируем обработчики для G4F и ChatGPT
 import { handleSimpleG4F, simpleG4FPage } from "./simple-g4f.js";
+import { handleChatGPTRequest, chatGPTPage } from "./chatgpt-direct.js";
+import { handleG4FRequest, g4fPage } from "./g4f-provider.js";
 
 // Прокси-маршрут для ChatGPT
 async function setupChatGPTProxy(app: Express) {
