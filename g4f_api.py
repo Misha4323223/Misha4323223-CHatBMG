@@ -6,6 +6,7 @@ import logging
 import random
 import time
 import os
+import re
 from threading import Thread
 
 # Настройка логирования
