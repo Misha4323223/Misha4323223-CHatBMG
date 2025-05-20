@@ -25,42 +25,116 @@ if (!fs.existsSync(tempDir)) {
   fs.mkdirSync(tempDir);
 }
 
-// Функция для отправки запроса на Craiyon API
-async function generateImageWithCraiyon(prompt) {
-  console.log(`Генерация изображения с Craiyon для запроса: "${prompt}"`);
+// Функция для генерации изображения через Unsplash API (не требует ключа)
+async function generateImageWithUnsplash(prompt) {
+  console.log(`Генерация изображения через Unsplash для запроса: "${prompt}"`);
   
   try {
-    const response = await fetch('https://api.craiyon.com/v3', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify({
-        prompt: prompt,
-        negative_prompt: '',
-        model: 'photo',
-        version: 'c4ue22fb7kb6wlaz',
-        token: ''
-      })
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Ошибка API Craiyon: ${response.status} - ${errorText}`);
-    }
-
-    const data = await response.json();
+    // Формируем запрос для Unsplash
+    const query = encodeURIComponent(prompt);
+    const width = 800;
+    const height = 600;
     
-    // Получаем первое изображение
-    if (data.images && data.images.length > 0) {
-      return data.images[0];
-    } else {
-      throw new Error('API Craiyon не вернуло изображений');
+    // Используем публичный API Unsplash Source (не требует ключа)
+    const unsplashUrl = `https://source.unsplash.com/random/${width}x${height}/?${query}`;
+    
+    console.log(`Запрос изображения по URL: ${unsplashUrl}`);
+    
+    // Загружаем изображение
+    const response = await fetch(unsplashUrl);
+    
+    if (!response.ok) {
+      throw new Error(`Ошибка при загрузке изображения: ${response.status}`);
     }
+    
+    // Конвертируем в буфер и затем в base64
+    const buffer = await response.arrayBuffer();
+    const base64Image = Buffer.from(buffer).toString('base64');
+    
+    return base64Image;
   } catch (error) {
-    console.error('Ошибка при генерации изображения:', error);
-    throw error;
+    console.error('Ошибка при генерации изображения через Unsplash:', error);
+    // Пробуем резервный метод
+    return generateFallbackImage(prompt);
+  }
+}
+
+// Функция для генерации изображения через Placeholder API
+async function generateFallbackImage(prompt) {
+  console.log(`Генерация резервного изображения для запроса: "${prompt}"`);
+  
+  try {
+    // Создаем уникальный идентификатор на основе запроса
+    const seed = prompt.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % 1000;
+    
+    // Параметры для Placeholder
+    const width = 800;
+    const height = 600;
+    const bgColor = 'f0' + (seed % 9).toString() + (seed % 9).toString() + 'f' + (seed % 9).toString() + '0';
+    const textColor = '00' + (seed % 9).toString() + '0' + (seed % 9).toString() + (seed % 9).toString() + '0';
+    
+    // Формируем текст для изображения
+    const text = prompt.length > 30 ? prompt.substring(0, 30) + '...' : prompt;
+    const encodedText = encodeURIComponent(text);
+    
+    // Используем placeholder.com (бывший dummyimage.com)
+    const placeholderUrl = `https://via.placeholder.com/${width}x${height}/${bgColor}/${textColor}?text=${encodedText}`;
+    
+    console.log(`Запрос резервного изображения по URL: ${placeholderUrl}`);
+    
+    // Загружаем изображение
+    const response = await fetch(placeholderUrl);
+    
+    if (!response.ok) {
+      throw new Error(`Ошибка при загрузке резервного изображения: ${response.status}`);
+    }
+    
+    // Конвертируем в буфер и затем в base64
+    const buffer = await response.arrayBuffer();
+    const base64Image = Buffer.from(buffer).toString('base64');
+    
+    return base64Image;
+  } catch (error) {
+    console.error('Ошибка при генерации резервного изображения:', error);
+    
+    // Используем SVG шаблон как последний вариант
+    try {
+      console.log('Использование SVG шаблона...');
+      const svgPath = path.join(__dirname, 'public', 'simple-pattern.svg');
+      
+      if (fs.existsSync(svgPath)) {
+        const svgBuffer = fs.readFileSync(svgPath);
+        
+        // Используем Sharp для конвертации SVG в PNG
+        const pngBuffer = await sharp(svgBuffer)
+          .png()
+          .toBuffer();
+        
+        return pngBuffer.toString('base64');
+      }
+    } catch (svgError) {
+      console.error('Ошибка при использовании SVG шаблона:', svgError);
+    }
+    
+    // Если все методы не сработали, создаем базовое изображение с помощью Sharp
+    try {
+      console.log('Создание базового изображения...');
+      const buffer = await sharp({
+        create: {
+          width: 400,
+          height: 300,
+          channels: 4,
+          background: { r: 240, g: 240, b: 240, alpha: 1 }
+        }
+      })
+      .png()
+      .toBuffer();
+      
+      return buffer.toString('base64');
+    } catch (sharpError) {
+      console.error('Ошибка при создании базового изображения:', sharpError);
+      throw error; // Если все методы не сработали, пробрасываем исходную ошибку
+    }
   }
 }
 
@@ -118,8 +192,8 @@ app.post('/generate', async (req, res) => {
     
     console.log(`Получен запрос на генерацию изображения: "${prompt}"`);
     
-    // Генерируем изображение с помощью Craiyon
-    const base64Image = await generateImageWithCraiyon(prompt);
+    // Генерируем изображение с помощью Unsplash (без API-ключа)
+    const base64Image = await generateImageWithUnsplash(prompt);
     
     // Конвертируем в SVG
     const svg = await convertToSvg(base64Image);
