@@ -15,6 +15,13 @@ import { handleSimpleG4F, simpleG4FPage } from "./simple-g4f.js";
 import { handleChatGPTRequest, chatGPTPage } from "./chatgpt-direct.js";
 import { handleG4FRequest, g4fPage } from "./g4f-provider.js";
 import { handleFreeModelRequest, freeGPTPage } from "./free-models.js";
+import { 
+  initPythonG4FApi, 
+  handlePythonG4FChat, 
+  handlePythonG4FProviders,
+  handlePythonG4FModels,
+  pythonG4FPage
+} from "./python-g4f-bridge.js";
 
 // Прокси-маршрут для ChatGPT
 async function setupChatGPTProxy(app: Express) {
@@ -142,8 +149,20 @@ async function setupG4FIntegration(app: Express) {
     res.sendFile(path.join(process.cwd(), "ultra-gpt.html"));
   });
   
+  // Маршрут для Python G4F интерфейса
+  app.get("/pythongpt", pythonG4FPage);
+  
   // API для бесплатного доступа к AI моделям
   app.post("/api/free/model", handleFreeModelRequest);
+  
+  // API Python G4F для чата
+  app.post("/api/python/g4f/chat", handlePythonG4FChat);
+  
+  // API Python G4F для получения списка провайдеров
+  app.get("/api/python/g4f/providers", handlePythonG4FProviders);
+  
+  // API Python G4F для получения списка моделей
+  app.get("/api/python/g4f/models", handlePythonG4FModels);
   
   // API для обработки запросов к G4F
   app.post("/api/g4f/simple", handleSimpleG4F);
