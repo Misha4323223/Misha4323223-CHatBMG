@@ -308,8 +308,3 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   return httpServer;
 }
-
-// Маршрут для самого простого чата (ультра-совместимость)
-app.get("/ultra", (req, res) => {
-  res.sendFile(path.join(process.cwd(), "ultra-simple.html"));
-});
