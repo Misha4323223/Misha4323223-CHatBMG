@@ -1,7 +1,7 @@
-// Интеграция с провайдером You и моделью GPT-4o через G4F
-import g4f from 'g4f';
+// Интеграция с провайдером You и моделью GPT-4o через Python G4F API
 import { log } from './vite';
 import fetch from 'node-fetch';
+import path from 'path';
 
 /**
  * Обработчик запросов к модели GPT-4o через провайдер You
@@ -20,27 +20,38 @@ export async function handleYouGPT4oRequest(req, res) {
     log(`Запрос к You/GPT-4o: сообщение=${userMessage.substring(0, 30)}...`, 'you-gpt4o');
     
     try {
-      // Инициализируем API с провайдером You и моделью gpt-4o
-      const api = new ChatGPTAPI({
-        model: 'gpt-4o',
-        provider: You,
+      // Используем Python G4F API для отправки запроса с провайдером You
+      const response = await fetch('http://localhost:5001/api/python/g4f/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          message: userMessage,
+          provider: 'You',
+          model: 'gpt-4o',
+          max_retries: 2
+        })
       });
       
-      // Отправляем сообщение и получаем ответ
-      const response = await api.sendMessage(userMessage);
+      if (!response.ok) {
+        throw new Error(`Ошибка API: ${response.status}`);
+      }
       
-      log(`Ответ от You/GPT-4o получен: ${response.substring(0, 30)}...`, 'you-gpt4o');
+      const data = await response.json();
+      
+      log(`Ответ от You/GPT-4o получен: ${data.response.substring(0, 30)}...`, 'you-gpt4o');
       
       // Формируем ответ в формате ChatGPT для совместимости с фронтендом
       const formattedResponse = {
         message: {
           content: {
             content_type: "text",
-            parts: [response]
+            parts: [data.response]
           }
         },
-        provider: "You",
-        model: "gpt-4o"
+        provider: data.provider || "You",
+        model: data.model || "gpt-4o"
       };
       
       res.json(formattedResponse);
