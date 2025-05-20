@@ -128,6 +128,11 @@ async function setupG4FIntegration(app: Express) {
     res.sendFile(path.join(process.cwd(), "ultra-simple.html"));
   });
   
+  // Маршрут для ультра ChatGPT - работает с ACCESS_TOKEN
+  app.get("/ultragpt", (req, res) => {
+    res.sendFile(path.join(process.cwd(), "ultra-chatgpt.html"));
+  });
+  
   // API для обработки запросов к G4F
   app.post("/api/g4f/simple", handleSimpleG4F);
   

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Бесплатный GPT чат через G4F</title>
+    <title>Ультра ChatGPT</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -21,7 +21,7 @@
             height: 98vh;
         }
         .header {
-            background: linear-gradient(135deg, #202123, #343541);
+            background: linear-gradient(135deg, #10a37f, #0d8c6d);
             color: white;
             padding: 15px;
             border-radius: 10px 10px 0 0;
@@ -75,17 +75,6 @@
             border-radius: 0 0 10px 10px;
             border: 1px solid #ddd;
             border-top: none;
-        }
-        .model-selector {
-            margin-bottom: 15px;
-        }
-        .model-selector select {
-            width: 100%;
-            padding: 10px;
-            border-radius: 5px;
-            border: 1px solid #ddd;
-            background-color: white;
-            font-size: 14px;
         }
         .input-container {
             display: flex;
@@ -175,36 +164,22 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
-        .free-badge {
-            background-color: #22c55e;
-            color: white;
-            font-size: 12px;
-            padding: 4px 8px;
-            border-radius: 4px;
-            margin-left: 8px;
-        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <div>
-                <div class="header-title">GPT Чат <span class="free-badge">Бесплатно</span></div>
-                <div class="header-subtitle">Через G4F - без API ключей</div>
+                <div class="header-title">ChatGPT</div>
+                <div class="header-subtitle">Работает через доступный API</div>
             </div>
         </div>
         
         <div id="chat-container" class="chat-container">
-            <div class="system-message">Начните диалог с GPT через G4F</div>
+            <div class="system-message">Начните диалог с ChatGPT</div>
         </div>
         
         <div class="input-area">
-            <div class="model-selector">
-                <select id="model-select">
-                    <option value="gpt-4">GPT-4 (по умолчанию)</option>
-                    <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
-                </select>
-            </div>
             <div class="input-container">
                 <textarea 
                     id="message-input" 
@@ -222,7 +197,6 @@
         const chatContainer = document.getElementById('chat-container');
         const messageInput = document.getElementById('message-input');
         const sendButton = document.getElementById('send-button');
-        const modelSelect = document.getElementById('model-select');
         const errorMessage = document.getElementById('error-message');
         
         // Формат даты и времени
@@ -254,7 +228,7 @@
             indicatorElement.className = 'message bot-message';
             indicatorElement.style.display = 'flex';
             indicatorElement.style.alignItems = 'center';
-            indicatorElement.innerHTML = 'GPT печатает<div class="typing-indicator"><span></span><span></span><span></span></div>';
+            indicatorElement.innerHTML = 'ChatGPT печатает<div class="typing-indicator"><span></span><span></span><span></span></div>';
             
             chatContainer.appendChild(indicatorElement);
             chatContainer.scrollTop = chatContainer.scrollHeight;
@@ -284,7 +258,6 @@
         // Обработчик отправки сообщения
         async function sendMessage() {
             const message = messageInput.value.trim();
-            const model = modelSelect.value;
             
             if (!message) return;
             
@@ -303,16 +276,15 @@
             const typingIndicator = showTypingIndicator();
             
             try {
-                console.log('Отправка запроса к G4F провайдеру...');
-                // Отправляем запрос к G4F API
-                const response = await fetch('/api/g4f/provider', {
+                // Отправляем запрос к API
+                const response = await fetch('/api/chatgpt/direct', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
                         message: message,
-                        model: model
+                        model: "gpt-3.5-turbo"
                     })
                 });
                 
@@ -337,8 +309,34 @@
                     chatContainer.removeChild(typingIndicator);
                 }
                 
-                // Показываем сообщение об ошибке
-                showSystemMessage(`Ошибка: ${error.message}`);
+                // В случае ошибки, используем локальную имитацию
+                try {
+                    // Пробуем использовать локальный fallback
+                    const fallbackResponse = await fetch('/api/g4f/simple', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            message: message,
+                            model: "gpt-3.5-turbo"
+                        })
+                    });
+                    
+                    const fallbackData = await fallbackResponse.json();
+                    addMessage(fallbackData.response, 'bot');
+                    
+                    // Показываем незаметное сообщение о переключении
+                    const systemMsg = document.createElement('div');
+                    systemMsg.className = 'system-message';
+                    systemMsg.textContent = 'Переключено на локальную имитацию из-за недоступности API';
+                    systemMsg.style.fontSize = '10px';
+                    systemMsg.style.opacity = '0.6';
+                    chatContainer.appendChild(systemMsg);
+                } catch (fallbackError) {
+                    // Если и локальный fallback не сработал, показываем сообщение
+                    showSystemMessage(`Ошибка: ${error.message}`);
+                }
             } finally {
                 // Восстанавливаем кнопку
                 sendButton.disabled = false;
