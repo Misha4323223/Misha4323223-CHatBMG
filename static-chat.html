@@ -15,13 +15,25 @@
             max-width: 500px;
             margin: 0 auto;
             padding: 10px;
+            display: flex;
+            flex-direction: column;
+            height: 98vh;
         }
         .header {
             background: linear-gradient(to right, #6366f1, #8b5cf6);
             color: white;
-            padding: 15px;
+            padding: 10px;
             text-align: center;
             border-radius: 8px 8px 0 0;
+            flex-shrink: 0;
+        }
+        .header h2 {
+            margin: 0;
+            padding: 0;
+        }
+        .header p {
+            margin: 5px 0 0 0;
+            font-size: 14px;
         }
         .chat-area {
             background-color: white;
@@ -29,15 +41,18 @@
             border-radius: 0 0 8px 8px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             margin-bottom: 15px;
-            min-height: 300px;
-            max-height: 60vh;
+            flex: 1;
             overflow-y: auto;
+            min-height: 200px;
         }
         .input-area {
             background-color: white;
             padding: 15px;
             border-radius: 8px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            flex-shrink: 0;
+            position: sticky;
+            bottom: 0;
         }
         textarea {
             width: 100%;
@@ -121,14 +136,14 @@
         </div>
         
         <div class="input-area">
-            <select id="modelSelect">
+            <select id="modelSelect" style="display:block; width:100%; margin-bottom:10px; padding:8px; border:1px solid #ccc; border-radius:4px;">
                 <option value="gpt-3.5-turbo">GPT-3.5 Turbo (стандартно)</option>
                 <option value="gpt-4">GPT-4 (если доступен)</option>
                 <option value="claude-2">Claude 2 (если доступен)</option>
                 <option value="llama-2">Llama 2 (если доступен)</option>
             </select>
-            <textarea id="userInput" rows="3" placeholder="Введите ваше сообщение..."></textarea>
-            <button id="sendButton">Отправить</button>
+            <textarea id="userInput" rows="2" placeholder="Введите ваше сообщение..." style="display:block; width:100%; margin-bottom:10px; padding:8px; border:1px solid #ccc; border-radius:4px; min-height:50px;"></textarea>
+            <button id="sendButton" style="display:block; width:100%; padding:10px; background-color:#6366f1; color:white; border:none; border-radius:4px; cursor:pointer;">Отправить</button>
         </div>
         
         <div class="info">
