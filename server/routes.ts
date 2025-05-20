@@ -131,9 +131,14 @@ async function setupG4FIntegration(app: Express) {
     res.sendFile(path.join(process.cwd(), "real-gpt.html"));
   });
   
+  // Маршрут для текстового GPT интерфейса (только чистый текст)
+  app.get("/textgpt", (req, res) => {
+    res.sendFile(path.join(process.cwd(), "text-only-gpt.html"));
+  });
+  
   // Устанавливаем корневой маршрут для нашего бесплатного ChatGPT
   app.get("/", (req, res) => {
-    res.sendFile(path.join(process.cwd(), "real-gpt.html"));
+    res.sendFile(path.join(process.cwd(), "text-only-gpt.html"));
   });
   
   // Маршрут для ультра-простого чата (работает в любом окружении)
@@ -177,6 +182,63 @@ async function setupG4FIntegration(app: Express) {
   
   // API для прямого доступа к ChatGPT через ACCESS_TOKEN
   app.post("/api/chatgpt/direct", handleChatGPTRequest);
+  
+  // Прокси для текстового API (работает с локальным Python сервером)
+  app.post("/api/text/chat", async (req, res) => {
+    try {
+      console.log(`Запрос к текстовому API: ${JSON.stringify(req.body).substring(0, 100)}...`);
+      
+      // Перенаправляем запрос на наш текстовый Python сервер
+      const response = await fetch('http://localhost:5002/api/text/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(req.body)
+      });
+      
+      // Получаем ответ
+      const data = await response.json();
+      
+      // Отправляем ответ клиенту
+      res.status(response.status).json(data);
+      
+    } catch (error) {
+      console.error('Ошибка при обращении к текстовому API:', error);
+      
+      // В случае ошибки возвращаем информативное сообщение
+      res.status(500).json({
+        error: `Ошибка при обращении к текстовому API: ${error.message}`,
+        response: 'Извините, произошла ошибка при обращении к текстовому API. Попробуйте позже.',
+        provider: 'error',
+        model: 'none'
+      });
+    }
+  });
+  
+  // Прокси для получения провайдеров
+  app.get("/api/text/providers", async (req, res) => {
+    try {
+      // Перенаправляем запрос на наш текстовый Python сервер
+      const response = await fetch('http://localhost:5002/api/text/providers');
+      
+      // Получаем ответ
+      const data = await response.json();
+      
+      // Отправляем ответ клиенту
+      res.status(response.status).json(data);
+      
+    } catch (error) {
+      console.error('Ошибка при получении списка провайдеров:', error);
+      
+      // В случае ошибки возвращаем пустой список
+      res.status(500).json({
+        error: `Ошибка при получении списка провайдеров: ${error.message}`,
+        providers: [],
+        count: 0
+      });
+    }
+  });
   
   // Для обратной совместимости 
   app.post("/api/g4f/chat", handleSimpleG4F);
