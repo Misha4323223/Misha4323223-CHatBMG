@@ -224,6 +224,15 @@ async function setupG4FIntegration(app: Express) {
         try {
           console.log(`Пробуем провайдера: ${provider}`);
           
+          // Находим информацию о провайдере
+          const providerInfo = providersData.providers.find(p => p.name === provider);
+          
+          // Используем модель по умолчанию для провайдера, если она есть
+          const providerModel = providerInfo && providerInfo.default_model ? 
+            providerInfo.default_model : undefined;
+            
+          console.log(`Провайдер ${provider} с моделью ${providerModel || 'не указана'}`);
+          
           // Используем конкретного провайдера для запроса
           const response = await fetch('http://localhost:5001/api/python/g4f/chat', {
             method: 'POST',
@@ -234,7 +243,7 @@ async function setupG4FIntegration(app: Express) {
               message,
               provider,
               max_retries: 1, // Для ускорения
-              model: 'auto' // Используем модель по умолчанию для провайдера
+              // Не указываем модель, чтобы провайдер использовал свою модель по умолчанию
             })
           });
           
