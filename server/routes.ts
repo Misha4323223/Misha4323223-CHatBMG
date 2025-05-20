@@ -23,6 +23,9 @@ import {
   pythonG4FPage
 } from "./python-g4f-bridge.js";
 
+// Импорт оптимизированного G4F модуля
+import { handleOptimizedG4F } from "./g4f-optimized.js";
+
 // Прокси-маршрут для ChatGPT
 async function setupChatGPTProxy(app: Express) {
   const ACCESS_TOKEN = process.env.ACCESS_TOKEN;
@@ -141,9 +144,14 @@ async function setupG4FIntegration(app: Express) {
     res.sendFile(path.join(process.cwd(), "text-gpt-simple.html"));
   });
   
+  // Маршрут для оптимизированного интерфейса
+  app.get("/optimized", (req, res) => {
+    res.sendFile(path.join(process.cwd(), "optimized-gpt.html"));
+  });
+  
   // Устанавливаем корневой маршрут для нашего бесплатного ChatGPT
   app.get("/", (req, res) => {
-    res.sendFile(path.join(process.cwd(), "text-gpt-simple.html"));
+    res.sendFile(path.join(process.cwd(), "optimized-gpt.html"));
   });
   
   // Маршрут для ультра-простого чата (работает в любом окружении)
@@ -391,6 +399,9 @@ async function setupG4FIntegration(app: Express) {
   
   // Для обратной совместимости 
   app.post("/api/g4f/chat", handleSimpleG4F);
+  
+  // Новый оптимизированный маршрут для G4F
+  app.post("/api/optimized/g4f/chat", handleOptimizedG4F);
   
   console.log("G4F и ChatGPT интеграция настроена и готова к работе");
 }
