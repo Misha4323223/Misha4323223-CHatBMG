@@ -124,7 +124,7 @@ const AI_PROVIDERS = {
   // Альтернативный сервис для демо-режима
   DEMO: {
     name: 'BOOOMERANGS-Demo',
-    url: 'internal',
+    url: 'http://localhost:5000', // Фиктивный URL, который не будет использоваться
     needsKey: false,
     prepareRequest: (message) => message,
     extractResponse: async (response) => {
@@ -211,6 +211,16 @@ async function tryProvider(providerKey, message, options = {}) {
   
   const provider = AI_PROVIDERS[providerKey];
   console.log(`Попытка использования провайдера ${provider.name}...`);
+  
+  // Специальная обработка для демо-провайдера
+  if (providerKey === 'DEMO') {
+    console.log('Использую демо-режим напрямую');
+    return {
+      response: getDemoResponse(message),
+      provider: 'BOOOMERANGS-Demo',
+      model: 'demo-mode'
+    };
+  }
   
   // Проверка наличия API ключа для провайдеров, которые его требуют
   if (provider.needsKey) {
@@ -301,58 +311,80 @@ async function getProviderResponse(providerKey, message) {
 async function getChatResponse(message, options = {}) {
   const { specificProvider = null, timeout = 10000 } = options;
   
-  // Если указан конкретный провайдер, используем только его
-  if (specificProvider && AI_PROVIDERS[specificProvider]) {
+  // Если запрошен демо-режим, сразу возвращаем демо-ответ
+  if (specificProvider === 'DEMO') {
+    console.log('Использую демо-режим по запросу');
+    return {
+      response: getDemoResponse(message),
+      provider: 'BOOOMERANGS-Demo',
+      model: 'demo-mode'
+    };
+  }
+  
+  // Проверка конкретного запрошенного провайдера
+  if (specificProvider && AI_PROVIDERS[specificProvider] && specificProvider !== 'DEMO') {
+    console.log(`Пробуем получить ответ от указанного провайдера ${specificProvider}...`);
     try {
-      // Используем tryProvider вместо getProviderResponseWithTimeout для надежности
+      // Для Yew-Bot провайдера, который часто недоступен, сокращаем таймаут
+      const providerTimeout = specificProvider === 'YOU' ? Math.min(5000, timeout) : timeout;
+      
+      // Используем tryProvider с таймаутом для конкретного провайдера
       const result = await Promise.race([
-        tryProvider(specificProvider, message),
-        new Promise((resolve) => setTimeout(() => resolve(null), timeout))
+        tryProvider(specificProvider, message, options),
+        new Promise((resolve) => setTimeout(() => resolve(null), providerTimeout))
       ]);
       
       if (result) {
-        console.log(`Успешно получен ответ от указанного провайдера ${specificProvider}`);
+        console.log(`✅ Успешно получен ответ от ${result.provider}`);
         return result;
       }
       
-      console.log(`Указанный провайдер ${specificProvider} не ответил в течение ${timeout}мс`);
-      // Продолжаем выполнение и пробуем другие провайдеры
+      console.log(`❌ Указанный провайдер ${specificProvider} не ответил в течение ${providerTimeout}мс`);
+      // Продолжаем со следующими провайдерами
     } catch (error) {
-      console.log(`Указанный провайдер ${specificProvider} недоступен:`, error.message);
-      // Продолжаем выполнение и пробуем другие провайдеры
+      console.log(`❌ Указанный провайдер ${specificProvider} недоступен:`, error.message);
+      // Продолжаем со следующими провайдерами
     }
   }
   
-  // Порядок перебора провайдеров (от более надежных к менее)
-  const providerPriority = ['YOU', 'DEMO'];
-  
-  // Перебираем все провайдеры до первого успешного
-  for (const providerKey of providerPriority) {
-    console.log(`Пробуем получить ответ от провайдера ${providerKey}...`);
-    
-    // Используем tryProvider с таймаутом
-    const result = await Promise.race([
-      tryProvider(providerKey, message),
-      new Promise((resolve) => setTimeout(() => resolve(null), timeout))
-    ]);
-    
-    if (result) {
-      console.log(`✅ Успешно получен ответ от ${result.provider}`);
-      return result;
-    }
-    
-    console.log(`❌ Провайдер ${providerKey} не ответил в течение ${timeout}мс`);
-    // Продолжаем со следующим провайдером
+  // Проверяем, хотим ли мы сразу использовать демо-режим (для тестирования)
+  if (options.forceDemo === true) {
+    console.log('Использую демо-режим по запросу (forceDemo=true)');
+    return {
+      response: getDemoResponse(message),
+      provider: 'BOOOMERANGS-Demo',
+      model: 'demo-mode'
+    };
   }
   
-  // Если все провайдеры не ответили, возвращаем демо-ответ
-  console.log('⚠️ Все провайдеры недоступны, используем демо-режим');
-  return {
+  // Специальная обработка для демо-провайдера (избегаем сетевых запросов)
+  const demoResponse = {
     response: getDemoResponse(message),
     provider: 'BOOOMERANGS-Demo',
-    model: 'demo-mode',
-    error: 'Все провайдеры недоступны или не ответили в срок'
+    model: 'demo-mode'
   };
+  
+  // Попытка использовать "You" провайдер с коротким таймаутом
+  console.log('Пробуем получить ответ от провайдера YOU...');
+  try {
+    const youResult = await Promise.race([
+      tryProvider('YOU', message, options),
+      new Promise((resolve) => setTimeout(() => resolve(null), 5000)) // Короткий таймаут для YOU
+    ]);
+    
+    if (youResult) {
+      console.log(`✅ Успешно получен ответ от ${youResult.provider}`);
+      return youResult;
+    }
+    
+    console.log('❌ Провайдер YOU не ответил в течение 5000мс');
+  } catch (error) {
+    console.log('❌ Ошибка при использовании провайдера YOU:', error.message);
+  }
+  
+  // Если все провайдеры недоступны, возвращаем демо-ответ
+  console.log('⚠️ Все провайдеры недоступны, используем демо-режим');
+  return demoResponse;
 }
 
 // Экспортируем функции для использования

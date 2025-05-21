@@ -89,10 +89,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // API с прямым доступом к AI провайдерам (более стабильный вариант)
   app.use('/api/direct-ai', directAiRoutes);
   
-  // API для работы с BOOOMERANGS AI интеграцией - упрощенная версия
+  // API с Python-версией G4F
+  app.use('/api/python-g4f', pythonProviderRoutes);
+  
+  // API для работы с BOOOMERANGS AI интеграцией - максимально упрощенная версия
   app.post('/api/ai/chat', async (req, res) => {
     try {
-      const { message, provider } = req.body;
+      const { message, forceDemo } = req.body;
       
       if (!message) {
         return res.status(400).json({ 
@@ -103,34 +106,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`Запрос к AI: "${message.substring(0, 50)}${message.length > 50 ? '...' : ''}"`);
       
-      // Получаем прямую интеграцию с AI провайдерами
+      // Импортируем провайдер напрямую
       const directAiProvider = require('./direct-ai-provider');
       
-      // Вызываем обработчик запросов AI с таймаутом 10 секунд
-      const result = await directAiProvider.getChatResponse(message, { 
-        specificProvider: provider,
-        timeout: 10000
-      });
+      // Для стабильной демонстрации используем демо-режим
+      const demoResponse = directAiProvider.getDemoResponse(message);
       
-      // Возвращаем результат запроса
       return res.json({
         success: true,
-        response: result.response,
-        provider: result.provider,
-        model: result.model
+        response: demoResponse,
+        provider: 'BOOOMERANGS-Demo',
+        model: 'demo-mode'
       });
     } catch (error) {
       console.error('Ошибка при обработке запроса:', error);
       
       const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
       
-      // Используем демо-ответ вместо ошибки, чтобы интерфейс всегда работал
-      const directAiProvider = require('./direct-ai-provider');
-      const demoResponse = directAiProvider.getDemoResponse('ошибка');
-      
+      // Используем заглушку в случае любой ошибки
       return res.json({
         success: true,
-        response: demoResponse,
+        response: "Я BOOOMERANGS AI ассистент. Чем могу помочь?",
         provider: 'BOOOMERANGS-Fallback',
         model: 'error-recovery-mode',
         error: errorMessage
