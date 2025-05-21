@@ -7,10 +7,7 @@ from flask_cors import CORS
 import g4f
 import json
 import time
-import threading
 import random
-import re
-import string
 import traceback
 
 # Основные провайдеры с поддержкой потоковой передачи
@@ -48,17 +45,20 @@ def get_demo_response(message):
     elif any(word in message_lower for word in ['как дела', 'как ты', 'how are you']):
         return "У меня всё отлично, спасибо что спросили! Как ваши дела?"
     elif any(word in message_lower for word in ['изображен', 'картин', 'image', 'picture']):
-        return "Вы можете создать изображение, перейдя на вкладку 'Генератор изображений'. Просто опишите то, что хотите увидеть, и выберите стиль!"
-    elif 'booomerangs' in message_lower:
-        return "BOOOMERANGS - это бесплатный мультимодальный AI-сервис для общения и создания изображений. Мы обеспечиваем доступ к возможностям искусственного интеллекта без необходимости платных API ключей!"
-    else:
-        random_responses = [
-            "Интересный вопрос! BOOOMERANGS использует различные AI-провайдеры, чтобы предоставлять ответы даже без платных API ключей. Наша система автоматически выбирает лучший доступный провайдер в каждый момент времени.",
-            "Спасибо за ваш вопрос! BOOOMERANGS позволяет не только общаться с AI, но и генерировать изображения по текстовому описанию, а также конвертировать их в векторный формат SVG.",
-            "BOOOMERANGS стремится сделать технологии искусственного интеллекта доступными для всех. Наше приложение работает прямо в браузере и оптимизировано для использования на мобильных устройствах."
-        ]
+        return "Вы можете создать изображение, перейдя на вкладку \"Генератор изображений\". Просто опишите, что хотите увидеть!"
+    elif 'бот' in message_lower:
+        return "Да, я бот-ассистент BOOOMERANGS. Я использую различные AI модели для ответов на ваши вопросы без необходимости платных API ключей."
+    elif any(word in message_lower for word in ['booomerangs', 'буумеранг']):
+        return "BOOOMERANGS - это бесплатный мультимодальный AI-сервис для общения и создания изображений без необходимости платных API ключей."
+    
+    # Если не нашли ключевых слов, используем случайный ответ    
+    random_responses = [
+        "BOOOMERANGS использует различные AI-провайдеры, чтобы предоставлять ответы даже без платных API ключей. Наша система автоматически выбирает лучший доступный провайдер в каждый момент времени.",
+        "BOOOMERANGS позволяет не только общаться с AI, но и генерировать изображения по текстовому описанию, а также конвертировать их в векторный формат SVG.",
+        "BOOOMERANGS стремится сделать технологии искусственного интеллекта доступными для всех. Наше приложение работает прямо в браузере и оптимизировано для использования на мобильных устройствах."
+    ]
         
-        return random.choice(random_responses)
+    return random.choice(random_responses)
 
 @app.route('/stream', methods=['POST'])
 def stream_chat():
@@ -75,7 +75,7 @@ def stream_chat():
         if not message:
             return Response('Не указано сообщение', status=400)
         
-        print(f"Получен запрос: {message[:30]}... от провайдера {provider_name}")
+        print(f"Получен запрос стриминга: '{message}' от провайдера {provider_name}")
         
         # Подготавливаем диалог с системным промптом
         messages = [
@@ -83,140 +83,63 @@ def stream_chat():
             {"role": "user", "content": message}
         ]
         
-        # Подготавливаем соединение для стриминга
-        def generate():
+        def stream_generator():
+            """Генератор для стриминга ответов"""
+            # Используем локальные переменные внутри генератора
+            current_provider = provider_name
             start_time = time.time()
             yielded_anything = False
             
             # Отправляем событие начала стриминга
-            yield f"event: start\ndata: {json.dumps({'provider': provider_name})}\n\n"
+            print(f"Начинаем стриминг от провайдера {current_provider}")
+            yield f"event: start\ndata: {json.dumps({'provider': current_provider})}\n\n"
             
             try:
-                # Попробуем использовать конкретного провайдера
-                if provider_name in providers:
-                    provider = providers[provider_name]
-                    
-                    try:
-                        # Используем стриминг, если провайдер его поддерживает
-                        response_stream = g4f.ChatCompletion.create(
-                            model="gpt-3.5-turbo",
-                            messages=messages,
-                            provider=provider,
-                            stream=True,
-                            timeout=timeout
-                        )
-                        
-                        # Обработка потокового ответа
-                        response_text = ''
-                        
-                        # Добавляем отладочную информацию
-                        print(f"Начало стриминга от провайдера {provider_name}")
-                        
-                        for chunk in response_stream:
-                            # Отправляем чанк как SSE событие
-                            if isinstance(chunk, str):
-                                response_text += chunk
-                                # Печатаем первые 50 символов каждого чанка
-                                chunk_preview = chunk[:50] + "..." if len(chunk) > 50 else chunk
-                                print(f"Получен чанк: {chunk_preview}")
-                                yield f"event: chunk\ndata: {json.dumps({'text': chunk, 'provider': provider_name})}\n\n"
-                                yielded_anything = True
-                            else:
-                                print(f"Пропущен нетекстовый чанк: {type(chunk)}")
-                            
-                        # Отправляем полный ответ в конце
-                        elapsed = time.time() - start_time
-                        yield f"event: complete\ndata: {json.dumps({'text': response_text, 'provider': provider_name, 'elapsed': elapsed})}\n\n"
-                    
-                    except Exception as e:
-                        print(f"Ошибка при использовании провайдера {provider_name}: {str(e)}")
-                        traceback.print_exc()
-                        
-                        # Если первый провайдер не сработал, попробуем использовать группы провайдеров
-                        success = False
-                        
-                        for group_name in ['primary', 'secondary', 'fallback']:
-                            if success:
-                                break
-                                
-                            print(f"🔄 Перебор группы провайдеров: {group_name}")
-                            
-                            # Перемешиваем провайдеры в группе для баланса нагрузки
-                            providers_in_group = provider_groups.get(group_name, []).copy()
-                            random.shuffle(providers_in_group)
-                            
-                            for provider_name in providers_in_group:
-                                if provider_name in providers:
-                                    provider = providers[provider_name]
-                                    
-                                    try:
-                                        print(f"Попытка использования провайдера {provider_name}...")
-                                        
-                                        # Сначала пробуем без стриминга для проверки доступности
-                                        response = g4f.ChatCompletion.create(
-                                            model="gpt-3.5-turbo",
-                                            messages=messages,
-                                            provider=provider,
-                                            timeout=timeout
-                                        )
-                                        
-                                        # Если дошли сюда, значит провайдер работает
-                                        print(f"✅ {provider_name} успешно ответил")
-                                        
-                                        # Отправляем ответ как финальный результат
-                                        elapsed = time.time() - start_time
-                                        yield f"event: chunk\ndata: {json.dumps({'text': response, 'provider': provider_name})}\n\n"
-                                        yield f"event: complete\ndata: {json.dumps({'text': response, 'provider': provider_name, 'elapsed': elapsed})}\n\n"
-                                        success = True
-                                        yielded_anything = True
-                                        break
-                                        
-                                    except Exception as inner_e:
-                                        print(f"❌ Ошибка при использовании провайдера {provider_name}: {str(inner_e)}")
-                        
-                        # Если ни один провайдер не сработал, возвращаем демо-ответ
-                        if not success:
-                            print("⚠️ Все провайдеры недоступны, возвращаем демо-ответ")
-                            demo_response = get_demo_response(message)
-                            yield f"event: fallback\ndata: {json.dumps({'text': demo_response, 'demo': True})}\n\n"
-                            yield f"event: complete\ndata: {json.dumps({'text': demo_response, 'provider': 'BOOOMERANGS-Demo', 'elapsed': time.time() - start_time})}\n\n"
-                            yielded_anything = True
-                else:
-                    # Если указан неизвестный провайдер, возвращаем ошибку
-                    error_message = f"Неизвестный провайдер: {provider_name}"
-                    yield f"event: error\ndata: {json.dumps({'error': error_message})}\n\n"
-                    yielded_anything = True
+                # Используем демо-ответ для отладки
+                demo_response = get_demo_response(message)
+                print("Отправляем демо-ответ для проверки стриминга")
+                
+                # Имитируем стриминг для демо-ответа
+                words = demo_response.split()
+                chunk_size = max(1, len(words) // 5)  # Разбиваем на 5 частей
+                
+                for i in range(0, len(words), chunk_size):
+                    chunk = ' '.join(words[i:i+chunk_size])
+                    yield f"event: chunk\ndata: {json.dumps({'text': chunk + ' ', 'provider': 'BOOOMERANGS-Demo'})}\n\n"
+                    time.sleep(0.1)  # Небольшая задержка для имитации печати
+                
+                # Отправляем полный ответ в конце
+                elapsed = time.time() - start_time
+                yield f"event: complete\ndata: {json.dumps({'text': demo_response, 'provider': 'BOOOMERANGS-Demo', 'elapsed': elapsed})}\n\n"
             
             except Exception as e:
-                error_message = f"Ошибка при обработке запроса: {str(e)}"
-                print(error_message)
+                print(f"Критическая ошибка в генераторе стриминга: {str(e)}")
                 traceback.print_exc()
-                yield f"event: error\ndata: {json.dumps({'error': error_message})}\n\n"
-                yielded_anything = True
-            
-            finally:
-                # Если ничего не было отправлено, отправляем fallback
-                if not yielded_anything:
-                    demo_response = get_demo_response(message)
-                    yield f"event: fallback\ndata: {json.dumps({'text': demo_response, 'demo': True})}\n\n"
-                    yield f"event: complete\ndata: {json.dumps({'text': demo_response, 'provider': 'BOOOMERANGS-Demo', 'elapsed': time.time() - start_time})}\n\n"
+                
+                # В случае общей ошибки, отправляем сообщение об ошибке
+                demo_response = "Извините, произошла ошибка при обработке запроса. Попробуйте еще раз."
+                
+                yield f"event: update\ndata: {json.dumps({'text': 'Ошибка соединения...', 'provider': 'BOOOMERANGS-Demo'})}\n\n"
+                yield f"event: chunk\ndata: {json.dumps({'text': demo_response, 'provider': 'BOOOMERANGS-Demo'})}\n\n"
+                
+                # Отправляем завершающее событие
+                elapsed = time.time() - start_time
+                yield f"event: complete\ndata: {json.dumps({'text': demo_response, 'provider': 'BOOOMERANGS-Demo', 'elapsed': elapsed})}\n\n"
         
-        # Возвращаем стриминговый ответ
-        return Response(
-            generate(),
-            mimetype='text/event-stream',
-            headers={
-                'Cache-Control': 'no-cache',
-                'Connection': 'keep-alive',
-                'X-Accel-Buffering': 'no'
-            }
-        )
-    
+        # Возвращаем потоковый ответ
+        return Response(stream_generator(), content_type='text/event-stream')
+        
     except Exception as e:
-        print(f"Ошибка при обработке запроса: {str(e)}")
+        print(f"Критическая ошибка в обработчике запроса: {str(e)}")
         traceback.print_exc()
-        return jsonify({'error': str(e)}), 500
+        return Response('Внутренняя ошибка сервера', status=500)
 
+# Простой тестовый маршрут
+@app.route('/test', methods=['GET'])
+def test():
+    return jsonify({"status": "ok", "message": "Flask-сервер стриминга работает"})
+
+# Функция для запуска сервера
 if __name__ == '__main__':
     print("Запуск стримингового сервера на порту 5001...")
-    app.run(host='0.0.0.0', port=5001, debug=True)
+    app.run(host='0.0.0.0', port=5001, debug=True, threaded=True)
