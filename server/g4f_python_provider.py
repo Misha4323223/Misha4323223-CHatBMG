@@ -33,7 +33,8 @@ provider_groups = {
     "primary": ["AItianhu", "Phind", "Qwen_Qwen_2_5_Max", "Qwen_Qwen_3", "You"],
     "secondary": ["DeepInfra", "GeminiPro", "Gemini"],
     "fallback": ["You", "DeepInfra"],
-    "technical": ["Phind", "DeepInfra", "You"]  # Специальная группа для технических вопросов
+    "technical": ["Phind", "DeepInfra", "You"],  # Специальная группа для технических вопросов
+    "deepspeek": ["Phind"]  # DeepSpeek использует Phind в качестве реального провайдера
 }
 
 def get_demo_response(message):
@@ -214,6 +215,42 @@ def chat():
         provider = data.get('provider')
         timeout = data.get('timeout', 20000) / 1000  # Переводим миллисекунды в секунды
         
+        # Обработка запросов DeepSpeek
+        if provider == 'deepspeek':
+            print(f"Получен запрос для DeepSpeek: {message[:50]}...")
+            # Используем группу deepspeek с Phind для технических вопросов
+            try:
+                # Используем провайдеры из группы deepspeek
+                for provider_name in provider_groups.get('deepspeek', ['Phind']):
+                    try:
+                        result = try_provider(provider_name, message, timeout)
+                        if result.get('success'):
+                            # Подменяем имя провайдера и модели для отображения как DeepSpeek
+                            result['provider'] = 'DeepSpeek'
+                            result['model'] = 'DeepSpeek AI'
+                            return jsonify(result)
+                    except Exception as provider_error:
+                        print(f"Ошибка провайдера DeepSpeek ({provider_name}): {str(provider_error)}")
+                        continue
+                
+                # Если все провайдеры из deepspeek группы не сработали, используем Phind напрямую
+                result = try_provider('Phind', message, timeout)
+                if result.get('success'):
+                    result['provider'] = 'DeepSpeek'
+                    result['model'] = 'DeepSpeek AI (Phind)'
+                    return jsonify(result)
+            except Exception as e:
+                print(f"Все провайдеры DeepSpeek вернули ошибку: {str(e)}")
+                # Возвращаем демо-ответ с брендингом DeepSpeek
+                return jsonify({
+                    "success": True,
+                    "response": "Извините, возникла проблема подключения к DeepSpeek. Технические вопросы временно обрабатываются локально. Попробуйте еще раз или выберите другого провайдера.",
+                    "provider": "DeepSpeek",
+                    "model": "DeepSpeek AI (Offline)",
+                    "elapsed": 0.5
+                })
+        
+        # Стандартная обработка для других провайдеров
         result = get_chat_response(message, specific_provider=provider)
         return jsonify(result)
     except Exception as e:

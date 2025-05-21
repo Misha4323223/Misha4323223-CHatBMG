@@ -277,33 +277,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Проверяем, является ли вопрос техническим
       const isTechnicalQuestion = techKeywords.some(keyword => message.toLowerCase().includes(keyword));
       
-      // Обработка DeepSpeek должна происходить до перенаправления на Python
+      // Для DeepSpeek используем Python сервер и перенаправляем на провайдер из группы deepspeek
       if (provider === 'deepspeek') {
-        console.log(`📊 Явно запрошен провайдер DeepSpeek для запроса: "${message.substring(0, 50)}..."`);
+        console.log(`📊 Пробуем использовать Python провайдер deepspeek...`);
         
         try {
-          // Используем наш локальный провайдер напрямую без перенаправления на Python
-          const deepspeekProvider = require('./deepspeek-provider');
-          const deepspeekResponse = await deepspeekProvider.getDeepSpeekResponse(message);
+          // Вызываем Python-провайдер с параметром deepspeek, который будет использовать Phind
+          const pythonProviderUrl = `${pythonAIServerUrl}/chat?provider=deepspeek`;
+          const response = await fetch(pythonProviderUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              message: message
+            })
+          });
           
-          console.log(`✅ Получен ответ от локального DeepSpeek провайдера`);
+          if (!response.ok) {
+            throw new Error(`Python провайдер вернул ошибку: ${response.status} ${response.statusText}`);
+          }
+          
+          const result = await response.json();
+          console.log(`✅ Успешно получен ответ от Python провайдера deepspeek`);
           
           return res.json({
             success: true,
-            response: deepspeekResponse.response,
+            response: result.response,
             provider: 'DeepSpeek',
-            model: 'DeepSpeek AI'
+            model: result.model || 'DeepSpeek AI'
           });
         } catch (error) {
-          console.error(`❌ Ошибка локального DeepSpeek провайдера:`, error);
+          console.error(`❌ Ошибка при использовании Python провайдера для DeepSpeek:`, error);
           
-          // В случае ошибки вернем стандартное сообщение об ошибке
-          return res.json({
-            success: true,
-            response: "Извините, произошла ошибка при обработке вашего запроса в DeepSpeek. Попробуйте переформулировать вопрос или выбрать другого провайдера.",
-            provider: 'DeepSpeek',
-            model: 'DeepSpeek AI (Error)'
-          });
+          // Пытаемся использовать резервного провайдера
+          selectedProvider = 'Phind';
+          console.log(`⚠️ Ошибка DeepSpeek, переключаемся на Phind`);
         }
       }
       
