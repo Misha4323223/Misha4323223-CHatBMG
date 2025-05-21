@@ -46,6 +46,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.sendFile('demo.html', { root: '.' });
   });
   
+  // Главная страница
+  app.get('/', (req, res) => {
+    res.sendFile('index.html', { root: '.' });
+  });
+  
+  // Страница отладки
+  app.get('/debug', (req, res) => {
+    res.sendFile('debug-info.html', { root: '.' });
+  });
+
   // G4F чат интерфейс
   app.get('/g4f-chat', (req, res) => {
     res.sendFile('g4f-chat.html', { root: '.' });

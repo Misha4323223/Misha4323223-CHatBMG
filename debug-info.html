@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Отладочная информация</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    .status {
+      padding: 15px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+    }
+    .status-ok {
+      background-color: #d4edda;
+      color: #155724;
+    }
+    .status-error {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+    .info-block {
+      background-color: #f8f9fa;
+      border-radius: 4px;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+    h3 {
+      margin-top: 0;
+    }
+    button {
+      background-color: #4a56e2;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover {
+      background-color: #3a46c2;
+    }
+    .endpoints {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .endpoint {
+      padding: 10px 15px;
+      background-color: #e9ecef;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .endpoint:hover {
+      background-color: #dee2e6;
+    }
+  </style>
+</head>
+<body>
+  <h1>Отладочная информация</h1>
+  
+  <div id="server-status" class="status">Проверка статуса сервера...</div>
+  
+  <div class="info-block">
+    <h3>О сервере</h3>
+    <div id="server-info">Загрузка информации...</div>
+  </div>
+  
+  <div class="info-block">
+    <h3>Доступные маршруты</h3>
+    <p>Нажмите на любой из маршрутов, чтобы перейти:</p>
+    <div class="endpoints">
+      <a href="/" class="endpoint">Главная страница</a>
+      <a href="/g4f-chat" class="endpoint">G4F Чат</a>
+      <a href="/demo" class="endpoint">Генератор изображений</a>
+      <a href="/test" class="endpoint">Тестовая страница</a>
+      <a href="/api/g4f/test" class="endpoint">Тест G4F API</a>
+    </div>
+  </div>
+  
+  <div class="info-block">
+    <h3>Тест подключения</h3>
+    <button id="test-button">Проверить API подключение</button>
+    <div id="test-result" style="margin-top: 10px;"></div>
+  </div>
+  
+  <script>
+    // Проверка статуса сервера
+    async function checkServerStatus() {
+      try {
+        const response = await fetch('/api/g4f/test');
+        if (response.ok) {
+          const data = await response.json();
+          document.getElementById('server-status').className = 'status status-ok';
+          document.getElementById('server-status').textContent = 'Сервер работает нормально!';
+          
+          // Отображаем информацию о сервере
+          document.getElementById('server-info').innerHTML = `
+            <p><strong>Статус:</strong> ${data.status}</p>
+            <p><strong>Сообщение:</strong> ${data.message}</p>
+            <p><strong>Доступные G4F провайдеры:</strong> ${data.availableProviders.join(', ')}</p>
+          `;
+        } else {
+          throw new Error('Сервер отвечает, но с ошибкой: ' + response.status);
+        }
+      } catch (error) {
+        document.getElementById('server-status').className = 'status status-error';
+        document.getElementById('server-status').textContent = 'Ошибка подключения к серверу: ' + error.message;
+        document.getElementById('server-info').textContent = 'Не удалось получить информацию о сервере.';
+      }
+    }
+    
+    // Тест API подключения
+    document.getElementById('test-button').addEventListener('click', async function() {
+      const testResult = document.getElementById('test-result');
+      testResult.textContent = 'Проверка подключения...';
+      
+      try {
+        const response = await fetch('/api/g4f/providers');
+        if (response.ok) {
+          const data = await response.json();
+          testResult.innerHTML = `
+            <div class="status status-ok">
+              <p>Успешно получен список провайдеров!</p>
+              <p><strong>Провайдеры:</strong></p>
+              <ul>
+                ${data.providers.map(p => `<li>${p.name}: ${p.available ? 'доступен' : 'недоступен'}</li>`).join('')}
+              </ul>
+              <p><strong>Провайдер по умолчанию:</strong> ${data.default}</p>
+            </div>
+          `;
+        } else {
+          throw new Error('Ошибка запроса: ' + response.status);
+        }
+      } catch (error) {
+        testResult.innerHTML = `
+          <div class="status status-error">
+            <p>Ошибка при тестировании API: ${error.message}</p>
+            <p>Возможно, API находится на другом порту или не запущен.</p>
+          </div>
+        `;
+      }
+    });
+    
+    // Запускаем проверку при загрузке
+    window.addEventListener('DOMContentLoaded', checkServerStatus);
+  </script>
+</body>
+</html>

@@ -3,95 +3,191 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Генератор изображений по тексту</title>
+  <title>AI Бесплатные Сервисы</title>
   <style>
+    :root {
+      --primary-color: #4a56e2;
+      --primary-light: #6c63ff;
+      --primary-dark: #3a46c2;
+      --background-color: #f9fafc;
+      --card-bg: #ffffff;
+      --text-color: #333;
+      --border-color: #ddd;
+      --shadow-color: rgba(0, 0, 0, 0.1);
+    }
+    
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --primary-color: #5e68fa;
+        --primary-light: #8c85ff;
+        --primary-dark: #4a54e6;
+        --background-color: #1a1a2e;
+        --card-bg: #252538;
+        --text-color: #f0f0f0;
+        --border-color: #40405c;
+        --shadow-color: rgba(0, 0, 0, 0.3);
+      }
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
     body {
-      font-family: Arial, sans-serif;
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 20px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       line-height: 1.6;
-    }
-    h1 {
-      text-align: center;
-      color: #4a56e2;
-      margin-bottom: 20px;
-    }
-    .container {
-      background-color: #f9f9f9;
-      border-radius: 8px;
+      color: var(--text-color);
+      background-color: var(--background-color);
       padding: 20px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      max-width: 1000px;
+      margin: 0 auto;
+      min-height: 100vh;
     }
-    label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: bold;
-    }
-    textarea {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      min-height: 100px;
-      margin-bottom: 15px;
-      font-family: inherit;
-    }
-    button {
-      background-color: #4a56e2;
-      color: white;
-      border: none;
-      padding: 10px 15px;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #3a46c2;
-    }
-    .result {
-      margin-top: 20px;
-      display: none;
+    
+    header {
       text-align: center;
+      margin-bottom: 40px;
     }
-    .result img {
-      max-width: 100%;
-      border-radius: 4px;
-      max-height: 500px;
+    
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(45deg, var(--primary-color), var(--primary-light));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      display: inline-block;
+    }
+    
+    .subtitle {
+      opacity: 0.8;
+      margin-bottom: 20px;
+      font-size: 1.2rem;
+    }
+    
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+    }
+    
+    .card {
+      background-color: var(--card-bg);
+      border-radius: 12px;
+      box-shadow: 0 4px 12px var(--shadow-color);
+      padding: 25px;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      text-decoration: none;
+      color: var(--text-color);
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+    
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 24px var(--shadow-color);
+    }
+    
+    .card-title {
+      font-size: 1.5rem;
+      margin-bottom: 15px;
+      color: var(--primary-color);
+    }
+    
+    .card-description {
+      margin-bottom: 20px;
+      flex-grow: 1;
+    }
+    
+    .card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: auto;
+    }
+    
+    .card-tag {
+      background-color: rgba(106, 90, 205, 0.1);
+      color: var(--primary-color);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+    }
+    
+    .card-arrow {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background-color: var(--primary-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 12px;
+    }
+    
+    footer {
+      margin-top: 60px;
+      text-align: center;
+      opacity: 0.8;
+      font-size: 0.9rem;
+    }
+    
+    @media (max-width: 768px) {
+      h1 {
+        font-size: 2rem;
+      }
+      
+      .subtitle {
+        font-size: 1rem;
+      }
+      
+      .card-grid {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
 <body>
-  <h1>Генератор изображений по тексту</h1>
+  <header>
+    <h1>AI Бесплатные Сервисы</h1>
+    <p class="subtitle">Доступ к AI моделям и генераторам изображений без API ключей</p>
+  </header>
   
-  <div class="container">
-    <label for="prompt">Опишите желаемое изображение:</label>
-    <textarea id="prompt" placeholder="Например: горный пейзаж на закате, космический корабль, футуристический город..."></textarea>
+  <main class="card-grid">
+    <a href="/g4f-chat" class="card">
+      <h2 class="card-title">G4F Чат</h2>
+      <p class="card-description">Общайтесь с AI моделями через бесплатные провайдеры. Поддерживаются Qwen, Dify.AI и другие модели без необходимости API ключей.</p>
+      <div class="card-footer">
+        <span class="card-tag">Текстовый AI</span>
+        <span class="card-arrow">→</span>
+      </div>
+    </a>
     
-    <button id="generate">Создать изображение</button>
+    <a href="/demo" class="card">
+      <h2 class="card-title">Генератор Изображений</h2>
+      <p class="card-description">Создавайте изображения по текстовому описанию с использованием бесплатных провайдеров и конвертируйте их в SVG.</p>
+      <div class="card-footer">
+        <span class="card-tag">Генерация изображений</span>
+        <span class="card-arrow">→</span>
+      </div>
+    </a>
     
-    <div id="result" class="result">
-      <h3>Результат:</h3>
-      <img id="image" src="" alt="Сгенерированное изображение">
-    </div>
-  </div>
+    <a href="/test" class="card">
+      <h2 class="card-title">Тестовая страница</h2>
+      <p class="card-description">Страница для тестирования различных возможностей платформы и экспериментов с новыми функциями.</p>
+      <div class="card-footer">
+        <span class="card-tag">Тестирование</span>
+        <span class="card-arrow">→</span>
+      </div>
+    </a>
+  </main>
   
-  <script>
-    document.getElementById('generate').addEventListener('click', function() {
-      const prompt = document.getElementById('prompt').value.trim();
-      
-      if (!prompt) {
-        alert('Пожалуйста, введите описание изображения');
-        return;
-      }
-      
-      // Используем Unsplash API для получения изображения по запросу
-      const encodedPrompt = encodeURIComponent(prompt);
-      const imageUrl = `https://source.unsplash.com/800x600/?${encodedPrompt}&random=${Math.random()}`;
-      
-      // Отображаем результат
-      document.getElementById('image').src = imageUrl;
-      document.getElementById('result').style.display = 'block';
-    });
-  </script>
+  <footer>
+    <p>© 2024 AI Бесплатные Сервисы | Все функции доступны без API ключей</p>
+  </footer>
 </body>
 </html>
