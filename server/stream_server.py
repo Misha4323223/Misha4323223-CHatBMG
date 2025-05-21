@@ -21,10 +21,20 @@ def get_provider(name):
         return None
 
 providers = {}
-for name in ["Qwen_Qwen_2_5_Max", "Qwen_Qwen_3", "You", "DeepInfra", "Gemini", "GeminiPro", "Phind", "Liaobots"]:
+for name in ["Qwen_Qwen_2_5_Max", "Qwen_Qwen_3", "You", "DeepInfra", "Gemini", "GeminiPro", "Phind", "Liaobots", "Anthropic"]:
     provider = get_provider(name)
     if provider:
         providers[name] = provider
+        print(f"Успешно загружен провайдер: {name}")
+    else:
+        print(f"Не удалось загрузить провайдер: {name}")
+
+# Проверяем доступность Claude через Anthropic
+anthropic_available = "Anthropic" in providers
+if anthropic_available:
+    print("✅ Провайдер Anthropic (Claude) доступен для использования!")
+else:
+    print("❌ Провайдер Anthropic (Claude) недоступен или требует API ключ")
 
 # Организуем провайдеры в группы по надежности
 provider_groups = {
@@ -32,6 +42,10 @@ provider_groups = {
     'secondary': ['DeepInfra', 'Gemini', 'GeminiPro', 'Phind'],
     'fallback': ['You', 'DeepInfra']
 }
+
+# Добавляем Claude в группы, если доступен
+if anthropic_available:
+    provider_groups['primary'].insert(0, 'Anthropic')  # Добавляем в начало списка primary
 
 app = Flask(__name__)
 CORS(app)
