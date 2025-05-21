@@ -499,8 +499,36 @@
       width: 100%;
       max-width: 800px;
       display: flex;
-      gap: 10px;
+      flex-direction: column;
+      gap: 12px;
       margin-bottom: 24px;
+    }
+    
+    .style-selector {
+      width: 100%;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    
+    .style-option {
+      background: var(--gray-100);
+      border: 1px solid var(--gray-300);
+      border-radius: 6px;
+      padding: 8px 16px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .style-option:hover {
+      background: var(--gray-200);
+    }
+    
+    .style-option.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
     }
     
     .image-prompt-input {
@@ -738,7 +766,16 @@
               placeholder="Опишите изображение, которое хотите создать..." 
               autocomplete="off"
             >
-            <button type="submit" id="generate-button" class="generate-button">Сгенерировать</button>
+            
+            <div class="style-selector">
+              <div class="style-option active" data-style="realistic">Реалистичный</div>
+              <div class="style-option" data-style="artistic">Художественный</div>
+              <div class="style-option" data-style="anime">Аниме</div>
+              <div class="style-option" data-style="cartoon">Мультяшный</div>
+              <div class="style-option" data-style="abstract">Абстрактный</div>
+            </div>
+            
+            <button type="submit" id="generate-button" class="generate-button">Сгенерировать с помощью AI</button>
           </form>
           
           <div id="loading-indicator" class="loading-indicator">
@@ -994,13 +1031,24 @@
     
     let currentImageUrl = '';
     
+    // Обработчики выбора стиля
+    const styleOptions = document.querySelectorAll('.style-option');
+    styleOptions.forEach(option => {
+      option.addEventListener('click', () => {
+        // Удаляем активный класс у всех опций
+        styleOptions.forEach(opt => opt.classList.remove('active'));
+        // Добавляем активный класс текущей опции
+        option.classList.add('active');
+      });
+    });
+    
     // Обработка отправки формы для генератора изображений
     imagePromptForm.addEventListener('submit', (e) => {
       e.preventDefault();
       generateImage();
     });
     
-    // Функция генерации изображения
+    // Функция генерации изображения с использованием AI
     async function generateImage() {
       const prompt = imagePromptInput.value.trim();
       if (!prompt) return;
@@ -1013,115 +1061,148 @@
       loadingIndicator.style.display = 'flex';
       
       try {
-        // Вместо загрузки изображения с внешнего сервера, сразу создаем его на холсте
-        const width = 800;
-        const height = 600;
+        // Получаем выбранный стиль из активной опции
+        const activeStyleOption = document.querySelector('.style-option.active');
+        const style = activeStyleOption ? activeStyleOption.getAttribute('data-style') : 'realistic';
         
-        // Создаем холст
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
+        // Отправляем запрос на генерацию изображения через AI
+        const response = await fetch('/api/ai-image/generate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ prompt, style })
+        });
         
-        // Создаем градиент для фона
-        const gradient = ctx.createLinearGradient(0, 0, width, height);
-        gradient.addColorStop(0, '#3b82f6');
-        gradient.addColorStop(1, '#6366f1');
+        const data = await response.json();
         
-        // Заполняем холст градиентом
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, width, height);
-        
-        // Добавляем случайные элементы в зависимости от запроса
-        const keywords = prompt.toLowerCase().split(' ');
-        
-        // Добавляем геометрические фигуры
-        for (let i = 0; i < 20; i++) {
-          // Выбираем случайный цвет
-          ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.5})`;
+        if (data.success && data.imageUrl) {
+          // Сохраняем URL изображения
+          currentImageUrl = data.imageUrl;
           
-          // Случайное положение и размер
-          const x = Math.random() * width;
-          const y = Math.random() * height;
-          const size = 20 + Math.random() * 100;
+          // Устанавливаем изображение
+          imagePreview.onload = function() {
+            // Скрываем индикатор загрузки
+            loadingIndicator.style.display = 'none';
+            // Показываем результат
+            imageResult.style.display = 'flex';
+          };
           
-          // Случайная форма
-          const shape = Math.floor(Math.random() * 3);
+          // Загружаем изображение
+          imagePreview.src = currentImageUrl;
+        } else {
+          console.error('Ошибка генерации AI изображения, переключаемся на локальную генерацию:', data.error);
           
-          if (shape === 0) {
-            // Круг
+          // Если не удалось получить изображение от AI, создаем локально на холсте
+          const width = 800;
+          const height = 600;
+          
+          // Создаем холст
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          
+          // Создаем градиент для фона
+          const gradient = ctx.createLinearGradient(0, 0, width, height);
+          gradient.addColorStop(0, '#3b82f6');
+          gradient.addColorStop(1, '#6366f1');
+          
+          // Заполняем холст градиентом
+          ctx.fillStyle = gradient;
+          ctx.fillRect(0, 0, width, height);
+          
+          // Добавляем случайные элементы в зависимости от запроса
+          const keywords = prompt.toLowerCase().split(' ');
+          
+          // Добавляем геометрические фигуры
+          for (let i = 0; i < 20; i++) {
+            // Выбираем случайный цвет
+            ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.5})`;
+            
+            // Случайное положение и размер
+            const x = Math.random() * width;
+            const y = Math.random() * height;
+            const size = 20 + Math.random() * 100;
+            
+            // Случайная форма
+            const shape = Math.floor(Math.random() * 3);
+            
+            if (shape === 0) {
+              // Круг
+              ctx.beginPath();
+              ctx.arc(x, y, size/2, 0, Math.PI * 2);
+              ctx.fill();
+            } else if (shape === 1) {
+              // Квадрат
+              ctx.fillRect(x - size/2, y - size/2, size, size);
+            } else {
+              // Треугольник
+              ctx.beginPath();
+              ctx.moveTo(x, y - size/2);
+              ctx.lineTo(x - size/2, y + size/2);
+              ctx.lineTo(x + size/2, y + size/2);
+              ctx.closePath();
+              ctx.fill();
+            }
+          }
+          
+          // Тематические элементы в зависимости от запроса
+          if (keywords.some(k => ['космос', 'космический', 'звезда', 'звезды', 'galaxy', 'space', 'star'].includes(k))) {
+            // Звезды для космической темы
+            for (let i = 0; i < 200; i++) {
+              const x = Math.random() * width;
+              const y = Math.random() * height;
+              const radius = Math.random() * 2;
+              
+              ctx.fillStyle = 'white';
+              ctx.beginPath();
+              ctx.arc(x, y, radius, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
+          
+          if (keywords.some(k => ['природа', 'дерево', 'лес', 'гора', 'mountain', 'nature', 'tree'].includes(k))) {
+            // Горы для природной темы
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
             ctx.beginPath();
-            ctx.arc(x, y, size/2, 0, Math.PI * 2);
-            ctx.fill();
-          } else if (shape === 1) {
-            // Квадрат
-            ctx.fillRect(x - size/2, y - size/2, size, size);
-          } else {
-            // Треугольник
-            ctx.beginPath();
-            ctx.moveTo(x, y - size/2);
-            ctx.lineTo(x - size/2, y + size/2);
-            ctx.lineTo(x + size/2, y + size/2);
+            ctx.moveTo(0, height);
+            ctx.lineTo(width * 0.3, height * 0.5);
+            ctx.lineTo(width * 0.5, height * 0.7);
+            ctx.lineTo(width * 0.7, height * 0.4);
+            ctx.lineTo(width, height);
             ctx.closePath();
             ctx.fill();
           }
+          
+          // Добавляем заголовок
+          ctx.font = 'bold 32px Arial';
+          ctx.fillStyle = 'white';
+          ctx.textAlign = 'center';
+          ctx.fillText('BOOOMERANGS', width/2, height - 50);
+          
+          // Добавляем текст запроса
+          const wrappedText = wrapText(ctx, prompt, width - 100, 24);
+          wrappedText.forEach((line, index) => {
+            ctx.font = 'bold 24px Arial';
+            ctx.fillText(line, width/2, 100 + index * 30);
+          });
+          
+          // Преобразуем холст в URL изображения
+          currentImageUrl = canvas.toDataURL('image/png');
+          
+          // Отображаем результат
+          imagePreview.onload = function() {
+            // Скрываем индикатор загрузки
+            loadingIndicator.style.display = 'none';
+            // Показываем результат
+            imageResult.style.display = 'flex';
+          };
+          
+          imagePreview.src = currentImageUrl;
         }
-        
-        // Тематические элементы в зависимости от запроса
-        if (keywords.some(k => ['космос', 'космический', 'звезда', 'звезды', 'galaxy', 'space', 'star'].includes(k))) {
-          // Звезды для космической темы
-          for (let i = 0; i < 200; i++) {
-            const x = Math.random() * width;
-            const y = Math.random() * height;
-            const radius = Math.random() * 2;
-            
-            ctx.fillStyle = 'white';
-            ctx.beginPath();
-            ctx.arc(x, y, radius, 0, Math.PI * 2);
-            ctx.fill();
-          }
-        }
-        
-        if (keywords.some(k => ['природа', 'дерево', 'лес', 'гора', 'mountain', 'nature', 'tree'].includes(k))) {
-          // Горы для природной темы
-          ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-          ctx.beginPath();
-          ctx.moveTo(0, height);
-          ctx.lineTo(width * 0.3, height * 0.5);
-          ctx.lineTo(width * 0.5, height * 0.7);
-          ctx.lineTo(width * 0.7, height * 0.4);
-          ctx.lineTo(width, height);
-          ctx.closePath();
-          ctx.fill();
-        }
-        
-        // Добавляем заголовок
-        ctx.font = 'bold 32px Arial';
-        ctx.fillStyle = 'white';
-        ctx.textAlign = 'center';
-        ctx.fillText('BOOOMERANGS', width/2, height - 50);
-        
-        // Добавляем текст запроса
-        const wrappedText = wrapText(ctx, prompt, width - 100, 24);
-        wrappedText.forEach((line, index) => {
-          ctx.font = 'bold 24px Arial';
-          ctx.fillText(line, width/2, 100 + index * 30);
-        });
-        
-        // Преобразуем холст в URL изображения
-        currentImageUrl = canvas.toDataURL('image/png');
-        
-        // Отображаем результат
-        imagePreview.onload = function() {
-          // Скрываем индикатор загрузки
-          loadingIndicator.style.display = 'none';
-          // Показываем результат
-          imageResult.style.display = 'flex';
-        };
-        
-        imagePreview.src = currentImageUrl;
       } catch (error) {
-        console.error('Ошибка:', error);
+        console.error('Ошибка при генерации изображения:', error);
         
         // Скрываем индикатор загрузки
         loadingIndicator.style.display = 'none';
