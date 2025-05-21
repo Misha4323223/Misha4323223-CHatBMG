@@ -64,11 +64,14 @@ export default function AuthScreen() {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-white">
-      <Card className="w-full max-w-md p-8 bg-white rounded-lg shadow-lg">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-b from-gray-900 to-gray-800">
+      <Card className="w-full max-w-md p-8 bg-white rounded-lg shadow-2xl border border-gray-200">
         <div className="text-center mb-6">
-          <h1 className="text-2xl font-semibold text-primary">Proxy Chat</h1>
-          <p className="text-neutral-700 mt-2">Please enter your access token to continue</p>
+          <div className="flex justify-center mb-4">
+            <img src="/images/booomerangs-logo.jpg" alt="BOOOMERANGS" className="h-28 w-auto" />
+          </div>
+          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">BOOOMERANGS</h1>
+          <p className="text-gray-600 mt-2">Бесплатный AI чат и генератор изображений</p>
         </div>
         
         <Form {...form}>
@@ -78,16 +81,16 @@ export default function AuthScreen() {
               name="token"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-sm font-medium text-neutral-700">Access Token</FormLabel>
+                  <FormLabel className="text-sm font-medium text-gray-700">ACCESS TOKEN</FormLabel>
                   <FormControl>
                     <Input
                       type="password"
-                      placeholder="Enter your access token"
-                      className="w-full px-4 py-2 border border-neutral-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                      placeholder="Введите свой токен доступа"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800"
                       {...field}
                     />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage className="text-xs mt-1 text-red-500" />
                 </FormItem>
               )}
             />
@@ -101,13 +104,13 @@ export default function AuthScreen() {
             
             <Button
               type="submit"
-              className="w-full px-4 py-2 bg-primary text-white rounded-md hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors"
+              className="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-700 text-white font-medium rounded-lg hover:from-blue-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all shadow-lg transform hover:scale-[1.02] active:scale-[0.98] duration-200"
               disabled={isLoading}
             >
               {isLoading ? (
                 <>
                   <span className="animate-spin mr-2">
-                    <svg className="h-4 w-4" viewBox="0 0 24 24">
+                    <svg className="h-5 w-5" viewBox="0 0 24 24">
                       <circle
                         className="opacity-25"
                         cx="12"
@@ -123,10 +126,10 @@ export default function AuthScreen() {
                       ></path>
                     </svg>
                   </span>
-                  Connecting...
+                  Подключение...
                 </>
               ) : (
-                "Connect to Chat"
+                "Войти в чат"
               )}
             </Button>
           </form>
