@@ -23,14 +23,15 @@ models_per_provider = {
     "Phind": "phind-70b",
     "DeepInfra": "deepinfra-mistral",
     "GeminiPro": "gemini-pro",
-    "Liaobots": "llama-3-70b"
+    "Liaobots": "llama-3-70b",
+    "Gemini": "gemini-pro"
 }
 
 # Организуем провайдеры в группы по надежности
 provider_groups = {
     "primary": ["Qwen_Qwen_2_5_Max", "Qwen_Qwen_3", "You"],
-    "secondary": ["DeepInfra", "GeminiPro", "Phind"],
-    "fallback": ["Liaobots"]
+    "secondary": ["DeepInfra", "GeminiPro", "Gemini", "Phind"],
+    "fallback": ["You", "DeepInfra"]
 }
 
 def get_demo_response(message):

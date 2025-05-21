@@ -24,7 +24,7 @@ def get_provider(name):
         return None
 
 providers = {}
-for name in ["Qwen_Qwen_2_5_Max", "Qwen_Qwen_3", "You", "DeepInfra", "Gemini", "GeminiPro"]:
+for name in ["Qwen_Qwen_2_5_Max", "Qwen_Qwen_3", "You", "DeepInfra", "Gemini", "GeminiPro", "Phind", "Liaobots"]:
     provider = get_provider(name)
     if provider:
         providers[name] = provider
@@ -32,8 +32,8 @@ for name in ["Qwen_Qwen_2_5_Max", "Qwen_Qwen_3", "You", "DeepInfra", "Gemini", "
 # Организуем провайдеры в группы по надежности
 provider_groups = {
     'primary': ['Qwen_Qwen_2_5_Max', 'Qwen_Qwen_3', 'You'],
-    'secondary': ['DeepInfra', 'Gemini', 'GeminiPro'],
-    'fallback': ['You']
+    'secondary': ['DeepInfra', 'Gemini', 'GeminiPro', 'Phind'],
+    'fallback': ['You', 'DeepInfra']
 }
 
 app = Flask(__name__)
