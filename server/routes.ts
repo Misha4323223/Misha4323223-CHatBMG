@@ -8,7 +8,7 @@ import { z } from "zod";
 import { authSchema, messageSchema } from "@shared/schema";
 
 // Импортируем роутер для генератора изображений
-import imageGeneratorRouter from "./image-generator-route.js";
+import imageGeneratorRouter from "./image-route.js";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Create HTTP server
