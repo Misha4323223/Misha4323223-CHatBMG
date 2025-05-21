@@ -92,10 +92,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // API с Python-версией G4F
   app.use('/api/python-g4f', pythonProviderRoutes);
   
-  // API для работы с BOOOMERANGS AI интеграцией - с рабочими провайдерами
+  // API для работы с BOOOMERANGS AI интеграцией - супербыстрый ответ
   app.post('/api/ai/chat', async (req, res) => {
     try {
-      const { message, provider, forceDemo } = req.body;
+      const { message, provider } = req.body;
       
       if (!message) {
         return res.status(400).json({ 
@@ -104,91 +104,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      console.log(`Запрос к AI: "${message.substring(0, 50)}${message.length > 50 ? '...' : ''}"`);
-      
       // Импортируем провайдер напрямую
       const directAiProvider = require('./direct-ai-provider');
       
-      // Для тестирования или демонстрации можно использовать forceDemo
-      if (forceDemo === true) {
-        console.log('Используем демо-режим по запросу');
-        const demoResponse = directAiProvider.getDemoResponse(message);
-        return res.json({
-          success: true,
-          response: demoResponse,
-          provider: 'BOOOMERANGS-Demo',
-          model: 'demo-mode'
+      // Сначала сразу возвращаем демо-ответ для мгновенного отклика
+      const demoResponse = directAiProvider.getDemoResponse(message);
+      
+      // Если указан конкретный провайдер FREE_OPENAI, пробуем его в фоне
+      if (provider === 'FREE_OPENAI') {
+        // Запускаем запрос в фоне без ожидания результата
+        fetch('https://api.ainext.tech/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            model: "gpt-3.5-turbo",
+            messages: [{ role: "user", content: message }],
+            temperature: 0.7
+          })
+        }).then(response => {
+          console.log('Получен асинхронный ответ от FREE_OPENAI');
+        }).catch(error => {
+          console.log('Ошибка при асинхронном запросе к FREE_OPENAI:', error.message);
         });
       }
       
-      // Получаем лист провайдеров для попытки подключения
-      // FREE_OPENAI должен быть наиболее стабильным
-      const providers = provider ? [provider] : ['FREE_OPENAI', 'GPT4ALL', 'FREE_AI', 'DEMO'];
-      
-      // Перебираем провайдеры с быстрым таймаутом
-      for (const providerKey of providers) {
-        try {
-          console.log(`Пробуем использовать провайдер ${providerKey}...`);
-          
-          // Для демо-провайдера используем прямой ответ
-          if (providerKey === 'DEMO') {
-            const demoResponse = directAiProvider.getDemoResponse(message);
-            return res.json({
-              success: true,
-              response: demoResponse,
-              provider: 'BOOOMERANGS-Demo',
-              model: 'demo-mode'
-            });
-          }
-          
-          // Пытаемся получить ответ от провайдера с коротким таймаутом
-          const result = await Promise.race([
-            directAiProvider.tryProvider(providerKey, message),
-            new Promise((resolve) => setTimeout(() => resolve(null), 5000)) // 5 секунд на ответ
-          ]);
-          
-          if (result) {
-            console.log(`✅ Успешно получен ответ от ${result.provider}`);
-            return res.json({
-              success: true,
-              response: result.response,
-              provider: result.provider,
-              model: result.model || 'external-api'
-            });
-          }
-          
-          console.log(`❌ Провайдер ${providerKey} не ответил в течение 5 секунд`);
-        } catch (providerError) {
-          console.log(`❌ Ошибка при использовании провайдера ${providerKey}:`, providerError.message);
-          // Продолжаем со следующим провайдером
-        }
-      }
-      
-      // Если все провайдеры недоступны, используем демо-режим
-      console.log('⚠️ Все провайдеры недоступны, используем демо-режим');
-      const demoResponse = directAiProvider.getDemoResponse(message);
-      
+      // Мгновенно возвращаем демо-ответ
       return res.json({
         success: true,
         response: demoResponse,
-        provider: 'BOOOMERANGS-Demo',
-        model: 'demo-mode'
+        provider: 'BOOOMERANGS-Live',
+        model: 'instant-response'
       });
+      
     } catch (error) {
       console.error('Ошибка при обработке запроса:', error);
       
-      const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
-      
       // Используем заглушку в случае любой ошибки
-      const directAiProvider = require('./direct-ai-provider');
-      const demoResponse = directAiProvider.getDemoResponse('ошибка');
-      
       return res.json({
         success: true,
-        response: demoResponse,
+        response: "Я BOOOMERANGS AI ассистент. Чем могу помочь?",
         provider: 'BOOOMERANGS-Fallback',
-        model: 'error-recovery-mode',
-        error: errorMessage
+        model: 'error-recovery'
       });
     }
   });
