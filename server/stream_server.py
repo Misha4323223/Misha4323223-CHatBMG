@@ -109,12 +109,20 @@ def stream_chat():
                         # Обработка потокового ответа
                         response_text = ''
                         
+                        # Добавляем отладочную информацию
+                        print(f"Начало стриминга от провайдера {provider_name}")
+                        
                         for chunk in response_stream:
                             # Отправляем чанк как SSE событие
-                            response_text += chunk
-                            
-                            yield f"event: chunk\ndata: {json.dumps({'text': chunk, 'provider': provider_name})}\n\n"
-                            yielded_anything = True
+                            if isinstance(chunk, str):
+                                response_text += chunk
+                                # Печатаем первые 50 символов каждого чанка
+                                chunk_preview = chunk[:50] + "..." if len(chunk) > 50 else chunk
+                                print(f"Получен чанк: {chunk_preview}")
+                                yield f"event: chunk\ndata: {json.dumps({'text': chunk, 'provider': provider_name})}\n\n"
+                                yielded_anything = True
+                            else:
+                                print(f"Пропущен нетекстовый чанк: {type(chunk)}")
                             
                         # Отправляем полный ответ в конце
                         elapsed = time.time() - start_time
