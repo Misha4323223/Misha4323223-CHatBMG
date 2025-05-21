@@ -24,12 +24,13 @@ models_per_provider = {
     "DeepInfra": "deepinfra-mistral",
     "GeminiPro": "gemini-pro",
     "Liaobots": "llama-3-70b",
-    "Gemini": "gemini-pro"
+    "Gemini": "gemini-pro",
+    "AItianhu": "qwen-max"  # Добавляем AItianhu с моделью qwen-max
 }
 
 # Организуем провайдеры в группы по надежности
 provider_groups = {
-    "primary": ["Qwen_Qwen_2_5_Max", "Qwen_Qwen_3", "You"],
+    "primary": ["AItianhu", "Qwen_Qwen_2_5_Max", "Qwen_Qwen_3", "You"],
     "secondary": ["DeepInfra", "GeminiPro", "Gemini", "Phind"],
     "fallback": ["You", "DeepInfra"]
 }

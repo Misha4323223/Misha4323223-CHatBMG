@@ -188,21 +188,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Сначала создаем демо-ответ для запасного варианта
       const demoResponse = generateDemoResponse(message);
       
+      // Определяем, какой провайдер использовать
+      let selectedProvider = provider || 'AItianhu';
+      
       // Всегда пытаемся сначала использовать Python G4F сервер для любого запроса
       try {
         // Пытаемся получить ответ от Python провайдера с использованием callPythonAI
-        console.log(`Пробуем использовать Python провайдер ${provider || 'You'}...`);
+        console.log(`Пробуем использовать Python провайдер ${selectedProvider}...`);
         
         // Используем нашу новую функцию callPythonAI
-        const aiResponse = await pythonProviderRoutes.callPythonAI(message, provider || 'You');
+        const aiResponse = await pythonProviderRoutes.callPythonAI(message, selectedProvider);
         
         if (aiResponse) {
-          console.log(`✅ Успешно получен ответ от Python провайдера ${provider || 'You'}`);
+          console.log(`✅ Успешно получен ответ от Python провайдера ${selectedProvider}`);
+          
+          // Определяем отображаемое имя модели
+          const modelName = selectedProvider.includes('Qwen') || selectedProvider === 'AItianhu' 
+            ? "Qwen AI" 
+            : selectedProvider;
+            
           return res.json({
             success: true,
             response: aiResponse,
-            provider: "Qwen_Qwen_2_5_Max",
-            model: "Qwen AI"
+            provider: selectedProvider,
+            model: modelName
           });
         }
       } catch (pythonError) {
