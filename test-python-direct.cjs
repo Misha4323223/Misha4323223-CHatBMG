@@ -70,7 +70,7 @@ async function runTest() {
   ];
   
   // Выбранный для теста провайдер (можно изменить)
-  const providerToTest = 'AiChats';
+  const providerToTest = 'Anthropic';
   
   // Тестовый вопрос
   const testMessage = "Объясни, как работает трансформерная архитектура в нейронных сетях простыми словами";
