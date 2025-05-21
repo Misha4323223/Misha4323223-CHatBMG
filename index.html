@@ -3,159 +3,447 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BOOOMERANGS: Генерация изображений</title>
+  <title>BOOOMERANGS: AI Чат и Генерация Изображений</title>
   <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
     body {
-      font-family: sans-serif;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: #111;
       color: white;
-      text-align: center;
-      padding: 2rem;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
     }
+    
     header {
-      font-size: 2rem;
-      margin-bottom: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    
+    .logo {
+      font-size: 1.5rem;
       background: linear-gradient(45deg, #ff4b2b, #ff416c);
       -webkit-background-clip: text;
       background-clip: text;
       color: transparent;
       font-weight: bold;
     }
-    .container {
-      max-width: 800px;
-      margin: 0 auto;
+    
+    nav {
+      display: flex;
+      gap: 1rem;
     }
-    img {
-      max-width: 100%;
-      border-radius: 10px;
-      margin-top: 1rem;
-      display: none;
-      box-shadow: 0 0 10px rgba(255, 75, 43, 0.3);
-    }
-    button {
-      padding: 10px 20px;
-      border: none;
-      background-color: #00e676;
-      color: #000;
-      font-size: 1rem;
+    
+    .nav-button {
+      padding: 0.5rem 1rem;
+      background: none;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: white;
+      border-radius: 5px;
       cursor: pointer;
-      border-radius: 8px;
-      margin: 10px;
+      transition: all 0.2s;
     }
-    button:hover {
-      background-color: #00c853;
+    
+    .nav-button:hover,
+    .nav-button.active {
+      background: rgba(255, 255, 255, 0.1);
     }
-    input {
-      padding: 10px;
+    
+    main {
+      flex: 1;
+      padding: 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+      width: 100%;
+    }
+    
+    .tab {
+      display: none;
+    }
+    
+    .tab.active {
+      display: block;
+      animation: fadeIn 0.3s ease-in-out;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    /* Генератор изображений */
+    .image-generator {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.5rem;
+    }
+    
+    .prompt-container {
+      width: 100%;
+      max-width: 800px;
+    }
+    
+    .prompt-input {
+      width: 100%;
+      padding: 1rem;
       border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.05);
+      color: white;
+      font-size: 1rem;
+    }
+    
+    .prompt-input:focus {
+      outline: none;
+      border-color: #ff416c;
+    }
+    
+    .button {
+      padding: 0.75rem 1.5rem;
       border: none;
-      width: 80%;
-      max-width: 500px;
-      margin-bottom: 10px;
-      font-size: 16px;
+      background: linear-gradient(45deg, #ff4b2b, #ff416c);
+      color: white;
+      font-size: 1rem;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
     }
+    
+    .button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(255, 75, 43, 0.3);
+    }
+    
     .loading {
       display: none;
-      margin: 20px auto;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
     }
+    
     .spinner {
-      display: inline-block;
-      width: 30px;
-      height: 30px;
-      border: 3px solid rgba(255,255,255,0.2);
-      border-top-color: #00e676;
+      width: 40px;
+      height: 40px;
+      border: 4px solid rgba(255, 255, 255, 0.1);
       border-radius: 50%;
+      border-top-color: #ff416c;
       animation: spin 1s ease-in-out infinite;
     }
+    
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
-    .svg-container {
-      margin-top: 20px;
-      padding: 15px;
-      background-color: #222;
-      border-radius: 10px;
+    
+    .image-preview {
+      max-width: 800px;
+      width: 100%;
+      border-radius: 12px;
+      overflow: hidden;
       display: none;
+    }
+    
+    .image-preview img {
+      width: 100%;
+      display: block;
+    }
+    
+    .image-actions {
+      display: none;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    
+    .svg-container {
+      max-width: 800px;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 1rem;
+      margin-top: 1.5rem;
+      display: none;
+    }
+    
+    .svg-container svg {
+      width: 100%;
+      height: auto;
+      max-height: 600px;
+    }
+    
+    /* Чат */
+    .chat {
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 180px);
+      max-height: 800px;
+      border-radius: 12px;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    
+    .message {
+      max-width: 80%;
+      padding: 1rem;
+      border-radius: 12px;
+      line-height: 1.5;
+    }
+    
+    .message-user {
+      align-self: flex-end;
+      background: linear-gradient(45deg, #ff4b2b, #ff416c);
+      border-bottom-right-radius: 0;
+    }
+    
+    .message-ai {
+      align-self: flex-start;
+      background: rgba(255, 255, 255, 0.1);
+      border-bottom-left-radius: 0;
+    }
+    
+    .message p {
+      margin-bottom: 0.5rem;
+    }
+    
+    .message p:last-child {
+      margin-bottom: 0;
+    }
+    
+    .message a {
+      color: #00e676;
+      text-decoration: none;
+    }
+    
+    .message a:hover {
+      text-decoration: underline;
+    }
+    
+    .message code {
+      font-family: monospace;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 0.2rem 0.4rem;
+      border-radius: 4px;
+    }
+    
+    .message pre {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 1rem;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 1rem 0;
+    }
+    
+    .message pre code {
+      background: none;
+      padding: 0;
+    }
+    
+    .chat-input-container {
+      padding: 1rem;
+      background: rgba(0, 0, 0, 0.3);
+      display: flex;
+      gap: 1rem;
+    }
+    
+    .chat-input {
+      flex: 1;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.05);
+      color: white;
+      font-size: 1rem;
+      resize: none;
+      min-height: 60px;
+    }
+    
+    .chat-input:focus {
+      outline: none;
+      border-color: #ff416c;
+    }
+    
+    footer {
+      padding: 1rem 2rem;
+      text-align: center;
+      font-size: 0.875rem;
+      color: rgba(255, 255, 255, 0.5);
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    
+    /* Мобильная адаптация */
+    @media (max-width: 768px) {
+      header {
+        padding: 1rem;
+      }
+      
+      main {
+        padding: 1rem;
+      }
+      
+      .message {
+        max-width: 90%;
+      }
+      
+      .chat-input-container {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      
+      .nav-button {
+        padding: 0.5rem;
+        font-size: 0.875rem;
+      }
     }
   </style>
 </head>
 <body>
-  <header>🚀 BOOOMERANGS</header>
+  <header>
+    <div class="logo">🚀 BOOOMERANGS</div>
+    <nav>
+      <button class="nav-button active" data-tab="chat-tab">AI Чат</button>
+      <button class="nav-button" data-tab="image-generator-tab">Генератор Изображений</button>
+    </nav>
+  </header>
   
-  <div class="container">
-    <input type="text" id="prompt-input" placeholder="Введите описание изображения (например: закат над горами)" />
-    
-    <div>
-      <button onclick="generateImage()">Сгенерировать изображение</button>
+  <main>
+    <!-- Вкладка чата -->
+    <div class="tab active" id="chat-tab">
+      <div class="chat">
+        <div class="chat-messages" id="chat-messages">
+          <div class="message message-ai">
+            <p>Привет! Я BOOOMERANGS AI ассистент. Чем я могу помочь вам сегодня?</p>
+          </div>
+        </div>
+        <div class="chat-input-container">
+          <textarea class="chat-input" id="chat-input" placeholder="Введите ваше сообщение..." rows="2"></textarea>
+          <button class="button" id="send-message">Отправить</button>
+        </div>
+      </div>
     </div>
     
-    <div class="loading" id="loading">
-      <div class="spinner"></div>
-      <p>Генерация изображения...</p>
+    <!-- Вкладка генерации изображений -->
+    <div class="tab" id="image-generator-tab">
+      <div class="image-generator">
+        <div class="prompt-container">
+          <input type="text" class="prompt-input" id="prompt-input" placeholder="Опишите изображение, которое хотите создать...">
+        </div>
+        
+        <button class="button" id="generate-image">Сгенерировать изображение</button>
+        
+        <div class="loading" id="loading">
+          <div class="spinner"></div>
+          <p>Генерация изображения...</p>
+        </div>
+        
+        <div class="image-preview" id="image-preview">
+          <img id="preview-img" src="" alt="Сгенерированное изображение">
+        </div>
+        
+        <div class="image-actions" id="image-actions">
+          <button class="button" id="convert-svg">Конвертировать в SVG</button>
+          <button class="button" id="download-image">Скачать изображение</button>
+        </div>
+        
+        <div class="svg-container" id="svg-container"></div>
+      </div>
     </div>
-    
-    <div>
-      <img id="preview" src="" alt="Превью появится здесь" />
-    </div>
-    
-    <div id="buttons" style="display:none;">
-      <button onclick="convertToSVG()">Конвертировать в SVG</button>
-      <button onclick="downloadImage()">Скачать изображение</button>
-    </div>
-    
-    <div class="svg-container" id="svg-container"></div>
-  </div>
-
+  </main>
+  
+  <footer>
+    <p>© 2025 BOOOMERANGS. Все права защищены.</p>
+  </footer>
+  
   <script>
+    // Переключение вкладок
+    const tabButtons = document.querySelectorAll('.nav-button');
+    const tabs = document.querySelectorAll('.tab');
+    
+    tabButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const tabId = button.getAttribute('data-tab');
+        
+        // Активация кнопки
+        tabButtons.forEach(btn => btn.classList.remove('active'));
+        button.classList.add('active');
+        
+        // Активация вкладки
+        tabs.forEach(tab => tab.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+      });
+    });
+    
+    // Функции для генератора изображений
+    const promptInput = document.getElementById('prompt-input');
+    const generateButton = document.getElementById('generate-image');
+    const loadingElement = document.getElementById('loading');
+    const imagePreview = document.getElementById('image-preview');
+    const previewImg = document.getElementById('preview-img');
+    const imageActions = document.getElementById('image-actions');
+    const svgContainer = document.getElementById('svg-container');
+    const convertSvgButton = document.getElementById('convert-svg');
+    const downloadImageButton = document.getElementById('download-image');
+    
     let currentImageUrl = '';
     
-    // DOM элементы
-    const previewImage = document.getElementById('preview');
-    const promptInput = document.getElementById('prompt-input');
-    const loadingElement = document.getElementById('loading');
-    const buttonsElement = document.getElementById('buttons');
-    const svgContainer = document.getElementById('svg-container');
-    
-    // Функция генерации изображения
-    function generateImage() {
-      const prompt = promptInput.value.trim() || 'mountain landscape';
+    generateButton.addEventListener('click', () => {
+      const prompt = promptInput.value.trim() || 'beautiful landscape';
       
       // Скрываем предыдущие результаты
-      previewImage.style.display = 'none';
-      buttonsElement.style.display = 'none';
+      imagePreview.style.display = 'none';
+      imageActions.style.display = 'none';
       svgContainer.style.display = 'none';
       
       // Показываем индикатор загрузки
-      loadingElement.style.display = 'block';
+      loadingElement.style.display = 'flex';
       
       // Генерируем URL для изображения с Unsplash
-      const randomSeed = Math.floor(Math.random() * 1000);
+      const randomSeed = Math.floor(Math.random() * 10000);
       currentImageUrl = `https://source.unsplash.com/random/800x600/?${encodeURIComponent(prompt)}&sig=${randomSeed}`;
       
-      // Настраиваем обработчики событий изображения
-      previewImage.onload = function() {
+      previewImg.onload = function() {
         // Скрываем загрузку и показываем изображение и кнопки
         loadingElement.style.display = 'none';
-        previewImage.style.display = 'block';
-        buttonsElement.style.display = 'block';
+        imagePreview.style.display = 'block';
+        imageActions.style.display = 'flex';
       };
       
-      previewImage.onerror = function() {
+      previewImg.onerror = function() {
         loadingElement.style.display = 'none';
         alert('Ошибка при загрузке изображения. Попробуйте другой запрос.');
       };
       
-      // Устанавливаем источник изображения
-      previewImage.src = currentImageUrl;
-    }
+      previewImg.src = currentImageUrl;
+    });
     
-    // Функция конвертации в SVG
-    function convertToSVG() {
+    convertSvgButton.addEventListener('click', () => {
       if (!currentImageUrl) return;
       
       // Создаем SVG код
       const svgCode = `
-        <svg xmlns="http://www.w3.org/2000/svg" width="800" height="600">
+        <svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
           <defs>
             <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" style="stop-color:#ff4b2b;stop-opacity:0.2" />
@@ -183,34 +471,31 @@
       svgContainer.style.display = 'block';
       
       // Добавляем кнопку для скачивания SVG
-      const downloadButton = document.createElement('button');
-      downloadButton.textContent = 'Скачать SVG';
-      downloadButton.onclick = downloadSVG;
-      svgContainer.appendChild(downloadButton);
-    }
+      const downloadSvgButton = document.createElement('button');
+      downloadSvgButton.textContent = 'Скачать SVG';
+      downloadSvgButton.className = 'button';
+      downloadSvgButton.style.marginTop = '1rem';
+      downloadSvgButton.onclick = downloadSVG;
+      svgContainer.appendChild(downloadSvgButton);
+    });
     
-    // Функция скачивания изображения
-    function downloadImage() {
+    downloadImageButton.addEventListener('click', () => {
       if (!currentImageUrl) return;
       
-      // Создаем ссылку для скачивания
       const link = document.createElement('a');
       link.href = currentImageUrl;
       link.download = 'booomerangs-image.jpg';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-    }
+    });
     
-    // Функция скачивания SVG
     function downloadSVG() {
       const svgCode = svgContainer.querySelector('svg').outerHTML;
       
-      // Создаем Blob из SVG данных
       const blob = new Blob([svgCode], { type: 'image/svg+xml' });
       const url = URL.createObjectURL(blob);
       
-      // Создаем ссылку для скачивания
       const link = document.createElement('a');
       link.href = url;
       link.download = 'booomerangs-image.svg';
@@ -219,6 +504,144 @@
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
     }
+    
+    // Функции для чата
+    const chatMessages = document.getElementById('chat-messages');
+    const chatInput = document.getElementById('chat-input');
+    const sendMessageButton = document.getElementById('send-message');
+    
+    // Добавление сообщения в чат
+    function addMessage(text, isUser) {
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `message ${isUser ? 'message-user' : 'message-ai'}`;
+      
+      // Разбиваем текст на абзацы
+      const paragraphs = text.split('\n').filter(p => p.trim() !== '');
+      paragraphs.forEach(paragraph => {
+        const p = document.createElement('p');
+        p.textContent = paragraph;
+        messageDiv.appendChild(p);
+      });
+      
+      chatMessages.appendChild(messageDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+    
+    // Добавление сообщения с цитатами в чат
+    function addMessageWithCitations(text, citations) {
+      const messageDiv = document.createElement('div');
+      messageDiv.className = 'message message-ai';
+      
+      const p = document.createElement('p');
+      p.textContent = text;
+      messageDiv.appendChild(p);
+      
+      if (citations && citations.length > 0) {
+        const sourcesList = document.createElement('p');
+        sourcesList.innerHTML = '<strong>Источники:</strong>';
+        messageDiv.appendChild(sourcesList);
+        
+        const ul = document.createElement('ul');
+        ul.style.marginLeft = '20px';
+        ul.style.marginTop = '8px';
+        
+        citations.forEach(url => {
+          const li = document.createElement('li');
+          const a = document.createElement('a');
+          a.href = url;
+          a.target = '_blank';
+          a.textContent = new URL(url).hostname;
+          li.appendChild(a);
+          ul.appendChild(li);
+        });
+        
+        messageDiv.appendChild(ul);
+      }
+      
+      chatMessages.appendChild(messageDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+    
+    // Обработка отправки сообщения
+    async function sendMessage() {
+      const messageText = chatInput.value.trim();
+      if (!messageText) return;
+      
+      // Добавляем сообщение пользователя
+      addMessage(messageText, true);
+      
+      // Очищаем поле ввода
+      chatInput.value = '';
+      
+      try {
+        // Имитация ответа AI (в реальном приложении здесь будет запрос к API)
+        // Для демонстрации мы создаем простой ответ на основе ввода пользователя
+        
+        // Создаем "думающее" сообщение
+        const thinkingDiv = document.createElement('div');
+        thinkingDiv.className = 'message message-ai';
+        thinkingDiv.textContent = 'Думаю...';
+        chatMessages.appendChild(thinkingDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        
+        // Имитируем задержку ответа
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        // Генерируем ответ AI
+        let response;
+        const lowerMessage = messageText.toLowerCase();
+        
+        if (lowerMessage.includes('привет') || lowerMessage.includes('здравствуй')) {
+          response = 'Привет! Чем я могу помочь вам сегодня?';
+        } else if (lowerMessage.includes('как дела') || lowerMessage.includes('как ты')) {
+          response = 'У меня всё отлично, спасибо что спросили! Я всегда готов помочь.';
+        } else if (lowerMessage.includes('погода')) {
+          response = 'Я не могу проверить текущую погоду, но вы можете узнать её в вашем местном прогнозе погоды или через поисковую систему.';
+        } else if (lowerMessage.includes('изображени') || lowerMessage.includes('картинк')) {
+          response = 'Если вы хотите создать изображение, перейдите на вкладку "Генератор Изображений" в верхней части страницы. Там вы сможете описать желаемое изображение и создать его.';
+        } else if (lowerMessage.includes('svg')) {
+          response = 'SVG (Scalable Vector Graphics) - это формат векторной графики, который масштабируется без потери качества. На вкладке "Генератор Изображений" вы можете конвертировать созданное изображение в SVG.';
+        } else if (lowerMessage.includes('booomerangs')) {
+          response = 'BOOOMERANGS - это мультимодальный AI-сервис, который позволяет вести диалоги и создавать изображения. Мы стремимся обеспечить доступ к технологиям искусственного интеллекта для всех.';
+        } else {
+          // Для других запросов используем более общий ответ
+          const responses = [
+            'Интересный вопрос! К сожалению, у меня нет всей необходимой информации, чтобы дать вам точный ответ.',
+            'Спасибо за ваш запрос. В настоящее время я работаю в демонстрационном режиме и имею ограниченную функциональность.',
+            'Это хороший вопрос. В полной версии приложения я бы использовал AI сервисы для поиска информации и предоставления вам точного ответа.',
+            'Это отличный вопрос для полноценного AI. В демонстрационной версии я не могу обработать этот запрос полностью.',
+            'В демо-версии я могу ответить только на базовые вопросы. Полная версия BOOOMERANGS использует расширенные AI возможности.'
+          ];
+          
+          // Выбираем случайный ответ
+          response = responses[Math.floor(Math.random() * responses.length)];
+        }
+        
+        // Удаляем "думающее" сообщение
+        chatMessages.removeChild(thinkingDiv);
+        
+        // Показываем ответ с небольшой задержкой для эффекта набора текста
+        addMessage(response, false);
+      } catch (error) {
+        console.error('Ошибка при получении ответа:', error);
+        // Добавляем сообщение об ошибке
+        addMessage('Произошла ошибка при получении ответа. Пожалуйста, попробуйте еще раз.', false);
+      }
+    }
+    
+    // Обработчик событий для кнопки отправки
+    sendMessageButton.addEventListener('click', sendMessage);
+    
+    // Обработчик событий для нажатия Enter в поле ввода
+    chatInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+    
+    // Автоматический фокус на поле ввода
+    chatInput.focus();
   </script>
 </body>
 </html>
