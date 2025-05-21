@@ -277,14 +277,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Проверяем, является ли вопрос техническим
       const isTechnicalQuestion = techKeywords.some(keyword => message.toLowerCase().includes(keyword));
       
-      // Если запрошен явно DeepSpeek или это технический вопрос без указанного провайдера
-      if (provider === 'deepspeek' || (isTechnicalQuestion && !provider)) {
+      // Обработка DeepSpeek должна происходить до перенаправления на Python
+      if (provider === 'deepspeek') {
+        console.log(`📊 Явно запрошен провайдер DeepSpeek для запроса: "${message.substring(0, 50)}..."`);
+        
         try {
-          // Используем наш локальный DeepSpeek провайдер для технических вопросов
-          console.log(`📊 Обнаружен технический вопрос, используем DeepSpeek: "${message.substring(0, 50)}..."`);
-          
+          // Используем наш локальный провайдер напрямую без перенаправления на Python
           const deepspeekProvider = require('./deepspeek-provider');
           const deepspeekResponse = await deepspeekProvider.getDeepSpeekResponse(message);
+          
+          console.log(`✅ Получен ответ от локального DeepSpeek провайдера`);
           
           return res.json({
             success: true,
@@ -292,16 +294,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
             provider: 'DeepSpeek',
             model: 'DeepSpeek AI'
           });
-        } catch (deepspeekError) {
-          console.log(`❌ Ошибка при использовании DeepSpeek: ${deepspeekError}`);
-          // Продолжаем с другими провайдерами, если DeepSpeek не справился
+        } catch (error) {
+          console.error(`❌ Ошибка локального DeepSpeek провайдера:`, error);
+          
+          // В случае ошибки вернем стандартное сообщение об ошибке
+          return res.json({
+            success: true,
+            response: "Извините, произошла ошибка при обработке вашего запроса в DeepSpeek. Попробуйте переформулировать вопрос или выбрать другого провайдера.",
+            provider: 'DeepSpeek',
+            model: 'DeepSpeek AI (Error)'
+          });
         }
-        
-        // Если DeepSpeek не справился и провайдер не указан явно, используем Phind как запасной вариант
-        if (!provider) {
-          selectedProvider = 'Phind';
-          console.log(`📊 DeepSpeek не справился, переключаемся на провайдер Phind`);
-        }
+      }
+      
+      // Автоматическое определение технических запросов
+      if (isTechnicalQuestion && !provider) {
+        selectedProvider = 'Phind';
+        console.log(`📊 Обнаружен технический вопрос, переключаемся на провайдер Phind`);
       }
       
       // Всегда пытаемся сначала использовать Python G4F сервер для любого запроса
