@@ -734,8 +734,9 @@
         
         // Для стриминг-режима используем Python API
         if (useStreaming) {
-          // Используем стриминг через специальный API
-          const response = await fetch('/api/python/chat/stream', {
+          console.log(`Отправка запроса к провайдеру ${selectedModel} через стриминг API`);
+          // Используем стриминг через Flask-сервер (самый надежный вариант)
+          const response = await fetch('/api/flask-stream', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
