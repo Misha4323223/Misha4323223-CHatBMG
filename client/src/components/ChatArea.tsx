@@ -45,7 +45,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     return (
       <div className="flex-1 flex flex-col bg-gradient-to-b from-gray-50 to-gray-100 items-center justify-center text-gray-700 p-6">
         <div className="text-center max-w-md">
-          <img src="/images/booomerangs-logo.jpg" alt="BOOOMERANGS" className="h-32 mx-auto mb-6" />
+          <img src="/images/booomerangs-logo.svg" alt="BOOOMERANGS" className="h-32 mx-auto mb-6" />
           <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-700 mb-3">BOOOMERANGS AI</h1>
           <p className="text-gray-600 mb-8">Бесплатный доступ к возможностям искусственного интеллекта без платных API ключей</p>
           <div className="flex items-center justify-center">
@@ -128,7 +128,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
         
         <div className="flex items-center">
           <div className="hidden sm:flex mr-3">
-            <img src="/images/booomerangs-logo.jpg" alt="BOOOMERANGS" className="h-7 w-auto" />
+            <img src="/images/booomerangs-logo.svg" alt="BOOOMERANGS" className="h-7 w-auto" />
           </div>
           <form onSubmit={handleSubmit} className="flex-1 flex items-center space-x-2">
             <div className="relative flex-1">
