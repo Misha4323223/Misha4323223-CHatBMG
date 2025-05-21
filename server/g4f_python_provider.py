@@ -274,6 +274,90 @@ def chat():
             "model": "error-mode"
         })
 
+@app.route('/python/direct', methods=['POST'])
+def direct_provider():
+    """Прямой вызов конкретного провайдера без автоматического переключения"""
+    try:
+        data = request.json
+        message = data.get('message', '')
+        provider_name = data.get('provider')
+        system_prompt = data.get('systemPrompt', 'Вы полезный AI-ассистент. Отвечайте кратко и точно.')
+        timeout = data.get('timeout', 30000) / 1000  # Увеличенный таймаут для медленных провайдеров
+        
+        if not message or not provider_name:
+            return jsonify({
+                "error": "Необходимо указать сообщение и провайдера",
+                "response": "Ошибка: не указаны обязательные параметры",
+                "provider": "error",
+                "model": "error"
+            })
+        
+        print(f"🎯 Прямой вызов провайдера {provider_name} без fallback")
+        
+        # Получаем провайдер напрямую из g4f
+        if hasattr(g4f.Provider, provider_name):
+            provider = getattr(g4f.Provider, provider_name)
+            # Выбираем подходящую модель
+            model = models_per_provider.get(provider_name, "gpt-3.5-turbo")
+            
+            print(f"📝 Используем модель {model} для провайдера {provider_name}")
+            
+            # Формируем сообщения
+            messages = [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": message}
+            ]
+            
+            # Отправляем запрос напрямую провайдеру
+            try:
+                start_time = time.time()
+                response = g4f.ChatCompletion.create(
+                    model=model,
+                    messages=messages,
+                    provider=provider,
+                    timeout=timeout
+                )
+                elapsed = time.time() - start_time
+                
+                # Проверяем валидность ответа
+                if isinstance(response, str) and "<html" in response.lower():
+                    raise Exception(f"Провайдер {provider_name} вернул HTML вместо текста")
+                
+                print(f"✅ Провайдер {provider_name} успешно ответил за {elapsed:.2f} сек")
+                
+                return jsonify({
+                    "success": True,
+                    "response": response,
+                    "provider": provider_name,
+                    "model": model,
+                    "elapsed": elapsed
+                })
+            except Exception as e:
+                error_message = str(e)
+                print(f"❌ Ошибка провайдера {provider_name}: {error_message}")
+                
+                return jsonify({
+                    "error": f"Ошибка провайдера {provider_name}: {error_message}",
+                    "response": f"Ошибка провайдера {provider_name}: {error_message}",
+                    "provider": provider_name,
+                    "model": model
+                })
+        else:
+            return jsonify({
+                "error": f"Провайдер {provider_name} не найден",
+                "response": f"Провайдер {provider_name} не найден в системе",
+                "provider": "unknown"
+            })
+    except Exception as e:
+        print(f"❌ Общая ошибка при прямом вызове провайдера: {str(e)}")
+        traceback.print_exc()
+        
+        return jsonify({
+            "error": str(e),
+            "response": f"Ошибка при вызове провайдера: {str(e)}",
+            "provider": "error"
+        })
+
 @app.route('/python/test', methods=['POST'])
 def test():
     try:
