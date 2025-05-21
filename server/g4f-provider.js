@@ -39,16 +39,17 @@ const KEY_REQUIRED_PROVIDERS = [
 ];
 
 // Порядок провайдеров от самых стабильных к менее стабильным
-// По рекомендации пользователя временно отключены некоторые провайдеры
+// Обновлено по рекомендации пользователя
 const PROVIDER_PRIORITY = [
-  // PROVIDERS.PHIND отключен временно    
-  // PROVIDERS.LIAOBOTS отключен временно
-  PROVIDERS.YOU,         // Добавлен провайдер You через yew-bot
-  PROVIDERS.DEEPAI,      // Если есть API ключ
-  PROVIDERS.QWEN,        // Потенциально работающий
-  PROVIDERS.DIFY,        // Потенциально работающий
-  PROVIDERS.AICHAT,      // Менее стабильный
-  PROVIDERS.CHATGPT      // Нестабильный
+  PROVIDERS.YOU,          // You.com (стабильный, но медленный)
+  PROVIDERS.DEEPAI,       // DeepAI (если доступен API-ключ)
+  PROVIDERS.AICHAT,       // Быстрый, но нестабильный
+  PROVIDERS.CHATGPT,      // Если есть access_token
+  // Временно отключенные провайдеры:
+  // PROVIDERS.PHIND,     // Недоступен из Replit
+  // PROVIDERS.LIAOBOTS,  // Недоступен из Replit
+  // PROVIDERS.QWEN,      // Нестабильный
+  // PROVIDERS.DIFY       // Нестабильный
 ];
 
 // Функция для получения списка доступных провайдеров в порядке приоритета

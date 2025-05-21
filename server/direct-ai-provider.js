@@ -3,10 +3,10 @@ const fetch = require('node-fetch').default;
 
 // Набор рабочих API-провайдеров
 const AI_PROVIDERS = {
-  // You.com API
+  // You.com API - более простой и стабильный вариант через yew-bot
   YOU: {
-    name: 'You.com', 
-    url: 'https://you.com/api/streamingSearch',
+    name: 'Yew-Bot', 
+    url: 'https://api.yewbot.app/v1/chat/completions',
     needsKey: false,
     headers: {
       'Content-Type': 'application/json',
@@ -14,26 +14,17 @@ const AI_PROVIDERS = {
     },
     prepareRequest: (message) => {
       return {
-        q: message,
-        page: 1,
-        count: 10,
-        safeSearch: 'Off',
-        onShoppingPage: false,
-        mkt: '',
-        responseFilter: 'WebPages,Translations,TimeZone,Computation,RelatedSearches',
-        domain: 'youchat',
-        queryTraceId: null,
-        chat: { messages: [] },
-        chatId: null,
-        options: []
+        model: "yew-llama3:8b",
+        messages: [{ role: "user", content: message }],
+        temperature: 0.7
       };
     },
     extractResponse: async (response) => {
       const jsonResponse = await response.json();
-      if (jsonResponse && jsonResponse.youChatToken && jsonResponse.youChatToken.length > 0) {
-        return jsonResponse.youChatToken.join('');
+      if (jsonResponse && jsonResponse.choices && jsonResponse.choices.length > 0) {
+        return jsonResponse.choices[0].message.content;
       }
-      throw new Error('Некорректный ответ от You.com');
+      throw new Error('Некорректный ответ от Yew-Bot');
     }
   },
   
@@ -157,6 +148,54 @@ async function getProviderResponseWithTimeout(providerKey, message, timeoutMs = 
   }
 }
 
+// Функция для попытки получения ответа от провайдера с обработкой ошибок
+async function tryProvider(providerKey, message) {
+  // Проверка существования провайдера
+  if (!AI_PROVIDERS[providerKey]) {
+    console.log(`Провайдер ${providerKey} не найден`);
+    return null;
+  }
+  
+  const provider = AI_PROVIDERS[providerKey];
+  console.log(`Попытка использования провайдера ${provider.name}...`);
+  
+  try {
+    // Подготовка запроса
+    const requestData = provider.prepareRequest(message);
+    
+    // Выполнение запроса
+    const response = await fetch(provider.url, {
+      method: 'POST',
+      headers: provider.headers || { 'Content-Type': 'application/json' },
+      body: JSON.stringify(requestData)
+    });
+    
+    // Проверка успешности запроса
+    if (!response.ok) {
+      throw new Error(`Статус ответа: ${response.status} ${response.statusText}`);
+    }
+    
+    // Извлечение ответа
+    const responseText = await provider.extractResponse(response);
+    
+    // Проверка на пустой или некорректный ответ
+    if (!responseText || responseText.trim() === '') {
+      throw new Error('Получен пустой ответ');
+    }
+    
+    // Успешный ответ
+    console.log(`✅ ${provider.name} успешно ответил`);
+    return {
+      response: responseText,
+      provider: provider.name,
+      model: 'external-api'
+    };
+  } catch (error) {
+    console.error(`❌ ${provider.name} не отвечает:`, error.message);
+    return null; // Возвращаем null в случае ошибки
+  }
+}
+
 // Основная функция для получения ответа от конкретного провайдера
 async function getProviderResponse(providerKey, message) {
   // Если запрошен демо-режим, возвращаем предустановленный ответ
@@ -172,25 +211,15 @@ async function getProviderResponse(providerKey, message) {
   console.log(`Отправка запроса к провайдеру ${provider.name}...`);
   
   try {
-    // Подготовка запроса
-    const requestData = provider.prepareRequest(message);
+    // Используем улучшенную функцию tryProvider
+    const result = await tryProvider(providerKey, message);
     
-    // Выполнение запроса
-    const response = await fetch(provider.url, {
-      method: 'POST',
-      headers: provider.headers || { 'Content-Type': 'application/json' },
-      body: JSON.stringify(requestData)
-    });
+    if (result) {
+      return result;
+    }
     
-    // Извлечение ответа
-    const responseText = await provider.extractResponse(response);
-    
-    // Возвращаем результат
-    return {
-      response: responseText,
-      provider: provider.name,
-      model: 'external-api'
-    };
+    // Если результат не получен, выбрасываем ошибку
+    throw new Error(`Не удалось получить ответ от ${provider.name}`);
   } catch (error) {
     console.error(`Ошибка при обращении к провайдеру ${provider.name}:`, error.message);
     throw error;
@@ -218,7 +247,7 @@ async function getChatResponse(message, options = {}) {
   }
   
   // Порядок перебора провайдеров (от более надежных к менее)
-  const providerPriority = ['YOU', 'BING'];
+  const providerPriority = ['YOU', 'DEMO'];
   
   // Перебираем все провайдеры до первого успешного
   let lastError = null;

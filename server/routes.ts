@@ -7,7 +7,7 @@ import { authMiddleware } from "./middleware/auth";
 import { z } from "zod";
 import { authSchema, messageSchema } from "@shared/schema";
 
-// Импортируем модули для работы с изображениями и G4F
+// Импортируем модули для работы с изображениями и AI провайдерами
 import * as path from 'path';
 import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
@@ -17,6 +17,7 @@ const __dirname = path.dirname(__filename);
 const require = createRequire(__filename);
 const svgGenerator = require('./svg-generator');
 const g4fHandlers = require('./g4f-handlers');
+const directAiRoutes = require('./direct-ai-routes');
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Create HTTP server
@@ -84,10 +85,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // API для работы с G4F провайдерами
   app.use('/api/g4f', g4fHandlers);
   
+  // API с прямым доступом к AI провайдерам (более стабильный вариант)
+  app.use('/api/direct-ai', directAiRoutes);
+  
   // API для работы с BOOOMERANGS AI интеграцией
   app.post('/api/ai/chat', async (req, res) => {
     try {
-      const { message } = req.body;
+      const { message, provider } = req.body;
       
       if (!message) {
         return res.status(400).json({ 
@@ -96,34 +100,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Пытаемся сначала использовать G4F хендлеры
+      console.log(`Запрос к AI: "${message.substring(0, 50)}${message.length > 50 ? '...' : ''}"`);
+      
+      // Используем нашу прямую интеграцию с провайдерами
       try {
-        const g4fResponse = await fetch('http://localhost:5000/api/g4f/chat', {
+        // Направляем запрос к прямой интеграции с провайдерами
+        const directResponse = await fetch('http://localhost:5000/api/direct-ai/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message })
+          body: JSON.stringify({ 
+            message,
+            provider,
+            timeout: 8000 // Меньший таймаут для быстрого ответа
+          })
         });
         
-        if (g4fResponse.ok) {
-          const result = await g4fResponse.json();
+        if (directResponse.ok) {
+          const result = await directResponse.json();
           return res.json({
             success: true,
             response: result.response,
-            provider: result.provider || 'g4f',
-            model: result.model || 'unknown'
+            provider: result.provider,
+            model: result.model
           });
         }
-      } catch (err) {
-        console.error('Ошибка при обращении к G4F API:', err);
-        // Продолжаем выполнение и используем демо-ответы
+      } catch (directError) {
+        console.error('Ошибка при обращении к прямым провайдерам:', directError);
+        
+        // Fallback на G4F, если прямые провайдеры не работают
+        try {
+          const g4fResponse = await fetch('http://localhost:5000/api/g4f/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              message,
+              forceDemo: true // Используем принудительно демо-режим для быстрого ответа
+            })
+          });
+          
+          if (g4fResponse.ok) {
+            const result = await g4fResponse.json();
+            return res.json({
+              success: true,
+              response: result.response,
+              provider: result.provider || 'g4f',
+              model: result.model || 'unknown'
+            });
+          }
+        } catch (g4fError) {
+          console.error('Ошибка при обращении к G4F API:', g4fError);
+          // Продолжаем выполнение и используем встроенные демо-ответы
+        }
       }
       
-      // Если G4F недоступен, используем демо-ответы
-      const demoResponse = generateDemoResponse(message);
+      // Если все провайдеры недоступны, используем встроенные демо-ответы
+      const directAiProvider = require('./direct-ai-provider');
+      const demoResponse = directAiProvider.getDemoResponse(message);
+      
       return res.json({
         success: true,
-        response: demoResponse.response,
-        provider: 'booomerangs-demo',
+        response: demoResponse,
+        provider: 'BOOOMERANGS-Demo',
         model: 'demo-mode'
       });
     } catch (error) {
@@ -131,10 +168,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
       
-      return res.status(500).json({
-        success: false,
-        error: 'Ошибка при обработке запроса',
-        message: errorMessage
+      // Используем демо-ответ вместо ошибки, чтобы интерфейс всегда работал
+      const directAiProvider = require('./direct-ai-provider');
+      const demoResponse = directAiProvider.getDemoResponse('ошибка');
+      
+      return res.json({
+        success: true,
+        response: demoResponse,
+        provider: 'BOOOMERANGS-Fallback',
+        model: 'error-recovery-mode',
+        error: errorMessage
       });
     }
   });
