@@ -261,6 +261,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (provider === 'qwen') {
         actualProvider = 'AItianhu';
+      } else if (provider === 'ollama') {
+        // Используем Ollama через Python G4F
+        try {
+          console.log(`Пробуем использовать Ollama через Python G4F...`);
+          const ollamaResponse = await pythonProviderRoutes.callPythonAI(message, 'Ollama');
+          
+          if (ollamaResponse) {
+            return {
+              success: true,
+              response: ollamaResponse,
+              provider: 'Ollama',
+              model: 'llama3'
+            };
+          } else {
+            throw new Error('Ollama не вернул ответ через Python G4F');
+          }
+        } catch (error) {
+          console.error(`❌ Ошибка при использовании Ollama через Python:`, error);
+          
+          // Пробуем использовать локальный Ollama провайдер как запасной вариант
+          try {
+            const ollamaProvider = require('./ollama-provider');
+            const isOllamaAvailable = await ollamaProvider.checkOllamaAvailability();
+            
+            if (isOllamaAvailable) {
+              const ollamaDirectResponse = await ollamaProvider.getOllamaResponse(message);
+              if (ollamaDirectResponse.success) {
+                return ollamaDirectResponse;
+              }
+            }
+          } catch (localError) {
+            console.error(`❌ Локальный Ollama тоже недоступен:`, localError);
+          }
+          
+          // Фолбэк на стабильный провайдер
+          actualProvider = 'AItianhu';
+        }
       } else if (provider === 'chatfree') {
         // Используем наш локальный провайдер для ChatFree
         try {
@@ -370,6 +407,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (isTechnicalQuestion && !provider) {
         selectedProvider = 'Phind';
         console.log(`📊 Обнаружен технический вопрос, переключаемся на провайдер Phind`);
+      }
+      
+      // Проверяем доступность Ollama как бесплатного локального провайдера
+      if (!provider) {
+        try {
+          const ollamaProvider = require('./ollama-provider');
+          const isOllamaAvailable = await ollamaProvider.checkOllamaAvailability();
+          
+          if (isOllamaAvailable) {
+            console.log(`Обнаружен локальный Ollama, используем его как предпочтительный провайдер`);
+            selectedProvider = 'Ollama';
+          }
+        } catch (error) {
+          console.log(`Lokальный Ollama не обнаружен, используем стандартные провайдеры`);
+        }
       }
       
       // Всегда пытаемся сначала использовать Python G4F сервер для любого запроса
