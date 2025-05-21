@@ -93,6 +93,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.sendFile('booomerangs-new.html', { root: '.' });
   });
   
+  // BOOOMERANGS чат с AI провайдерами (прямой интерфейс)
+  app.get('/chat-ai', (req, res) => {
+    res.sendFile('booomerangs-chat.html', { root: '.' });
+  });
+  
   // BOOOMERANGS приложение со стримингом
   app.get('/booom-streaming', (req, res) => {
     res.sendFile('booomerangs-app-streaming-fixed.html', { root: '.' });
