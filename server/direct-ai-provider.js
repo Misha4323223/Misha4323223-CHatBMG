@@ -54,29 +54,81 @@ const AI_PROVIDERS = {
     }
   },
   
-  // You.com - без авторизации, Claude-модели
+  // You.com - без авторизации, Claude-модели - использует расширенную имплементацию для надежности
   YOUCOM: {
     name: 'You.com-AI',
-    url: 'https://you.com/api/chat',
+    url: 'https://you.com/api/streamingSearch',
     needsKey: false,
     headers: {
       'Content-Type': 'application/json',
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
-      'Accept': 'application/json'
+      'Accept': 'application/json',
+      'Origin': 'https://you.com',
+      'Referer': 'https://you.com/search?q=test&tbm=youchat'
     },
     prepareRequest: (message) => {
       return {
-        query: message,
-        chat_model: "claude-3-sonnet",
-        chat_history: []
+        q: message,
+        page: 1,
+        count: 10,
+        safeSearch: 'Moderate',
+        onShoppingPage: false,
+        mkt: '',
+        responseFilter: 'WebPages,Translations,TimeZone,Computation,RelatedSearches',
+        domain: 'youchat',
+        queryTraceId: Date.now().toString(),
+        chat: {
+          messages: [
+            {
+              author: 'user',
+              text: message
+            }
+          ]
+        },
+        chatId: Date.now().toString(),
+        extras: {
+          count: 20,
+          offset: 0,
+          blockAdvancedEditing: false,
+          insights: {
+            count: 20,
+            offset: 0
+          }
+        }
       };
     },
     extractResponse: async (response) => {
-      const jsonResponse = await response.json();
-      if (jsonResponse && jsonResponse.response && jsonResponse.response.text) {
-        return jsonResponse.response.text;
+      // You.com API может возвращать данные в разных форматах
+      try {
+        const jsonResponse = await response.json();
+        
+        // Проверяем разные пути получения текста ответа
+        if (jsonResponse && jsonResponse.youChatToken && jsonResponse.youChatToken.length > 0) {
+          return jsonResponse.youChatToken;
+        }
+        
+        if (jsonResponse && jsonResponse.response && jsonResponse.response.text) {
+          return jsonResponse.response.text;
+        }
+        
+        if (jsonResponse && jsonResponse.text) {
+          return jsonResponse.text;
+        }
+        
+        throw new Error('Не удалось найти текст ответа в ответе You.com');
+      } catch (error) {
+        // Пытаемся прочитать как текст, если это не JSON
+        try {
+          const textResponse = await response.text();
+          if (textResponse && textResponse.length > 0) {
+            return textResponse;
+          }
+        } catch (textError) {
+          // Игнорируем ошибку чтения текста
+        }
+        
+        throw new Error(`Ошибка при обработке ответа You.com: ${error.message}`);
       }
-      throw new Error('Некорректный ответ от You.com');
     }
   },
   
@@ -210,6 +262,62 @@ const AI_PROVIDERS = {
     }
   },
   
+  // Bing Chat - использует поисковый API Bing для получения ответов
+  BING: {
+    name: 'Bing Chat',
+    url: 'https://www.bing.com/search',
+    needsKey: false,
+    headers: {
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+      'Accept-Language': 'en-US,en;q=0.5',
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/113.0'
+    },
+    prepareRequest: (message) => {
+      // В данном случае, мы формируем query параметры напрямую в URL
+      // Это GET запрос, и нам не нужен body
+      return {};
+    },
+    modifyUrl: (url, message) => {
+      // Добавляем параметры к URL
+      return `${url}?q=${encodeURIComponent(message)}&form=QBLH`;
+    },
+    extractResponse: async (response) => {
+      try {
+        // Получаем HTML-страницу результата поиска
+        const html = await response.text();
+        
+        // Простая функция для извлечения описания первого результата
+        function extractFirstResult(html) {
+          // Ищем описание первого результата (простая эвристика)
+          const descriptionMatch = html.match(/<p class="b_paractl">(.*?)<\/p>/);
+          if (descriptionMatch && descriptionMatch[1]) {
+            // Удаляем HTML-теги
+            return descriptionMatch[1].replace(/<[^>]*>/g, '');
+          }
+          
+          // Если не нашли конкретное описание, ищем любой текстовый фрагмент с информацией
+          const contentMatch = html.match(/<div class="b_caption">(.*?)<\/div>/);
+          if (contentMatch && contentMatch[1]) {
+            return contentMatch[1].replace(/<[^>]*>/g, '');
+          }
+          
+          return null;
+        }
+        
+        // Получаем первый результат
+        const result = extractFirstResult(html);
+        
+        if (result) {
+          return result;
+        }
+        
+        throw new Error('Не удалось извлечь ответ из результатов поиска');
+      } catch (error) {
+        throw new Error(`Ошибка при обработке ответа от Bing: ${error.message}`);
+      }
+    }
+  },
+  
   // Альтернативный сервис для демо-режима
   DEMO: {
     name: 'BOOOMERANGS-Demo',
@@ -278,9 +386,33 @@ const DEMO_RESPONSES = [
   
   // Общие вопросы об искусственном интеллекте
   {
-    pattern: /что такое (ии|ai|искусственн.*интеллект|нейросет|машин.*обучен)/i,
+    pattern: /что такое (ии|ai|искусственн.*интеллект|машин.*обучен)/i,
     responses: [
       "Искусственный интеллект (ИИ или AI) - это компьютерные системы, способные выполнять задачи, которые обычно требуют человеческого интеллекта, такие как понимание естественного языка, распознавание образов, обучение и принятие решений. В BOOOMERANGS мы используем различные типы ИИ, включая языковые модели для генерации текста и диффузионные модели для создания изображений."
+    ]
+  },
+  
+  // Нейронные сети
+  {
+    pattern: /нейрон.*сет|нейросет|deep learning|глубок.*обучен/i,
+    responses: [
+      "Нейронные сети — это вычислительные системы, имитирующие работу нейронов в мозге человека. Они состоят из взаимосвязанных узлов (искусственных нейронов), организованных в слои, которые обрабатывают входные данные и передают результаты на следующие слои. Нейронные сети способны обучаться на примерах, распознавать паттерны и решать сложные задачи, такие как распознавание изображений, обработка естественного языка и генерация контента. В BOOOMERANGS для создания изображений используются специальные типы нейронных сетей — диффузионные модели."
+    ]
+  },
+  
+  // ML и типы моделей
+  {
+    pattern: /машинн.*обучен|ml|модел.*ai|gpt|большие языков.*модел|llm|генератив.*ai/i,
+    responses: [
+      "Машинное обучение (ML) — это подраздел искусственного интеллекта, который позволяет компьютерам учиться на данных без явного программирования. Существует несколько типов ML-моделей:\n\n• Большие языковые модели (LLM) как GPT и Claude обрабатывают и генерируют текст\n• Диффузионные модели как Stable Diffusion и DALL-E генерируют изображения\n• Мультимодальные модели работают одновременно с текстом, изображениями и другими типами данных\n\nBOOOMERANGS предоставляет доступ к различным моделям через бесплатные API, создавая надежный сервис без необходимости платных ключей."
+    ]
+  },
+  
+  // Вопросы о генеративном AI
+  {
+    pattern: /генеративн.*ai|генеративн.*ии|синтез.*контент|ai арт|нейросет.*искусств/i,
+    responses: [
+      "Генеративный AI — это системы искусственного интеллекта, которые создают новый контент на основе обучения на существующих данных. Сейчас активно развиваются такие направления как:\n\n• Генерация текста (GPT, Claude, Llama)\n• Создание изображений (DALL-E, Midjourney, Stable Diffusion)\n• Синтез аудио и музыки (MusicLM, Bark)\n• Генерация видео (Sora, Gen-2)\n\nBOOOMERANGS предоставляет доступ к генеративным AI-моделям для создания текста и изображений через единый интерфейс, причем полностью бесплатно!"
     ]
   },
   
@@ -374,11 +506,23 @@ async function tryProvider(providerKey, message, options = {}) {
       headers = provider.headers || { 'Content-Type': 'application/json' };
     }
     
-    // Выполнение запроса
-    const response = await fetch(provider.url, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(requestData)
+    // Проверяем, нужно ли модифицировать URL (для GET запросов)
+    let url = provider.url;
+    let method = 'POST';
+    let body = JSON.stringify(requestData);
+    
+    // Если провайдер поддерживает modifyUrl, используем GET запрос
+    if (provider.modifyUrl) {
+      url = provider.modifyUrl(url, message);
+      method = 'GET';
+      body = undefined; // GET запросы не имеют тела
+    }
+    
+    // Выполнение запроса с учетом метода
+    const response = await fetch(url, {
+      method: method,
+      headers: headers,
+      body: body
     });
     
     // Проверка успешности запроса
@@ -494,22 +638,32 @@ async function getChatResponse(message, options = {}) {
     model: 'demo-mode'
   };
   
-  // Попытка использовать "You" провайдер с коротким таймаутом
-  console.log('Пробуем получить ответ от провайдера YOU...');
-  try {
-    const youResult = await Promise.race([
-      tryProvider('YOU', message, options),
-      new Promise((resolve) => setTimeout(() => resolve(null), 5000)) // Короткий таймаут для YOU
-    ]);
-    
-    if (youResult) {
-      console.log(`✅ Успешно получен ответ от ${youResult.provider}`);
-      return youResult;
+  // Массив провайдеров, которые будем пробовать по очереди с короткими таймаутами
+  const providersToPrioritize = [
+    { key: 'YOUCOM', timeout: 5000, name: 'You.com API' },
+    { key: 'LIAOBOTS', timeout: 4000, name: 'Liaobots API' },
+    { key: 'FREEGPT4', timeout: 4000, name: 'FreeGPT4 API' },
+    { key: 'DEEPINFRA', timeout: 4000, name: 'DeepInfra API' }
+  ];
+  
+  // Перебираем приоритетные провайдеры
+  for (const provider of providersToPrioritize) {
+    console.log(`🔄 Пробуем получить ответ от провайдера ${provider.name}...`);
+    try {
+      const result = await Promise.race([
+        tryProvider(provider.key, message, options),
+        new Promise((resolve) => setTimeout(() => resolve(null), provider.timeout))
+      ]);
+      
+      if (result) {
+        console.log(`✅ Успешно получен ответ от ${result.provider}`);
+        return result;
+      }
+      
+      console.log(`❌ Провайдер ${provider.name} не ответил в течение ${provider.timeout}мс`);
+    } catch (error) {
+      console.log(`❌ Ошибка при использовании провайдера ${provider.name}:`, error.message);
     }
-    
-    console.log('❌ Провайдер YOU не ответил в течение 5000мс');
-  } catch (error) {
-    console.log('❌ Ошибка при использовании провайдера YOU:', error.message);
   }
   
   // Если все провайдеры недоступны, возвращаем демо-ответ

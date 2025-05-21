@@ -42,6 +42,15 @@ for provider_class in g4f.Provider.__providers__:
         AVAILABLE_PROVIDERS["AIChatFree"] = provider_class
     elif provider_class.__name__ == "Yqcloud":
         AVAILABLE_PROVIDERS["Yqcloud"] = provider_class
+    # Добавляем новые провайдеры
+    elif provider_class.__name__ == "Qwen":
+        AVAILABLE_PROVIDERS["Qwen"] = provider_class
+    elif provider_class.__name__ == "Qwen_Qwen_2_5":
+        AVAILABLE_PROVIDERS["Qwen_72B"] = provider_class
+    elif provider_class.__name__ == "Qwen_Qwen_2_5_Max":
+        AVAILABLE_PROVIDERS["Qwen_Max"] = provider_class
+    elif provider_class.__name__ == "Qwen_Qwen_3":
+        AVAILABLE_PROVIDERS["Qwen_3"] = provider_class
 
 # Выводим список провайдеров, которые будем использовать
 print(f"🤖 Загружено {len(AVAILABLE_PROVIDERS)} провайдеров: {', '.join(AVAILABLE_PROVIDERS.keys())}")
