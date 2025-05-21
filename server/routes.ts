@@ -106,28 +106,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Импортируем провайдер напрямую
       const directAiProvider = require('./direct-ai-provider');
+      const { AI_PROVIDERS } = directAiProvider;
       
       // Сначала сразу возвращаем демо-ответ для мгновенного отклика
       const demoResponse = directAiProvider.getDemoResponse(message);
       
-      // Если указан конкретный провайдер FREE_OPENAI, пробуем его в фоне
-      if (provider === 'FREE_OPENAI') {
-        // Запускаем запрос в фоне без ожидания результата
-        fetch('https://api.ainext.tech/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            model: "gpt-3.5-turbo",
-            messages: [{ role: "user", content: message }],
-            temperature: 0.7
-          })
-        }).then(response => {
-          console.log('Получен асинхронный ответ от FREE_OPENAI');
-        }).catch(error => {
-          console.log('Ошибка при асинхронном запросе к FREE_OPENAI:', error.message);
-        });
+      // Если указан конкретный провайдер, пробуем его в фоне
+      if (provider && AI_PROVIDERS && AI_PROVIDERS[provider]) {
+        try {
+          // Получаем параметры запроса для указанного провайдера
+          const selectedProvider = AI_PROVIDERS[provider];
+          const requestData = selectedProvider.prepareRequest(message);
+          
+          // Запускаем запрос в фоне без ожидания результата
+          fetch(selectedProvider.url, {
+            method: 'POST',
+            headers: selectedProvider.headers || { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestData)
+          }).then(response => {
+            console.log(`Получен асинхронный ответ от ${selectedProvider.name}`);
+          }).catch(error => {
+            console.log(`Ошибка при асинхронном запросе к ${selectedProvider.name}:`, error.message);
+          });
+        } catch (error) {
+          console.log(`Ошибка при подготовке запроса к провайдеру ${provider}:`, error.message);
+        }
       }
       
       // Мгновенно возвращаем демо-ответ

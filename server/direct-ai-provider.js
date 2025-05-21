@@ -1,23 +1,23 @@
 // Прямая интеграция с AI API (без использования g4f пакета)
 const fetch = require('node-fetch').default;
 
-// Набор рабочих API-провайдеров
+// Набор рабочих API-провайдеров - обновленные провайдеры из списка G4F
 const AI_PROVIDERS = {
-  // OpenAI API через бесплатный прокси
-  FREE_OPENAI: {
-    name: 'OpenAI-Free', 
-    url: 'https://api.ainext.tech/v1/chat/completions',
+  // DarkAI - без авторизации, поддержка GPT-4o
+  DARKAI: {
+    name: 'DarkAI', 
+    url: 'https://api.darkai.ai/v1/chat/completions',
     needsKey: false,
     headers: {
       'Content-Type': 'application/json',
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36'
     },
     prepareRequest: (message) => {
       return {
-        model: "gpt-3.5-turbo",
+        model: "gpt-4o",
         messages: [{ role: "user", content: message }],
         temperature: 0.7,
-        max_tokens: 800
+        stream: false
       };
     },
     extractResponse: async (response) => {
@@ -25,24 +25,25 @@ const AI_PROVIDERS = {
       if (jsonResponse && jsonResponse.choices && jsonResponse.choices.length > 0) {
         return jsonResponse.choices[0].message.content;
       }
-      throw new Error('Некорректный ответ от бесплатного OpenAI API');
+      throw new Error('Некорректный ответ от DarkAI API');
     }
   },
   
-  // GPT4All API - работает через API Free FastAPI
-  GPT4ALL: {
-    name: 'GPT4All-Free',
-    url: 'https://gpt4all.hexcode.tech/api/chat/completions',
+  // Gemini (gemini-pro) - базовый API
+  GEMINI: {
+    name: 'Gemini-Pro',
+    url: 'https://api.gemini-pro.ai/v1/chat/completions',
     needsKey: false,
     headers: {
       'Content-Type': 'application/json',
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36'
     },
     prepareRequest: (message) => {
       return {
-        model: "gpt-3.5-turbo",
+        model: "gemini-pro",
         messages: [{ role: "user", content: message }],
-        temperature: 0.7
+        temperature: 0.7,
+        stream: false
       };
     },
     extractResponse: async (response) => {
@@ -50,23 +51,50 @@ const AI_PROVIDERS = {
       if (jsonResponse && jsonResponse.choices && jsonResponse.choices.length > 0) {
         return jsonResponse.choices[0].message.content;
       }
-      throw new Error('Некорректный ответ от GPT4All');
+      throw new Error('Некорректный ответ от Gemini API');
     }
   },
   
-  // Free AI API - небольшой свободный провайдер
-  FREE_AI: {
-    name: 'Free-AI',
-    url: 'https://api.free-ai.chat/v1/chat/completions',
+  // Free2GPT - бесплатный провайдер с Mixtral
+  FREE2GPT: {
+    name: 'Free2GPT-Mixtral',
+    url: 'https://free2gpt.wayscript.io/v1/chat/completions',
+    needsKey: false,
+    headers: {
+      'Content-Type': 'application/json',
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36'
+    },
+    prepareRequest: (message) => {
+      return {
+        model: "mixtral-7b",
+        messages: [{ role: "user", content: message }],
+        temperature: 0.7,
+        stream: false
+      };
+    },
+    extractResponse: async (response) => {
+      const jsonResponse = await response.json();
+      if (jsonResponse && jsonResponse.choices && jsonResponse.choices.length > 0) {
+        return jsonResponse.choices[0].message.content;
+      }
+      throw new Error('Некорректный ответ от Free2GPT');
+    }
+  },
+  
+  // AIChatFree - использование Gemini Pro
+  AICHATFREE: {
+    name: 'AIChatFree',
+    url: 'https://api.aichatfree.app/v1/chat/completions',
     needsKey: false,
     headers: {
       'Content-Type': 'application/json'
     },
     prepareRequest: (message) => {
       return {
-        model: "gpt-3.5-turbo",
+        model: "gemini-pro",
         messages: [{ role: "user", content: message }],
-        temperature: 0.7
+        temperature: 0.7,
+        stream: false
       };
     },
     extractResponse: async (response) => {
@@ -74,7 +102,7 @@ const AI_PROVIDERS = {
       if (jsonResponse && jsonResponse.choices && jsonResponse.choices.length > 0) {
         return jsonResponse.choices[0].message.content;
       }
-      throw new Error('Некорректный ответ от Free-AI');
+      throw new Error('Некорректный ответ от AIChatFree');
     }
   },
   
@@ -395,5 +423,6 @@ async function getChatResponse(message, options = {}) {
 module.exports = {
   getChatResponse,
   getDemoResponse,
+  tryProvider,
   AI_PROVIDERS
 };
