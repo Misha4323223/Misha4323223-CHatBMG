@@ -43,18 +43,67 @@ async function getDeepInfraResponse(message, options = {}) {
       systemPrompt: systemPrompt
     };
     
-    // Используем готовую функцию из pythonProviderRoutes для отправки запроса к Python G4F
-    const providerToUse = model === 'codellama' ? 'DeepInfra_CodeLlama' :
-                          model === 'mixtral' ? 'DeepInfra_Mistral' :
-                          model === 'llama' ? 'DeepInfra_Llama' :
-                          model === 'qwen' ? 'DeepInfra_Qwen' : 'DeepInfra';
+    // Используем прямой вызов к конкретному провайдеру DeepInfra без автопереключения
+    // Используем /python/direct вместо /python/chat для указания конкретного провайдера
     
-    console.log(`DeepInfra: Используем провайдер ${providerToUse}`);
+    // Определяем нужный провайдер, используя точное имя из списка провайдеров Python G4F
+    const providerToUse = model === 'codellama' ? 'DeepInfra' :
+                          model === 'mixtral' ? 'DeepInfra' :
+                          model === 'llama' ? 'DeepInfra' :
+                          model === 'qwen' ? 'DeepInfra' : 'DeepInfra';
     
-    const response = await pythonProviderRoutes.callPythonAI(
-      JSON.stringify(fullMessage),
-      providerToUse
-    );
+    console.log(`DeepInfra: Используем провайдер ${providerToUse} с прямым вызовом без автоматического переключения`);
+    
+    // Создаем HTTP-запрос к Python G4F напрямую, указывая force_provider=true
+    const http = require('http');
+    const requestData = JSON.stringify({
+      message: message,
+      provider: providerToUse,
+      systemPrompt: systemPrompt,
+      force_provider: true, // Принудительное использование указанного провайдера
+      timeout: 25000
+    });
+    
+    // Отправляем запрос напрямую к Python API с указанием принудительного использования провайдера
+    const responseData = await new Promise((resolve, reject) => {
+      const options = {
+        hostname: 'localhost',
+        port: 5004,
+        path: '/python/direct',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Content-Length': Buffer.byteLength(requestData)
+        }
+      };
+      
+      const req = http.request(options, (res) => {
+        let data = '';
+        
+        res.on('data', (chunk) => {
+          data += chunk;
+        });
+        
+        res.on('end', () => {
+          try {
+            const parsedData = JSON.parse(data);
+            resolve(parsedData);
+          } catch (err) {
+            reject(new Error(`Ошибка при парсинге ответа: ${err.message}`));
+          }
+        });
+      });
+      
+      req.on('error', (err) => {
+        reject(err);
+      });
+      
+      req.write(requestData);
+      req.end();
+    });
+    
+    // Извлекаем ответ из данных
+    const response = responseData.response;
     
     if (!response) {
       throw new Error('Python G4F не вернул ответ от DeepInfra');
