@@ -143,7 +143,7 @@ def get_chat_response(message, specific_provider=None):
         print(f"Указанный провайдер {specific_provider} не ответил, пробуем другие...")
     
     # Порядок перебора провайдеров (от более стабильных к менее)
-    providers_priority = ["Bing", "You", "DeepAi", "Phind", "Aichat", "FreeGpt", "Bard", "AItianhuSpace"]
+    providers_priority = ["You", "DDG", "DeepInfra", "Phind", "Liaobots", "GeminiPro", "Gemini", "AIChatFree", "FreeGpt", "ChatgptFree", "Yqcloud", "ChatGLM"]
     
     # Перебираем провайдеры
     for provider_name in providers_priority:
