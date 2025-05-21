@@ -77,14 +77,49 @@ export default function AuthScreen() {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-b from-gray-900 to-gray-800">
-      <Card className="w-full max-w-md p-8 bg-white rounded-lg shadow-2xl border border-gray-200">
-        <div className="text-center mb-6">
-          <div className="flex justify-center mb-4">
-            <BooomerangsLogo size={128} className="mx-auto" />
+    <div style={{
+      position: 'fixed', 
+      inset: 0, 
+      zIndex: 50, 
+      display: 'flex', 
+      alignItems: 'center', 
+      justifyContent: 'center', 
+      background: 'linear-gradient(to bottom, #1e293b, #0f172a)'
+    }}>
+      <Card style={{
+        width: '100%',
+        maxWidth: '28rem',
+        padding: '2rem',
+        backgroundColor: 'white',
+        borderRadius: '1rem',
+        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+        border: '1px solid #e5e7eb'
+      }}>
+        <div style={{textAlign: 'center', marginBottom: '1.5rem'}}>
+          <div style={{display: 'flex', justifyContent: 'center', marginBottom: '1rem'}}>
+            <div style={{
+              width: '128px',
+              height: '128px',
+              borderRadius: '50%',
+              background: 'white',
+              border: '4px solid #3b82f6',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '32px',
+              fontWeight: 'bold',
+              color: '#3b82f6'
+            }}>B</div>
           </div>
-          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">BOOOMERANGS</h1>
-          <p className="text-gray-600 mt-2">Бесплатный доступ к AI без платных API ключей</p>
+          <h1 style={{
+            fontSize: '1.875rem',
+            fontWeight: 'bold',
+            background: 'linear-gradient(to right, #3b82f6, #4f46e5)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            marginBottom: '0.5rem'
+          }}>BOOOMERANGS</h1>
+          <p style={{color: '#4b5563', marginTop: '0.5rem'}}>Бесплатный доступ к AI без платных API ключей</p>
         </div>
         
         <Form {...form}>
