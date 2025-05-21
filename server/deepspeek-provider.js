@@ -6,6 +6,72 @@ const express = require('express');
 const router = express.Router();
 const fetch = require('node-fetch');
 
+// Кэш для хранения часто задаваемых технических вопросов и ответов
+// Используем Map для быстрого доступа по ключу
+const technicalResponseCache = new Map();
+
+/**
+ * Генерирует уникальный ключ для кэширования запроса
+ * @param {string} query - Текст запроса
+ * @returns {string} - Уникальный ключ для кэша
+ */
+function generateCacheKey(query) {
+  // Нормализуем запрос: приводим к нижнему регистру, удаляем лишние пробелы
+  return query.toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Проверяет, есть ли кэшированный ответ для запроса
+ * @param {string} query - Текст запроса
+ * @returns {Object|null} - Кэшированный ответ или null
+ */
+function getCachedResponse(query) {
+  const cacheKey = generateCacheKey(query);
+  
+  // Проверяем кэш на точное совпадение
+  if (technicalResponseCache.has(cacheKey)) {
+    console.log(`DeepSpeek: Найден кэшированный ответ для запроса "${query.substring(0, 30)}..."`);
+    return technicalResponseCache.get(cacheKey);
+  }
+  
+  // Проверяем на частичное совпадение для похожих вопросов
+  // Например, "как работают react хуки" и "расскажи про react хуки" должны дать похожий ответ
+  for (const [key, value] of technicalResponseCache.entries()) {
+    // Если в кэше есть ключ, который содержит все значимые слова из запроса
+    const queryWords = cacheKey.split(' ').filter(word => word.length > 3);
+    const isMatch = queryWords.every(word => key.includes(word));
+    
+    if (isMatch) {
+      console.log(`DeepSpeek: Найден похожий кэшированный ответ для "${query.substring(0, 30)}..."`);
+      return value;
+    }
+  }
+  
+  return null;
+}
+
+/**
+ * Сохраняет ответ в кэш для последующего использования
+ * @param {string} query - Текст запроса
+ * @param {Object} response - Ответ для кэширования
+ */
+function cacheResponse(query, response) {
+  // Кэшируем только успешные ответы
+  if (response && response.success && response.response) {
+    const cacheKey = generateCacheKey(query);
+    console.log(`DeepSpeek: Кэширование ответа для "${query.substring(0, 30)}..."`);
+    technicalResponseCache.set(cacheKey, response);
+    
+    // Ограничиваем размер кэша (максимум 100 записей)
+    if (technicalResponseCache.size > 100) {
+      const oldestKey = technicalResponseCache.keys().next().value;
+      technicalResponseCache.delete(oldestKey);
+    }
+  }
+}
+
 // Технические домены для определения запросов
 const techDomains = [
   // Языки программирования
@@ -779,8 +845,22 @@ router.post('/query', async (req, res) => {
       });
     }
     
+    console.log(`DeepSpeek: Получен запрос: "${query.substring(0, 50)}..."`);
+    
+    // Проверяем кэш перед обработкой запроса
+    const cachedResponse = getCachedResponse(query);
+    if (cachedResponse) {
+      console.log(`DeepSpeek: Отправляем кэшированный ответ`);
+      return res.json(cachedResponse);
+    }
+    
     // Получаем ответ от DeepSpeek
     const response = await getDeepSpeekResponse(query);
+    
+    // Кэшируем успешный ответ для будущего использования
+    if (response.success) {
+      cacheResponse(query, response);
+    }
     
     res.json(response);
   } catch (error) {
