@@ -587,6 +587,7 @@ async function getDeepSpeekResponse(query) {
     case 'advanced':
       // Для продвинутых вопросов используем наиболее мощные модели
       technicalProviders = [
+        "ChatFree",          // Новый стабильный провайдер
         "Qwen_Qwen_2_5_Max", // Python G4F с Qwen 2.5 Max (самая мощная версия)
         "DEEPSEEK",          // G4F провайдер специализированный на техническом контенте
         "AItianhu",          // Qwen через AItianhu
@@ -601,6 +602,7 @@ async function getDeepSpeekResponse(query) {
     case 'intermediate':
       // Для среднего уровня сложности - баланс между глубиной и доступностью
       technicalProviders = [
+        "ChatFree",          // Новый стабильный провайдер
         "AItianhu",          // Qwen через AItianhu
         "Qwen_Qwen_3",       // Python G4F с Qwen 3 (быстрее работает)
         "Phind",             // Технический AI специалист
@@ -615,6 +617,7 @@ async function getDeepSpeekResponse(query) {
     case 'basic':
       // Для базового уровня - фокус на объяснение основ
       technicalProviders = [
+        "ChatFree",          // Новый стабильный провайдер
         "AItianhu_Turbo",    // Быстрая версия Qwen
         "Qwen_Qwen_3",       // Python G4F с Qwen 3
         "Gemini",            // Хорошо для объяснений базовых концепций
@@ -629,6 +632,7 @@ async function getDeepSpeekResponse(query) {
     default: // 'general'
       // Для общих технических вопросов - универсальный подход
       technicalProviders = [
+        "ChatFree",          // Новый стабильный провайдер без API ключа
         "AItianhu",          // Qwen через AItianhu
         "Qwen_Qwen_2_5_Max", // Python G4F с Qwen 2.5 Max
         "Phind",             // Технический AI специалист
@@ -675,6 +679,31 @@ async function getDeepSpeekResponse(query) {
             model: `DeepSpeek AI (${provider})`,
             expertLevel: expertLevel
           };
+        }
+      } else if (provider === "ChatFree") {
+        // Используем новый провайдер ChatFree
+        try {
+          console.log(`DeepSpeek: Пробуем использовать ChatFree API для ответа...`);
+          
+          response = await directAiProvider.getChatResponse(query, { 
+            provider: "CHATFREE",  // Имя провайдера в списке AI_PROVIDERS
+            systemPrompt: systemPrompt
+          });
+          
+          if (response) {
+            console.log(`DeepSpeek: Успешно получен ответ от ChatFree (уровень: ${expertLevel})`);
+            
+            return {
+              success: true,
+              response: response,
+              provider: "DeepSpeek",
+              model: `DeepSpeek AI (ChatFree)`,
+              expertLevel: expertLevel
+            };
+          }
+        } catch (chatFreeError) {
+          console.error(`DeepSpeek: Ошибка с ChatFree: ${chatFreeError.message}`);
+          // Продолжаем выполнение и пробуем другие провайдеры
         }
       } else {
         // Остальные провайдеры доступны через direct-ai-provider
