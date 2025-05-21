@@ -363,4 +363,5 @@ if __name__ == '__main__':
     available_providers = [name for name in dir(g4f.Provider) if not name.startswith('_') and name[0].isupper()]
     print(f"🤖 Загружено {len(available_providers)} провайдеров: {', '.join(available_providers)}")
     
+    # Используем порт 5000, очистив его заранее
     app.run(host='0.0.0.0', port=5000, debug=False)
