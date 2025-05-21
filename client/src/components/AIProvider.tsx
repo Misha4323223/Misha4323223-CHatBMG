@@ -141,29 +141,40 @@ const AIProvider: React.FC = () => {
                   </div>
                 )}
                 
-                <div className="max-w-[80%]">
-                  <div 
-                    className={`p-3 rounded-lg break-words ${
-                      message.sender === 'user' 
-                        ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white ml-auto rounded-br-none' 
-                        : 'bg-white text-gray-800 rounded-bl-none shadow-sm border border-gray-100'
-                    }`}
-                    style={message.sender === 'user' ? {
-                      boxShadow: '0 4px 15px -3px rgba(59, 130, 246, 0.3)'
-                    } : {}}
-                  >
-                    <p className="whitespace-pre-wrap">{message.text}</p>
+                {message.sender === 'user' ? (
+                  <div className="flex flex-col items-end space-y-1 max-w-[80%]">
+                    <div className="message-bubble sent p-3 text-white text-[15px]">
+                      <p className="whitespace-pre-wrap">{message.text}</p>
+                    </div>
+                    <div className="flex items-center text-xs text-gray-500 pr-2 mt-1">
+                      <span>{message.time}</span>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-4 w-4 ml-1 text-blue-500"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <path d="M5 12l5 5L20 7" />
+                      </svg>
+                    </div>
                   </div>
-                  
-                  <div className={`flex items-center mt-1 text-xs text-gray-500 ${message.sender === 'user' ? 'justify-end' : ''}`}>
-                    <span>{message.time}</span>
-                    {message.model && (
-                      <span className="ml-2 px-2 py-0.5 bg-blue-50 text-blue-700 rounded-full">
-                        {message.model}
-                      </span>
-                    )}
+                ) : (
+                  <div className="flex flex-col space-y-1 max-w-[80%]">
+                    <div className="message-bubble received p-3 text-[15px] text-gray-800">
+                      <p className="whitespace-pre-wrap">{message.text}</p>
+                    </div>
+                    <div className="flex items-center">
+                      <span className="text-xs text-gray-500">{message.time}</span>
+                      {message.model && (
+                        <span className="ml-2 text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-600 font-medium">
+                          {message.model}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             ))}
             

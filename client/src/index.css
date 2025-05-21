@@ -15,10 +15,10 @@
 
 /* Message Bubbles Styles */
 .message-bubble.sent {
-  background: linear-gradient(to right, #3b82f6, #4f46e5);
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
   border-radius: 18px 18px 4px 18px;
   position: relative;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 10px -2px rgba(59, 130, 246, 0.3);
 }
 
 .message-bubble.sent::after {
@@ -28,7 +28,7 @@
   right: -3px;
   width: 12px;
   height: 12px;
-  background: #4f46e5;
+  background: #6366f1;
   transform: rotate(45deg);
   z-index: -1;
 }
