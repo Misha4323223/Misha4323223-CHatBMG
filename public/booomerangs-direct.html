@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BOOOMERANGS AI - Прямой доступ</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    
+    body {
+      min-height: 100vh;
+      background-color: #f9fafb;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1rem;
+    }
+    
+    .header {
+      padding: 1rem 0;
+      border-bottom: 1px solid rgba(59, 130, 246, 0.2);
+      margin-bottom: 2rem;
+      background: linear-gradient(135deg, rgba(219, 234, 254, 0.8), rgba(224, 231, 255, 0.8));
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+    
+    .header-content {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .logo-container {
+      display: flex;
+      align-items: center;
+    }
+    
+    .logo {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: white;
+      border: 3px solid #3b82f6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: bold;
+      color: #3b82f6;
+      box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
+      margin-right: 12px;
+    }
+    
+    .title {
+      font-weight: bold;
+      font-size: 20px;
+      background: linear-gradient(to right, #3b82f6, #6366f1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      color: transparent;
+    }
+    
+    .badge {
+      background-color: white;
+      border-radius: 9999px;
+      padding: 6px 12px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #3b82f6;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+    }
+    
+    .welcome {
+      text-align: center;
+      padding: 2rem;
+      background: white;
+      border-radius: 24px;
+      box-shadow: 0 20px 40px -10px rgba(59, 130, 246, 0.15);
+      margin-bottom: 2rem;
+    }
+    
+    .big-logo {
+      width: 86px;
+      height: 86px;
+      border-radius: 50%;
+      background: white;
+      border: 4px solid #3b82f6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+      font-weight: bold;
+      color: #3b82f6;
+      box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.3);
+      margin: 0 auto 1.5rem;
+    }
+    
+    .welcome-title {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 0.75rem;
+      background: linear-gradient(135deg, #3b82f6, #6366f1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      color: transparent;
+    }
+    
+    .welcome-subtitle {
+      color: #64748b;
+      margin-bottom: 1.5rem;
+    }
+    
+    .provider-tag {
+      display: inline-block;
+      padding: 0.5rem 1rem;
+      background-color: rgba(59, 130, 246, 0.1);
+      color: #3b82f6;
+      border-radius: 12px;
+      font-weight: 500;
+      border: 1px solid rgba(59, 130, 246, 0.2);
+    }
+    
+    .chat-container {
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 220px);
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+    
+    .messages {
+      flex-grow: 1;
+      padding: 1.5rem;
+      overflow-y: auto;
+    }
+    
+    .message-group {
+      display: flex;
+      margin-bottom: 1.5rem;
+    }
+    
+    .message-group.user {
+      justify-content: flex-end;
+    }
+    
+    .avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      margin-right: 12px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      color: white;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    
+    .avatar.booomerangs {
+      background: linear-gradient(135deg, #8b5cf6, #6366f1);
+    }
+    
+    .message-content {
+      max-width: 80%;
+    }
+    
+    .message-bubble {
+      padding: 12px 16px;
+      border-radius: 16px;
+      position: relative;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+      word-wrap: break-word;
+      white-space: pre-wrap;
+    }
+    
+    .user .message-bubble {
+      background: linear-gradient(135deg, #3b82f6, #6366f1);
+      color: white;
+      border-radius: 16px 16px 4px 16px;
+    }
+    
+    .user .message-bubble::after {
+      content: '';
+      position: absolute;
+      bottom: -5px;
+      right: -2px;
+      width: 12px;
+      height: 12px;
+      background: #6366f1;
+      transform: rotate(45deg);
+      z-index: -1;
+    }
+    
+    .ai .message-bubble {
+      background: white;
+      color: #1e293b;
+      border-radius: 16px 16px 16px 4px;
+      border: 1px solid #f1f5f9;
+    }
+    
+    .ai .message-bubble::after {
+      content: '';
+      position: absolute;
+      bottom: -5px;
+      left: -2px;
+      width: 12px;
+      height: 12px;
+      background: white;
+      border-bottom: 1px solid #f1f5f9;
+      border-left: 1px solid #f1f5f9;
+      transform: rotate(45deg);
+      z-index: -1;
+    }
+    
+    .message-meta {
+      display: flex;
+      align-items: center;
+      margin-top: 6px;
+      font-size: 12px;
+      color: #64748b;
+    }
+    
+    .message-time {
+      margin-right: 8px;
+    }
+    
+    .message-model {
+      display: inline-block;
+      padding: 2px 8px;
+      background-color: rgba(59, 130, 246, 0.1);
+      color: #3b82f6;
+      border-radius: 12px;
+      font-weight: 500;
+    }
+    
+    .user .message-meta {
+      justify-content: flex-end;
+    }
+    
+    .input-area {
+      border-top: 1px solid #f1f5f9;
+      padding: 1rem 1.5rem;
+      background: white;
+      display: flex;
+      align-items: center;
+      box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.03);
+    }
+    
+    .message-input {
+      flex-grow: 1;
+      padding: 12px 16px;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      margin-right: 12px;
+    }
+    
+    .message-input:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    .send-button {
+      background: linear-gradient(135deg, #3b82f6, #6366f1);
+      color: white;
+      border: none;
+      width: 45px;
+      height: 45px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
+    }
+    
+    .send-button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 8px -1px rgba(59, 130, 246, 0.4);
+    }
+    
+    .send-button:active {
+      transform: translateY(0);
+    }
+    
+    .send-button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    .send-button svg {
+      width: 20px;
+      height: 20px;
+    }
+    
+    .typing-indicator {
+      display: flex;
+      align-items: center;
+      margin-top: 10px;
+    }
+    
+    .typing-bubble {
+      display: flex;
+      align-items: center;
+      padding: 10px 16px;
+      background: white;
+      border-radius: 18px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+      border: 1px solid #f1f5f9;
+    }
+    
+    .typing-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin: 0 2px;
+      animation: typing-bubble-pulse 1.4s infinite ease-in-out;
+    }
+    
+    .typing-dot:nth-child(1) {
+      background-color: #bfdbfe;
+      animation-delay: 0s;
+    }
+    
+    .typing-dot:nth-child(2) {
+      background-color: #93c5fd;
+      animation-delay: 0.2s;
+    }
+    
+    .typing-dot:nth-child(3) {
+      background-color: #60a5fa;
+      animation-delay: 0.4s;
+    }
+    
+    @keyframes typing-bubble-pulse {
+      0%, 60%, 100% {
+        transform: translateY(0);
+      }
+      30% {
+        transform: translateY(-4px);
+      }
+    }
+    
+    .model-select {
+      position: relative;
+      margin-right: 12px;
+    }
+    
+    .model-select select {
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      background-color: white;
+      font-size: 14px;
+      color: #1e293b;
+      appearance: none;
+      padding-right: 30px;
+      cursor: pointer;
+    }
+    
+    .model-select::after {
+      content: '';
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 0;
+      height: 0;
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-top: 5px solid #1e293b;
+      pointer-events: none;
+    }
+    
+    @media (max-width: 640px) {
+      .header-content {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      
+      .badge {
+        margin-top: 8px;
+        align-self: flex-start;
+      }
+      
+      .chat-container {
+        height: calc(100vh - 260px);
+      }
+      
+      .message-content {
+        max-width: 90%;
+      }
+      
+      .model-select {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="container">
+      <div class="header-content">
+        <div class="logo-container">
+          <div class="logo">B</div>
+          <h1 class="title">BOOOMERANGS AI</h1>
+        </div>
+        <div class="badge">Без платных API ключей</div>
+      </div>
+    </div>
+  </header>
+  
+  <div class="container">
+    <div id="welcome-screen" class="welcome">
+      <div class="big-logo">B</div>
+      <h2 class="welcome-title">Добро пожаловать в BOOOMERANGS AI!</h2>
+      <p class="welcome-subtitle">Получайте доступ к современным AI моделям без платных API ключей. Задайте любой вопрос и получите ответ от искусственного интеллекта!</p>
+      <div class="provider-tag">Доступные провайдеры: Qwen AI, Phind, HuggingChat и другие</div>
+    </div>
+    
+    <div class="chat-container">
+      <div id="messages" class="messages">
+        <!-- Сообщения будут добавляться здесь -->
+      </div>
+      
+      <div class="input-area">
+        <div class="model-select">
+          <select id="model-selector">
+            <option value="AItianhu">Qwen AI</option>
+            <option value="Phind">Phind AI</option>
+            <option value="HuggingChat">HuggingChat</option>
+            <option value="auto">Автовыбор</option>
+          </select>
+        </div>
+        <input type="text" id="message-input" class="message-input" placeholder="Введите сообщение...">
+        <button id="send-button" class="send-button" disabled>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 2L11 13"></path>
+            <path d="M22 2L15 22L11 13L2 9L22 2Z"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const messagesContainer = document.getElementById('messages');
+      const messageInput = document.getElementById('message-input');
+      const sendButton = document.getElementById('send-button');
+      const welcomeScreen = document.getElementById('welcome-screen');
+      const modelSelector = document.getElementById('model-selector');
+      
+      let messages = [];
+      let isWaitingForResponse = false;
+      
+      // Активация кнопки отправки только при наличии текста
+      messageInput.addEventListener('input', () => {
+        sendButton.disabled = messageInput.value.trim() === '' || isWaitingForResponse;
+      });
+      
+      // Отправка при нажатии Enter
+      messageInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && !sendButton.disabled) {
+          sendMessage();
+        }
+      });
+      
+      // Обработка нажатия на кнопку отправки
+      sendButton.addEventListener('click', sendMessage);
+      
+      function sendMessage() {
+        const messageText = messageInput.value.trim();
+        if (messageText === '' || isWaitingForResponse) return;
+        
+        // Скрываем приветственный экран после первого сообщения
+        if (welcomeScreen.style.display !== 'none') {
+          welcomeScreen.style.display = 'none';
+        }
+        
+        // Получаем выбранный провайдер
+        const selectedProvider = modelSelector.value;
+        
+        // Добавляем сообщение пользователя
+        const userMessage = {
+          id: Date.now(),
+          text: messageText,
+          sender: 'user',
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        };
+        
+        messages.push(userMessage);
+        renderMessages();
+        messageInput.value = '';
+        sendButton.disabled = true;
+        
+        // Добавляем индикатор набора текста
+        showTypingIndicator();
+        
+        // Отправляем запрос к API
+        isWaitingForResponse = true;
+        fetch('/api/ai/chat', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            message: messageText,
+            provider: selectedProvider === 'auto' ? null : selectedProvider
+          })
+        })
+        .then(response => response.json())
+        .then(data => {
+          // Удаляем индикатор набора текста
+          hideTypingIndicator();
+          
+          if (data.success) {
+            // Добавляем ответ от AI
+            const aiMessage = {
+              id: Date.now(),
+              text: data.response,
+              sender: 'ai',
+              time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              model: data.model || 'AI',
+              provider: data.provider || 'Unknown'
+            };
+            
+            messages.push(aiMessage);
+          } else {
+            // Обработка ошибки
+            const errorMessage = {
+              id: Date.now(),
+              text: "Извините, произошла ошибка при получении ответа. Пожалуйста, попробуйте еще раз.",
+              sender: 'ai',
+              time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              model: 'Error',
+              provider: 'System'
+            };
+            
+            messages.push(errorMessage);
+          }
+          
+          renderMessages();
+          isWaitingForResponse = false;
+        })
+        .catch(error => {
+          console.error('Ошибка:', error);
+          
+          // Удаляем индикатор набора текста
+          hideTypingIndicator();
+          
+          // Обработка ошибки
+          const errorMessage = {
+            id: Date.now(),
+            text: "Произошла ошибка при обращении к серверу. Пожалуйста, проверьте соединение и попробуйте еще раз.",
+            sender: 'ai',
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            model: 'Error',
+            provider: 'System'
+          };
+          
+          messages.push(errorMessage);
+          renderMessages();
+          isWaitingForResponse = false;
+        });
+      }
+      
+      function renderMessages() {
+        if (messages.length === 0) return;
+        
+        messagesContainer.innerHTML = '';
+        
+        messages.forEach(message => {
+          const messageGroup = document.createElement('div');
+          messageGroup.className = `message-group ${message.sender}`;
+          
+          let html = '';
+          
+          if (message.sender === 'ai') {
+            html += `
+              <div class="avatar booomerangs">B</div>
+              <div class="message-content">
+                <div class="message-bubble">${message.text}</div>
+                <div class="message-meta">
+                  <span class="message-time">${message.time}</span>
+                  ${message.model ? `<span class="message-model">${message.model}</span>` : ''}
+                </div>
+              </div>
+            `;
+          } else {
+            html += `
+              <div class="message-content">
+                <div class="message-bubble">${message.text}</div>
+                <div class="message-meta">
+                  <span class="message-time">${message.time}</span>
+                </div>
+              </div>
+            `;
+          }
+          
+          messageGroup.innerHTML = html;
+          messagesContainer.appendChild(messageGroup);
+        });
+        
+        // Прокрутка вниз
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      }
+      
+      function showTypingIndicator() {
+        const typingIndicator = document.createElement('div');
+        typingIndicator.className = 'message-group ai typing-indicator';
+        typingIndicator.id = 'typing-indicator';
+        
+        typingIndicator.innerHTML = `
+          <div class="avatar booomerangs">B</div>
+          <div class="typing-bubble">
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+          </div>
+        `;
+        
+        messagesContainer.appendChild(typingIndicator);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      }
+      
+      function hideTypingIndicator() {
+        const typingIndicator = document.getElementById('typing-indicator');
+        if (typingIndicator) {
+          typingIndicator.remove();
+        }
+      }
+    });
+  </script>
+</body>
+</html>
