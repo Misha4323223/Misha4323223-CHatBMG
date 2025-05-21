@@ -282,6 +282,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           // Используем наш локальный DeepSpeek провайдер для технических вопросов
           console.log(`📊 Обнаружен технический вопрос, используем DeepSpeek: "${message.substring(0, 50)}..."`);
+          
+          const deepspeekProvider = require('./deepspeek-provider');
           const deepspeekResponse = await deepspeekProvider.getDeepSpeekResponse(message);
           
           return res.json({
