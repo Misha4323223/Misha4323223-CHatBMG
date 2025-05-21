@@ -6,7 +6,8 @@ const { getResponseFromG4F, getAvailableProviders } = require('./g4f-chat-correc
 
 const app = express();
 // Используем порт из переменной окружения для совместимости с Replit
-const PORT = process.env.PORT || 5000;
+// или 5001, чтобы избежать конфликтов с другими серверами
+const PORT = process.env.PORT || 5001;
 
 // Поддержка JSON, CORS и статических файлов
 app.use(express.json());
