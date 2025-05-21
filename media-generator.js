@@ -1,4 +1,35 @@
-<!DOCTYPE html>
+import express from 'express';
+import cors from 'cors';
+import fetch from 'node-fetch';
+import potrace from 'potrace';
+import sharp from 'sharp';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+
+// Настройка Express
+const app = express();
+const PORT = 3100;
+
+// Настройка пути для ES модулей
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Настройка промежуточного ПО
+app.use(express.json());
+app.use(cors());
+
+// Создаем директории
+const tempDir = path.join(__dirname, 'temp');
+const publicDir = path.join(__dirname, 'public');
+const outputDir = path.join(__dirname, 'output');
+
+if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir);
+if (!fs.existsSync(publicDir)) fs.mkdirSync(publicDir);
+if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir);
+
+// HTML страница для нашего генератора
+const htmlPage = `<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -535,7 +566,7 @@
                             'Content-Type': 'application/json'
                         },
                         body: JSON.stringify({
-                            message: `Опиши подробно, как будет выглядеть изображение по запросу: "${prompt}". Опиши визуальные элементы, стиль, цвета, композицию и детали.`,
+                            message: \`Опиши подробно, как будет выглядеть изображение по запросу: "\${prompt}". Опиши визуальные элементы, стиль, цвета, композицию и детали.\`,
                             provider: 'Qwen_Qwen_2_5',
                             max_retries: 2
                         })
@@ -577,4 +608,333 @@
         });
     </script>
 </body>
-</html>
+</html>`;
+
+// Сохраняем HTML файл
+fs.writeFileSync(path.join(publicDir, 'index.html'), htmlPage);
+
+// Объект для временного хранения сгенерированных изображений
+const generatedImages = new Map();
+
+// Функция для генерации уникального ID
+function generateId() {
+    return Date.now().toString(36) + Math.random().toString(36).substring(2, 9);
+}
+
+// Функция для генерации изображения через Picsum Photos API
+async function generateImage(prompt, style = 'realistic') {
+    console.log(`Генерация изображения для запроса: "${prompt}" в стиле "${style}"`);
+    
+    try {
+        // Создаем хеш из промпта для получения стабильных, но разных изображений
+        const seed = prompt.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % 1000;
+        
+        // Изменяем параметры в зависимости от стиля
+        let imageUrl = `https://picsum.photos/seed/${seed}/800/600`;
+        
+        if (style === 'artistic') {
+            // Используем другой сервис для художественных изображений
+            imageUrl = `https://source.unsplash.com/800x600/?${encodeURIComponent(prompt)}`;
+        }
+        
+        console.log(`Запрос изображения по URL: ${imageUrl}`);
+        
+        const response = await fetch(imageUrl);
+        
+        if (!response.ok) {
+            throw new Error(`Ошибка при загрузке изображения: ${response.status}`);
+        }
+        
+        // Получаем изображение как буфер
+        const buffer = await response.arrayBuffer();
+        const imageBuffer = Buffer.from(buffer);
+        
+        // Применяем фильтры в зависимости от стиля
+        let processedBuffer = imageBuffer;
+        
+        if (style !== 'realistic') {
+            const sharpImage = sharp(imageBuffer);
+            
+            switch (style) {
+                case 'abstract':
+                    processedBuffer = await sharpImage
+                        .modulate({ brightness: 1.2, saturation: 1.5 })
+                        .blur(5)
+                        .toBuffer();
+                    break;
+                case 'geometric':
+                    processedBuffer = await sharpImage
+                        .modulate({ brightness: 1.1 })
+                        .sharpen()
+                        .threshold(128)
+                        .toBuffer();
+                    break;
+                case 'minimalist':
+                    processedBuffer = await sharpImage
+                        .grayscale()
+                        .modulate({ brightness: 1.3 })
+                        .threshold(150)
+                        .blur(2)
+                        .toBuffer();
+                    break;
+                default:
+                    processedBuffer = await sharpImage.toBuffer();
+                    break;
+            }
+        }
+        
+        return processedBuffer;
+    } catch (error) {
+        console.error('Ошибка при генерации изображения:', error);
+        
+        // Создаем градиент с помощью Sharp, если API недоступно
+        try {
+            console.log('Создание резервного изображения...');
+            
+            // Выбираем цвет на основе промпта и стиля
+            const seed = prompt.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+            
+            let r, g, b;
+            switch (style) {
+                case 'abstract':
+                    r = (seed * 123) % 255;
+                    g = (seed * 45) % 255;
+                    b = (seed * 67) % 255;
+                    break;
+                case 'minimalist':
+                    r = g = b = 240;
+                    break;
+                case 'geometric':
+                    r = 40; g = 40; b = 40;
+                    break;
+                default:
+                    r = 100; g = 100; b = 200;
+                    break;
+            }
+            
+            // Создаем простое изображение в зависимости от стиля
+            return await sharp({
+                create: {
+                    width: 800,
+                    height: 600,
+                    channels: 3,
+                    background: { r, g, b }
+                }
+            })
+            .png()
+            .toBuffer();
+        } catch (sharpError) {
+            console.error('Ошибка при создании резервного изображения:', sharpError);
+            throw error;
+        }
+    }
+}
+
+// Функция для конвертации PNG в SVG с использованием Potrace
+async function convertToSvg(imageBuffer, style = 'realistic') {
+    return new Promise(async (resolve, reject) => {
+        try {
+            // Создаем временный файл для трассировки
+            const tempPngPath = path.join(tempDir, `temp_${Date.now()}.png`);
+            
+            // Оптимизируем изображение с помощью Sharp перед трассировкой
+            let sharpConfig = sharp(imageBuffer).grayscale();
+            
+            // Настраиваем параметры трассировки в зависимости от стиля
+            const potraceParams = {
+                threshold: 128,
+                turdSize: 2,
+                optTolerance: 0.2,
+                alphaMax: 1,
+                color: '#000000'
+            };
+            
+            switch (style) {
+                case 'minimalist':
+                    await sharpConfig.threshold(150).blur(2).toFile(tempPngPath);
+                    potraceParams.turdSize = 5;
+                    potraceParams.optTolerance = 0.5;
+                    break;
+                case 'geometric':
+                    await sharpConfig.sharpen().threshold(128).toFile(tempPngPath);
+                    potraceParams.turdSize = 1;
+                    potraceParams.optTolerance = 0.1;
+                    break;
+                case 'abstract':
+                    await sharpConfig.modulate({ brightness: 1.2 }).blur(3).toFile(tempPngPath);
+                    potraceParams.turdSize = 4;
+                    potraceParams.optTolerance = 0.3;
+                    break;
+                case 'artistic':
+                    await sharpConfig.modulate({ contrast: 1.2 }).toFile(tempPngPath);
+                    potraceParams.turdSize = 3;
+                    potraceParams.optTolerance = 0.2;
+                    break;
+                default:
+                    await sharpConfig.toFile(tempPngPath);
+                    break;
+            }
+            
+            // Выполняем трассировку изображения
+            potrace.trace(tempPngPath, potraceParams, (err, svg) => {
+                // Удаляем временный файл после трассировки
+                fs.unlink(tempPngPath, () => {});
+                
+                if (err) {
+                    console.error('Ошибка при трассировке:', err);
+                    return reject(err);
+                }
+                
+                resolve(svg);
+            });
+        } catch (error) {
+            console.error('Ошибка при конвертации в SVG:', error);
+            reject(error);
+        }
+    });
+}
+
+// Маршрут для статических файлов
+app.use(express.static(publicDir));
+
+// Маршрут для главной страницы
+app.get('/', (req, res) => {
+    res.sendFile(path.join(publicDir, 'index.html'));
+});
+
+// Маршрут для генерации изображения
+app.post('/api/generate', async (req, res) => {
+    try {
+        const { prompt, style = 'realistic' } = req.body;
+        
+        if (!prompt) {
+            return res.status(400).json({ error: 'Отсутствует параметр prompt' });
+        }
+        
+        console.log(`Получен запрос на генерацию: "${prompt}" в стиле "${style}"`);
+        
+        // Генерируем изображение
+        const imageBuffer = await generateImage(prompt, style);
+        
+        // Конвертируем в SVG
+        const svg = await convertToSvg(imageBuffer, style);
+        
+        // Сохраняем оригинальное изображение для последующей конвертации
+        const id = generateId();
+        const imagePath = path.join(outputDir, `${id}.png`);
+        await sharp(imageBuffer).toFile(imagePath);
+        
+        // Сохраняем в кэш
+        generatedImages.set(id, {
+            id,
+            prompt,
+            style,
+            timestamp: Date.now(),
+            path: imagePath
+        });
+        
+        // Отправляем SVG и ID в ответе
+        res.json({ 
+            svg,
+            id
+        });
+        
+    } catch (error) {
+        console.error('Ошибка при обработке запроса:', error);
+        res.status(500).json({ 
+            error: 'Произошла ошибка при обработке запроса',
+            message: error.message
+        });
+    }
+});
+
+// Маршрут для конвертации в другие форматы
+app.get('/api/convert', async (req, res) => {
+    try {
+        const { id, format } = req.query;
+        
+        if (!id || !format) {
+            return res.status(400).json({ error: 'Отсутствуют обязательные параметры id и format' });
+        }
+        
+        // Проверяем, есть ли изображение в кэше
+        if (!generatedImages.has(id)) {
+            return res.status(404).json({ error: 'Изображение не найдено' });
+        }
+        
+        const imageInfo = generatedImages.get(id);
+        
+        // Проверяем, существует ли файл
+        if (!fs.existsSync(imageInfo.path)) {
+            return res.status(404).json({ error: 'Файл изображения не найден' });
+        }
+        
+        // Настраиваем формат
+        let contentType = 'image/png';
+        let outputOptions = {};
+        let outputFormat = 'png';
+        
+        switch (format.toLowerCase()) {
+            case 'jpeg':
+            case 'jpg':
+                contentType = 'image/jpeg';
+                outputFormat = 'jpeg';
+                outputOptions = { quality: 90 };
+                break;
+            case 'webp':
+                contentType = 'image/webp';
+                outputFormat = 'webp';
+                outputOptions = { quality: 90 };
+                break;
+            case 'png':
+            default:
+                // PNG настройки по умолчанию
+                break;
+        }
+        
+        // Устанавливаем заголовки ответа
+        res.setHeader('Content-Type', contentType);
+        res.setHeader('Content-Disposition', `attachment; filename="image.${outputFormat}"`);
+        
+        // Создаем поток обработки изображения
+        const transform = sharp(imageInfo.path)
+            .toFormat(outputFormat, outputOptions);
+        
+        // Отправляем изображение клиенту
+        transform.pipe(res);
+        
+    } catch (error) {
+        console.error('Ошибка при конвертации изображения:', error);
+        res.status(500).json({ 
+            error: 'Произошла ошибка при конвертации изображения',
+            message: error.message
+        });
+    }
+});
+
+// Очистка старых изображений (чтобы не засорять диск)
+setInterval(() => {
+    const now = Date.now();
+    const expirationTime = 3600000; // 1 час
+    
+    for (const [id, info] of generatedImages.entries()) {
+        if (now - info.timestamp > expirationTime) {
+            // Удаляем старые файлы
+            try {
+                if (fs.existsSync(info.path)) {
+                    fs.unlinkSync(info.path);
+                }
+                generatedImages.delete(id);
+                console.log(`Удален старый файл: ${id}`);
+            } catch (err) {
+                console.error(`Ошибка при удалении файла ${id}:`, err);
+            }
+        }
+    }
+}, 1800000); // каждые 30 минут
+
+// Запускаем сервер
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Универсальный генератор графики запущен на порту ${PORT}`);
+    console.log(`Откройте http://localhost:${PORT} в браузере`);
+});
