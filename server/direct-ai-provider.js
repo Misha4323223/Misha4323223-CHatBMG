@@ -3,10 +3,10 @@ const fetch = require('node-fetch').default;
 
 // Набор рабочих API-провайдеров
 const AI_PROVIDERS = {
-  // You.com API - более простой и стабильный вариант через yew-bot
-  YOU: {
-    name: 'Yew-Bot', 
-    url: 'https://api.yewbot.app/v1/chat/completions',
+  // OpenAI API через бесплатный прокси
+  FREE_OPENAI: {
+    name: 'OpenAI-Free', 
+    url: 'https://api.ainext.tech/v1/chat/completions',
     needsKey: false,
     headers: {
       'Content-Type': 'application/json',
@@ -14,7 +14,33 @@ const AI_PROVIDERS = {
     },
     prepareRequest: (message) => {
       return {
-        model: "yew-llama3:8b",
+        model: "gpt-3.5-turbo",
+        messages: [{ role: "user", content: message }],
+        temperature: 0.7,
+        max_tokens: 800
+      };
+    },
+    extractResponse: async (response) => {
+      const jsonResponse = await response.json();
+      if (jsonResponse && jsonResponse.choices && jsonResponse.choices.length > 0) {
+        return jsonResponse.choices[0].message.content;
+      }
+      throw new Error('Некорректный ответ от бесплатного OpenAI API');
+    }
+  },
+  
+  // GPT4All API - работает через API Free FastAPI
+  GPT4ALL: {
+    name: 'GPT4All-Free',
+    url: 'https://gpt4all.hexcode.tech/api/chat/completions',
+    needsKey: false,
+    headers: {
+      'Content-Type': 'application/json',
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+    },
+    prepareRequest: (message) => {
+      return {
+        model: "gpt-3.5-turbo",
         messages: [{ role: "user", content: message }],
         temperature: 0.7
       };
@@ -24,7 +50,31 @@ const AI_PROVIDERS = {
       if (jsonResponse && jsonResponse.choices && jsonResponse.choices.length > 0) {
         return jsonResponse.choices[0].message.content;
       }
-      throw new Error('Некорректный ответ от Yew-Bot');
+      throw new Error('Некорректный ответ от GPT4All');
+    }
+  },
+  
+  // Free AI API - небольшой свободный провайдер
+  FREE_AI: {
+    name: 'Free-AI',
+    url: 'https://api.free-ai.chat/v1/chat/completions',
+    needsKey: false,
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    prepareRequest: (message) => {
+      return {
+        model: "gpt-3.5-turbo",
+        messages: [{ role: "user", content: message }],
+        temperature: 0.7
+      };
+    },
+    extractResponse: async (response) => {
+      const jsonResponse = await response.json();
+      if (jsonResponse && jsonResponse.choices && jsonResponse.choices.length > 0) {
+        return jsonResponse.choices[0].message.content;
+      }
+      throw new Error('Некорректный ответ от Free-AI');
     }
   },
   
@@ -53,14 +103,8 @@ const AI_PROVIDERS = {
         temperature: 0.2,
         max_tokens: 1000,
         top_p: 0.9,
-        search_domain_filter: [],
-        return_images: false,
-        return_related_questions: false,
         search_recency_filter: "month",
-        top_k: 0,
-        stream: false,
-        presence_penalty: 0,
-        frequency_penalty: 1
+        stream: false
       };
     },
     extractResponse: async (response) => {
@@ -81,46 +125,6 @@ const AI_PROVIDERS = {
     }
   },
   
-  // Интеграция с Bing 
-  BING: {
-    name: 'Bing',
-    url: 'https://www.bing.com/turing/conversation/create',
-    needsKey: false,
-    headers: {
-      'Content-Type': 'application/json',
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      'Accept': 'text/html,application/xhtml+xml,application/xml',
-      'Accept-Language': 'en-US,en;q=0.9',
-      'Referer': 'https://www.bing.com/search?q=Bing+AI'
-    },
-    prepareRequest: (message) => {
-      return {
-        messages: [
-          {
-            author: 'user',
-            content: message
-          }
-        ],
-        invocationId: '1',
-        conversationSignature: '',
-        participant: { id: '' },
-        conversationId: ''
-      };
-    },
-    extractResponse: async (response) => {
-      if (!response.ok) {
-        throw new Error(`Ошибка Bing API: ${response.status} ${response.statusText}`);
-      }
-      const text = await response.text();
-      // Извлечение ответа из текста (может потребоваться адаптация)
-      const match = text.match(/"text":"([^"]+)"/);
-      if (match && match[1]) {
-        return match[1].replace(/\\n/g, '\n');
-      }
-      throw new Error('Не удалось получить ответ от Bing');
-    }
-  },
-  
   // Альтернативный сервис для демо-режима
   DEMO: {
     name: 'BOOOMERANGS-Demo',
@@ -131,7 +135,7 @@ const AI_PROVIDERS = {
       return response;
     }
   }
-};
+}
 
 // Набор предустановленных ответов для демо-режима
 const DEMO_RESPONSES = [
