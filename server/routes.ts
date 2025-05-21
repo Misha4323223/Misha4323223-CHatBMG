@@ -7,7 +7,7 @@ import { authMiddleware } from "./middleware/auth";
 import { z } from "zod";
 import { authSchema, messageSchema } from "@shared/schema";
 
-// Импортируем наш новый генератор изображений через динамический импорт
+// Импортируем модули для работы с изображениями и G4F
 import * as path from 'path';
 import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
@@ -16,6 +16,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const require = createRequire(__filename);
 const svgGenerator = require('./svg-generator');
+const g4fHandlers = require('./g4f-handlers');
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Create HTTP server
@@ -44,6 +45,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/demo', (req, res) => {
     res.sendFile('demo.html', { root: '.' });
   });
+  
+  // G4F чат интерфейс
+  app.get('/g4f-chat', (req, res) => {
+    res.sendFile('g4f-chat.html', { root: '.' });
+  });
+  
+  // API для работы с G4F провайдерами
+  app.use('/api/g4f', g4fHandlers);
   
   // Auth endpoint - validate token and return user
   app.post("/api/auth", async (req, res) => {
