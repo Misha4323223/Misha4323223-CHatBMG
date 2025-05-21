@@ -7,6 +7,7 @@ import NotFound from "@/pages/not-found";
 import AuthScreen from "@/pages/AuthScreen";
 import BooomerangsAuth from "@/pages/BooomerangsAuth";
 import Chat from "@/pages/Chat";
+import AIChat from "@/pages/AIChat";
 import ImageGeneratorSimple from "@/pages/ImageGeneratorSimple";
 import { useEffect } from "react";
 
@@ -37,6 +38,7 @@ function Router() {
       <Route path="/" component={AuthScreen} />
       <Route path="/new-auth" component={BooomerangsAuth} />
       <Route path="/chat" component={Chat} />
+      <Route path="/ai-chat" component={AIChat} />
       <Route path="/image-generator" component={ImageGeneratorSimple} />
       <Route component={NotFound} />
     </Switch>
