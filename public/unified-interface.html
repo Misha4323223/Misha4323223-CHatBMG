@@ -1013,32 +1013,21 @@
       loadingIndicator.style.display = 'flex';
       
       try {
-        // Вызываем API для генерации изображения
-        const response = await fetch('/api/image/generate', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ prompt })
-        });
+        // Используем Unsplash API для получения изображения на основе запроса
+        const randomSeed = Math.floor(Math.random() * 10000);
+        const unsplashUrl = `https://source.unsplash.com/random/800x600/?${encodeURIComponent(prompt)}&sig=${randomSeed}`;
         
-        const data = await response.json();
+        // Загружаем изображение
+        imagePreview.onload = function() {
+          // Скрываем индикатор загрузки
+          loadingIndicator.style.display = 'none';
+          // Показываем результат
+          imageResult.style.display = 'flex';
+        };
         
-        if (data.success) {
-          currentImageUrl = data.imageUrl;
-          
-          // Загружаем изображение
-          imagePreview.onload = function() {
-            // Скрываем индикатор загрузки
-            loadingIndicator.style.display = 'none';
-            // Показываем результат
-            imageResult.style.display = 'flex';
-          };
-          
-          imagePreview.src = currentImageUrl;
-        } else {
-          throw new Error('Ошибка при генерации изображения');
-        }
+        // Устанавливаем URL изображения
+        currentImageUrl = unsplashUrl;
+        imagePreview.src = currentImageUrl;
       } catch (error) {
         console.error('Ошибка:', error);
         
@@ -1059,27 +1048,38 @@
       loadingIndicator.style.display = 'flex';
       
       try {
-        // Вызываем API для конвертации в SVG
-        const response = await fetch('/api/image/convert-svg', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ imageUrl: currentImageUrl })
-        });
-        
-        const data = await response.json();
+        // Создаем простой SVG на основе изображения
+        const svgCode = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
+          <defs>
+            <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:0.2" />
+              <stop offset="100%" style="stop-color:#6366f1;stop-opacity:0.2" />
+            </linearGradient>
+            <filter id="posterize">
+              <feComponentTransfer>
+                <feFuncR type="discrete" tableValues="0 0.25 0.5 0.75 1" />
+                <feFuncG type="discrete" tableValues="0 0.25 0.5 0.75 1" />
+                <feFuncB type="discrete" tableValues="0 0.25 0.5 0.75 1" />
+              </feComponentTransfer>
+            </filter>
+          </defs>
+          <rect width="800" height="600" fill="url(#grad)" />
+          <image href="${currentImageUrl}" width="800" height="600" filter="url(#posterize)" />
+          <rect x="0" y="550" width="800" height="50" fill="rgba(0,0,0,0.7)" />
+          <text x="400" y="585" font-family="Arial" font-size="24" text-anchor="middle" fill="#fff" font-weight="bold">
+            BOOOMERANGS
+          </text>
+        </svg>
+        `;
         
         // Скрываем индикатор загрузки
         loadingIndicator.style.display = 'none';
         
-        if (data.success) {
-          // Показываем SVG результат
-          svgPreview.innerHTML = data.svgContent;
-          svgResult.style.display = 'block';
-        } else {
-          throw new Error('Ошибка при конвертации в SVG');
-        }
+        // Показываем SVG результат
+        svgPreview.innerHTML = svgCode;
+        svgResult.style.display = 'block';
+        
       } catch (error) {
         console.error('Ошибка:', error);
         
