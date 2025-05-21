@@ -46,27 +46,74 @@ async function checkPythonProvider() {
   try {
     console.log('Проверка работоспособности Python G4F...');
     
-    const response = await fetch('http://localhost:5002/python/test', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
+    // Используем http.request вместо fetch (которого нет в Node.js)
+    const http = require('http');
+    
+    return new Promise((resolve, reject) => {
+      const testData = JSON.stringify({
         message: 'hi',
         provider: 'Qwen_Max',
         timeout: 5000
-      })
+      });
+      
+      const options = {
+        hostname: 'localhost',
+        port: 5002,
+        path: '/python/test',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Content-Length': Buffer.byteLength(testData)
+        }
+      };
+      
+      const req = http.request(options, (res) => {
+        let responseData = '';
+        
+        res.on('data', (chunk) => {
+          responseData += chunk;
+        });
+        
+        res.on('end', () => {
+          if (res.statusCode !== 200) {
+            console.error(`HTTP ошибка: ${res.statusCode}`);
+            reject(new Error(`HTTP ошибка: ${res.statusCode}`));
+            return;
+          }
+          
+          try {
+            const data = JSON.parse(responseData);
+            if (data.response) {
+              demoResponse = data.response; // Сохраняем для демо-режима
+              console.log('✅ Python G4F провайдер готов к работе');
+              resolve(true);
+            } else {
+              throw new Error('Ответ не содержит данных');
+            }
+          } catch (err) {
+            reject(new Error(`Ошибка при парсинге ответа: ${err.message}`));
+          }
+        });
+      });
+      
+      req.on('error', (err) => {
+        console.error('❌ Ошибка при проверке Python G4F:', err.message);
+        reject(err);
+      });
+      
+      // Установка таймаута в 5 секунд
+      req.setTimeout(5000, () => {
+        req.destroy();
+        reject(new Error('Таймаут соединения'));
+      });
+      
+      // Отправляем данные
+      req.write(testData);
+      req.end();
+    }).catch(err => {
+      console.error('❌ Ошибка при проверке Python G4F:', err.message);
+      return false;
     });
-    
-    if (!response.ok) {
-      throw new Error(`HTTP ошибка: ${response.status}`);
-    }
-    
-    const data = await response.json();
-    demoResponse = data.response; // Сохраняем для демо-режима
-    
-    console.log('✅ Python G4F провайдер готов к работе');
-    return true;
   } catch (error) {
     console.error('❌ Ошибка при проверке Python G4F:', error.message);
     return false;
@@ -121,20 +168,50 @@ router.post('/chat', async (req, res) => {
     }
     
     try {
-      const response = await fetch('http://localhost:5002/python/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ message, provider, timeout }),
-        timeout: timeout + 5000 // Добавляем запас по времени
+      // Используем http.request вместо fetch
+      const http = require('http');
+      
+      const requestData = JSON.stringify({ message, provider, timeout });
+      
+      const data = await new Promise((resolve, reject) => {
+        const options = {
+          hostname: 'localhost',
+          port: 5002,
+          path: '/python/chat',
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Content-Length': Buffer.byteLength(requestData)
+          },
+          timeout: timeout + 5000 // Добавляем запас по времени
+        };
+        
+        const req = http.request(options, (res) => {
+          let responseData = '';
+          
+          res.on('data', (chunk) => {
+            responseData += chunk;
+          });
+          
+          res.on('end', () => {
+            if (res.statusCode !== 200) {
+              return reject(new Error(`HTTP ошибка: ${res.statusCode}`));
+            }
+            
+            try {
+              const parsedData = JSON.parse(responseData);
+              resolve(parsedData);
+            } catch (err) {
+              reject(new Error(`Ошибка при парсинге ответа: ${err.message}`));
+            }
+          });
+        });
+        
+        req.on('error', (err) => reject(err));
+        
+        req.write(requestData);
+        req.end();
       });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ошибка: ${response.status}`);
-      }
-      
-      const data = await response.json();
       
       // Сохраняем успешный ответ для демо-режима
       if (data.response) {
@@ -245,47 +322,75 @@ router.post('/chat/stream', async (req, res) => {
     }, totalTimeout);
     
     try {
-      const apiUrl = 'http://localhost:5002/python/chat/stream';
+      // Используем http.request вместо fetch
+      const http = require('http');
       
-      // Создаем fetch запрос к Python API
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'text/event-stream'
-        },
-        body: JSON.stringify({ message, provider, timeout })
+      const requestData = JSON.stringify({ message, provider, timeout });
+      
+      // Подключаемся к Python потоковому серверу
+      await new Promise((resolve, reject) => {
+        const options = {
+          hostname: 'localhost',
+          port: 5002,
+          path: '/python/chat/stream',
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'text/event-stream',
+            'Connection': 'keep-alive',
+            'Content-Length': Buffer.byteLength(requestData)
+          }
+        };
+        
+        const pythonReq = http.request(options, (pythonRes) => {
+          if (pythonRes.statusCode !== 200) {
+            reject(new Error(`HTTP ошибка: ${pythonRes.statusCode}`));
+            return;
+          }
+          
+          // Получен ответ от сервера, останавливаем таймаут демо-ответа
+          clearTimeout(demoTimeoutId);
+          
+          // Настройка обработки потокового ответа
+          pythonRes.on('data', (chunk) => {
+            // Пересылаем данные клиенту без изменений
+            res.write(chunk);
+            
+            // Форсируем отправку данных
+            if (res.flush) {
+              res.flush();
+            }
+          });
+          
+          pythonRes.on('end', () => {
+            isResponseComplete = true;
+            resolve();
+          });
+          
+          // Ошибка со стороны Python сервера
+          pythonRes.on('error', (err) => {
+            console.error('Ошибка при получении данных от Python:', err.message);
+            isResponseComplete = true;
+            reject(err);
+          });
+        });
+        
+        // Ошибка соединения с Python сервером
+        pythonReq.on('error', (err) => {
+          console.error('Ошибка при подключении к Python серверу:', err.message);
+          reject(err);
+        });
+        
+        // Установка таймаута запроса
+        pythonReq.setTimeout(timeout + 5000, () => {
+          pythonReq.destroy();
+          reject(new Error('Таймаут соединения с Python сервером'));
+        });
+        
+        // Отправляем данные
+        pythonReq.write(requestData);
+        pythonReq.end();
       });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ошибка: ${response.status}`);
-      }
-      
-      // Получен ответ от сервера, останавливаем таймаут демо-ответа
-      clearTimeout(demoTimeoutId);
-      
-      // Обработка потокового ответа
-      const reader = response.body.getReader();
-      
-      while (true) {
-        const { done, value } = await reader.read();
-        
-        if (done) {
-          isResponseComplete = true;
-          break;
-        }
-        
-        // Пересылаем данные клиенту без изменений
-        const chunk = Buffer.from(value).toString('utf8');
-        res.write(chunk);
-        
-        // Форсируем отправку данных
-        if (res.flush) {
-          res.flush();
-        }
-      }
-      
-      isResponseComplete = true;
       
     } catch (error) {
       console.error('Ошибка при получении стримингового ответа:', error.message);
