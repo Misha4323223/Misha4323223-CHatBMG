@@ -97,23 +97,69 @@ app.post('/api/convert-svg', async (req, res) => {
     
     console.log(`Конвертация изображения в SVG: ${imageUrl}`);
     
-    // Имитируем задержку для более реалистичного ощущения конвертации
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    // Запускаем Python-скрипт для конвертации
+    const { spawn } = await import('child_process');
+    const pythonProcess = spawn('python', ['converters/raster2svg.py', imageUrl]);
     
-    // Конвертируем изображение в SVG (упрощенно)
-    const svgData = await convertImageToSVG(imageUrl);
+    let svgData = '';
+    let errorData = '';
     
-    return res.json({
-      success: true,
-      svgData,
-      message: 'Изображение успешно конвертировано в SVG'
+    // Собираем вывод из стандартного потока
+    pythonProcess.stdout.on('data', (data) => {
+      svgData += data.toString();
     });
+    
+    // Собираем ошибки, если они есть
+    pythonProcess.stderr.on('data', (data) => {
+      errorData += data.toString();
+      console.error(`Ошибка Python: ${data}`);
+    });
+    
+    // Ожидаем завершения процесса
+    await new Promise((resolve, reject) => {
+      pythonProcess.on('close', (code) => {
+        if (code !== 0) {
+          reject(new Error(`Python процесс завершился с кодом ${code}: ${errorData}`));
+        } else {
+          resolve();
+        }
+      });
+      
+      // Обработка ошибок запуска процесса
+      pythonProcess.on('error', (err) => {
+        reject(new Error(`Ошибка запуска Python процесса: ${err.message}`));
+      });
+    });
+    
+    if (svgData) {
+      return res.json({
+        success: true,
+        svgData,
+        message: 'Изображение успешно конвертировано в SVG'
+      });
+    } else {
+      throw new Error('Пустой результат конвертации');
+    }
   } catch (error) {
     console.error('Ошибка при конвертации в SVG:', error);
-    return res.status(500).json({
-      error: 'Не удалось конвертировать изображение в SVG',
-      message: error.message
-    });
+    
+    // Если Python-скрипт не работает, используем JavaScript-версию как запасной вариант
+    try {
+      console.log('Использую запасной JavaScript метод конвертации');
+      const svgData = await convertImageToSVG(imageUrl);
+      
+      return res.json({
+        success: true,
+        svgData,
+        message: 'Изображение успешно конвертировано в SVG (JavaScript)'
+      });
+    } catch (fallbackError) {
+      console.error('Ошибка при запасной конвертации:', fallbackError);
+      return res.status(500).json({
+        error: 'Не удалось конвертировать изображение в SVG',
+        message: error.message
+      });
+    }
   }
 });
 
