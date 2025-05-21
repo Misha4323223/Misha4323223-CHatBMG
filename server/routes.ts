@@ -7,8 +7,8 @@ import { authMiddleware } from "./middleware/auth";
 import { z } from "zod";
 import { authSchema, messageSchema } from "@shared/schema";
 
-// Импортируем роутер для генератора изображений
-import imageGeneratorRouter from "./image-route.js";
+// Импортируем наш новый генератор изображений
+import imageGenerator from "./image-generator";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Create HTTP server
@@ -20,8 +20,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup proxy middleware
   setupProxyMiddleware(app);
   
-  // Подключаем генератор изображений по пути /image-generator
-  app.use('/image-generator', imageGeneratorRouter);
+  // Подключаем генератор изображений по пути /image-generator для страницы
+  app.use('/image-generator', (req, res) => {
+    res.redirect('/api/image-generator');
+  });
+  
+  // API для генератора изображений
+  app.use('/api/image-generator', imageGenerator);
   
   // Auth endpoint - validate token and return user
   app.post("/api/auth", async (req, res) => {
