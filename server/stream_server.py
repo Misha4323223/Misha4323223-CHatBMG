@@ -343,6 +343,40 @@ def stream_chat():
 def test():
     return jsonify({"status": "ok", "message": "Flask-сервер стриминга работает"})
 
+# Маршрут для тестирования провайдеров
+@app.route('/test-provider/<provider_name>', methods=['GET'])
+def test_provider(provider_name):
+    if provider_name not in providers:
+        return jsonify({"status": "error", "message": f"Провайдер {provider_name} не найден"})
+    
+    provider = providers[provider_name]
+    try:
+        # Проверяем, требует ли провайдер API-ключ
+        # Используем минимальный запрос для проверки
+        response = g4f.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "user", "content": "Say just one word: Test"}],
+            provider=provider,
+            timeout=5  # Короткий таймаут
+        )
+        
+        return jsonify({
+            "status": "ok", 
+            "message": f"Провайдер {provider_name} доступен", 
+            "requires_api_key": False,
+            "response": str(response)[:100]  # Только начало ответа
+        })
+    except Exception as e:
+        error_str = str(e)
+        requires_api_key = any(key in error_str.lower() for key in ["api_key", "apikey", "key", "token"])
+        
+        return jsonify({
+            "status": "error",
+            "message": f"Ошибка при проверке провайдера {provider_name}",
+            "error": error_str,
+            "requires_api_key": requires_api_key
+        })
+
 # Функция для запуска сервера
 if __name__ == '__main__':
     print("Запуск стримингового сервера на порту 5001...")
