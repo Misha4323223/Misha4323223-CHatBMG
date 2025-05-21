@@ -184,7 +184,7 @@ def stream_chat():
                             print(f"🔍 Настройка параметров для {current_provider}")
                             model = "gpt-3.5-turbo"
                             
-                            # Специальная обработка для Anthropic (Claude)
+                            # Специальная обработка для разных провайдеров
                             if current_provider == "Anthropic":
                                 print(f"⭐ Запрос к Claude через провайдер Anthropic")
                                 # Проверяем, требуется ли API-ключ
@@ -208,10 +208,47 @@ def stream_chat():
                                     else:
                                         print("⚠️ Другая ошибка при запросе к Claude")
                                         raise
+                            elif current_provider == "You":
+                                print(f"⭐ Запрос к You.com (с поддержкой Llama 3)")
+                                # You.com поддерживает много моделей, включая llama-3
+                                try:
+                                    model_to_use = "llama-3"  # Используем llama-3 вместо gpt-3.5-turbo
+                                    print(f"🔄 Используем модель {model_to_use} для провайдера You")
+                                    response_stream = g4f.ChatCompletion.create(
+                                        model=model_to_use,
+                                        messages=messages,
+                                        provider=provider,
+                                        stream=True,
+                                        timeout=timeout
+                                    )
+                                    print("✅ Provider You успешно отправил запрос к Llama 3!")
+                                except Exception as you_error:
+                                    error_str = str(you_error)
+                                    print(f"❌ Ошибка You с моделью llama-3: {error_str}")
+                                    # Попробуем другую модель
+                                    try:
+                                        fallback_model = "claude-3-haiku"  # Альтернативная модель
+                                        print(f"🔄 Пробуем альтернативную модель {fallback_model}")
+                                        response_stream = g4f.ChatCompletion.create(
+                                            model=fallback_model,
+                                            messages=messages,
+                                            provider=provider,
+                                            stream=True,
+                                            timeout=timeout
+                                        )
+                                        print(f"✅ Provider You успешно использовал модель {fallback_model}!")
+                                    except Exception as fallback_error:
+                                        print(f"❌ Ошибка при использовании резервной модели: {str(fallback_error)}")
+                                        raise
                             else:
                                 # Для всех остальных провайдеров используем стандартный запрос
+                                # с корректировкой модели в зависимости от провайдера
+                                model_to_use = model
+                                if current_provider in ["Qwen_Qwen_2_5_Max", "Qwen_Qwen_3"]:
+                                    model_to_use = model  # Используем стандартную модель для Qwen
+                                
                                 response_stream = g4f.ChatCompletion.create(
-                                    model=model,
+                                    model=model_to_use,
                                     messages=messages,
                                     provider=provider,
                                     stream=True,
