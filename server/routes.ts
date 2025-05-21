@@ -201,8 +201,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.json({
             success: true,
             response: aiResponse,
-            provider: provider || 'You',
-            model: provider || 'You'
+            provider: "Qwen_Qwen_2_5_Max",
+            model: "Qwen AI"
           });
         }
       } catch (pythonError) {
