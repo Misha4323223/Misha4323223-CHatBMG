@@ -2,7 +2,7 @@
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
-const { getResponse, getProviders } = require('./server/g4f-provider.js');
+const { getResponse, getProviders } = require('./g4f-provider.cjs');
 
 const app = express();
 const PORT = 5000;

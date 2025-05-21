@@ -574,9 +574,6 @@
       chatInput.value = '';
       
       try {
-        // Имитация ответа AI (в реальном приложении здесь будет запрос к API)
-        // Для демонстрации мы создаем простой ответ на основе ввода пользователя
-        
         // Создаем "думающее" сообщение
         const thinkingDiv = document.createElement('div');
         thinkingDiv.className = 'message message-ai';
@@ -584,46 +581,67 @@
         chatMessages.appendChild(thinkingDiv);
         chatMessages.scrollTop = chatMessages.scrollHeight;
         
-        // Имитируем задержку ответа
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        
-        // Генерируем ответ AI
+        // Отправляем запрос к G4F API
         let response;
-        const lowerMessage = messageText.toLowerCase();
+        let provider = '';
+        let model = '';
         
-        if (lowerMessage.includes('привет') || lowerMessage.includes('здравствуй')) {
-          response = 'Привет! Чем я могу помочь вам сегодня?';
-        } else if (lowerMessage.includes('как дела') || lowerMessage.includes('как ты')) {
-          response = 'У меня всё отлично, спасибо что спросили! Я всегда готов помочь.';
-        } else if (lowerMessage.includes('погода')) {
-          response = 'Я не могу проверить текущую погоду, но вы можете узнать её в вашем местном прогнозе погоды или через поисковую систему.';
-        } else if (lowerMessage.includes('изображени') || lowerMessage.includes('картинк')) {
-          response = 'Если вы хотите создать изображение, перейдите на вкладку "Генератор Изображений" в верхней части страницы. Там вы сможете описать желаемое изображение и создать его.';
-        } else if (lowerMessage.includes('svg')) {
-          response = 'SVG (Scalable Vector Graphics) - это формат векторной графики, который масштабируется без потери качества. На вкладке "Генератор Изображений" вы можете конвертировать созданное изображение в SVG.';
-        } else if (lowerMessage.includes('booomerangs')) {
-          response = 'BOOOMERANGS - это мультимодальный AI-сервис, который позволяет вести диалоги и создавать изображения. Мы стремимся обеспечить доступ к технологиям искусственного интеллекта для всех.';
-        } else {
-          // Для других запросов используем более общий ответ
-          const responses = [
-            'Интересный вопрос! К сожалению, у меня нет всей необходимой информации, чтобы дать вам точный ответ.',
-            'Спасибо за ваш запрос. В настоящее время я работаю в демонстрационном режиме и имею ограниченную функциональность.',
-            'Это хороший вопрос. В полной версии приложения я бы использовал AI сервисы для поиска информации и предоставления вам точного ответа.',
-            'Это отличный вопрос для полноценного AI. В демонстрационной версии я не могу обработать этот запрос полностью.',
-            'В демо-версии я могу ответить только на базовые вопросы. Полная версия BOOOMERANGS использует расширенные AI возможности.'
-          ];
+        try {
+          // Пробуем получить ответ от G4F API
+          const result = await fetch('/api/ai/chat', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ message: messageText })
+          });
           
-          // Выбираем случайный ответ
-          response = responses[Math.floor(Math.random() * responses.length)];
+          if (!result.ok) {
+            throw new Error(`Ошибка API: ${result.status}`);
+          }
+          
+          const data = await result.json();
+          
+          if (data.success) {
+            response = data.response;
+            provider = data.provider;
+            model = data.model;
+          } else {
+            throw new Error(data.error || 'Неизвестная ошибка');
+          }
+        } catch (apiError) {
+          console.error('Ошибка при обращении к G4F API:', apiError);
+          
+          // Если API не отвечает, используем запасной локальный ответ
+          const lowerMessage = messageText.toLowerCase();
+          
+          if (lowerMessage.includes('привет') || lowerMessage.includes('здравствуй')) {
+            response = 'Привет! Чем я могу помочь вам сегодня?';
+          } else if (lowerMessage.includes('как дела') || lowerMessage.includes('как ты')) {
+            response = 'У меня всё отлично, спасибо что спросили! Я всегда готов помочь.';
+          } else if (lowerMessage.includes('изображени') || lowerMessage.includes('картинк')) {
+            response = 'Если вы хотите создать изображение, перейдите на вкладку "Генератор Изображений" в верхней части страницы. Там вы сможете описать желаемое изображение и создать его.';
+          } else if (lowerMessage.includes('booomerangs')) {
+            response = 'BOOOMERANGS - это мультимодальный AI-сервис, который позволяет вести диалоги и создавать изображения. Мы стремимся обеспечить доступ к технологиям искусственного интеллекта для всех.';
+          } else {
+            response = 'Извините, у меня возникли проблемы при получении ответа от AI. Пожалуйста, попробуйте еще раз или задайте другой вопрос.';
+          }
+          
+          provider = 'Локальный резерв';
         }
         
         // Удаляем "думающее" сообщение
         chatMessages.removeChild(thinkingDiv);
         
-        // Показываем ответ с небольшой задержкой для эффекта набора текста
-        addMessage(response, false);
+        // Показываем ответ
+        if (provider && provider !== 'Локальный резерв') {
+          const messageWithProvider = `${response}\n\n(Ответ от: ${provider}${model ? ` / ${model}` : ''})`;
+          addMessage(messageWithProvider, false);
+        } else {
+          addMessage(response, false);
+        }
       } catch (error) {
-        console.error('Ошибка при получении ответа:', error);
+        console.error('Ошибка при обработке сообщения:', error);
         // Добавляем сообщение об ошибке
         addMessage('Произошла ошибка при получении ответа. Пожалуйста, попробуйте еще раз.', false);
       }
