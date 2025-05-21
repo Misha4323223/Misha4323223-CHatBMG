@@ -239,6 +239,15 @@ def stream_chat():
                                 # Проверка запроса пользователя - если он просит GPT-3.5, мы попробуем использовать его
                                 if "gpt" in message.lower() or "test-gpt" in message.lower():
                                     print(f"⭐ Запрос к You.com с моделью GPT")
+                                    # Удаляем префикс test-gpt: из сообщения, если он присутствует
+                                    if message.lower().startswith("test-gpt:"):
+                                        original_message = message
+                                        message = message[9:].strip()
+                                        # Обновляем сообщение в диалоге
+                                        for m in messages:
+                                            if m['role'] == 'user' and m['content'] == original_message:
+                                                m['content'] = message
+                                        print(f"🔄 Обновили сообщение без префикса: {message}")
                                     try:
                                         model_to_use = "gpt-4o-mini"  # You поддерживает GPT-4o mini
                                         print(f"🔄 Используем модель {model_to_use} для провайдера You")
@@ -324,6 +333,9 @@ def stream_chat():
                                         gpt_model_to_use = "gpt-3.5-turbo"
                                     elif current_provider == "GPTalk":
                                         gpt_model_to_use = "gpt-3.5-turbo"
+                                    elif current_provider == "You":
+                                        # You поддерживает более новые модели GPT
+                                        gpt_model_to_use = "gpt-4o-mini"
                                     
                                     print(f"🔄 Используем модель {gpt_model_to_use} для провайдера {current_provider}")
                                     response_stream = g4f.ChatCompletion.create(
