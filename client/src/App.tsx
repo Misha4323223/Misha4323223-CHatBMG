@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import AuthScreen from "@/pages/AuthScreen";
+import BooomerangsAuth from "@/pages/BooomerangsAuth";
 import Chat from "@/pages/Chat";
 import ImageGeneratorSimple from "@/pages/ImageGeneratorSimple";
 import { useEffect } from "react";
@@ -34,6 +35,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={AuthScreen} />
+      <Route path="/new-auth" component={BooomerangsAuth} />
       <Route path="/chat" component={Chat} />
       <Route path="/image-generator" component={ImageGeneratorSimple} />
       <Route component={NotFound} />
