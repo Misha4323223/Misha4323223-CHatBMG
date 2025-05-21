@@ -137,6 +137,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.sendFile('public/unified-interface.html', { root: '.' });
   });
   
+  // BOOOMERANGS фиксированный интерфейс с локальной генерацией изображений
+  app.get('/fixed', (req, res) => {
+    res.sendFile('public/fixed-interface.html', { root: '.' });
+  });
+  
   // BOOOMERANGS только генератор изображений (стабильная версия)
   app.get('/image-generator', (req, res) => {
     res.sendFile('public/image-generator.html', { root: '.' });
