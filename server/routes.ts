@@ -265,7 +265,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Определяем, какой провайдер использовать
       let selectedProvider = provider || 'AItianhu';
       
-      // Автоматическое определение технических вопросов для перенаправления на Phind
+      // Автоматическое определение технических вопросов для перенаправления на DeepSpeek/Phind
       const techKeywords = [
         "код", "программирование", "javascript", "python", "java", "c++", "c#", 
         "coding", "programming", "code", "алгоритм", "algorithm", "функция", "function",
@@ -277,10 +277,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Проверяем, является ли вопрос техническим
       const isTechnicalQuestion = techKeywords.some(keyword => message.toLowerCase().includes(keyword));
       
-      // Если вопрос технический и провайдер не указан явно, используем Phind
-      if (isTechnicalQuestion && !provider) {
-        selectedProvider = 'Phind';
-        console.log(`📊 Обнаружен технический вопрос, переключаемся на провайдер Phind`);
+      // Если запрошен явно DeepSpeek или это технический вопрос без указанного провайдера
+      if (provider === 'deepspeek' || (isTechnicalQuestion && !provider)) {
+        try {
+          // Используем наш локальный DeepSpeek провайдер для технических вопросов
+          console.log(`📊 Обнаружен технический вопрос, используем DeepSpeek: "${message.substring(0, 50)}..."`);
+          const deepspeekResponse = await deepspeekProvider.getDeepSpeekResponse(message);
+          
+          return res.json({
+            success: true,
+            response: deepspeekResponse.response,
+            provider: 'DeepSpeek',
+            model: 'DeepSpeek AI'
+          });
+        } catch (deepspeekError) {
+          console.log(`❌ Ошибка при использовании DeepSpeek: ${deepspeekError}`);
+          // Продолжаем с другими провайдерами, если DeepSpeek не справился
+        }
+        
+        // Если DeepSpeek не справился и провайдер не указан явно, используем Phind как запасной вариант
+        if (!provider) {
+          selectedProvider = 'Phind';
+          console.log(`📊 DeepSpeek не справился, переключаемся на провайдер Phind`);
+        }
       }
       
       // Всегда пытаемся сначала использовать Python G4F сервер для любого запроса
