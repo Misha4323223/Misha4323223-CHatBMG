@@ -3,28 +3,59 @@ const fetch = require('node-fetch');
 
 // Список доступных провайдеров, отсортированных по стабильности
 const PROVIDERS = {
-  QWEN: 'qwen',        // Самый стабильный
-  DIFY: 'dify',        // Хорошая альтернатива
-  GEMINI: 'gemini',    // Требует валидный API ключ
-  DEEPAI: 'deepai',    // Часто ограничения
-  AICHAT: 'aichat',    // Менее стабильный
-  CHATGPT: 'chatgpt',  // Может быть нестабильным
-  GIGA: 'gigachat'     // Требует российский номер телефона
+  QWEN: 'qwen',          // Самый стабильный
+  DIFY: 'dify',          // Хорошая альтернатива
+  LIAOBOTS: 'liaobots',  // Новый стабильный провайдер
+  OPENROUTER: 'openrouter', // Хороший провайдер, поддерживает gpt-4o
+  DEEPAI: 'deepai',      // Часто ограничения
+  AICHAT: 'aichat',      // Менее стабильный
+  CHATGPT: 'chatgpt',    // Может быть нестабильным
+  PHIND: 'phind',        // Более новый провайдер
+  PERPLEXITY: 'perplexity', // Требует конкретную модель
+  GEMINI: 'gemini',      // Требует валидный API ключ
+  GIGA: 'gigachat'       // Требует российский номер телефона
+};
+
+// Модели провайдеров - каждый провайдер работает с разными моделями
+const PROVIDER_MODELS = {
+  [PROVIDERS.QWEN]: 'qwen-2.5-ultra-preview',
+  [PROVIDERS.LIAOBOTS]: 'gpt-4o',
+  [PROVIDERS.OPENROUTER]: 'gpt-4o',
+  [PROVIDERS.DIFY]: 'dify-gguf',
+  [PROVIDERS.PHIND]: 'phind-model',
+  [PROVIDERS.PERPLEXITY]: 'llama-3.1-sonar-small-128k-online',
+  [PROVIDERS.DEEPAI]: 'deepai-text-generator',
+  [PROVIDERS.GEMINI]: 'gemini-pro'
 };
 
 // Порядок провайдеров от самых стабильных к менее стабильным
 const PROVIDER_PRIORITY = [
   PROVIDERS.QWEN,
-  PROVIDERS.DIFY,
-  PROVIDERS.GEMINI,
+  PROVIDERS.LIAOBOTS,
+  PROVIDERS.DIFY, 
+  PROVIDERS.OPENROUTER,
+  PROVIDERS.PHIND,
+  PROVIDERS.PERPLEXITY,
   PROVIDERS.DEEPAI,
   PROVIDERS.AICHAT,
-  PROVIDERS.CHATGPT
+  PROVIDERS.CHATGPT,
+  PROVIDERS.GEMINI
 ];
 
 // Функция для получения списка доступных провайдеров в порядке приоритета
 function getProviders() {
   return PROVIDER_PRIORITY;
+}
+
+// Функция для получения правильной модели для провайдера
+function getModelForProvider(provider, requestedModel) {
+  if (!provider) return null;
+  
+  // Если указана конкретная модель, используем её
+  if (requestedModel) return requestedModel;
+  
+  // Иначе возвращаем модель по умолчанию для провайдера
+  return PROVIDER_MODELS[provider.toLowerCase()] || null;
 }
 
 // Функция для проверки доступности провайдера
@@ -64,22 +95,33 @@ async function getResponse(message, options = {}) {
     model = null,
     temperature = 0.7,
     maxTokens = 800,
-    maxRetries = 2
+    maxRetries = 2,
+    messages = null, // Поддержка массива сообщений в формате [{ role: 'user', content: '...' }]
   } = options;
 
   // Валидация параметров
-  if (!message) {
+  if (!message && (!messages || messages.length === 0)) {
     throw new Error('Сообщение не может быть пустым');
   }
 
+  // Подготовка сообщений
+  const chatMessages = messages || [{ role: 'user', content: message }];
+
   // Если указан конкретный провайдер, используем только его
   if (provider) {
-    return tryProviderWithRetries(provider, message, { model, temperature, maxTokens, maxRetries });
+    const selectedModel = getModelForProvider(provider, model);
+    return tryProviderWithRetries(provider, chatMessages, { 
+      model: selectedModel, 
+      temperature, 
+      maxTokens, 
+      maxRetries 
+    });
   }
   
   // Иначе перебираем провайдеры по приоритету
   const providersToTry = [...PROVIDER_PRIORITY]; // Копируем массив приоритетов
   let lastError = null;
+  let successfulProviders = [];
   
   // Проходим по всем провайдерам в порядке приоритета
   for (const currentProvider of providersToTry) {
@@ -91,16 +133,30 @@ async function getResponse(message, options = {}) {
         continue;
       }
       
+      // Получаем подходящую модель для провайдера
+      const selectedModel = getModelForProvider(currentProvider, model);
+      if (!selectedModel) {
+        console.log(`Для провайдера ${currentProvider} не найдена подходящая модель, пропускаем`);
+        continue;
+      }
+      
       // Пробуем получить ответ от текущего провайдера
-      console.log(`Пробуем получить ответ от провайдера ${currentProvider}...`);
-      const result = await tryProviderWithRetries(currentProvider, message, { 
-        model, 
+      console.log(`Пробуем получить ответ от провайдера ${currentProvider} с моделью ${selectedModel}...`);
+      const result = await tryProviderWithRetries(currentProvider, chatMessages, { 
+        model: selectedModel, 
         temperature, 
         maxTokens,
         maxRetries: 1 // Для каскадного перебора достаточно 1 попытки на провайдер
       });
       
-      return result;
+      // Сохраняем успешный провайдер
+      successfulProviders.push(currentProvider);
+      
+      return {
+        ...result,
+        successfulProviders,
+        attemptedProviders: [...successfulProviders]
+      };
     } catch (err) {
       lastError = err;
       console.error(`Ошибка при использовании провайдера ${currentProvider}:`, err.message);
@@ -113,7 +169,7 @@ async function getResponse(message, options = {}) {
 }
 
 // Вспомогательная функция для попыток с ретраями на одном провайдере
-async function tryProviderWithRetries(provider, message, options) {
+async function tryProviderWithRetries(provider, messages, options) {
   const { model, temperature, maxTokens, maxRetries } = options;
   
   // Получаем обработчик для указанного провайдера
@@ -124,6 +180,18 @@ async function tryProviderWithRetries(provider, message, options) {
       break;
     case PROVIDERS.DIFY:
       handler = handleDifyProvider;
+      break;
+    case PROVIDERS.LIAOBOTS:
+      handler = handleLiaobotsProvider;
+      break;
+    case PROVIDERS.OPENROUTER:
+      handler = handleOpenRouterProvider;
+      break;
+    case PROVIDERS.PHIND:
+      handler = handlePhindProvider;
+      break;
+    case PROVIDERS.PERPLEXITY:
+      handler = handlePerplexityProvider;
       break;
     case PROVIDERS.AICHAT:
       handler = handleAIChatProvider;
@@ -149,7 +217,7 @@ async function tryProviderWithRetries(provider, message, options) {
 
   while (retries < maxRetries) {
     try {
-      const result = await handler(message, { model, temperature, maxTokens });
+      const result = await handler(messages, { model, temperature, maxTokens });
       return result;
     } catch (err) {
       error = err;
@@ -164,7 +232,7 @@ async function tryProviderWithRetries(provider, message, options) {
 }
 
 // Обработчик для модели Qwen от Alibaba
-async function handleQwenProvider(message, options = {}) {
+async function handleQwenProvider(messages, options = {}) {
   try {
     const response = await fetch('https://api.lingyiwanwu.com/v1/chat/completions', {
       method: 'POST',
@@ -173,8 +241,8 @@ async function handleQwenProvider(message, options = {}) {
         'Cache-Control': 'no-cache'
       },
       body: JSON.stringify({
-        messages: [{ role: 'user', content: message }],
-        model: 'qwen-2.5-ultra-preview',
+        messages: messages,
+        model: options.model || 'qwen-2.5-ultra-preview',
         temperature: options.temperature || 0.7,
         max_tokens: options.maxTokens || 800
       })
@@ -197,16 +265,181 @@ async function handleQwenProvider(message, options = {}) {
   }
 }
 
-// Обработчик для Dify.AI
-async function handleDifyProvider(message, options = {}) {
+// Обработчик для Liaobots
+async function handleLiaobotsProvider(messages, options = {}) {
   try {
+    const response = await fetch('https://api.liaobots.work/api/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        messages: messages,
+        model: options.model || 'gpt-4o',
+        temperature: options.temperature || 0.7,
+        max_tokens: options.maxTokens || 800,
+        stream: false
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Liaobots API вернул ошибку: ${response.status} - ${errorText}`);
+    }
+
+    const data = await response.json();
+    return {
+      response: data.choices[0].message.content,
+      provider: 'Liaobots',
+      model: options.model || 'gpt-4o'
+    };
+  } catch (error) {
+    console.error('Ошибка при обращении к Liaobots API:', error);
+    throw error;
+  }
+}
+
+// Обработчик для OpenRouter
+async function handleOpenRouterProvider(messages, options = {}) {
+  try {
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'HTTP-Referer': 'https://booomerangs.app', // Обязательный заголовок
+        'X-Title': 'BOOOMERANGS'                   // Название приложения
+      },
+      body: JSON.stringify({
+        messages: messages,
+        model: options.model || 'gpt-4o',
+        temperature: options.temperature || 0.7,
+        max_tokens: options.maxTokens || 800
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`OpenRouter API вернул ошибку: ${response.status} - ${errorText}`);
+    }
+
+    const data = await response.json();
+    return {
+      response: data.choices[0].message.content,
+      provider: 'OpenRouter',
+      model: data.model || options.model || 'gpt-4o'
+    };
+  } catch (error) {
+    console.error('Ошибка при обращении к OpenRouter API:', error);
+    throw error;
+  }
+}
+
+// Обработчик для Phind
+async function handlePhindProvider(messages, options = {}) {
+  try {
+    // Преобразуем массив сообщений в формат Phind
+    let phindMessages = messages;
+    
+    // Если формат сообщений отличается, конвертируем его
+    if (messages.length === 1 && messages[0].role === 'user') {
+      phindMessages = [
+        {
+          role: 'system',
+          content: 'You are Phind, a helpful AI assistant.'
+        },
+        messages[0]
+      ];
+    }
+    
+    const response = await fetch('https://api.phind.com/agent/web', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        messages: phindMessages,
+        model: options.model || 'phind-model',
+        temperature: options.temperature || 0.7,
+        max_tokens: options.maxTokens || 800,
+        web_search: false // отключаем поиск в интернете
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Phind API вернул ошибку: ${response.status} - ${errorText}`);
+    }
+
+    const data = await response.json();
+    return {
+      response: data.response || data.answer,
+      provider: 'Phind',
+      model: options.model || 'phind-model'
+    };
+  } catch (error) {
+    console.error('Ошибка при обращении к Phind API:', error);
+    throw error;
+  }
+}
+
+// Обработчик для Perplexity
+async function handlePerplexityProvider(messages, options = {}) {
+  try {
+    const response = await fetch('https://api.perplexity.ai/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: options.model || 'llama-3.1-sonar-small-128k-online',
+        messages: messages,
+        temperature: options.temperature || 0.7,
+        max_tokens: options.maxTokens || 800,
+        stream: false,
+        frequency_penalty: 1
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Perplexity API вернул ошибку: ${response.status} - ${errorText}`);
+    }
+
+    const data = await response.json();
+    
+    // Если доступны цитаты, включаем их в ответ
+    const citations = data.citations || [];
+    
+    return {
+      response: data.choices[0].message.content,
+      citations: citations,
+      provider: 'Perplexity',
+      model: options.model || 'llama-3.1-sonar-small-128k-online'
+    };
+  } catch (error) {
+    console.error('Ошибка при обращении к Perplexity API:', error);
+    throw error;
+  }
+}
+
+// Обработчик для Dify.AI
+async function handleDifyProvider(messages, options = {}) {
+  try {
+    // Извлекаем текст из последнего сообщения пользователя
+    const lastUserMessage = messages.filter(m => m.role === 'user').pop();
+    if (!lastUserMessage) {
+      throw new Error('Не найдено сообщение пользователя в истории');
+    }
+    
+    const query = lastUserMessage.content;
+    
     const response = await fetch('https://api.dify.ai/v1/chat-messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        query: message,
+        query: query,
         user: "anonymous-" + Math.random().toString(36).substring(2, 10),
         response_mode: 'blocking',
         conversation_id: Math.random().toString(36).substring(2, 10)
@@ -222,7 +455,7 @@ async function handleDifyProvider(message, options = {}) {
     return {
       response: data.answer,
       provider: 'Dify',
-      model: 'dify-gguf'
+      model: options.model || 'dify-gguf'
     };
   } catch (error) {
     console.error('Ошибка при обращении к Dify API:', error);
@@ -231,23 +464,74 @@ async function handleDifyProvider(message, options = {}) {
 }
 
 // Обработчик для AI Chat провайдера
-async function handleAIChatProvider(message, options = {}) {
-  // Здесь была бы имплементация для AI Chat провайдера
-  // Поскольку в текущий момент этот провайдер не реализован, возвращаем ошибку
-  throw new Error('AI Chat провайдер временно недоступен');
+async function handleAIChatProvider(messages, options = {}) {
+  try {
+    // Извлекаем текст из последнего сообщения пользователя
+    const lastUserMessage = messages.filter(m => m.role === 'user').pop();
+    if (!lastUserMessage) {
+      throw new Error('Не найдено сообщение пользователя в истории');
+    }
+    
+    const query = lastUserMessage.content;
+    
+    const response = await fetch('https://ai-chat-gpt.online/indexFull.php', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Referer': 'https://ai-chat-gpt.online/'
+      },
+      body: new URLSearchParams({
+        'prompt': query,
+        'model': options.model || 'gpt-4'
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`AI Chat API вернул ошибку: ${response.status} - ${errorText}`);
+    }
+
+    const data = await response.json();
+    if (!data.text) {
+      throw new Error('Пустой ответ от AI Chat API');
+    }
+    
+    return {
+      response: data.text,
+      provider: 'AI Chat',
+      model: options.model || 'gpt-4'
+    };
+  } catch (error) {
+    console.error('Ошибка при обращении к AI Chat API:', error);
+    throw error;
+  }
 }
 
 // Обработчик для Google Gemini
-async function handleGeminiProvider(message, options = {}) {
+async function handleGeminiProvider(messages, options = {}) {
   try {
-    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=', {
+    // Проверяем, есть ли ключ API для Gemini
+    if (!process.env.GEMINI_API_KEY) {
+      throw new Error('Для работы с Gemini необходим API ключ в переменной GEMINI_API_KEY');
+    }
+    
+    // Формируем данные для запроса в формате Gemini
+    const parts = [];
+    for (const message of messages) {
+      parts.push({
+        text: message.content
+      });
+    }
+    
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${process.env.GEMINI_API_KEY}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
         contents: [{
-          parts: [{ text: message }]
+          parts: parts
         }],
         generationConfig: {
           temperature: options.temperature || 0.7,
@@ -265,7 +549,7 @@ async function handleGeminiProvider(message, options = {}) {
     return {
       response: data.candidates[0].content.parts[0].text,
       provider: 'Gemini',
-      model: 'gemini-pro'
+      model: options.model || 'gemini-pro'
     };
   } catch (error) {
     console.error('Ошибка при обращении к Gemini API:', error);
@@ -274,7 +558,7 @@ async function handleGeminiProvider(message, options = {}) {
 }
 
 // Обработчик для GigaChat
-async function handleGigaChatProvider(message, options = {}) {
+async function handleGigaChatProvider(messages, options = {}) {
   try {
     // Здесь была бы имплементация для GigaChat
     // Возвращаем ошибку, так как требуется ключ API
@@ -286,15 +570,23 @@ async function handleGigaChatProvider(message, options = {}) {
 }
 
 // Обработчик для DeepAI
-async function handleDeepAIProvider(message, options = {}) {
+async function handleDeepAIProvider(messages, options = {}) {
   try {
+    // Извлекаем текст из последнего сообщения пользователя
+    const lastUserMessage = messages.filter(m => m.role === 'user').pop();
+    if (!lastUserMessage) {
+      throw new Error('Не найдено сообщение пользователя в истории');
+    }
+    
+    const query = lastUserMessage.content;
+    
     const response = await fetch('https://api.deepai.org/api/text-generator', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        text: message
+        text: query
       })
     });
 
@@ -307,7 +599,7 @@ async function handleDeepAIProvider(message, options = {}) {
     return {
       response: data.output,
       provider: 'DeepAI',
-      model: 'deepai-text-generator'
+      model: options.model || 'deepai-text-generator'
     };
   } catch (error) {
     console.error('Ошибка при обращении к DeepAI API:', error);
@@ -319,6 +611,8 @@ async function handleDeepAIProvider(message, options = {}) {
 module.exports = {
   getResponse,
   getProviders,
+  getModelForProvider,
   checkProviderAvailability,
-  PROVIDERS
+  PROVIDERS,
+  PROVIDER_MODELS
 };
