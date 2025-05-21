@@ -240,6 +240,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   })();
   
+  // Вспомогательная функция для вызова G4F API
+  async function callG4F(message: string, provider: string) {
+    try {
+      // Получаем ответ от прямого провайдера
+      const directAiProvider = require('./direct-ai-provider');
+      
+      // Если провайдер qwen, используем AItianhu который реализует доступ к Qwen AI
+      const actualProvider = provider === 'qwen' ? 'AItianhu' : provider;
+      
+      // Получаем ответ
+      const response = await directAiProvider.getChatResponse(message, { provider: actualProvider });
+      
+      return {
+        success: true,
+        response: response,
+        provider: actualProvider
+      };
+    } catch (error) {
+      console.error(`❌ Ошибка при вызове G4F:`, error);
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Неизвестная ошибка'
+      };
+    }
+  }
+  
   // API для работы с BOOOMERANGS AI интеграцией (с поддержкой Qwen и других провайдеров)
   app.post('/api/ai/chat', async (req, res) => {
     try {
