@@ -3,36 +3,10 @@ const fetch = require('node-fetch').default;
 
 // Набор рабочих API-провайдеров - обновленные провайдеры из списка G4F
 const AI_PROVIDERS = {
-  // DarkAI - без авторизации, поддержка GPT-4o
-  DARKAI: {
-    name: 'DarkAI', 
-    url: 'https://api.darkai.ai/v1/chat/completions',
-    needsKey: false,
-    headers: {
-      'Content-Type': 'application/json',
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36'
-    },
-    prepareRequest: (message) => {
-      return {
-        model: "gpt-4o",
-        messages: [{ role: "user", content: message }],
-        temperature: 0.7,
-        stream: false
-      };
-    },
-    extractResponse: async (response) => {
-      const jsonResponse = await response.json();
-      if (jsonResponse && jsonResponse.choices && jsonResponse.choices.length > 0) {
-        return jsonResponse.choices[0].message.content;
-      }
-      throw new Error('Некорректный ответ от DarkAI API');
-    }
-  },
-  
-  // Gemini (gemini-pro) - базовый API
-  GEMINI: {
-    name: 'Gemini-Pro',
-    url: 'https://api.gemini-pro.ai/v1/chat/completions',
+  // FreeGPT API - настроен по списку G4F
+  FREEGPT: {
+    name: 'FreeGPT', 
+    url: 'https://api.freegpt.ml/v1/chat/completions',
     needsKey: false,
     headers: {
       'Content-Type': 'application/json',
@@ -42,8 +16,7 @@ const AI_PROVIDERS = {
       return {
         model: "gemini-pro",
         messages: [{ role: "user", content: message }],
-        temperature: 0.7,
-        stream: false
+        temperature: 0.7
       };
     },
     extractResponse: async (response) => {
@@ -51,14 +24,14 @@ const AI_PROVIDERS = {
       if (jsonResponse && jsonResponse.choices && jsonResponse.choices.length > 0) {
         return jsonResponse.choices[0].message.content;
       }
-      throw new Error('Некорректный ответ от Gemini API');
+      throw new Error('Некорректный ответ от FreeGPT API');
     }
   },
   
-  // Free2GPT - бесплатный провайдер с Mixtral
-  FREE2GPT: {
-    name: 'Free2GPT-Mixtral',
-    url: 'https://free2gpt.wayscript.io/v1/chat/completions',
+  // Liaobots - без авторизации, сильный провайдер
+  LIAOBOTS: {
+    name: 'Liaobots',
+    url: 'https://liaobots.work/api/chat',
     needsKey: false,
     headers: {
       'Content-Type': 'application/json',
@@ -66,7 +39,7 @@ const AI_PROVIDERS = {
     },
     prepareRequest: (message) => {
       return {
-        model: "mixtral-7b",
+        model: "gpt-4o-mini",
         messages: [{ role: "user", content: message }],
         temperature: 0.7,
         stream: false
@@ -74,24 +47,50 @@ const AI_PROVIDERS = {
     },
     extractResponse: async (response) => {
       const jsonResponse = await response.json();
-      if (jsonResponse && jsonResponse.choices && jsonResponse.choices.length > 0) {
-        return jsonResponse.choices[0].message.content;
+      if (jsonResponse && jsonResponse.message && jsonResponse.message.content) {
+        return jsonResponse.message.content;
       }
-      throw new Error('Некорректный ответ от Free2GPT');
+      throw new Error('Некорректный ответ от Liaobots');
     }
   },
   
-  // AIChatFree - использование Gemini Pro
-  AICHATFREE: {
-    name: 'AIChatFree',
-    url: 'https://api.aichatfree.app/v1/chat/completions',
+  // You.com - без авторизации, Claude-модели
+  YOUCOM: {
+    name: 'You.com-AI',
+    url: 'https://you.com/api/chat',
+    needsKey: false,
+    headers: {
+      'Content-Type': 'application/json',
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
+      'Accept': 'application/json'
+    },
+    prepareRequest: (message) => {
+      return {
+        query: message,
+        chat_model: "claude-3-sonnet",
+        chat_history: []
+      };
+    },
+    extractResponse: async (response) => {
+      const jsonResponse = await response.json();
+      if (jsonResponse && jsonResponse.response && jsonResponse.response.text) {
+        return jsonResponse.response.text;
+      }
+      throw new Error('Некорректный ответ от You.com');
+    }
+  },
+  
+  // DeepInfraChat - бесплатные LLM модели
+  DEEPINFRA: {
+    name: 'DeepInfra',
+    url: 'https://api.deepinfra.com/v1/openai/chat/completions',
     needsKey: false,
     headers: {
       'Content-Type': 'application/json'
     },
     prepareRequest: (message) => {
       return {
-        model: "gemini-pro",
+        model: "llama-3.1-8b",
         messages: [{ role: "user", content: message }],
         temperature: 0.7,
         stream: false
@@ -102,7 +101,7 @@ const AI_PROVIDERS = {
       if (jsonResponse && jsonResponse.choices && jsonResponse.choices.length > 0) {
         return jsonResponse.choices[0].message.content;
       }
-      throw new Error('Некорректный ответ от AIChatFree');
+      throw new Error('Некорректный ответ от DeepInfra');
     }
   },
   

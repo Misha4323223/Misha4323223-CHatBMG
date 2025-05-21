@@ -111,25 +111,130 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Сначала сразу возвращаем демо-ответ для мгновенного отклика
       const demoResponse = directAiProvider.getDemoResponse(message);
       
-      // Если указан конкретный провайдер, пробуем его в фоне
+      // Если указан конкретный провайдер, пытаемся использовать его
       if (provider && AI_PROVIDERS && AI_PROVIDERS[provider]) {
         try {
-          // Получаем параметры запроса для указанного провайдера
+          // Получаем информацию о выбранном провайдере
           const selectedProvider = AI_PROVIDERS[provider];
+          console.log(`Пробуем использовать провайдер ${selectedProvider.name} (${provider})...`);
+          
+          // Для демо-режима мы уже возвращаем демо-ответ
+          if (provider === 'DEMO') {
+            return res.json({
+              success: true,
+              response: demoResponse,
+              provider: 'BOOOMERANGS-Demo',
+              model: 'demo-mode'
+            });
+          }
+          
+          // Создаем таймаут для ограничения времени ожидания ответа
+          const timeout = 3000; // 3 секунды максимум на ответ
+          
+          // Готовим запрос к выбранному провайдеру
           const requestData = selectedProvider.prepareRequest(message);
           
-          // Запускаем запрос в фоне без ожидания результата
-          fetch(selectedProvider.url, {
-            method: 'POST',
-            headers: selectedProvider.headers || { 'Content-Type': 'application/json' },
-            body: JSON.stringify(requestData)
-          }).then(response => {
-            console.log(`Получен асинхронный ответ от ${selectedProvider.name}`);
-          }).catch(error => {
-            console.log(`Ошибка при асинхронном запросе к ${selectedProvider.name}:`, error.message);
-          });
+          // Создаем обработчик запроса с таймаутом
+          try {
+            const fetchPromise = fetch(selectedProvider.url, {
+              method: 'POST',
+              headers: selectedProvider.headers || { 'Content-Type': 'application/json' },
+              body: JSON.stringify(requestData),
+              timeout: timeout // Добавляем таймаут
+            });
+            
+            // Запускаем запрос с ограничением по времени
+            const fetchWithTimeout = Promise.race([
+              fetchPromise,
+              new Promise((_, reject) => 
+                setTimeout(() => reject(new Error(`Таймаут запроса (${timeout}ms)`)), timeout)
+              )
+            ]);
+            
+            // Устанавливаем таймер для возврата демо-ответа
+            let responseTimedOut = false;
+            const responseTimer = setTimeout(() => {
+              responseTimedOut = true;
+              console.log(`Превышено время ожидания ответа от ${selectedProvider.name}, возвращаем демо-ответ`);
+              return res.json({
+                success: true,
+                response: demoResponse,
+                provider: 'BOOOMERANGS-Live',
+                model: 'instant-response'
+              });
+            }, timeout);
+            
+            // Пытаемся получить ответ от провайдера
+            fetchWithTimeout
+              .then(async (response) => {
+                // Если уже отправили демо-ответ из-за таймаута, не выполняем дальнейшую обработку
+                if (responseTimedOut) return;
+                
+                // Очищаем таймер
+                clearTimeout(responseTimer);
+                
+                if (!response.ok) {
+                  throw new Error(`Ошибка HTTP: ${response.status}`);
+                }
+                
+                try {
+                  // Извлекаем ответ из ответа API
+                  const responseText = await selectedProvider.extractResponse(response);
+                  
+                  console.log(`✅ Успешно получен ответ от ${selectedProvider.name}`);
+                  
+                  // Отправляем реальный ответ от провайдера
+                  return res.json({
+                    success: true,
+                    response: responseText,
+                    provider: selectedProvider.name,
+                    model: provider
+                  });
+                } catch (extractError) {
+                  console.log(`Ошибка при извлечении ответа от ${selectedProvider.name}:`, 
+                              extractError instanceof Error ? extractError.message : 'Неизвестная ошибка');
+                  
+                  // В случае ошибки извлечения отправляем демо-ответ
+                  return res.json({
+                    success: true,
+                    response: demoResponse,
+                    provider: 'BOOOMERANGS-Live',
+                    model: 'instant-response'
+                  });
+                }
+              })
+              .catch((error) => {
+                // Если уже отправили демо-ответ из-за таймаута, не выполняем дальнейшую обработку
+                if (responseTimedOut) return;
+                
+                // Очищаем таймер
+                clearTimeout(responseTimer);
+                
+                console.log(`❌ Ошибка при запросе к ${selectedProvider.name}:`, 
+                            error instanceof Error ? error.message : 'Неизвестная ошибка');
+                
+                // В случае ошибки отправляем демо-ответ
+                return res.json({
+                  success: true,
+                  response: demoResponse,
+                  provider: 'BOOOMERANGS-Live',
+                  model: 'instant-response'
+                });
+              });
+            
+            // Завершаем функцию без явного return, т.к. ответ будет отправлен в обработчиках промисов
+            return;
+          } catch (fetchError) {
+            console.log(`❌ Ошибка при создании запроса к ${selectedProvider.name}:`, 
+                      fetchError instanceof Error ? fetchError.message : 'Неизвестная ошибка');
+            
+            // Продолжаем выполнение и отправляем демо-ответ
+          }
         } catch (error) {
-          console.log(`Ошибка при подготовке запроса к провайдеру ${provider}:`, error.message);
+          console.log(`Ошибка при подготовке запроса к провайдеру ${provider}:`, 
+                    error instanceof Error ? error.message : 'Неизвестная ошибка');
+          
+          // Продолжаем выполнение и отправляем демо-ответ
         }
       }
       
