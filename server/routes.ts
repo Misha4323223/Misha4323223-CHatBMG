@@ -7,8 +7,15 @@ import { authMiddleware } from "./middleware/auth";
 import { z } from "zod";
 import { authSchema, messageSchema } from "@shared/schema";
 
-// Импортируем наш новый генератор изображений
-import imageGenerator from "./image-generator";
+// Импортируем наш новый генератор изображений через динамический импорт
+import * as path from 'path';
+import { fileURLToPath } from 'url';
+import { createRequire } from 'module';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const require = createRequire(__filename);
+const svgGenerator = require('./svg-generator');
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Create HTTP server
@@ -20,13 +27,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup proxy middleware
   setupProxyMiddleware(app);
   
-  // Подключаем генератор изображений по пути /image-generator для страницы
+  // Подключаем генератор изображений
   app.use('/image-generator', (req, res) => {
-    res.redirect('/api/image-generator');
+    res.redirect('/api/svg');
   });
   
   // API для генератора изображений
-  app.use('/api/image-generator', imageGenerator);
+  app.use('/api/svg', svgGenerator);
   
   // Auth endpoint - validate token and return user
   app.post("/api/auth", async (req, res) => {

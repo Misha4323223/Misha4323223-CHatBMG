@@ -757,7 +757,7 @@ async function convertToSvg(imageBuffer: Buffer, style = 'realistic') {
                     potraceParams.optTolerance = 0.3;
                     break;
                 case 'artistic':
-                    await sharpConfig.modulate({ contrast: 1.2 }).toFile(tempPngPath);
+                    await sharpConfig.modulate({ brightness: 1.2 }).toFile(tempPngPath);
                     potraceParams.turdSize = 3;
                     potraceParams.optTolerance = 0.2;
                     break;
@@ -767,7 +767,7 @@ async function convertToSvg(imageBuffer: Buffer, style = 'realistic') {
             }
             
             // Выполняем трассировку изображения
-            potrace.trace(tempPngPath, potraceParams, (err, svg) => {
+            potrace.trace(tempPngPath, potraceParams, (err: Error | null, svg: string) => {
                 // Удаляем временный файл после трассировки
                 fs.unlink(tempPngPath, () => {});
                 
@@ -905,7 +905,8 @@ setInterval(() => {
     const now = Date.now();
     const expirationTime = 3600000; // 1 час
     
-    for (const [id, info] of generatedImages.entries()) {
+    // Используем Array.from для правильной типизации
+    Array.from(generatedImages.entries()).forEach(([id, info]) => {
         if (now - info.timestamp > expirationTime) {
             // Удаляем старые файлы
             try {
@@ -918,7 +919,7 @@ setInterval(() => {
                 console.error(`Ошибка при удалении файла ${id}:`, err);
             }
         }
-    }
+    });
 }, 1800000); // каждые 30 минут
 
 export default router;
