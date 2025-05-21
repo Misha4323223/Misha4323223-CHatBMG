@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BOOOMERANGS - Универсальный AI-интерфейс</title>
+  <title>BOOOMERANGS - AI Чат и Генератор Изображений</title>
   <style>
     * {
       margin: 0;
@@ -552,7 +552,7 @@
       color: white;
       border: none;
       border-radius: 8px;
-      padding: 0 20px;
+      padding: 12px 20px;
       font-weight: 500;
       cursor: pointer;
       box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
@@ -775,7 +775,7 @@
               <div class="style-option" data-style="abstract">Абстрактный</div>
             </div>
             
-            <button type="submit" id="generate-button" class="generate-button">Сгенерировать с помощью AI</button>
+            <button type="submit" id="generate-button" class="generate-button">Сгенерировать изображение</button>
           </form>
           
           <div id="loading-indicator" class="loading-indicator">
@@ -804,424 +804,329 @@
   </div>
   
   <script>
-    // Переключение вкладок
-    const tabButtons = document.querySelectorAll('.tab-button');
-    const tabContents = document.querySelectorAll('.tab-content');
-    
-    tabButtons.forEach(button => {
-      button.addEventListener('click', () => {
-        const tabName = button.getAttribute('data-tab');
-        
-        // Активация кнопки
-        tabButtons.forEach(btn => btn.classList.remove('active'));
-        button.classList.add('active');
-        
-        // Активация содержимого вкладки
-        tabContents.forEach(content => content.classList.remove('active'));
-        document.getElementById(`${tabName}-tab`).classList.add('active');
-      });
-    });
-    
-    // Функции для чата
-    const messagesArea = document.getElementById('messages-area');
-    const welcomeMessage = document.getElementById('welcome-message');
-    const messageForm = document.getElementById('message-form');
-    const messageInput = document.getElementById('message-input');
-    const sendButton = document.getElementById('send-button');
-    const modelSelect = document.getElementById('model-select');
-    
-    // Массив сообщений
-    let messages = [];
-    let isWaitingForResponse = false;
-    
-    // Активировать кнопку отправки только если есть текст
-    messageInput.addEventListener('input', () => {
-      sendButton.disabled = messageInput.value.trim() === '' || isWaitingForResponse;
-    });
-    
-    // Обработка отправки формы для чата
-    messageForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      sendChatMessage();
-    });
-    
-    // Функция отправки сообщения чата
-    async function sendChatMessage() {
-      const messageText = messageInput.value.trim();
-      if (messageText === '' || isWaitingForResponse) return;
+    document.addEventListener('DOMContentLoaded', function() {
+      // Элементы интерфейса
+      const tabButtons = document.querySelectorAll('.tab-button');
+      const tabContents = document.querySelectorAll('.tab-content');
       
-      // Скрывать приветственное сообщение после первого сообщения
-      if (welcomeMessage.style.display !== 'none') {
-        welcomeMessage.style.display = 'none';
-      }
+      // Элементы чата
+      const messagesArea = document.getElementById('messages-area');
+      const welcomeMessage = document.getElementById('welcome-message');
+      const messageForm = document.getElementById('message-form');
+      const messageInput = document.getElementById('message-input');
+      const sendButton = document.getElementById('send-button');
+      const modelSelect = document.getElementById('model-select');
       
-      // Выбранная модель
-      const selectedModel = modelSelect.value;
+      // Элементы генератора изображений
+      const imagePromptForm = document.getElementById('image-prompt-form');
+      const imagePromptInput = document.getElementById('image-prompt-input');
+      const generateButton = document.getElementById('generate-button');
+      const loadingIndicator = document.getElementById('loading-indicator');
+      const imageResult = document.getElementById('image-result');
+      const imagePreview = document.getElementById('image-preview');
+      const convertSvgButton = document.getElementById('convert-svg-button');
+      const downloadImageButton = document.getElementById('download-image-button');
+      const svgResult = document.getElementById('svg-result');
+      const svgPreview = document.getElementById('svg-preview');
+      const downloadSvgButton = document.getElementById('download-svg-button');
+      const styleOptions = document.querySelectorAll('.style-option');
       
-      // Добавляем сообщение пользователя
-      const messageTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      // Переменные для хранения данных
+      let messages = [];
+      let isWaitingForResponse = false;
+      let currentImageUrl = '';
       
-      addMessageToUI({
-        id: Date.now(),
-        text: messageText,
-        sender: 'user',
-        time: messageTime
+      // Переключение вкладок
+      tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+          const tabName = button.getAttribute('data-tab');
+          
+          // Активация кнопки
+          tabButtons.forEach(btn => btn.classList.remove('active'));
+          button.classList.add('active');
+          
+          // Активация содержимого вкладки
+          tabContents.forEach(content => content.classList.remove('active'));
+          document.getElementById(`${tabName}-tab`).classList.add('active');
+        });
       });
       
-      // Очищаем поле ввода и блокируем кнопку
-      messageInput.value = '';
-      sendButton.disabled = true;
+      // Выбор стиля изображения
+      styleOptions.forEach(option => {
+        option.addEventListener('click', () => {
+          styleOptions.forEach(opt => opt.classList.remove('active'));
+          option.classList.add('active');
+        });
+      });
       
-      // Показываем индикатор набора текста
-      showTypingIndicator();
+      // Активировать кнопку отправки только если есть текст
+      messageInput.addEventListener('input', () => {
+        sendButton.disabled = messageInput.value.trim() === '' || isWaitingForResponse;
+      });
       
-      // Отправляем запрос к API
-      isWaitingForResponse = true;
+      // Обработка отправки формы для чата
+      messageForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        sendChatMessage();
+      });
       
-      try {
-        const response = await fetch('/api/ai/chat', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            message: messageText,
-            provider: selectedModel === 'auto' ? null : selectedModel
-          })
+      // Обработка отправки формы для генератора изображений
+      imagePromptForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        generateImage();
+      });
+      
+      // Обработчики кнопок для изображений
+      convertSvgButton.addEventListener('click', convertToSvg);
+      downloadImageButton.addEventListener('click', downloadImage);
+      downloadSvgButton.addEventListener('click', downloadSvg);
+      
+      // Функция отправки сообщения в чат
+      async function sendChatMessage() {
+        const messageText = messageInput.value.trim();
+        if (messageText === '' || isWaitingForResponse) return;
+        
+        // Скрывать приветственное сообщение после первого сообщения
+        if (welcomeMessage.style.display !== 'none') {
+          welcomeMessage.style.display = 'none';
+        }
+        
+        // Выбранная модель
+        const selectedModel = modelSelect.value;
+        
+        // Добавляем сообщение пользователя
+        const messageTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
+        addMessageToUI({
+          id: Date.now(),
+          text: messageText,
+          sender: 'user',
+          time: messageTime
         });
         
-        const data = await response.json();
+        // Очищаем поле ввода и блокируем кнопку
+        messageInput.value = '';
+        sendButton.disabled = true;
         
-        // Скрываем индикатор набора текста
-        hideTypingIndicator();
+        // Показываем индикатор набора текста
+        showTypingIndicator();
         
-        if (data.success) {
-          // Добавляем ответ от AI
-          addMessageToUI({
-            id: Date.now() + 1,
-            text: data.response,
-            sender: 'ai',
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            model: data.model || 'AI',
-            provider: data.provider || 'Unknown'
+        // Отправляем запрос к API
+        isWaitingForResponse = true;
+        
+        try {
+          const response = await fetch('/api/ai/chat', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              message: messageText,
+              provider: selectedModel === 'auto' ? null : selectedModel
+            })
           });
-        } else {
+          
+          const data = await response.json();
+          
+          // Скрываем индикатор набора текста
+          hideTypingIndicator();
+          
+          if (data.success) {
+            // Добавляем ответ от AI
+            addMessageToUI({
+              id: Date.now() + 1,
+              text: data.response,
+              sender: 'ai',
+              time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              model: data.model || 'AI',
+              provider: data.provider || 'Unknown'
+            });
+          } else {
+            // Обработка ошибки
+            addMessageToUI({
+              id: Date.now() + 1,
+              text: "Извините, произошла ошибка при получении ответа. Пожалуйста, попробуйте еще раз.",
+              sender: 'ai',
+              time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              model: 'Error',
+              provider: 'System'
+            });
+          }
+        } catch (error) {
+          console.error('Ошибка:', error);
+          
+          // Скрываем индикатор набора текста
+          hideTypingIndicator();
+          
           // Обработка ошибки
           addMessageToUI({
             id: Date.now() + 1,
-            text: "Извините, произошла ошибка при получении ответа. Пожалуйста, попробуйте еще раз.",
+            text: "Произошла ошибка при обращении к серверу. Пожалуйста, проверьте соединение и попробуйте еще раз.",
             sender: 'ai',
             time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             model: 'Error',
             provider: 'System'
           });
+        } finally {
+          isWaitingForResponse = false;
         }
-      } catch (error) {
-        console.error('Ошибка:', error);
-        
-        // Скрываем индикатор набора текста
-        hideTypingIndicator();
-        
-        // Обработка ошибки
-        addMessageToUI({
-          id: Date.now() + 1,
-          text: "Произошла ошибка при обращении к серверу. Пожалуйста, проверьте соединение и попробуйте еще раз.",
-          sender: 'ai',
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          model: 'Error',
-          provider: 'System'
-        });
-      } finally {
-        isWaitingForResponse = false;
       }
-    }
-    
-    // Функция для добавления сообщения в UI
-    function addMessageToUI(message) {
-      // Сохраняем сообщение в массив
-      messages.push(message);
       
-      // Создаем элемент сообщения
-      const messageRow = document.createElement('div');
-      messageRow.className = `message-row ${message.sender}`;
-      messageRow.style.animationDelay = `${messages.length * 0.05}s`;
-      
-      if (message.sender === 'user') {
-        messageRow.innerHTML = `
-          <div class="message-container">
-            <div class="message-bubble">${formatMessageText(message.text)}</div>
-            <div class="message-metadata">
-              <span class="message-time">${message.time}</span>
+      // Функция для добавления сообщения в UI
+      function addMessageToUI(message) {
+        // Сохраняем сообщение в массив
+        messages.push(message);
+        
+        // Создаем элемент сообщения
+        const messageRow = document.createElement('div');
+        messageRow.className = `message-row ${message.sender}`;
+        messageRow.style.animationDelay = `${messages.length * 0.05}s`;
+        
+        if (message.sender === 'user') {
+          messageRow.innerHTML = `
+            <div class="message-container">
+              <div class="message-bubble">${formatMessageText(message.text)}</div>
+              <div class="message-metadata">
+                <span class="message-time">${message.time}</span>
+              </div>
             </div>
-          </div>
-        `;
-      } else {
-        messageRow.innerHTML = `
+          `;
+        } else {
+          messageRow.innerHTML = `
+            <div class="message-avatar ai">B</div>
+            <div class="message-container">
+              <div class="message-bubble">${formatMessageText(message.text)}</div>
+              <div class="message-metadata">
+                <span class="message-time">${message.time}</span>
+                ${message.model ? `<span class="message-model">${message.model}</span>` : ''}
+              </div>
+            </div>
+          `;
+        }
+        
+        // Добавляем элемент в контейнер сообщений
+        messagesArea.appendChild(messageRow);
+        
+        // Прокручиваем до нового сообщения
+        messageRow.scrollIntoView({ behavior: 'smooth' });
+      }
+      
+      // Функция для форматирования текста сообщения
+      function formatMessageText(text) {
+        // Заменяем блоки кода (обрамленные тройными обратными кавычками)
+        let formattedText = text.replace(/```([^`]+)```/g, '<pre>$1</pre>');
+        
+        // Заменяем однострочный код (обрамленный одинарными обратными кавычками)
+        formattedText = formattedText.replace(/`([^`]+)`/g, '<code>$1</code>');
+        
+        // Заменяем перенос строки на <br>
+        formattedText = formattedText.replace(/\n/g, '<br>');
+        
+        return formattedText;
+      }
+      
+      // Показываем индикатор набора текста
+      function showTypingIndicator() {
+        const typingRow = document.createElement('div');
+        typingRow.className = 'message-row ai typing-indicator';
+        typingRow.id = 'typing-indicator';
+        
+        typingRow.innerHTML = `
           <div class="message-avatar ai">B</div>
-          <div class="message-container">
-            <div class="message-bubble">${formatMessageText(message.text)}</div>
-            <div class="message-metadata">
-              <span class="message-time">${message.time}</span>
-              ${message.model ? `<span class="message-model">${message.model}</span>` : ''}
-            </div>
+          <div class="typing-bubble">
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
           </div>
         `;
+        
+        messagesArea.appendChild(typingRow);
+        typingRow.scrollIntoView({ behavior: 'smooth' });
       }
       
-      // Добавляем элемент в контейнер сообщений
-      messagesArea.appendChild(messageRow);
-      
-      // Прокручиваем до нового сообщения
-      messageRow.scrollIntoView({ behavior: 'smooth' });
-    }
-    
-    // Функция для форматирования текста сообщения (код, ссылки и т.д.)
-    function formatMessageText(text) {
-      // Заменяем блоки кода (обрамленные тройными обратными кавычками)
-      let formattedText = text.replace(/```([^`]+)```/g, '<pre>$1</pre>');
-      
-      // Заменяем однострочный код (обрамленный одинарными обратными кавычками)
-      formattedText = formattedText.replace(/`([^`]+)`/g, '<code>$1</code>');
-      
-      // Заменяем перенос строки на <br>
-      formattedText = formattedText.replace(/\n/g, '<br>');
-      
-      return formattedText;
-    }
-    
-    // Показываем индикатор набора текста
-    function showTypingIndicator() {
-      const typingRow = document.createElement('div');
-      typingRow.className = 'message-row ai typing-indicator';
-      typingRow.id = 'typing-indicator';
-      
-      typingRow.innerHTML = `
-        <div class="message-avatar ai">B</div>
-        <div class="typing-bubble">
-          <div class="typing-dot"></div>
-          <div class="typing-dot"></div>
-          <div class="typing-dot"></div>
-        </div>
-      `;
-      
-      messagesArea.appendChild(typingRow);
-      typingRow.scrollIntoView({ behavior: 'smooth' });
-    }
-    
-    // Скрываем индикатор набора текста
-    function hideTypingIndicator() {
-      const typingIndicator = document.getElementById('typing-indicator');
-      if (typingIndicator) {
-        typingIndicator.remove();
+      // Скрываем индикатор набора текста
+      function hideTypingIndicator() {
+        const typingIndicator = document.getElementById('typing-indicator');
+        if (typingIndicator) {
+          typingIndicator.remove();
+        }
       }
-    }
-    
-    // Функции для генератора изображений
-    const imagePromptForm = document.getElementById('image-prompt-form');
-    const imagePromptInput = document.getElementById('image-prompt-input');
-    const generateButton = document.getElementById('generate-button');
-    const loadingIndicator = document.getElementById('loading-indicator');
-    const imageResult = document.getElementById('image-result');
-    const imagePreview = document.getElementById('image-preview');
-    const convertSvgButton = document.getElementById('convert-svg-button');
-    const downloadImageButton = document.getElementById('download-image-button');
-    const svgResult = document.getElementById('svg-result');
-    const svgPreview = document.getElementById('svg-preview');
-    const downloadSvgButton = document.getElementById('download-svg-button');
-    
-    let currentImageUrl = '';
-    
-    // Обработчики выбора стиля
-    const styleOptions = document.querySelectorAll('.style-option');
-    styleOptions.forEach(option => {
-      option.addEventListener('click', () => {
-        // Удаляем активный класс у всех опций
-        styleOptions.forEach(opt => opt.classList.remove('active'));
-        // Добавляем активный класс текущей опции
-        option.classList.add('active');
-      });
-    });
-    
-    // Обработка отправки формы для генератора изображений
-    imagePromptForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      generateImage();
-    });
-    
-    // Функция генерации изображения с использованием AI
-    async function generateImage() {
-      const prompt = imagePromptInput.value.trim();
-      if (!prompt) return;
       
-      // Скрываем предыдущие результаты
-      imageResult.style.display = 'none';
-      svgResult.style.display = 'none';
-      
-      // Показываем индикатор загрузки
-      loadingIndicator.style.display = 'flex';
-      
-      try {
-        // Получаем выбранный стиль из активной опции
+      // Функция для генерации изображения
+      async function generateImage() {
+        const prompt = imagePromptInput.value.trim();
+        if (!prompt) return;
+        
+        // Получаем выбранный стиль
         const activeStyleOption = document.querySelector('.style-option.active');
         const style = activeStyleOption ? activeStyleOption.getAttribute('data-style') : 'realistic';
         
-        // Создаем изображение локально на canvas
-        const width = 800;
-        const height = 600;
+        // Скрываем предыдущие результаты
+        imageResult.style.display = 'none';
+        svgResult.style.display = 'none';
         
-        // Создаем холст
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
+        // Показываем индикатор загрузки
+        loadingIndicator.style.display = 'flex';
         
-        // Создаем фон в зависимости от стиля
-        if (style === 'realistic') {
-          // Градиентный фон для реалистичного стиля
-          const gradient = ctx.createLinearGradient(0, 0, 0, height);
-          gradient.addColorStop(0, '#3b82f6');
-          gradient.addColorStop(1, '#1e3a8a');
-          ctx.fillStyle = gradient;
-          ctx.fillRect(0, 0, width, height);
-        } else if (style === 'artistic') {
-          // Художественный фон
-          const gradient = ctx.createLinearGradient(0, 0, width, height);
-          gradient.addColorStop(0, '#f97316');
-          gradient.addColorStop(0.5, '#ef4444');
-          gradient.addColorStop(1, '#8b5cf6');
-          ctx.fillStyle = gradient;
-          ctx.fillRect(0, 0, width, height);
-        } else if (style === 'anime') {
-          // Аниме стиль
-          const gradient = ctx.createLinearGradient(0, 0, width, height);
-          gradient.addColorStop(0, '#06b6d4');
-          gradient.addColorStop(1, '#3b82f6');
-          ctx.fillStyle = gradient;
-          ctx.fillRect(0, 0, width, height);
-        } else if (style === 'cartoon') {
-          // Мультяшный стиль
-          const gradient = ctx.createLinearGradient(0, 0, width, height);
-          gradient.addColorStop(0, '#22c55e');
-          gradient.addColorStop(1, '#10b981');
-          ctx.fillStyle = gradient;
-          ctx.fillRect(0, 0, width, height);
-        } else {
-          // Абстрактный стиль
-          const gradient = ctx.createLinearGradient(0, 0, width, height);
-          gradient.addColorStop(0, '#6366f1');
-          gradient.addColorStop(1, '#8b5cf6');
-          ctx.fillStyle = gradient;
-          ctx.fillRect(0, 0, width, height);
-        }
-        
-        // Добавляем элементы в зависимости от запроса
-        const keywords = prompt.toLowerCase().split(' ');
-        
-        // Если запрос связан с космосом
-        if (keywords.some(k => ['космос', 'космический', 'звезда', 'звезды', 'galaxy', 'space', 'star'].includes(k))) {
-          // Звезды для космической темы
-          for (let i = 0; i < 500; i++) {
-            const x = Math.random() * width;
-            const y = Math.random() * height;
-            const radius = Math.random() * 2;
+        try {
+          // Пробуем использовать canvas для создания локального изображения
+          const canvas = document.createElement('canvas');
+          const width = 800;
+          const height = 600;
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          
+          // Устанавливаем градиент в зависимости от стиля
+          const getGradient = () => {
+            const gradient = ctx.createLinearGradient(0, 0, width, height);
             
-            ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.8 + 0.2})`;
+            if (style === 'realistic') {
+              gradient.addColorStop(0, '#3b82f6');
+              gradient.addColorStop(1, '#1e3a8a');
+            } else if (style === 'artistic') {
+              gradient.addColorStop(0, '#f97316');
+              gradient.addColorStop(0.5, '#ef4444');
+              gradient.addColorStop(1, '#8b5cf6');
+            } else if (style === 'anime') {
+              gradient.addColorStop(0, '#06b6d4');
+              gradient.addColorStop(1, '#3b82f6');
+            } else if (style === 'cartoon') {
+              gradient.addColorStop(0, '#22c55e');
+              gradient.addColorStop(1, '#10b981');
+            } else {
+              gradient.addColorStop(0, '#6366f1');
+              gradient.addColorStop(1, '#8b5cf6');
+            }
+            
+            return gradient;
+          };
+          
+          // Рисуем фон
+          ctx.fillStyle = getGradient();
+          ctx.fillRect(0, 0, width, height);
+          
+          // Добавляем текстуру
+          for (let i = 0; i < 50; i++) {
+            ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.1})`;
             ctx.beginPath();
-            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.arc(
+              Math.random() * width,
+              Math.random() * height,
+              Math.random() * 50,
+              0,
+              Math.PI * 2
+            );
             ctx.fill();
           }
           
-          // Планета
-          const planetX = width * 0.7;
-          const planetY = height * 0.3;
-          const planetRadius = 80;
+          // Анализируем ключевые слова из запроса
+          const keywords = prompt.toLowerCase().split(' ');
           
-          ctx.beginPath();
-          ctx.arc(planetX, planetY, planetRadius, 0, Math.PI * 2);
-          const planetGradient = ctx.createRadialGradient(
-            planetX - 20, planetY - 20, 0,
-            planetX, planetY, planetRadius
-          );
-          
-          planetGradient.addColorStop(0, '#60a5fa');
-          planetGradient.addColorStop(1, '#1d4ed8');
-          
-          ctx.fillStyle = planetGradient;
-          ctx.fill();
-        }
-        
-        // Если запрос связан с природой
-        if (keywords.some(k => ['природа', 'дерево', 'лес', 'гора', 'mountain', 'nature', 'tree'].includes(k))) {
-          // Горы для природной темы
-          ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-          ctx.beginPath();
-          ctx.moveTo(0, height);
-          ctx.lineTo(width * 0.3, height * 0.5);
-          ctx.lineTo(width * 0.5, height * 0.7);
-          ctx.lineTo(width * 0.7, height * 0.4);
-          ctx.lineTo(width, height);
-          ctx.closePath();
-          ctx.fill();
-          
-          // Деревья для природной темы
-          if (style === 'cartoon' || style === 'anime') {
-            for (let i = 0; i < 5; i++) {
-              const treeX = 100 + i * 150;
-              const treeY = height * 0.8;
-              
-              // Ствол
-              ctx.fillStyle = '#8B4513';
-              ctx.fillRect(treeX - 10, treeY - 80, 20, 80);
-              
-              // Крона
-              ctx.fillStyle = '#228B22';
-              ctx.beginPath();
-              ctx.arc(treeX, treeY - 100, 40, 0, Math.PI * 2);
-              ctx.fill();
-            }
-          }
-        }
-        
-        // Если запрос связан с городом
-        if (keywords.some(k => ['город', 'здание', 'городской', 'city', 'building', 'urban'].includes(k))) {
-          // Создаем силуэт города
-          ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-          
-          // Рисуем здания
-          for (let i = 0; i < 10; i++) {
-            const buildingWidth = 40 + Math.random() * 40;
-            const buildingHeight = 100 + Math.random() * 200;
-            const buildingX = i * 80;
-            
-            ctx.fillRect(buildingX, height - buildingHeight, buildingWidth, buildingHeight);
-            
-            // Добавляем окна
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-            
-            for (let j = 0; j < 10; j++) {
-              for (let k = 0; k < 4; k++) {
-                if (Math.random() > 0.3) {
-                  ctx.fillRect(
-                    buildingX + 5 + k * 10,
-                    height - buildingHeight + 10 + j * 20,
-                    5,
-                    10
-                  );
-                }
-              }
-            }
-            
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-          }
-        }
-        
-        // Для абстрактного стиля добавляем геометрические фигуры
-        if (style === 'abstract') {
-          for (let i = 0; i < 30; i++) {
-            // Выбираем случайный цвет
+          // Добавляем геометрические фигуры
+          for (let i = 0; i < 20; i++) {
             ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.5})`;
             
-            // Случайное положение и размер
             const x = Math.random() * width;
             const y = Math.random() * height;
             const size = 20 + Math.random() * 100;
@@ -1247,152 +1152,153 @@
               ctx.fill();
             }
           }
-        }
-        
-        // Добавляем заголовок
-        ctx.font = 'bold 32px Arial';
-        ctx.fillStyle = 'white';
-        ctx.textAlign = 'center';
-        ctx.fillText('BOOOMERANGS', width/2, height - 40);
-        
-        // Добавляем текст запроса
-        const wrappedText = wrapText(ctx, prompt, width - 100, 24);
-        wrappedText.forEach((line, index) => {
-          ctx.font = 'bold 24px Arial';
-          ctx.fillText(line, width/2, 60 + index * 30);
-        });
-        
-        // Преобразуем холст в URL изображения
-        currentImageUrl = canvas.toDataURL('image/png');
-        
-        // Отображаем результат
-        imagePreview.onload = function() {
-          // Скрываем индикатор загрузки
+          
+          // Добавляем заголовок
+          ctx.font = 'bold 32px Arial';
+          ctx.fillStyle = 'white';
+          ctx.textAlign = 'center';
+          ctx.fillText('BOOOMERANGS', width/2, height - 50);
+          
+          // Добавляем текст запроса
+          const wrappedText = wrapText(ctx, prompt, width - 100, 24);
+          wrappedText.forEach((line, index) => {
+            ctx.font = 'bold 24px Arial';
+            ctx.fillText(line, width/2, 100 + index * 30);
+          });
+          
+          // Получаем URL данных
+          currentImageUrl = canvas.toDataURL('image/png');
+          
+          // Устанавливаем изображение
+          imagePreview.onload = function() {
+            loadingIndicator.style.display = 'none';
+            imageResult.style.display = 'flex';
+          };
+          
+          imagePreview.onerror = function() {
+            console.error('Ошибка загрузки изображения');
+            loadingIndicator.style.display = 'none';
+            alert('Ошибка при загрузке изображения. Пожалуйста, попробуйте еще раз.');
+          };
+          
+          imagePreview.src = currentImageUrl;
+        } catch (error) {
+          console.error('Ошибка при генерации изображения:', error);
           loadingIndicator.style.display = 'none';
-          // Показываем результат
-          imageResult.style.display = 'flex';
-        };
-        
-        imagePreview.src = currentImageUrl;
-      } catch (error) {
-        console.error('Ошибка при генерации изображения:', error);
-        loadingIndicator.style.display = 'none';
-        showToast('error', 'Ошибка', 'Не удалось сгенерировать изображение. Пожалуйста, попробуйте ещё раз.');
-      }
-        
-        // Скрываем индикатор загрузки
-        loadingIndicator.style.display = 'none';
-        
-        // Показываем сообщение об ошибке
-        alert('Произошла ошибка при генерации изображения. Пожалуйста, попробуйте еще раз.');
-      }
-    }
-    
-    // Вспомогательная функция для переноса текста
-    function wrapText(ctx, text, maxWidth, fontSize) {
-      ctx.font = `bold ${fontSize}px Arial`;
-      
-      const words = text.split(' ');
-      const lines = [];
-      let currentLine = words[0];
-      
-      for (let i = 1; i < words.length; i++) {
-        const word = words[i];
-        const width = ctx.measureText(currentLine + " " + word).width;
-        
-        if (width < maxWidth) {
-          currentLine += " " + word;
-        } else {
-          lines.push(currentLine);
-          currentLine = word;
+          alert('Произошла ошибка при генерации изображения. Пожалуйста, попробуйте еще раз.');
         }
       }
       
-      lines.push(currentLine);
-      return lines;
-    }
-    
-    // Конвертация изображения в SVG
-    convertSvgButton.addEventListener('click', async () => {
-      if (!currentImageUrl) return;
-      
-      // Показываем индикатор загрузки
-      imageResult.style.display = 'none';
-      loadingIndicator.style.display = 'flex';
-      
-      try {
-        // Создаем простой SVG на основе изображения
-        const svgCode = `
-        <svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
-          <defs>
-            <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:0.2" />
-              <stop offset="100%" style="stop-color:#6366f1;stop-opacity:0.2" />
-            </linearGradient>
-            <filter id="posterize">
-              <feComponentTransfer>
-                <feFuncR type="discrete" tableValues="0 0.25 0.5 0.75 1" />
-                <feFuncG type="discrete" tableValues="0 0.25 0.5 0.75 1" />
-                <feFuncB type="discrete" tableValues="0 0.25 0.5 0.75 1" />
-              </feComponentTransfer>
-            </filter>
-          </defs>
-          <rect width="800" height="600" fill="url(#grad)" />
-          <image href="${currentImageUrl}" width="800" height="600" filter="url(#posterize)" />
-          <rect x="0" y="550" width="800" height="50" fill="rgba(0,0,0,0.7)" />
-          <text x="400" y="585" font-family="Arial" font-size="24" text-anchor="middle" fill="#fff" font-weight="bold">
-            BOOOMERANGS
-          </text>
-        </svg>
-        `;
+      // Функция для переноса текста
+      function wrapText(ctx, text, maxWidth, fontSize) {
+        ctx.font = `bold ${fontSize}px Arial`;
         
-        // Скрываем индикатор загрузки
-        loadingIndicator.style.display = 'none';
+        const words = text.split(' ');
+        const lines = [];
+        let currentLine = words[0];
         
-        // Показываем SVG результат
-        svgPreview.innerHTML = svgCode;
-        svgResult.style.display = 'block';
+        for (let i = 1; i < words.length; i++) {
+          const word = words[i];
+          const width = ctx.measureText(currentLine + " " + word).width;
+          
+          if (width < maxWidth) {
+            currentLine += " " + word;
+          } else {
+            lines.push(currentLine);
+            currentLine = word;
+          }
+        }
         
-      } catch (error) {
-        console.error('Ошибка:', error);
-        
-        // Скрываем индикатор загрузки
-        loadingIndicator.style.display = 'none';
-        // Показываем исходное изображение
-        imageResult.style.display = 'flex';
-        
-        // Показываем сообщение об ошибке
-        alert('Произошла ошибка при конвертации изображения в SVG. Пожалуйста, попробуйте еще раз.');
+        lines.push(currentLine);
+        return lines;
       }
-    });
-    
-    // Скачивание изображения
-    downloadImageButton.addEventListener('click', () => {
-      if (!currentImageUrl) return;
       
-      const link = document.createElement('a');
-      link.href = currentImageUrl;
-      link.download = 'booomerangs-image.jpg';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    });
-    
-    // Скачивание SVG
-    downloadSvgButton.addEventListener('click', () => {
-      if (!svgPreview.innerHTML) return;
+      // Функция для конвертации в SVG
+      function convertToSvg() {
+        if (!currentImageUrl) return;
+        
+        try {
+          // Создаем базовый SVG-документ
+          const svgData = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
+            <defs>
+              <linearGradient id="bg-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#6366f1;stop-opacity:1" />
+              </linearGradient>
+              
+              <filter id="blur-filter">
+                <feGaussianBlur stdDeviation="2" />
+              </filter>
+              
+              <pattern id="dots" width="10" height="10" patternUnits="userSpaceOnUse">
+                <circle cx="5" cy="5" r="1" fill="white" fill-opacity="0.3" />
+              </pattern>
+            </defs>
+            
+            <!-- Фоновый прямоугольник -->
+            <rect width="800" height="600" fill="url(#bg-gradient)" />
+            
+            <!-- Добавляем изображение как базу -->
+            <image href="${currentImageUrl}" width="800" height="600" opacity="0.9" />
+            
+            <!-- Накладываем эффект размытия на края -->
+            <rect x="0" y="0" width="800" height="600" fill="url(#bg-gradient)" opacity="0.3" filter="url(#blur-filter)" />
+            
+            <!-- Добавляем узор -->
+            <rect width="800" height="600" fill="url(#dots)" opacity="0.3" />
+            
+            <!-- Добавляем текст BOOOMERANGS -->
+            <rect x="0" y="520" width="800" height="80" fill="rgba(0,0,0,0.5)" />
+            <text x="400" y="570" font-family="Arial" font-size="32" font-weight="bold" text-anchor="middle" fill="white">
+              BOOOMERANGS
+            </text>
+            
+            <!-- Добавляем оригинальный запрос -->
+            <text x="400" y="30" font-family="Arial" font-size="18" font-weight="bold" text-anchor="middle" fill="white">
+              ${imagePromptInput.value.trim() || 'AI Generated Image'}
+            </text>
+          </svg>
+          `;
+          
+          // Показываем SVG
+          svgPreview.innerHTML = svgData;
+          svgResult.style.display = 'block';
+        } catch (error) {
+          console.error('Ошибка при конвертации в SVG:', error);
+          alert('Произошла ошибка при конвертации в SVG. Пожалуйста, попробуйте еще раз.');
+        }
+      }
       
-      const svgContent = svgPreview.innerHTML;
-      const blob = new Blob([svgContent], { type: 'image/svg+xml' });
-      const url = URL.createObjectURL(blob);
+      // Функция для скачивания изображения
+      function downloadImage() {
+        if (!currentImageUrl) return;
+        
+        const link = document.createElement('a');
+        link.href = currentImageUrl;
+        link.download = 'booomerangs-image.png';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
       
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'booomerangs-image.svg';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      // Функция для скачивания SVG
+      function downloadSvg() {
+        const svgContent = svgPreview.innerHTML;
+        if (!svgContent) return;
+        
+        const blob = new Blob([svgContent], { type: 'image/svg+xml' });
+        const url = URL.createObjectURL(blob);
+        
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'booomerangs-image.svg';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        URL.revokeObjectURL(url);
+      }
     });
   </script>
 </body>
