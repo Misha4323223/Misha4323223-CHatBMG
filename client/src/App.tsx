@@ -39,6 +39,7 @@ function Router() {
       <Route path="/new-auth" component={BooomerangsAuth} />
       <Route path="/chat" component={Chat} />
       <Route path="/ai-chat" component={AIChat} />
+      <Route path="/provider" component={AIProviderChat} />
       <Route path="/image-generator" component={ImageGeneratorSimple} />
       <Route component={NotFound} />
     </Switch>
