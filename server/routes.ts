@@ -200,6 +200,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const flaskStreamBridge = require('./stream-flask-bridge');
   app.use('/api/flask-stream', flaskStreamBridge);
   
+  // API для DeepSpeek - специализированного AI для технических вопросов
+  const deepspeekRoutes = require('./deepspeek-routes');
+  app.use('/api/deepspeek', deepspeekRoutes);
+  
   // Проверка работы Python провайдера при запуске
   (async () => {
     try {
