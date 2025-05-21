@@ -14,7 +14,8 @@ router.post('/chat/stream', (req, res) => {
     const { 
       message, 
       provider = null,
-      clientId = Date.now().toString() // Уникальный ID для клиента
+      clientId = Date.now().toString(), // Уникальный ID для клиента
+      timeout = 20000 // Таймаут по умолчанию - 20 секунд
     } = req.body;
     
     // Проверяем, что сообщение присутствует
@@ -66,9 +67,21 @@ router.post('/chat/stream', (req, res) => {
     // Создаем флаг для отслеживания завершения
     let isCompleted = false;
     
-    // Запускаем демо-ответ через небольшую задержку, если Python не ответит быстро
+    // Запускаем демо-ответ через задержку, если Python не ответит быстро
+    // Используем переданный таймаут или значение по умолчанию
+    const demoDelay = Math.min(5000, timeout / 4); // Не больше 5 секунд, но не меньше 1/4 от общего таймаута
+    console.log(`⏱️ Настроен таймаут для демо-ответа: ${demoDelay}мс, общий таймаут: ${timeout}мс`);
+    
     const demoTimeout = setTimeout(() => {
       if (!isCompleted) {
+        console.log(`Запуск демо-ответа после ${demoDelay}мс ожидания...`);
+        
+        // Отправляем уведомление о переключении на демо-режим
+        sendEvent('info', {
+          message: 'AI провайдер отвечает дольше обычного, начинаем отображать демо-ответ',
+          provider: 'BOOOMERANGS-Live'
+        });
+        
         // Отправляем демо-ответ по частям для имитации стриминга
         const demoWords = demoResponse.split(' ');
         let sentWords = 0;
@@ -104,7 +117,7 @@ router.post('/chat/stream', (req, res) => {
           }
         }, 100); // Отправляем каждые 100мс для имитации печати
       }
-    }, 2000); // Ждем 2 секунды перед запуском демо-ответа
+    }, demoDelay);
     
     // Вызываем скрипт как дочерний процесс
     const pythonProcess = spawn('python', args);

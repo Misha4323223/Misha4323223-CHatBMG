@@ -702,124 +702,129 @@
           // Очищаем таймер после получения ответа
           clearTimeout(timeoutId);
         
-        if (!response.ok) {
-          throw new Error(`Ошибка API: ${response.status}`);
-        }
-        
-        // Читаем поток ответа
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        
-        // Создаем переменные для хранения информации о провайдере и модели
-        let responseProvider = 'BOOOMERANGS AI';
-        let responseModel = '';
-        
-        // Обрабатываем события в потоке ответа
-        while (true) {
-          const { done, value } = await reader.read();
-          
-          if (done) {
-            // Поток завершен
-            break;
+          if (!response.ok) {
+            throw new Error(`Ошибка API: ${response.status}`);
           }
           
-          // Декодируем данные
-          const chunk = decoder.decode(value, { stream: true });
+          // Читаем поток ответа
+          const reader = response.body.getReader();
+          const decoder = new TextDecoder();
           
-          // Обрабатываем SSE формат
-          const lines = chunk.split('\n\n');
+          // Создаем переменные для хранения информации о провайдере и модели
+          let responseProvider = 'BOOOMERANGS AI';
+          let responseModel = '';
           
-          for (const line of lines) {
-            if (!line.trim()) continue;
+          // Обрабатываем события в потоке ответа
+          while (true) {
+            const { done, value } = await reader.read();
             
-            try {
-              // Находим тип события и данные
-              const eventMatch = line.match(/event: (.+)/);
-              const dataMatch = line.match(/data: (.+)/);
+            if (done) {
+              // Поток завершен
+              break;
+            }
+            
+            // Декодируем данные
+            const chunk = decoder.decode(value, { stream: true });
+            
+            // Обрабатываем SSE формат
+            const lines = chunk.split('\n\n');
+            
+            for (const line of lines) {
+              if (!line.trim()) continue;
               
-              if (eventMatch && dataMatch) {
-                const eventType = eventMatch[1];
-                const data = JSON.parse(dataMatch[1]);
+              try {
+                // Находим тип события и данные
+                const eventMatch = line.match(/event: (.+)/);
+                const dataMatch = line.match(/data: (.+)/);
                 
-                switch (eventType) {
-                  case 'connected':
-                    // Соединение установлено
-                    console.log('Соединение установлено:', data);
-                    updateConnectionStatus('connected');
-                    break;
-                    
-                  case 'update':
-                    // Получен фрагмент текста
-                    if (data.chunk) {
-                      currentMessageText += data.chunk + ' ';
-                      updateAIMessage(currentMessageText);
-                      
-                      // Сохраняем информацию о провайдере
-                      if (data.provider) responseProvider = data.provider;
-                      if (data.model) responseModel = data.model;
-                      
-                      // Обновляем метаданные в процессе генерации
-                      updateAIMessage(currentMessageText, `${responseProvider} ${data.done ? 'завершено' : 'печатает...'}`);
-                    }
-                    
-                    if (data.done) {
-                      // Генерация завершена
-                      console.log('Генерация текста завершена');
-                    }
-                    break;
-                    
-                  case 'complete':
-                    // Ответ полностью сгенерирован
-                    console.log('Ответ завершен:', data);
-                    updateConnectionStatus('connected');
-                    finishAIMessage(responseProvider, responseModel);
-                    break;
-                    
-                  case 'error':
-                    // Произошла ошибка
-                    console.error('Ошибка стриминга:', data);
-                    updateConnectionStatus('error');
-                    
-                    // Добавляем информацию об ошибке в ответ
-                    if (currentMessageText) {
-                      currentMessageText += '\n\n[Ошибка: ' + data.message + ']';
-                    } else {
-                      currentMessageText = 'Произошла ошибка при генерации ответа. Пожалуйста, попробуйте еще раз или выберите другую модель.';
-                    }
-                    
-                    updateAIMessage(currentMessageText);
-                    finishAIMessage('Ошибка', 'Не удалось завершить ответ');
-                    break;
+                if (eventMatch && dataMatch) {
+                  const eventType = eventMatch[1];
+                  const data = JSON.parse(dataMatch[1]);
                   
-                  case 'info':
-                    // Информационное сообщение
-                    console.log('Информация от сервера:', data.message);
-                    
-                    // Обновляем метаданные сообщения, чтобы пользователь видел, что происходит
-                    if (currentMessageElement) {
-                      const metaDiv = currentMessageElement.querySelector('.message-meta');
-                      if (metaDiv) {
-                        metaDiv.textContent = data.message;
+                  switch (eventType) {
+                    case 'connected':
+                      // Соединение установлено
+                      console.log('Соединение установлено:', data);
+                      updateConnectionStatus('connected');
+                      break;
+                      
+                    case 'update':
+                      // Получен фрагмент текста
+                      if (data.chunk) {
+                        currentMessageText += data.chunk + ' ';
+                        updateAIMessage(currentMessageText);
+                        
+                        // Сохраняем информацию о провайдере
+                        if (data.provider) responseProvider = data.provider;
+                        if (data.model) responseModel = data.model;
+                        
+                        // Обновляем метаданные в процессе генерации
+                        updateAIMessage(currentMessageText, `${responseProvider} ${data.done ? 'завершено' : 'печатает...'}`);
                       }
-                    }
-                    break;
+                      
+                      if (data.done) {
+                        // Генерация завершена
+                        console.log('Генерация текста завершена');
+                      }
+                      break;
+                      
+                    case 'complete':
+                      // Ответ полностью сгенерирован
+                      console.log('Ответ завершен:', data);
+                      updateConnectionStatus('connected');
+                      finishAIMessage(responseProvider, responseModel);
+                      break;
+                      
+                    case 'error':
+                      // Произошла ошибка
+                      console.error('Ошибка стриминга:', data);
+                      updateConnectionStatus('error');
+                      
+                      // Добавляем информацию об ошибке в ответ
+                      if (currentMessageText) {
+                        currentMessageText += '\n\n[Ошибка: ' + data.message + ']';
+                      } else {
+                        currentMessageText = 'Произошла ошибка при генерации ответа. Пожалуйста, попробуйте еще раз или выберите другую модель.';
+                      }
+                      
+                      updateAIMessage(currentMessageText);
+                      finishAIMessage('Ошибка', 'Не удалось завершить ответ');
+                      break;
                     
-                  case 'log':
-                    // Логи от сервера
-                    console.log('Лог от сервера:', data.message);
-                    break;
+                    case 'info':
+                      // Информационное сообщение
+                      console.log('Информация от сервера:', data.message);
+                      
+                      // Обновляем метаданные сообщения, чтобы пользователь видел, что происходит
+                      if (currentMessageElement) {
+                        const metaDiv = currentMessageElement.querySelector('.message-meta');
+                        if (metaDiv) {
+                          metaDiv.textContent = data.message;
+                        }
+                      }
+                      break;
+                      
+                    case 'log':
+                      // Логи от сервера
+                      console.log('Лог от сервера:', data.message);
+                      break;
+                  }
                 }
+              } catch (parseError) {
+                console.error('Ошибка при обработке SSE события:', parseError, line);
               }
-            } catch (parseError) {
-              console.error('Ошибка при обработке SSE события:', parseError, line);
             }
           }
-        }
-        
-        // Завершаем ответ, если он еще не завершен
-        if (isGenerating) {
-          finishAIMessage(responseProvider, responseModel);
-          updateConnectionStatus('disconnected');
+          
+          // Завершаем ответ, если он еще не завершен
+          if (isGenerating) {
+            finishAIMessage(responseProvider, responseModel);
+            updateConnectionStatus('disconnected');
+          }
+        } catch (fetchError) {
+          console.error('Ошибка при запросе:', fetchError);
+          clearTimeout(timeoutId);
+          throw fetchError;
         }
         
       } catch (error) {
@@ -881,7 +886,8 @@
         const response = await fetch('/api/svg/generate', {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Connection': 'keep-alive'
           },
           body: JSON.stringify({ prompt, style })
         });
@@ -920,7 +926,8 @@
               const svgResponse = await fetch('/api/svg/convert', {
                 method: 'POST',
                 headers: {
-                  'Content-Type': 'application/json'
+                  'Content-Type': 'application/json',
+                  'Connection': 'keep-alive'
                 },
                 body: JSON.stringify({ imageUrl: data.imageUrl, style })
               });
