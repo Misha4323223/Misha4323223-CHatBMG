@@ -1,5 +1,5 @@
 // G4F провайдеры для бесплатного доступа к AI моделям
-const fetch = require('node-fetch');
+const fetch = require('node-fetch').default; // Важно использовать .default для совместимости
 
 // Список доступных провайдеров, отсортированных по стабильности
 const PROVIDERS = {
@@ -28,18 +28,23 @@ const PROVIDER_MODELS = {
   [PROVIDERS.GEMINI]: 'gemini-pro'
 };
 
-// Порядок провайдеров от самых стабильных к менее стабильным
-const PROVIDER_PRIORITY = [
-  PROVIDERS.QWEN,
-  PROVIDERS.LIAOBOTS,
-  PROVIDERS.DIFY, 
-  PROVIDERS.OPENROUTER,
-  PROVIDERS.PHIND,
+// Провайдеры, требующие API ключ (отключены)
+const KEY_REQUIRED_PROVIDERS = [
   PROVIDERS.PERPLEXITY,
-  PROVIDERS.DEEPAI,
-  PROVIDERS.AICHAT,
-  PROVIDERS.CHATGPT,
-  PROVIDERS.GEMINI
+  PROVIDERS.GEMINI,
+  PROVIDERS.GIGA
+];
+
+// Порядок провайдеров от самых стабильных к менее стабильным
+// Включаем только бесплатные провайдеры, не требующие API ключей
+const PROVIDER_PRIORITY = [
+  PROVIDERS.QWEN,        // Самый стабильный, бесплатный 
+  PROVIDERS.LIAOBOTS,    // Хороший бесплатный провайдер
+  PROVIDERS.PHIND,       // Хороший бесплатный провайдер
+  PROVIDERS.DIFY,        // Хороший бесплатный провайдер
+  PROVIDERS.DEEPAI,      // Бесплатный с ограничениями
+  PROVIDERS.AICHAT,      // Менее стабильный, но бесплатный
+  PROVIDERS.CHATGPT      // Нестабильный, но бесплатный
 ];
 
 // Функция для получения списка доступных провайдеров в порядке приоритета
@@ -614,5 +619,6 @@ module.exports = {
   getModelForProvider,
   checkProviderAvailability,
   PROVIDERS,
-  PROVIDER_MODELS
+  PROVIDER_MODELS,
+  KEY_REQUIRED_PROVIDERS
 };

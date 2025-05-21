@@ -6,25 +6,60 @@ const g4fProvider = require('./g4f-provider');
 // API endpoint для чата с моделями G4F
 router.post('/chat', async (req, res) => {
   try {
-    const { message, provider = 'qwen', model = null, temperature = 0.7, maxTokens = 800, max_retries = 3 } = req.body;
+    const { 
+      message, 
+      messages = null,
+      provider = null, // Если null, будет перебор по приоритету
+      model = null, 
+      temperature = 0.7, 
+      maxTokens = 800, 
+      max_retries = 3 
+    } = req.body;
     
-    if (!message) {
+    // Проверяем, что есть хотя бы одно сообщение
+    if (!message && (!messages || messages.length === 0)) {
       return res.status(400).json({ 
-        error: 'Отсутствует параметр message',
-        response: 'Пожалуйста, укажите сообщение для обработки'
+        error: 'Отсутствует сообщение',
+        response: 'Пожалуйста, укажите сообщение или историю сообщений для обработки'
       });
     }
     
-    console.log(`Запрос к G4F: провайдер=${provider}, сообщение="${message.substring(0, 50)}..."`);
+    // Подготовка формата сообщений для API
+    let chatMessages;
+    if (messages) {
+      // Если передан массив сообщений, используем его
+      chatMessages = messages;
+      console.log(`Запрос к G4F: провайдер=${provider || 'auto'}, ${messages.length} сообщений в истории`);
+    } else {
+      // Иначе создаем новое сообщение
+      chatMessages = [{ role: 'user', content: message }];
+      console.log(`Запрос к G4F: провайдер=${provider || 'auto'}, сообщение="${message.substring(0, 50)}..."`);
+    }
     
+    // Если указан конкретный провайдер, проверяем модель
+    let selectedModel = model;
+    if (provider && !model) {
+      // Если модель не указана, получаем модель по умолчанию для данного провайдера
+      selectedModel = g4fProvider.getModelForProvider(provider, model);
+      console.log(`Для провайдера ${provider} выбрана модель: ${selectedModel}`);
+    }
+    
+    // Выполняем запрос к провайдеру(ам)
     const response = await g4fProvider.getResponse(message, {
       provider,
-      model,
+      model: selectedModel,
       temperature,
       maxTokens,
-      maxRetries: max_retries
+      maxRetries: max_retries,
+      messages: chatMessages
     });
     
+    // Добавляем информацию о проверенных провайдерах
+    if (response.successfulProviders) {
+      console.log(`Успешный ответ от провайдера: ${response.provider} (модель: ${response.model})`);
+    }
+    
+    // Если есть цитаты (например, от Perplexity), они будут включены в ответ
     return res.json(response);
   } catch (error) {
     console.error('Ошибка G4F API:', error);
@@ -44,13 +79,15 @@ router.post('/chat', async (req, res) => {
 router.get('/providers', async (req, res) => {
   try {
     const providers = g4fProvider.getProviders();
+    const models = g4fProvider.PROVIDER_MODELS;
     
     // Получаем информацию о доступности каждого провайдера
     const availabilityPromises = providers.map(async (provider) => {
       const available = await g4fProvider.checkProviderAvailability(provider);
       return {
         name: provider,
-        available
+        available,
+        model: models[provider] || null
       };
     });
     
@@ -58,7 +95,7 @@ router.get('/providers', async (req, res) => {
     
     return res.json({
       providers: providersInfo,
-      default: 'qwen'
+      default: null // Автоматический выбор провайдера
     });
   } catch (error) {
     console.error('Ошибка при получении списка провайдеров:', error);
