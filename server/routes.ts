@@ -103,6 +103,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.sendFile('public/unified-interface.html', { root: '.' });
   });
   
+  // BOOOMERANGS только генератор изображений (стабильная версия)
+  app.get('/image-generator', (req, res) => {
+    res.sendFile('public/image-generator.html', { root: '.' });
+  });
+  
   // BOOOMERANGS приложение со стримингом
   app.get('/booom-streaming', (req, res) => {
     res.sendFile('booomerangs-app-streaming-fixed.html', { root: '.' });
