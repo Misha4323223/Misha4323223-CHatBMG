@@ -1,27 +1,21 @@
 import express from 'express';
-import cors from 'cors';
-import fetch from 'node-fetch';
 import potrace from 'potrace';
 import sharp from 'sharp';
 import path from 'path';
 import fs from 'fs';
+import fetch from 'node-fetch';
 import { fileURLToPath } from 'url';
+
+// Создаем роутер для SVG генератора
+const svgRouter = express.Router();
 
 // Получаем текущую директорию для ES модулей
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const app = express();
-const PORT = 5000;
-
-// Включаем парсинг JSON и CORS
-app.use(express.json());
-app.use(cors());
-app.use(express.static('public'));
-
 // Создаем директории, если их нет
-const tempDir = path.join(__dirname, 'temp');
-const publicDir = path.join(__dirname, 'public');
+const tempDir = path.join(__dirname, '..', 'temp');
+const publicDir = path.join(__dirname, '..', 'public');
 
 if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir);
 if (!fs.existsSync(publicDir)) fs.mkdirSync(publicDir);
@@ -45,7 +39,7 @@ async function generateImage(prompt) {
       throw new Error(`Ошибка при загрузке изображения: ${response.status}`);
     }
     
-    // Конвертируем в буфер и затем в base64
+    // Конвертируем в буфер
     const buffer = await response.arrayBuffer();
     return Buffer.from(buffer);
   } catch (error) {
@@ -71,8 +65,8 @@ async function generateImage(prompt) {
       }
     })
     .linear(
-      [1.1, 1.1, 1.1], // умножитель для каждого канала (немного осветляет)
-      [-10, -10, -10]  // добавка для каждого канала (немного смещает цвет)
+      [1.1, 1.1, 1.1], // умножитель для каждого канала
+      [-10, -10, -10]  // добавка для каждого канала
     )
     .png()
     .toBuffer();
@@ -118,7 +112,7 @@ function convertToSvg(imageBuffer) {
   });
 }
 
-// Создаем простую HTML страницу с формой для генерации
+// Создаем HTML-страницу для SVG генератора
 const htmlPage = `<!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -180,7 +174,7 @@ const htmlPage = `<!DOCTYPE html>
             
             try {
                 // Запрос на генерацию
-                const response = await fetch('/generate', {
+                const response = await fetch('/svg-generator/generate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ prompt })
@@ -243,16 +237,16 @@ const htmlPage = `<!DOCTYPE html>
 </body>
 </html>`;
 
-// Создаем файл HTML если его нет
-fs.writeFileSync(path.join(publicDir, 'index.html'), htmlPage);
+// Создаем HTML-файл
+fs.writeFileSync(path.join(publicDir, 'svg-generator.html'), htmlPage);
 
-// Эндпоинт для главной страницы
-app.get('/', (req, res) => {
-  res.sendFile(path.join(publicDir, 'index.html'));
+// Маршрут для главной страницы генератора
+svgRouter.get('/', (req, res) => {
+  res.sendFile(path.join(publicDir, 'svg-generator.html'));
 });
 
-// Эндпоинт для генерации изображения
-app.post('/generate', async (req, res) => {
+// Маршрут для генерации SVG
+svgRouter.post('/generate', async (req, res) => {
   try {
     const { prompt } = req.body;
     
@@ -280,8 +274,4 @@ app.post('/generate', async (req, res) => {
   }
 });
 
-// Запускаем сервер
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`SVG Generator запущен на порту ${PORT}`);
-  console.log(`Откройте http://localhost:${PORT} в браузере`);
-});
+export default svgRouter;

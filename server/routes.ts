@@ -7,6 +7,9 @@ import { authMiddleware } from "./middleware/auth";
 import { z } from "zod";
 import { authSchema, messageSchema } from "@shared/schema";
 
+// Импортируем роутер для SVG генератора
+import svgGeneratorRouter from "./svg-generator-routes.js";
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Create HTTP server
   const httpServer = createServer(app);
@@ -16,6 +19,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Setup proxy middleware
   setupProxyMiddleware(app);
+  
+  // Подключаем SVG генератор по пути /svg-generator
+  app.use('/svg-generator', svgGeneratorRouter);
   
   // Auth endpoint - validate token and return user
   app.post("/api/auth", async (req, res) => {
