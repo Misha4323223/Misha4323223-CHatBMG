@@ -209,6 +209,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const checkProvidersRoutes = require('./check-providers');
   app.use('/api/providers', checkProvidersRoutes);
   
+  // API для Ollama - локальный AI провайдер
+  const ollamaProvider = require('./ollama-provider');
+  app.use('/api/ollama', ollamaProvider);
+  
   // Проверка работы Python провайдера при запуске
   (async () => {
     try {
