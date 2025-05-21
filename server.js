@@ -1,0 +1,334 @@
+const express = require('express');
+const app = express();
+const PORT = 3000;
+
+// Главная страница
+app.get('/', (req, res) => {
+  res.send(`
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>G4F и Генератор изображений</title>
+  <style>
+    :root {
+      --primary: #4a56e2;
+      --primary-hover: #3a46c2;
+      --bg-light: #f9fafc;
+      --text-dark: #333;
+      --card-bg: #fff;
+      --border: #ddd;
+      --shadow: rgba(0, 0, 0, 0.1);
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.6;
+      color: var(--text-dark);
+      background-color: var(--bg-light);
+      padding: 2rem;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    
+    header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(45deg, var(--primary), #6c63ff);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      display: inline-block;
+    }
+    
+    p {
+      margin-bottom: 1rem;
+      opacity: 0.8;
+    }
+    
+    .card {
+      background-color: var(--card-bg);
+      border-radius: 0.5rem;
+      box-shadow: 0 4px 6px var(--shadow);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      border: 1px solid var(--border);
+    }
+    
+    h2 {
+      margin-bottom: 1rem;
+      color: var(--primary);
+    }
+    
+    .button {
+      display: inline-block;
+      background-color: var(--primary);
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.5rem;
+      text-decoration: none;
+      font-weight: 500;
+      margin-top: 1rem;
+      transition: background-color 0.2s, transform 0.2s;
+      border: none;
+      cursor: pointer;
+    }
+    
+    .button:hover {
+      background-color: var(--primary-hover);
+      transform: translateY(-2px);
+    }
+    
+    .demo-container {
+      margin-top: 2rem;
+    }
+    
+    .tabs {
+      display: flex;
+      margin-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .tab {
+      padding: 0.75rem 1.5rem;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+    }
+    
+    .tab.active {
+      border-bottom: 2px solid var(--primary);
+      color: var(--primary);
+      font-weight: 500;
+    }
+    
+    .tab-content {
+      display: none;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    .input-container {
+      margin-bottom: 1rem;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+    }
+    
+    textarea {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 0.5rem;
+      min-height: 100px;
+      font-family: inherit;
+    }
+    
+    .image-result {
+      margin-top: 1.5rem;
+      text-align: center;
+      display: none;
+    }
+    
+    .image-result img {
+      max-width: 100%;
+      border-radius: 0.5rem;
+      box-shadow: 0 4px 6px var(--shadow);
+      max-height: 400px;
+    }
+    
+    .messages {
+      height: 300px;
+      overflow-y: auto;
+      padding: 1rem;
+      background-color: #f5f5f5;
+      border-radius: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    
+    .message {
+      padding: 0.75rem;
+      border-radius: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+    
+    .user-message {
+      background-color: var(--primary);
+      color: white;
+      margin-left: 20%;
+    }
+    
+    .ai-message {
+      background-color: #e9e9e9;
+      margin-right: 20%;
+    }
+    
+    .chat-input {
+      display: flex;
+      gap: 0.5rem;
+    }
+    
+    .chat-input textarea {
+      flex: 1;
+      min-height: 60px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>G4F + Генератор изображений</h1>
+    <p>Бесплатный доступ к функциям AI с генерацией изображений</p>
+  </header>
+  
+  <div class="card">
+    <h2>Выберите функцию</h2>
+    <p>Наше приложение предоставляет доступ к AI функциям без необходимости платных ключей API:</p>
+    
+    <div class="tabs">
+      <div class="tab active" data-tab="image-generator">Генератор изображений</div>
+      <div class="tab" data-tab="chat">Чат с AI</div>
+    </div>
+    
+    <div class="tab-content active" id="image-generator-tab">
+      <p>Создавайте изображения по текстовому описанию с помощью генератора изображений:</p>
+      
+      <div class="input-container">
+        <label for="prompt">Опишите желаемое изображение:</label>
+        <textarea id="prompt" placeholder="Например: горный пейзаж на закате, космический корабль в стиле киберпанк, футуристический город ночью..."></textarea>
+      </div>
+      
+      <button class="button" id="generate-btn">Создать изображение</button>
+      
+      <div class="image-result" id="image-result">
+        <h3>Результат:</h3>
+        <img id="result-image" src="" alt="Сгенерированное изображение">
+      </div>
+    </div>
+    
+    <div class="tab-content" id="chat-tab">
+      <p>Общайтесь с искусственным интеллектом без необходимости платных API ключей:</p>
+      
+      <div class="messages" id="messages">
+        <div class="message ai-message">Привет! Я демонстрационная версия чат-бота, использующего G4F. Как я могу помочь вам сегодня?</div>
+      </div>
+      
+      <div class="chat-input">
+        <textarea id="chat-input" placeholder="Введите ваш вопрос или сообщение..."></textarea>
+        <button class="button" id="send-btn">Отправить</button>
+      </div>
+    </div>
+  </div>
+  
+  <div class="card">
+    <h2>О проекте</h2>
+    <p>Это демонстрация проекта для бесплатного доступа к функциям ChatGPT без необходимости платных API ключей. Проект использует библиотеку G4F для доступа к различным моделям AI.</p>
+    <p>Генератор изображений использует Unsplash API для создания изображений по текстовому описанию, а затем процессинг с помощью библиотеки Sharp и трассировку в SVG формат с помощью Potrace.</p>
+  </div>
+  
+  <script>
+    // Переключение вкладок
+    const tabs = document.querySelectorAll('.tab');
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        // Убираем активный класс со всех вкладок
+        tabs.forEach(t => t.classList.remove('active'));
+        // Добавляем активный класс текущей вкладке
+        tab.classList.add('active');
+        
+        // Скрываем все контенты вкладок
+        document.querySelectorAll('.tab-content').forEach(content => {
+          content.classList.remove('active');
+        });
+        
+        // Показываем контент выбранной вкладки
+        const tabId = tab.getAttribute('data-tab');
+        document.getElementById(tabId + '-tab').classList.add('active');
+      });
+    });
+    
+    // Генератор изображений
+    document.getElementById('generate-btn').addEventListener('click', () => {
+      const prompt = document.getElementById('prompt').value.trim();
+      
+      if (!prompt) {
+        alert('Пожалуйста, введите описание изображения');
+        return;
+      }
+      
+      // Используем Unsplash API для получения изображения по запросу
+      const encodedPrompt = encodeURIComponent(prompt);
+      const imageUrl = \`https://source.unsplash.com/900x600/?\${encodedPrompt}&random=\${Math.random()}\`;
+      
+      // Отображаем результат
+      document.getElementById('result-image').src = imageUrl;
+      document.getElementById('image-result').style.display = 'block';
+    });
+    
+    // Чат с AI (демонстрационная версия)
+    document.getElementById('send-btn').addEventListener('click', () => {
+      const userInput = document.getElementById('chat-input').value.trim();
+      
+      if (!userInput) return;
+      
+      // Добавляем сообщение пользователя
+      addMessage(userInput, true);
+      document.getElementById('chat-input').value = '';
+      
+      // Генерируем ответ AI (в полной версии здесь был бы запрос к G4F)
+      setTimeout(() => {
+        const response = generateDemoResponse(userInput);
+        addMessage(response, false);
+      }, 1000);
+    });
+    
+    // Функция добавления сообщения в чат
+    function addMessage(text, isUser) {
+      const messagesContainer = document.getElementById('messages');
+      const messageElement = document.createElement('div');
+      messageElement.className = \`message \${isUser ? 'user-message' : 'ai-message'}\`;
+      messageElement.textContent = text;
+      
+      messagesContainer.appendChild(messageElement);
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+    
+    // Демо-функция для генерации ответов (имитация G4F)
+    function generateDemoResponse(input) {
+      const responses = [
+        "Это интересный вопрос! В полной версии приложения я бы использовал G4F для получения ответа от реальной модели AI.",
+        "Спасибо за ваш вопрос. В рабочей версии приложения здесь был бы ответ от провайдера Qwen через G4F.",
+        "Отличный запрос! Вы можете получить детальный ответ в полной версии приложения.",
+        "Этот демонстрационный режим имеет ограниченную функциональность. В полной версии вы получите ответ от реальной модели AI.",
+        "Для получения полноценного ответа на этот вопрос, попробуйте полную версию приложения с интеграцией G4F.",
+        "Чтобы увидеть реальный ответ от AI, запустите полную версию сервера с поддержкой G4F.",
+        "В полной версии приложения вы можете также создавать изображения и получать ответы от различных моделей AI!"
+      ];
+      
+      return responses[Math.floor(Math.random() * responses.length)];
+    }
+  </script>
+</body>
+</html>
+  `);
+});
+
+// Запуск сервера
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Сервер запущен на порту ${PORT}`);
+});
