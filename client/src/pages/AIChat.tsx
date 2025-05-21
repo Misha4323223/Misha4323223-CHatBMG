@@ -1,6 +1,33 @@
 import { useState, useRef, useEffect } from "react";
 import BooomerangsLogo from "@/components/BooomerangsLogo";
 
+// Функция для получения иконки провайдера
+const getProviderIcon = (provider: string) => {
+  // Преобразуем название провайдера к нижнему регистру для сравнения
+  const providerName = provider.toLowerCase();
+  
+  switch(providerName) {
+    case 'deepspeek':
+      return <span className="mr-1">👨‍💻</span>;
+    case 'claude':
+    case 'anthropic':
+      return <span className="mr-1">🤖</span>;
+    case 'chatfree':
+      return <span className="mr-1">💬</span>;
+    case 'deepinfra':
+      return <span className="mr-1">🧠</span>;
+    case 'qwen':
+    case 'aitianhu':
+      return <span className="mr-1">🚀</span>;
+    case 'ollama':
+      return <span className="mr-1">🦙</span>;
+    case 'phind':
+      return <span className="mr-1">📚</span>;
+    default:
+      return <span className="mr-1">🤖</span>;
+  }
+}
+
 // Тип данных для сообщений
 interface Message {
   id: number;
@@ -210,19 +237,34 @@ export default function AIChat() {
                     </div>
                   )}
                   
-                  <div className={`flex items-center text-xs text-gray-500 mt-1 ${message.sender === "user" ? "justify-end" : ""}`}>
+                  <div className={`flex items-center text-xs text-gray-500 mt-1 ${message.sender === "user" ? "justify-end" : ""} gap-2`}>
                     <span>{message.time}</span>
                     {message.provider && (
-                      <span 
-                        className="ml-2 px-2 py-0.5 rounded-full"
-                        style={{
-                          background: 'rgba(59, 130, 246, 0.1)',
-                          color: '#3b82f6',
-                          fontWeight: '500'
-                        }}
-                      >
-                        {message.model}
-                      </span>
+                      <>
+                        <span 
+                          className="px-2 py-0.5 rounded-full flex items-center"
+                          style={{
+                            background: 'rgba(59, 130, 246, 0.1)',
+                            color: '#3b82f6',
+                            fontWeight: '500'
+                          }}
+                        >
+                          {getProviderIcon(message.provider)}
+                          <span className="ml-1">{message.provider}</span>
+                        </span>
+                        {message.model && (
+                          <span 
+                            className="px-2 py-0.5 rounded-full"
+                            style={{
+                              background: 'rgba(99, 102, 241, 0.1)',
+                              color: '#6366f1',
+                              fontWeight: '500'
+                            }}
+                          >
+                            {message.model}
+                          </span>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>
