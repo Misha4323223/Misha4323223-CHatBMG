@@ -35,6 +35,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // API для генератора изображений
   app.use('/api/svg', svgGenerator);
   
+  // Тестовая страница
+  app.get('/test', (req, res) => {
+    res.sendFile('test-page.html', { root: '.' });
+  });
+  
   // Auth endpoint - validate token and return user
   app.post("/api/auth", async (req, res) => {
     try {
