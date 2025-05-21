@@ -3,7 +3,7 @@
  */
 const express = require('express');
 const router = express.Router();
-const fetch = require('node-fetch');
+const pythonProviderRoutes = require('./python_provider_routes');
 
 // Модели DeepInfra
 const DEEPINFRA_MODELS = {
@@ -37,81 +37,58 @@ async function getDeepInfraResponse(message, options = {}) {
   try {
     console.log(`DeepInfra: Запрос к модели ${modelName}...`);
     
-    // Используем прямой вызов API для DeepInfra
-    const response = await fetch('http://localhost:5004/python/direct', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        message,
-        provider: 'DeepInfra',
-        model: modelName,
-        systemPrompt,
-        timeout: 25000  // Увеличенный таймаут для DeepInfra
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
+    // Подготавливаем запрос с нужными параметрами
+    const fullMessage = {
+      message: message,
+      systemPrompt: systemPrompt
+    };
     
-    // Проверяем ответ от сервера
-    if (data.error) {
-      throw new Error(data.error);
-    }
+    // Используем готовую функцию из pythonProviderRoutes для отправки запроса к Python G4F
+    const providerToUse = model === 'codellama' ? 'DeepInfra_CodeLlama' :
+                          model === 'mixtral' ? 'DeepInfra_Mistral' :
+                          model === 'llama' ? 'DeepInfra_Llama' :
+                          model === 'qwen' ? 'DeepInfra_Qwen' : 'DeepInfra';
     
-    if (!data.response || data.response.trim() === '') {
-      throw new Error('DeepInfra вернул пустой ответ');
+    console.log(`DeepInfra: Используем провайдер ${providerToUse}`);
+    
+    const response = await pythonProviderRoutes.callPythonAI(
+      JSON.stringify(fullMessage),
+      providerToUse
+    );
+    
+    if (!response) {
+      throw new Error('Python G4F не вернул ответ от DeepInfra');
     }
     
     console.log(`DeepInfra: Успешно получен ответ от модели ${modelName}`);
     
     return {
       success: true,
-      response: data.response,
+      response: response,
       provider: 'DeepInfra',
       model: modelName
     };
   } catch (error) {
     console.error(`DeepInfra Error: ${error.message}`);
     
-    // Пробуем получить ответ через fallback систему
+    // Пробуем получить ответ через общий API с автоматическим переключением
     try {
-      console.log(`DeepInfra: Попытка получить ответ через fallback...`);
+      console.log(`DeepInfra: Попытка получить ответ через общий API...`);
       
-      // Используем общую систему с автопереключением
-      const fallbackResponse = await fetch('http://localhost:5004/python/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message,
-          provider: 'DeepInfra_Mistral',  // Начинаем с Mixtral
-          timeout: 15000
-        }),
-      });
+      // Отправляем запрос через основной интерфейс с автоматическим переключением
+      const response = await pythonProviderRoutes.callPythonAI(message);
       
-      if (!fallbackResponse.ok) {
-        throw new Error(`HTTP error! status: ${fallbackResponse.status}`);
+      if (!response) {
+        throw new Error('Python G4F не вернул ответ через общий API');
       }
       
-      const fallbackData = await fallbackResponse.json();
-      
-      if (fallbackData.error) {
-        throw new Error(fallbackData.error);
-      }
-      
-      console.log(`DeepInfra: Успешно получен ответ через fallback`);
+      console.log(`DeepInfra: Успешно получен ответ через общий API`);
       
       return {
         success: true,
-        response: fallbackData.response,
-        provider: fallbackData.provider || 'DeepInfra-Fallback',
-        model: fallbackData.model || modelName
+        response: response,
+        provider: 'AI-Fallback',
+        model: 'auto-selected'
       };
     } catch (fallbackError) {
       console.error(`DeepInfra Fallback Error: ${fallbackError.message}`);
