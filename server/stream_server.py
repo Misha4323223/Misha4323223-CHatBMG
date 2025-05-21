@@ -21,7 +21,8 @@ def get_provider(name):
         return None
 
 providers = {}
-for name in ["Qwen_Qwen_2_5_Max", "Qwen_Qwen_3", "You", "DeepInfra", "Gemini", "GeminiPro", "Phind", "Liaobots", "Anthropic"]:
+# Добавляем Llama 3 в список провайдеров
+for name in ["Qwen_Qwen_2_5_Max", "Qwen_Qwen_3", "You", "DeepInfra", "Gemini", "GeminiPro", "Phind", "Liaobots", "Anthropic", "Ollama", "HuggingChat"]:
     provider = get_provider(name)
     if provider:
         providers[name] = provider
@@ -29,8 +30,48 @@ for name in ["Qwen_Qwen_2_5_Max", "Qwen_Qwen_3", "You", "DeepInfra", "Gemini", "
     else:
         print(f"Не удалось загрузить провайдер: {name}")
 
+# Пытаемся найти провайдеры Llama и другие перспективные модели
+llama_providers = []
+all_provider_names = []
+try:
+    all_provider_names = [name for name in dir(g4f.Provider) if not name.startswith('_')]
+    print(f"Всего найдено провайдеров: {len(all_provider_names)}")
+except Exception as e:
+    print(f"Ошибка при получении списка провайдеров: {str(e)}")
+    all_provider_names = []
+
+# Ищем провайдеры с llama в названии
+for name in all_provider_names:
+    if "llama" in name.lower():
+        print(f"Найден потенциальный Llama провайдер: {name}")
+        provider = get_provider(name)
+        if provider:
+            providers[name] = provider
+            llama_providers.append(name)
+            print(f"🦙 Успешно загружен Llama провайдер: {name}")
+            
+# Ищем Llama 3 специально
+for name in ["HuggingFace", "HuggingSpace", "HuggingChat", "Ollama", "Replicate"]:
+    if name not in providers and name in all_provider_names:
+        provider = get_provider(name)
+        if provider:
+            providers[name] = provider
+            print(f"✅ Успешно загружен дополнительный провайдер для моделей Llama: {name}")
+            
+# Добавляем в список потенциальных провайдеров с Llama
+if "HuggingChat" in providers:
+    llama_providers.append("HuggingChat")
+if "Ollama" in providers:
+    llama_providers.append("Ollama")
+
 # Проверяем доступность Claude через Anthropic
 anthropic_available = "Anthropic" in providers
+llama_available = len(llama_providers) > 0
+
+if llama_available:
+    print(f"✅ Провайдеры Llama доступны: {', '.join(llama_providers)}")
+else:
+    print("❌ Провайдеры Llama не найдены или недоступны")
 if anthropic_available:
     print("✅ Провайдер Anthropic (Claude) доступен для использования!")
 else:
@@ -46,6 +87,13 @@ provider_groups = {
 # Добавляем Claude в группы, если доступен
 if anthropic_available:
     provider_groups['primary'].insert(0, 'Anthropic')  # Добавляем в начало списка primary
+    
+# Добавляем Llama в группы, если доступны
+if llama_available:
+    for llama_provider in llama_providers:
+        # Добавляем Llama провайдеров в начало primary группы
+        provider_groups['primary'].insert(0, llama_provider)
+        print(f"🦙 Добавлен Llama провайдер {llama_provider} в primary группу")
 
 app = Flask(__name__)
 CORS(app)
