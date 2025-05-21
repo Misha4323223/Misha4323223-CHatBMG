@@ -820,6 +820,20 @@
                         case 'chunk':
                           // Получен фрагмент текста
                           const textChunk = data.chunk || data.text || '';
+                          
+                          // Проверка на HTML-ответ (признак блокировки)
+                          if (textChunk && textChunk.toLowerCase().includes("<html")) {
+                            console.error("Обнаружен HTML в ответе, возможно провайдер заблокирован");
+                            
+                            // Прерываем обработку этого чанка и отправляем ошибку
+                            res.write(`event: error\ndata: ${JSON.stringify({
+                              error: 'Провайдер вернул HTML вместо текста — возможно, заблокирован'
+                            })}\n\n`);
+                            
+                            // Переключаемся на резервный режим
+                            continue;
+                          }
+                          
                           if (textChunk) {
                             currentMessageText += textChunk;
                             updateAIMessage(currentMessageText);

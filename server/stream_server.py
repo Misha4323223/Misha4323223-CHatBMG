@@ -14,15 +14,20 @@ import string
 import traceback
 
 # Основные провайдеры с поддержкой потоковой передачи
-providers = {
-    'Qwen_Max': g4f.Provider.Qwen_Max,
-    'Qwen_3': g4f.Provider.Qwen_3,
-    'You': g4f.Provider.You,
-    'DeepInfra': g4f.Provider.DeepInfra,
-    'Gemini': g4f.Provider.Gemini,
-    'GeminiPro': g4f.Provider.GeminiPro,
-    'DeepAI': g4f.Provider.DeepAI
-}
+# Используем более гибкий подход с getattr вместо прямого доступа
+# для избежания ошибок AttributeError
+def get_provider(name):
+    try:
+        return getattr(g4f.Provider, name)
+    except AttributeError:
+        print(f"Провайдер {name} не найден в g4f")
+        return None
+
+providers = {}
+for name in ["Qwen_Max", "Qwen_3", "You", "DeepInfra", "Gemini", "GeminiPro", "DeepAI"]:
+    provider = get_provider(name)
+    if provider:
+        providers[name] = provider
 
 # Организуем провайдеры в группы по надежности
 provider_groups = {
