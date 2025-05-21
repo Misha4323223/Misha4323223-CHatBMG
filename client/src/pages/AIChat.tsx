@@ -1,10 +1,10 @@
 import { useState, useRef, useEffect } from "react";
 import BooomerangsLogo from "@/components/BooomerangsLogo";
 
-// Функция для получения иконки провайдера
-const getProviderIcon = (provider: string) => {
+// Функция для получения иконки провайдера в метаданных
+const getProviderIcon = (provider?: string) => {
   // Преобразуем название провайдера к нижнему регистру для сравнения
-  const providerName = provider.toLowerCase();
+  const providerName = provider?.toLowerCase() || '';
   
   switch(providerName) {
     case 'deepspeek':
@@ -25,6 +25,58 @@ const getProviderIcon = (provider: string) => {
       return <span className="mr-1">📚</span>;
     default:
       return <span className="mr-1">🤖</span>;
+  }
+}
+
+// Функция для получения аватара провайдера в кружке
+const getProviderAvatar = (provider?: string) => {
+  const providerName = provider?.toLowerCase() || '';
+  
+  switch(providerName) {
+    case 'deepspeek':
+      return "👨‍💻";
+    case 'claude':
+    case 'anthropic':
+      return "C";
+    case 'chatfree':
+      return "CF";
+    case 'deepinfra':
+      return "DI";
+    case 'qwen':
+    case 'aitianhu':
+      return "Q";
+    case 'ollama':
+      return "🦙";
+    case 'phind':
+      return "P";
+    default:
+      return "B";
+  }
+}
+
+// Функция для получения градиента фона аватара провайдера
+const getProviderGradient = (provider?: string) => {
+  const providerName = provider?.toLowerCase() || '';
+  
+  switch(providerName) {
+    case 'deepspeek':
+      return 'linear-gradient(135deg, #4f46e5, #3b82f6)'; // Indigo to blue
+    case 'claude':
+    case 'anthropic':
+      return 'linear-gradient(135deg, #7c3aed, #8b5cf6)'; // Purple shades
+    case 'chatfree':
+      return 'linear-gradient(135deg, #0ea5e9, #38bdf8)'; // Sky blue shades
+    case 'deepinfra':
+      return 'linear-gradient(135deg, #475569, #64748b)'; // Slate shades
+    case 'qwen':
+    case 'aitianhu':
+      return 'linear-gradient(135deg, #ef4444, #f87171)'; // Red shades
+    case 'ollama':
+      return 'linear-gradient(135deg, #16a34a, #4ade80)'; // Green shades
+    case 'phind':
+      return 'linear-gradient(135deg, #eab308, #facc15)'; // Yellow shades
+    default:
+      return 'linear-gradient(135deg, #8b5cf6, #6366f1)'; // Default gradient
   }
 }
 
@@ -184,13 +236,13 @@ export default function AIChat() {
               <div key={message.id} className={`flex ${message.sender === "user" ? "justify-end" : ""}`}>
                 {message.sender === "ai" && (
                   <div 
-                    className="w-8 h-8 rounded-full text-white flex items-center justify-center mr-2 flex-shrink-0 mb-1"
+                    className="w-9 h-9 rounded-full text-white flex items-center justify-center mr-2 flex-shrink-0 mb-1"
                     style={{
-                      background: 'linear-gradient(135deg, #8b5cf6, #6366f1)',
+                      background: getProviderGradient(message.provider),
                       boxShadow: '0 4px 10px -2px rgba(99, 102, 241, 0.3)'
                     }}
                   >
-                    B
+                    {message.provider ? getProviderAvatar(message.provider) : "B"}
                   </div>
                 )}
                 
@@ -275,13 +327,13 @@ export default function AIChat() {
             {isLoading && (
               <div className="flex items-center">
                 <div 
-                  className="w-8 h-8 rounded-full text-white flex items-center justify-center mr-2 flex-shrink-0"
+                  className="w-9 h-9 rounded-full text-white flex items-center justify-center mr-2 flex-shrink-0"
                   style={{
                     background: 'linear-gradient(135deg, #8b5cf6, #6366f1)',
                     boxShadow: '0 4px 10px -2px rgba(99, 102, 241, 0.3)'
                   }}
                 >
-                  B
+                  <span className="animate-pulse">B</span>
                 </div>
                 <div className="p-3 bg-white rounded-xl shadow-sm" style={{borderRadius: '18px 18px 18px 4px'}}>
                   <div className="flex space-x-2">
