@@ -999,7 +999,7 @@
               <div class="message-bubble">${formatMessageText(message.text)}</div>
               <div class="message-metadata">
                 <span class="message-time">${message.time}</span>
-                ${message.model ? `<span class="message-model">${message.model}</span>` : ''}
+                ${message.model ? `<span class="message-model ${message.model === 'DeepSpeek AI' ? 'deepspeek-badge' : ''}">${message.model}</span>` : ''}
               </div>
             </div>
           `;
