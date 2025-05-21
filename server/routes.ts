@@ -117,8 +117,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Пытаемся получить ответ от Python провайдера
           console.log(`Пробуем использовать Python провайдер Qwen...`);
           
-          // Устанавливаем таймаут для запроса
-          const pythonTimeout = 10000; // 10 секунд максимум
+          // Увеличиваем таймаут для запроса к Qwen
+          const pythonTimeout = 25000; // 25 секунд максимум
           
           // Создаем обработчик запроса с таймаутом
           const controller = new AbortController();
