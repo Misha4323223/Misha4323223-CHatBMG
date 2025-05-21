@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { MessageWithSender, UserWithInitials } from "@shared/schema";
 import MessageBubble from "@/components/MessageBubble";
 import BooomerangsLogo from "@/components/BooomerangsLogo";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Send, Menu } from "lucide-react";
 
 interface ChatAreaProps {
   messages: MessageWithSender[];
