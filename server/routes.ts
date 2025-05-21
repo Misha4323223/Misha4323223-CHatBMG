@@ -103,6 +103,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.sendFile('booomerangs-quick.html', { root: '.' });
   });
   
+  // BOOOMERANGS стабильная версия (только провайдеры с поддержкой стриминга)
+  app.get('/stable', (req, res) => {
+    res.sendFile('booomerangs-stable.html', { root: '.' });
+  });
+  
   // API для работы с G4F провайдерами
   app.use('/api/g4f', g4fHandlers);
   
@@ -111,6 +116,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // API с Python-версией G4F
   app.use('/api/python', pythonProviderRoutes);
+  
+  // API для стриминга от провайдеров, поддерживающих stream=True
+  const streamingRoutes = require('./streaming-routes');
+  app.use('/api/streaming', streamingRoutes);
   
   // Проверка работы Python провайдера при запуске
   (async () => {
