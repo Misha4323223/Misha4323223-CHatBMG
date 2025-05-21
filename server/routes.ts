@@ -88,6 +88,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.sendFile('booomerangs-qwen.html', { root: '.' });
   });
   
+  // BOOOMERANGS со стримингом ответов
+  app.get('/streaming', (req, res) => {
+    res.sendFile('booomerangs-streaming.html', { root: '.' });
+  });
+  
   // API для работы с G4F провайдерами
   app.use('/api/g4f', g4fHandlers);
   
@@ -96,6 +101,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // API с Python-версией G4F
   app.use('/api/python', pythonProviderRoutes);
+  
+  // Проверка работы Python провайдера при запуске
+  (async () => {
+    try {
+      const { spawn } = require('child_process');
+      console.log('Проверка работоспособности Python G4F...');
+      
+      const pythonProcess = spawn('python', ['server/g4f_python_provider.py', 'test']);
+      let pythonOutput = '';
+      
+      // Устанавливаем таймаут
+      const timeout = setTimeout(() => {
+        console.warn('⚠️ Таймаут при проверке Python G4F');
+      }, 5000);
+      
+      pythonProcess.stdout.on('data', (data) => {
+        pythonOutput += data.toString();
+        console.log(`Python G4F тест: ${data.toString().trim()}`);
+      });
+      
+      pythonProcess.stderr.on('data', (data) => {
+        console.error(`Python G4F ошибка: ${data.toString().trim()}`);
+      });
+      
+      pythonProcess.on('close', (code) => {
+        clearTimeout(timeout);
+        if (code === 0) {
+          console.log('✅ Python G4F провайдер готов к работе');
+        } else {
+          console.warn(`⚠️ Python G4F провайдер может работать некорректно (код ${code})`);
+        }
+      });
+    } catch (error) {
+      console.error('❌ Ошибка при проверке Python G4F:', error);
+    }
+  })();
   
   // API для работы с BOOOMERANGS AI интеграцией (с поддержкой Qwen и других провайдеров)
   app.post('/api/ai/chat', async (req, res) => {

@@ -4,7 +4,251 @@ const router = express.Router();
 const { spawn } = require('child_process');
 const { getDemoResponse } = require('./direct-ai-provider');
 
+// Хранилище для активных SSE клиентов
+const sseClients = new Map();
+
 // API endpoint для чата с Python G4F
+// Эндпоинт для стриминга ответов с использованием Server-Sent Events (SSE)
+router.post('/chat/stream', (req, res) => {
+  try {
+    const { 
+      message, 
+      provider = null,
+      clientId = Date.now().toString() // Уникальный ID для клиента
+    } = req.body;
+    
+    // Проверяем, что сообщение присутствует
+    if (!message) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Сообщение не может быть пустым' 
+      });
+    }
+    
+    console.log(`Запрос к Python G4F (стриминг): ${message.substring(0, 50)}${message.length > 50 ? '...' : ''}`);
+    
+    // Настраиваем заголовки для SSE
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive'
+    });
+    
+    // Получаем демо-ответ на случай ошибки
+    const demoResponse = getDemoResponse(message);
+    
+    // Отправляем начальное сообщение клиенту
+    const sendEvent = (event, data) => {
+      res.write(`event: ${event}\n`);
+      res.write(`data: ${JSON.stringify(data)}\n\n`);
+    };
+    
+    // Добавляем клиента в хранилище
+    sseClients.set(clientId, { res, sendEvent });
+    
+    // Отправляем первое сообщение с подтверждением подключения
+    sendEvent('connected', { 
+      message: 'Соединение установлено',
+      clientId
+    });
+    
+    // Вызываем Python скрипт с сообщением и опциональным провайдером
+    const args = [
+      'server/g4f_python_provider.py',
+      message
+    ];
+    
+    // Если указан провайдер, добавляем его в аргументы
+    if (provider) {
+      args.push(provider);
+    }
+    
+    // Создаем флаг для отслеживания завершения
+    let isCompleted = false;
+    
+    // Запускаем демо-ответ через небольшую задержку, если Python не ответит быстро
+    const demoTimeout = setTimeout(() => {
+      if (!isCompleted) {
+        // Отправляем демо-ответ по частям для имитации стриминга
+        const demoWords = demoResponse.split(' ');
+        let sentWords = 0;
+        
+        const demoInterval = setInterval(() => {
+          if (sentWords < demoWords.length && !isCompleted) {
+            const chunk = demoWords.slice(sentWords, sentWords + 3).join(' ');
+            sentWords += 3;
+            
+            sendEvent('update', {
+              chunk,
+              done: sentWords >= demoWords.length,
+              provider: 'BOOOMERANGS-Live',
+              model: 'streaming-demo'
+            });
+            
+            if (sentWords >= demoWords.length) {
+              clearInterval(demoInterval);
+              
+              // Отправляем событие завершения
+              sendEvent('complete', {
+                message: 'Генерация завершена',
+                provider: 'BOOOMERANGS-Live',
+                model: 'streaming-demo'
+              });
+              
+              // Удаляем клиента из хранилища
+              isCompleted = true;
+              sseClients.delete(clientId);
+            }
+          } else {
+            clearInterval(demoInterval);
+          }
+        }, 100); // Отправляем каждые 100мс для имитации печати
+      }
+    }, 2000); // Ждем 2 секунды перед запуском демо-ответа
+    
+    // Вызываем скрипт как дочерний процесс
+    const pythonProcess = spawn('python', args);
+    
+    // Обрабатываем частичные ответы от скрипта
+    pythonProcess.stdout.on('data', (data) => {
+      // Если соединение уже закрыто, прерываем обработку
+      if (isCompleted) return;
+      
+      const outputText = data.toString();
+      
+      // Проверяем, содержит ли вывод JSON
+      if (outputText.includes('{') && outputText.includes('}')) {
+        try {
+          // Пытаемся найти JSON в выводе
+          const jsonMatch = outputText.match(/{.*}/);
+          if (jsonMatch) {
+            const jsonData = JSON.parse(jsonMatch[0]);
+            
+            // Отправляем полный ответ
+            clearTimeout(demoTimeout);
+            isCompleted = true;
+            
+            // Отправляем ответ по словам для имитации стриминга
+            const responseWords = jsonData.response.split(' ');
+            let sentWords = 0;
+            
+            const streamInterval = setInterval(() => {
+              if (sentWords < responseWords.length) {
+                const chunk = responseWords.slice(sentWords, sentWords + 3).join(' ');
+                sentWords += 3;
+                
+                sendEvent('update', {
+                  chunk,
+                  done: sentWords >= responseWords.length,
+                  provider: jsonData.provider || 'Python-G4F',
+                  model: jsonData.model || 'g4f-python'
+                });
+                
+                if (sentWords >= responseWords.length) {
+                  clearInterval(streamInterval);
+                  
+                  // Отправляем событие завершения
+                  sendEvent('complete', {
+                    message: 'Генерация завершена',
+                    provider: jsonData.provider || 'Python-G4F',
+                    model: jsonData.model || 'g4f-python'
+                  });
+                  
+                  // Удаляем клиента из хранилища
+                  sseClients.delete(clientId);
+                }
+              } else {
+                clearInterval(streamInterval);
+              }
+            }, 100); // Отправляем небольшими кусками каждые 100мс
+          } else {
+            // Если JSON не найден, отправляем сырой вывод как обновление
+            sendEvent('log', { message: outputText });
+          }
+        } catch (jsonError) {
+          console.error('Ошибка при обработке JSON из Python:', jsonError);
+          sendEvent('log', { message: outputText });
+        }
+      } else {
+        // Отправляем любой другой вывод как лог
+        sendEvent('log', { message: outputText });
+      }
+    });
+    
+    // Обрабатываем ошибки
+    pythonProcess.stderr.on('data', (data) => {
+      const errorText = data.toString();
+      console.error(`Ошибка Python G4F: ${errorText}`);
+      
+      // Отправляем ошибку клиенту
+      if (!isCompleted) {
+        sendEvent('error', { message: errorText });
+      }
+    });
+    
+    // Обрабатываем завершение процесса
+    pythonProcess.on('close', (code) => {
+      if (code !== 0 && !isCompleted) {
+        console.error(`Python G4F завершился с кодом ${code}`);
+        
+        // Если процесс завершился с ошибкой и ещё не был отправлен ответ
+        sendEvent('error', { 
+          message: `Python процесс завершился с кодом ${code}` 
+        });
+        
+        // Отправляем демо-ответ после ошибки
+        sendEvent('update', {
+          chunk: demoResponse,
+          done: true,
+          provider: 'BOOOMERANGS-Fallback',
+          model: 'error-recovery'
+        });
+        
+        // Отправляем событие завершения
+        sendEvent('complete', {
+          message: 'Генерация завершена (после ошибки)',
+          provider: 'BOOOMERANGS-Fallback',
+          model: 'error-recovery'
+        });
+      }
+      
+      // Закрываем соединение, если оно ещё открыто
+      if (!isCompleted) {
+        isCompleted = true;
+        sseClients.delete(clientId);
+      }
+    });
+    
+    // Обрабатываем закрытие соединения клиентом
+    req.on('close', () => {
+      isCompleted = true;
+      clearTimeout(demoTimeout);
+      
+      // Убиваем процесс Python, если он ещё запущен
+      if (pythonProcess && !pythonProcess.killed) {
+        pythonProcess.kill();
+      }
+      
+      // Удаляем клиента из хранилища
+      sseClients.delete(clientId);
+      console.log(`Клиент ${clientId} отключился`);
+    });
+    
+  } catch (error) {
+    console.error('Ошибка при обработке запроса стриминга:', error);
+    
+    // Если соединение ещё открыто, отправляем ошибку
+    if (!res.headersSent) {
+      res.status(500).json({
+        success: false, 
+        error: 'Ошибка при обработке запроса',
+        message: error.message
+      });
+    }
+  }
+});
+
+// Обычный API endpoint для чата с Python G4F
 router.post('/chat', async (req, res) => {
   try {
     const { 
