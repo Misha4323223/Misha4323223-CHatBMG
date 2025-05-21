@@ -133,13 +133,42 @@ def stream_chat():
                         
                         # Пробуем получить ответ от провайдера
                         try:
-                            response_stream = g4f.ChatCompletion.create(
-                                model="gpt-3.5-turbo",
-                                messages=messages,
-                                provider=provider,
-                                stream=True,
-                                timeout=timeout
-                            )
+                            print(f"🔍 Настройка параметров для {current_provider}")
+                            model = "gpt-3.5-turbo"
+                            
+                            # Специальная обработка для Anthropic (Claude)
+                            if current_provider == "Anthropic":
+                                print(f"⭐ Запрос к Claude через провайдер Anthropic")
+                                # Проверяем, требуется ли API-ключ
+                                try:
+                                    # Попытка использовать без ключа - это проверка требуется ли ключ вообще
+                                    response_stream = g4f.ChatCompletion.create(
+                                        model="claude-3-opus-20240229",
+                                        messages=messages,
+                                        provider=provider,
+                                        stream=True,
+                                        timeout=timeout
+                                    )
+                                    print("✅ Provider Anthropic не требует API ключа!")
+                                except Exception as claude_error:
+                                    error_str = str(claude_error)
+                                    print(f"❌ Ошибка Claude: {error_str}")
+                                    if "api_key" in error_str.lower() or "apikey" in error_str.lower() or "key" in error_str.lower() or "token" in error_str.lower():
+                                        print("⚠️ Claude требует действительный API-ключ")
+                                        # Возбуждаем исключение, чтобы перейти к следующему провайдеру
+                                        raise Exception("Claude требует API-ключ")
+                                    else:
+                                        print("⚠️ Другая ошибка при запросе к Claude")
+                                        raise
+                            else:
+                                # Для всех остальных провайдеров используем стандартный запрос
+                                response_stream = g4f.ChatCompletion.create(
+                                    model=model,
+                                    messages=messages,
+                                    provider=provider,
+                                    stream=True,
+                                    timeout=timeout
+                                )
                             
                             print(f"Получен поток от провайдера {current_provider}")
                             response_text = ''
