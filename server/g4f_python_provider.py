@@ -30,9 +30,10 @@ models_per_provider = {
 
 # Организуем провайдеры в группы по надежности
 provider_groups = {
-    "primary": ["AItianhu", "Qwen_Qwen_2_5_Max", "Qwen_Qwen_3", "You"],
-    "secondary": ["DeepInfra", "GeminiPro", "Gemini", "Phind"],
-    "fallback": ["You", "DeepInfra"]
+    "primary": ["AItianhu", "Phind", "Qwen_Qwen_2_5_Max", "Qwen_Qwen_3", "You"],
+    "secondary": ["DeepInfra", "GeminiPro", "Gemini"],
+    "fallback": ["You", "DeepInfra"],
+    "technical": ["Phind", "DeepInfra", "You"]  # Специальная группа для технических вопросов
 }
 
 def get_demo_response(message):
@@ -173,6 +174,22 @@ def get_chat_response(message, specific_provider=None, use_stream=False):
                 return result
         
         return None
+    
+    # Определяем, является ли вопрос техническим
+    is_tech_question = any(keyword in message.lower() for keyword in [
+        "код", "программирование", "javascript", "python", "java", "c++", "c#", 
+        "coding", "programming", "code", "алгоритм", "algorithm", "функция", "function",
+        "api", "сервер", "server", "backend", "frontend", "фронтенд", "бэкенд",
+        "database", "база данных", "sql", "nosql", "mongodb", "json", "html", "css",
+        "git", "github", "docker", "kubernetes", "devops"
+    ])
+    
+    # Для технических вопросов сначала пробуем группу technical
+    if is_tech_question and not specific_provider:
+        print(f"🔍 Обнаружен технический вопрос, пробуем Phind...")
+        result = try_provider_group("technical")
+        if result:
+            return result
     
     # Перебираем группы провайдеров по порядку надежности
     for group in ["primary", "secondary", "fallback"]:

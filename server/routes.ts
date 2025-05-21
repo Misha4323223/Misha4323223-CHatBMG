@@ -191,6 +191,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Определяем, какой провайдер использовать
       let selectedProvider = provider || 'AItianhu';
       
+      // Автоматическое определение технических вопросов для перенаправления на Phind
+      const techKeywords = [
+        "код", "программирование", "javascript", "python", "java", "c++", "c#", 
+        "coding", "programming", "code", "алгоритм", "algorithm", "функция", "function",
+        "api", "сервер", "server", "backend", "frontend", "фронтенд", "бэкенд",
+        "database", "база данных", "sql", "nosql", "json", "html", "css",
+        "git", "github", "docker", "kubernetes", "devops"
+      ];
+      
+      // Проверяем, является ли вопрос техническим
+      const isTechnicalQuestion = techKeywords.some(keyword => message.toLowerCase().includes(keyword));
+      
+      // Если вопрос технический и провайдер не указан явно, используем Phind
+      if (isTechnicalQuestion && !provider) {
+        selectedProvider = 'Phind';
+        console.log(`📊 Обнаружен технический вопрос, переключаемся на провайдер Phind`);
+      }
+      
       // Всегда пытаемся сначала использовать Python G4F сервер для любого запроса
       try {
         // Пытаемся получить ответ от Python провайдера с использованием callPythonAI
@@ -203,9 +221,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log(`✅ Успешно получен ответ от Python провайдера ${selectedProvider}`);
           
           // Определяем отображаемое имя модели
-          const modelName = selectedProvider.includes('Qwen') || selectedProvider === 'AItianhu' 
-            ? "Qwen AI" 
-            : selectedProvider;
+          let modelName = "AI";
+          if (selectedProvider.includes('Qwen') || selectedProvider === 'AItianhu') {
+            modelName = "Qwen AI";
+          } else if (selectedProvider === 'Phind') {
+            modelName = "Phind AI";
+          } else {
+            modelName = selectedProvider;
+          }
             
           return res.json({
             success: true,
