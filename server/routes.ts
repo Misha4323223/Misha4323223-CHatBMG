@@ -80,7 +80,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // BOOOMERANGS приложение
   app.get('/booom', (req, res) => {
-    res.sendFile('booomerangs-app.html', { root: '.' });
+    res.sendFile('booomerangs-main.html', { root: '.' });
   });
   
   // BOOOMERANGS приложение со стримингом
