@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
 BOOOMERANGS G4F Python Provider
-Более стабильная версия провайдера на Python, использующая библиотеку g4f
+Версия с улучшенной системой резервных провайдеров и автоматическим переключением
+между разными моделями для повышения надежности
 """
 import g4f
 import g4f.Provider
@@ -93,8 +94,8 @@ def get_demo_response(message):
     # Общий ответ, если ни один шаблон не подошел
     return "Я BOOOMERANGS AI ассистент. К сожалению, внешние AI-провайдеры сейчас недоступны, но я все равно могу помочь с базовой информацией о BOOOMERANGS и подсказать, как использовать генератор изображений!"
 
-def try_provider(provider_name, message, timeout=10):
-    """Попытка получить ответ от провайдера с обработкой ошибок"""
+def try_provider(provider_name, message, timeout=15):
+    """Попытка получить ответ от провайдера с обработкой ошибок и системой резервных моделей"""
     if provider_name not in AVAILABLE_PROVIDERS:
         print(f"❌ Провайдер {provider_name} не найден")
         return None
@@ -102,68 +103,145 @@ def try_provider(provider_name, message, timeout=10):
     provider = AVAILABLE_PROVIDERS[provider_name]
     print(f"Попытка использования провайдера {provider_name}...")
     
-    try:
-        # Обертка с таймаутом (временно без настоящего таймаута)
-        start_time = time.time()
-        
-        # Используем модель в зависимости от провайдера
-        model = "gpt-4o-mini"  # Модель по умолчанию
-        
-        # Специфические модели для разных провайдеров
-        if provider_name == "You":
-            model = "gpt-4o-mini"
-        elif provider_name == "Phind":
-            model = "claude-3-haiku" 
-        elif provider_name == "Bing":
-            model = "gpt-4"
-        elif provider_name == "Qwen_Qwen_3":
-            model = "qwen3-8b"
-        elif provider_name == "Qwen_Qwen_2_5_Max":
-            model = "qwen-max"
+    # Таблица моделей для каждого провайдера с резервными вариантами
+    provider_models = {
+        "Qwen_Max": ["qwen-max", "qwen-plus", "qwen-turbo"],
+        "Qwen_3": ["qwen3-8b", "qwen3-4b", "qwen3-1.7b", "qwen3-0.6b", "qwen3-14b", "qwen3-32b", "qwen3-235b-a22b", "qwen3-30b-a3b"],
+        "Qwen": ["qwen-turbo", "qwen-plus"],
+        "Qwen_72B": ["qwen-72b"],
+        "You": ["gpt-4o-mini", "gpt-4", "gpt-3.5-turbo"],
+        "Phind": ["claude-3-haiku", "claude-3-sonnet", "claude-3-opus"],
+        "GeminiPro": ["gemini-pro", "gemini-1.5-pro"],
+        "Gemini": ["gemini-pro", "gemini-1.5-pro"],
+        "DeepInfra": ["meta-llama/Llama-3-8b-chat", "meta-llama/Llama-3-70b-chat"],
+        "Liaobots": ["gpt-4", "gpt-3.5-turbo"],
+        "AIChatFree": ["gpt-3.5-turbo", "gpt-4"],
+        "ChatgptFree": ["gpt-3.5"],
+        "DDG": ["gpt-3.5"],
+        "FreeGpt": ["gpt-3.5"]
+    }
+    
+    # Получаем список моделей для данного провайдера
+    models_to_try = provider_models.get(provider_name, ["gpt-3.5-turbo"])
+    
+    # Если модели не определены для провайдера, используем стандартную
+    if not models_to_try:
+        models_to_try = ["gpt-3.5-turbo"]
+    
+    # Информация о попытках
+    attempt_info = []
+    
+    # Попытка получить ответ с перебором моделей
+    for model in models_to_try:
+        try:
+            # Засекаем время
+            start_time = time.time()
             
-        response = g4f.ChatCompletion.create(
-            model=model,
-            provider=provider,
-            messages=[{"role": "user", "content": message}],
-            timeout=15  # Устанавливаем таймаут 15 секунд для всех провайдеров
-        )
-        
-        # Проверяем результат
-        if not response or (isinstance(response, str) and len(response.strip()) == 0):
-            print(f"❌ Провайдер {provider_name} вернул пустой ответ")
-            return None
-        
-        elapsed = time.time() - start_time
-        print(f"✅ {provider_name} успешно ответил за {elapsed:.2f} сек")
-        
-        return {
-            "response": response,
-            "provider": provider_name,
-            "model": "g4f-python"
-        }
-    except Exception as e:
-        print(f"❌ Ошибка при использовании провайдера {provider_name}: {str(e)}")
-        return None
+            # Формируем сообщение для модели
+            messages = [{"role": "user", "content": message}]
+            
+            # Для некоторых моделей нужно добавить системный промпт
+            system_prompt = "Ты полезный ассистент BOOOMERANGS. Отвечай кратко и по существу."
+            
+            if provider_name.startswith("Qwen"):
+                if "3" in provider_name:
+                    messages = [
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": message}
+                    ]
+            elif provider_name in ["Gemini", "GeminiPro"]:
+                messages = [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": message}
+                ]
+            
+            print(f"  📝 Пробуем модель: {model}")
+            
+            # Выполняем запрос
+            response = g4f.ChatCompletion.create(
+                model=model,
+                provider=provider,
+                messages=messages,
+                timeout=timeout  # Используем переданный таймаут
+            )
+            
+            # Проверяем результат
+            if not response or (isinstance(response, str) and len(response.strip()) == 0):
+                print(f"  ⚠️ Модель {model} вернула пустой ответ")
+                attempt_info.append(f"{model}: пустой ответ")
+                continue
+            
+            elapsed = time.time() - start_time
+            print(f"✅ {provider_name} (модель {model}) успешно ответил за {elapsed:.2f} сек")
+            
+            return {
+                "response": response,
+                "provider": provider_name,
+                "model": model
+            }
+            
+        except Exception as e:
+            error_msg = str(e)
+            print(f"  ❌ Ошибка с моделью {model}: {error_msg}")
+            attempt_info.append(f"{model}: {error_msg}")
+            
+            # Если ошибка связана с unsupported model, пробуем следующую модель
+            if "Model is not supported" in error_msg or "model not supported" in error_msg.lower():
+                continue
+            
+            # Если ошибка связана с таймаутом, можно увеличить таймаут для следующей попытки
+            if "timeout" in error_msg.lower():
+                timeout += 5  # Увеличиваем таймаут на 5 секунд
+                print(f"  ⏱️ Увеличиваем таймаут до {timeout} сек для следующей попытки")
+    
+    # Все модели провайдера не сработали
+    print(f"❌ Провайдер {provider_name} не смог ответить. Попытки: {', '.join(attempt_info)}")
+    return None
 
 def get_chat_response(message, specific_provider=None):
-    """Получение ответа с перебором провайдеров"""
-    result = None
+    """Получение ответа с улучшенной системой резервных провайдеров (fallback)"""
+    results = []
     
-    # Если указан конкретный провайдер, пробуем его
+    # Определяем группы провайдеров для fallback
+    provider_groups = {
+        "primary": ["Qwen_Max", "Qwen_3", "Qwen", "Qwen_72B"],
+        "secondary": ["You", "DDG", "DeepInfra", "Phind"],
+        "tertiary": ["Liaobots", "GeminiPro", "Gemini", "AIChatFree"],
+        "fallback": ["FreeGpt", "ChatgptFree", "Yqcloud", "ChatGLM"]
+    }
+    
+    # Если указан конкретный провайдер, сначала пробуем его
     if specific_provider and specific_provider in AVAILABLE_PROVIDERS:
+        print(f"🔍 Попытка использования запрошенного провайдера: {specific_provider}")
         result = try_provider(specific_provider, message)
         if result:
+            print(f"✅ Успешно получен ответ от запрошенного провайдера: {specific_provider}")
             return result
-        print(f"Указанный провайдер {specific_provider} не ответил, пробуем другие...")
+        print(f"⚠️ Запрошенный провайдер {specific_provider} не ответил, переключаемся на систему резервных провайдеров")
     
-    # Порядок перебора провайдеров (от более стабильных к менее)
-    providers_priority = ["Qwen", "Qwen_3", "Qwen_Max", "Qwen_72B", "You", "DDG", "DeepInfra", "Phind", "Liaobots", "GeminiPro", "Gemini", "AIChatFree", "FreeGpt", "ChatgptFree", "Yqcloud", "ChatGLM"]
+    # Функция для перебора группы провайдеров
+    def try_provider_group(group_name):
+        nonlocal results
+        print(f"🔄 Перебор группы провайдеров: {group_name}")
+        group_results = []
+        
+        for provider_name in provider_groups[group_name]:
+            if provider_name in AVAILABLE_PROVIDERS:
+                result = try_provider(provider_name, message)
+                if result:
+                    group_results.append(result)
+                    # Возвращаем результат сразу после первого успешного провайдера
+                    return result
+        
+        print(f"⚠️ Ни один провайдер из группы {group_name} не ответил")
+        return None
     
-    # Перебираем провайдеры
-    for provider_name in providers_priority:
-        result = try_provider(provider_name, message)
-        if result:
-            return result
+    # Перебираем группы провайдеров по приоритету
+    for group in ["primary", "secondary", "tertiary", "fallback"]:
+        group_result = try_provider_group(group)
+        if group_result:
+            print(f"✅ Группа {group} успешно вернула ответ")
+            return group_result
     
     # Если все провайдеры не ответили, используем демо-ответ
     print("⚠️ Все провайдеры недоступны, используем демо-режим")
