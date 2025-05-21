@@ -169,7 +169,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             // Пытаемся получить ответ от провайдера
             fetchWithTimeout
-              .then(async (response: Response) => {
+              .then(async (response: any) => {
                 // Очищаем таймер для AbortController
                 clearTimeout(timeoutId);
                 
@@ -210,6 +210,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 }
               })
               .catch((error) => {
+                // Очищаем таймер для AbortController
+                clearTimeout(timeoutId);
+                
                 // Если уже отправили демо-ответ из-за таймаута, не выполняем дальнейшую обработку
                 if (responseTimedOut) return;
                 
