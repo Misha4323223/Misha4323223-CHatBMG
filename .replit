@@ -4,7 +4,7 @@ hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 
 [nix]
 channel = "stable-24_05"
-packages = ["freetype", "lcms2", "libimagequant", "libjpeg", "libtiff", "libwebp", "libxcrypt", "openjpeg", "tcl", "tk", "zlib", "lsof"]
+packages = ["freetype", "lcms2", "libimagequant", "libjpeg", "libtiff", "libwebp", "libxcrypt", "lsof", "openjpeg", "tcl", "tk", "zlib"]
 
 [deployment]
 deploymentTarget = "autoscale"
@@ -16,6 +16,10 @@ localPort = 3000
 
 [[ports]]
 localPort = 3100
+
+[[ports]]
+localPort = 5000
+externalPort = 80
 
 [workflows]
 runButton = "Project"

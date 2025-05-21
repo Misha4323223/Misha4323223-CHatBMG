@@ -18,6 +18,7 @@ const require = createRequire(__filename);
 const svgGenerator = require('./svg-generator');
 const g4fHandlers = require('./g4f-handlers');
 const directAiRoutes = require('./direct-ai-routes');
+const pythonProviderRoutes = require('./python_provider_routes');
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Create HTTP server
