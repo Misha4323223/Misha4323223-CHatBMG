@@ -3,6 +3,36 @@ const fetch = require('node-fetch').default;
 
 // Набор рабочих API-провайдеров - обновленные провайдеры из списка G4F
 const AI_PROVIDERS = {
+  // ChatFree API - новый стабильный провайдер без необходимости API ключа
+  CHATFREE: {
+    name: 'ChatFree',
+    url: 'https://chatfree.org/api/chat/completions',
+    needsKey: false,
+    headers: {
+      'Content-Type': 'application/json',
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36'
+    },
+    prepareRequest: (message, options = {}) => {
+      const systemPrompt = options.systemPrompt || 'Вы полезный ассистент. Отвечайте коротко и по существу.';
+      return {
+        model: "gpt-3.5-turbo",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: message }
+        ],
+        temperature: 0.7,
+        stream: false
+      };
+    },
+    extractResponse: async (response) => {
+      const jsonResponse = await response.json();
+      if (jsonResponse && jsonResponse.choices && jsonResponse.choices.length > 0) {
+        return jsonResponse.choices[0].message.content;
+      }
+      throw new Error('Некорректный ответ от ChatFree API');
+    }
+  },
+  
   // FreeGPT API - настроен по списку G4F
   FREEGPT: {
     name: 'FreeGPT', 
