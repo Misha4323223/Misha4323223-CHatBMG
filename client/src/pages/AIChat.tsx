@@ -41,7 +41,7 @@ export default function AIChat() {
     setIsLoading(true);
     
     try {
-      // Отправляем запрос к API
+      // Отправляем запрос к API с автоматическим выбором провайдера
       const response = await fetch("/api/ai/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -51,7 +51,7 @@ export default function AIChat() {
       const data = await response.json();
       
       if (data.success) {
-        // Добавляем ответ от AI
+        // Добавляем ответ от AI с информацией о провайдере
         const aiMessage: Message = {
           id: Date.now() + 1,
           text: data.response,
@@ -121,13 +121,33 @@ export default function AIChat() {
               </h2>
               <p className="text-gray-600 mb-4">
                 Задайте любой вопрос и получите ответ от AI без необходимости платных API ключей.
+                Система автоматически выберет наилучший доступный провайдер для вашего запроса.
               </p>
-              <div className="py-3 px-4 bg-blue-50 rounded-xl inline-flex items-center mx-auto"
-                  style={{border: '1px solid rgba(59, 130, 246, 0.2)'}}>
-                <span className="text-blue-700">
-                  Поддерживаются: Qwen AI, Phind, HuggingChat и другие
-                </span>
+              <div className="flex flex-wrap justify-center gap-2 mb-4">
+                <div className="py-2 px-4 bg-blue-50 rounded-xl flex items-center"
+                    style={{border: '1px solid rgba(59, 130, 246, 0.2)'}}>
+                  <span className="text-lg mr-2">🧠</span>
+                  <span className="text-blue-700">DeepInfra</span>
+                </div>
+                <div className="py-2 px-4 bg-blue-50 rounded-xl flex items-center"
+                    style={{border: '1px solid rgba(59, 130, 246, 0.2)'}}>
+                  <span className="text-lg mr-2">🤖</span>
+                  <span className="text-blue-700">Claude</span>
+                </div>
+                <div className="py-2 px-4 bg-blue-50 rounded-xl flex items-center"
+                    style={{border: '1px solid rgba(59, 130, 246, 0.2)'}}>
+                  <span className="text-lg mr-2">💬</span>
+                  <span className="text-blue-700">ChatFree</span>
+                </div>
+                <div className="py-2 px-4 bg-blue-50 rounded-xl flex items-center"
+                    style={{border: '1px solid rgba(59, 130, 246, 0.2)'}}>
+                  <span className="text-lg mr-2">👨‍💻</span>
+                  <span className="text-blue-700">DeepSpeek</span>
+                </div>
               </div>
+              <p className="text-sm text-gray-500">
+                Все ответы генерируются через бесплатные API без необходимости оплаты или регистрации
+              </p>
             </div>
           )}
           
