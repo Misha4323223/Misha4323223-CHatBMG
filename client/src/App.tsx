@@ -12,6 +12,9 @@ import AIProviderChat from "@/pages/AIProviderChat";
 import ImageGeneratorSimple from "@/pages/ImageGeneratorSimple";
 import { useEffect } from "react";
 
+// Импортируем компонент навигации
+import MainNavigation from "@/components/MainNavigation";
+
 function Router() {
   const [location, setLocation] = useLocation();
   
@@ -20,7 +23,7 @@ function Router() {
     const token = localStorage.getItem("access_token");
     
     // Страницы, доступные без аутентификации
-    const publicPages = ["/", "/image-generator"];
+    const publicPages = ["/", "/image-generator", "/provider", "/ai-chat"];
     const isPublicPage = publicPages.includes(location);
     
     // If no token and not on public page, redirect to auth
@@ -34,16 +37,24 @@ function Router() {
     }
   }, [location, setLocation]);
 
+  // Определяем, нужно ли показывать навигацию
+  const showNavigation = location !== "/" && location !== "/new-auth";
+
   return (
-    <Switch>
-      <Route path="/" component={AuthScreen} />
-      <Route path="/new-auth" component={BooomerangsAuth} />
-      <Route path="/chat" component={Chat} />
-      <Route path="/ai-chat" component={AIChat} />
-      <Route path="/provider" component={AIProviderChat} />
-      <Route path="/image-generator" component={ImageGeneratorSimple} />
-      <Route component={NotFound} />
-    </Switch>
+    <>
+      {showNavigation && <MainNavigation />}
+      <main className={showNavigation ? "pt-2" : ""}>
+        <Switch>
+          <Route path="/" component={AuthScreen} />
+          <Route path="/new-auth" component={BooomerangsAuth} />
+          <Route path="/chat" component={Chat} />
+          <Route path="/ai-chat" component={AIChat} />
+          <Route path="/provider" component={AIProviderChat} />
+          <Route path="/image-generator" component={ImageGeneratorSimple} />
+          <Route component={NotFound} />
+        </Switch>
+      </main>
+    </>
   );
 }
 
