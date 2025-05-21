@@ -40,6 +40,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.sendFile('test-page.html', { root: '.' });
   });
   
+  // Демо-страница генератора изображений
+  app.get('/demo', (req, res) => {
+    res.sendFile('demo.html', { root: '.' });
+  });
+  
   // Auth endpoint - validate token and return user
   app.post("/api/auth", async (req, res) => {
     try {
