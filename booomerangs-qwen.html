@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BOOOMERANGS: Qwen AI Chat</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #111;
+      color: white;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    
+    .logo {
+      font-size: 1.5rem;
+      background: linear-gradient(45deg, #ff4b2b, #ff416c);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      font-weight: bold;
+    }
+    
+    main {
+      flex: 1;
+      padding: 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+      width: 100%;
+    }
+    
+    /* Чат */
+    .chat {
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 180px);
+      max-height: 800px;
+      border-radius: 12px;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    
+    .message {
+      max-width: 80%;
+      padding: 1rem;
+      border-radius: 12px;
+      line-height: 1.5;
+    }
+    
+    .message-user {
+      align-self: flex-end;
+      background: linear-gradient(45deg, #ff4b2b, #ff416c);
+      border-bottom-right-radius: 0;
+    }
+    
+    .message-ai {
+      align-self: flex-start;
+      background: rgba(255, 255, 255, 0.1);
+      border-bottom-left-radius: 0;
+    }
+    
+    .message p {
+      margin-bottom: 0.5rem;
+    }
+    
+    .message p:last-child {
+      margin-bottom: 0;
+    }
+    
+    .chat-input-container {
+      padding: 1rem;
+      background: rgba(0, 0, 0, 0.3);
+    }
+    
+    .input-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    
+    .bottom-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .chat-input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.05);
+      color: white;
+      font-size: 1rem;
+      resize: none;
+      min-height: 60px;
+    }
+    
+    .chat-input:focus {
+      outline: none;
+      border-color: #ff416c;
+    }
+    
+    .provider-select {
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      width: 250px;
+    }
+    
+    .button {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      background: linear-gradient(45deg, #ff4b2b, #ff416c);
+      color: white;
+      font-size: 1rem;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(255, 75, 43, 0.3);
+    }
+    
+    footer {
+      padding: 1rem 2rem;
+      text-align: center;
+      font-size: 0.875rem;
+      color: rgba(255, 255, 255, 0.5);
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    
+    /* Мобильная адаптация */
+    @media (max-width: 768px) {
+      header {
+        padding: 1rem;
+      }
+      
+      main {
+        padding: 1rem;
+      }
+      
+      .message {
+        max-width: 90%;
+      }
+      
+      .bottom-controls {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      
+      .provider-select {
+        width: 100%;
+      }
+      
+      .button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">🚀 BOOOMERANGS Qwen Chat</div>
+  </header>
+  
+  <main>
+    <div class="chat">
+      <div class="chat-messages" id="chat-messages">
+        <div class="message message-ai">
+          <p>Привет! Я BOOOMERANGS AI ассистент с интеграцией Qwen. Выберите режим AI в выпадающем списке и задайте свой вопрос!</p>
+        </div>
+      </div>
+      <div class="chat-input-container">
+        <div class="input-controls">
+          <textarea class="chat-input" id="chat-input" placeholder="Введите ваше сообщение..." rows="2"></textarea>
+          <div class="bottom-controls">
+            <select id="ai-provider" class="provider-select">
+              <option value="DEMO">Демо режим (мгновенный)</option>
+              <option value="QWEN">Qwen AI (настоящая модель)</option>
+            </select>
+            <button class="button" id="send-message">Отправить</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  
+  <footer>
+    <p>© 2025 BOOOMERANGS. Все права защищены.</p>
+  </footer>
+  
+  <script>
+    // Элементы интерфейса
+    const chatMessages = document.getElementById('chat-messages');
+    const chatInput = document.getElementById('chat-input');
+    const sendMessageButton = document.getElementById('send-message');
+    const aiProviderSelect = document.getElementById('ai-provider');
+    
+    // Добавление сообщения в чат
+    function addMessage(text, isUser) {
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `message ${isUser ? 'message-user' : 'message-ai'}`;
+      
+      // Разбиваем текст на абзацы
+      const paragraphs = text.split('\n').filter(p => p.trim() !== '');
+      paragraphs.forEach(paragraph => {
+        const p = document.createElement('p');
+        p.textContent = paragraph;
+        messageDiv.appendChild(p);
+      });
+      
+      chatMessages.appendChild(messageDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+    
+    // Обработка отправки сообщения
+    async function sendMessage() {
+      const messageText = chatInput.value.trim();
+      if (!messageText) return;
+      
+      // Добавляем сообщение пользователя
+      addMessage(messageText, true);
+      
+      // Очищаем поле ввода
+      chatInput.value = '';
+      
+      // Создаем "думающее" сообщение
+      const thinkingDiv = document.createElement('div');
+      thinkingDiv.className = 'message message-ai';
+      thinkingDiv.textContent = 'Думаю...';
+      chatMessages.appendChild(thinkingDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+      
+      // Получаем выбранный провайдер
+      const selectedProvider = aiProviderSelect.value;
+      let response = '';
+      
+      try {
+        if (selectedProvider === 'QWEN') {
+          // Используем настоящий AI через API
+          console.log('Запрос к Qwen AI...');
+          
+          try {
+            const apiResponse = await fetch('/api/ai/chat', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                message: messageText,
+                provider: 'QWEN' // Используем Qwen провайдер
+              })
+            });
+            
+            if (apiResponse.ok) {
+              const data = await apiResponse.json();
+              if (data.success && data.response) {
+                response = data.response;
+                console.log('Получен ответ от Qwen:', data.provider);
+              } else {
+                throw new Error('Неверный формат ответа от API');
+              }
+            } else {
+              throw new Error(`Ошибка API: ${apiResponse.status}`);
+            }
+          } catch (apiError) {
+            console.error('Ошибка при запросе к AI API:', apiError);
+            response = 'Извините, произошла ошибка при получении ответа от AI. Пожалуйста, попробуйте еще раз или выберите режим DEMO.';
+          }
+        } else {
+          // Демо-режим с мгновенным ответом
+          // Имитируем задержку ответа для естественности
+          await new Promise(resolve => setTimeout(resolve, 800));
+          
+          // Генерируем ответ AI в демо-режиме
+          const lowerMessage = messageText.toLowerCase();
+          
+          if (lowerMessage.includes('привет') || lowerMessage.includes('здравствуй')) {
+            response = 'Привет! Чем я могу помочь вам сегодня? (Демо-режим)';
+          } else if (lowerMessage.includes('как дела') || lowerMessage.includes('как ты')) {
+            response = 'У меня всё отлично, спасибо что спросили! Я всегда готов помочь. (Демо-режим)';
+          } else if (lowerMessage.includes('погода')) {
+            response = 'Я не могу проверить текущую погоду, но вы можете узнать её в вашем местном прогнозе погоды или через поисковую систему. (Демо-режим)';
+          } else if (lowerMessage.includes('изображени') || lowerMessage.includes('картинк')) {
+            response = 'В полной версии BOOOMERANGS вы можете создавать изображения через специальный генератор. (Демо-режим)';
+          } else if (lowerMessage.includes('svg')) {
+            response = 'SVG (Scalable Vector Graphics) - это формат векторной графики, который масштабируется без потери качества. В полной версии BOOOMERANGS вы можете конвертировать растровые изображения в SVG. (Демо-режим)';
+          } else if (lowerMessage.includes('booomerangs')) {
+            response = 'BOOOMERANGS - это мультимодальный AI-сервис, который позволяет вести диалоги и создавать изображения. Мы стремимся обеспечить доступ к технологиям искусственного интеллекта для всех. (Демо-режим)';
+          } else if (lowerMessage.includes('qwen') || lowerMessage.includes('квен')) {
+            response = 'Qwen - это большая языковая модель (LLM), разработанная Alibaba Cloud. В BOOOMERANGS мы используем её для бесплатного доступа к возможностям искусственного интеллекта без необходимости API ключей. Попробуйте выбрать режим "Qwen AI" в выпадающем списке, чтобы получить настоящие ответы от этой модели. (Демо-режим)';
+          } else {
+            // Для других запросов используем более общий ответ
+            const responses = [
+              'Интересный вопрос! Сейчас вы используете демо-режим. Попробуйте выбрать "Qwen AI" в выпадающем списке для получения настоящих ответов.',
+              'В демо-режиме я даю заготовленные ответы. Для реальных ответов выберите "Qwen AI" в селекторе слева от кнопки отправки.',
+              'BOOOMERANGS работает с реальной моделью искусственного интеллекта Qwen, доступной без API ключей. Выберите её из выпадающего списка, чтобы получить настоящие ответы.',
+              'Для получения реальных ответов на ваши вопросы, выберите режим "Qwen AI" в выпадающем списке рядом с кнопкой отправки.',
+              'Это демо-ответ. BOOOMERANGS может использовать настоящую модель AI без платных API ключей. Попробуйте выбрать режим "Qwen AI".'
+            ];
+            
+            // Выбираем случайный ответ
+            response = responses[Math.floor(Math.random() * responses.length)];
+          }
+        }
+      } catch (error) {
+        console.error('Ошибка при получении ответа:', error);
+        response = 'Извините, произошла ошибка при обработке вашего запроса. Пожалуйста, попробуйте еще раз.';
+      } finally {
+        // Удаляем "думающее" сообщение
+        chatMessages.removeChild(thinkingDiv);
+        
+        // Добавляем реальный ответ
+        addMessage(response, false);
+      }
+    }
+    
+    // Добавляем обработчики событий
+    sendMessageButton.addEventListener('click', sendMessage);
+    
+    chatInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+  </script>
+</body>
+</html>

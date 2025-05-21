@@ -582,10 +582,10 @@
       // Очищаем поле ввода
       chatInput.value = '';
       
+      // Получаем выбранный провайдер
+      const selectedProvider = aiProviderSelect.value;
+      
       try {
-        // Имитация ответа AI (в реальном приложении здесь будет запрос к API)
-        // Для демонстрации мы создаем простой ответ на основе ввода пользователя
-        
         // Создаем "думающее" сообщение
         const thinkingDiv = document.createElement('div');
         thinkingDiv.className = 'message message-ai';
@@ -593,16 +593,50 @@
         chatMessages.appendChild(thinkingDiv);
         chatMessages.scrollTop = chatMessages.scrollHeight;
         
-        // Имитируем задержку ответа
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        
-        // Генерируем ответ AI
         let response;
-        const lowerMessage = messageText.toLowerCase();
         
-        if (lowerMessage.includes('привет') || lowerMessage.includes('здравствуй')) {
-          response = 'Привет! Чем я могу помочь вам сегодня?';
-        } else if (lowerMessage.includes('как дела') || lowerMessage.includes('как ты')) {
+        if (selectedProvider === 'QWEN') {
+          // Используем настоящий AI через API
+          try {
+            console.log('Запрос к Qwen AI...');
+            
+            const apiResponse = await fetch('/api/ai/chat', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                message: messageText,
+                provider: 'QWEN' // Используем Qwen провайдер
+              })
+            });
+            
+            if (apiResponse.ok) {
+              const data = await apiResponse.json();
+              if (data.success && data.response) {
+                response = data.response;
+                console.log('Получен ответ от Qwen:', data.provider);
+              } else {
+                throw new Error('Неверный формат ответа от API');
+              }
+            } else {
+              throw new Error(`Ошибка API: ${apiResponse.status}`);
+            }
+          } catch (apiError) {
+            console.error('Ошибка при запросе к AI API:', apiError);
+            response = 'Извините, произошла ошибка при получении ответа от AI. Пожалуйста, попробуйте еще раз или выберите режим DEMO.';
+          }
+        } else {
+          // Демо-режим с мгновенным ответом
+          // Имитируем задержку ответа для естественности
+          await new Promise(resolve => setTimeout(resolve, 1200));
+          
+          // Генерируем ответ AI в демо-режиме
+          const lowerMessage = messageText.toLowerCase();
+        
+          if (lowerMessage.includes('привет') || lowerMessage.includes('здравствуй')) {
+            response = 'Привет! Чем я могу помочь вам сегодня? (Демо-режим)';
+          } else if (lowerMessage.includes('как дела') || lowerMessage.includes('как ты')) {
           response = 'У меня всё отлично, спасибо что спросили! Я всегда готов помочь.';
         } else if (lowerMessage.includes('погода')) {
           response = 'Я не могу проверить текущую погоду, но вы можете узнать её в вашем местном прогнозе погоды или через поисковую систему.';

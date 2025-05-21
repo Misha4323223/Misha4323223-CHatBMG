@@ -83,6 +83,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.sendFile('booomerangs-app.html', { root: '.' });
   });
   
+  // BOOOMERANGS с Qwen AI интеграцией
+  app.get('/qwen', (req, res) => {
+    res.sendFile('booomerangs-qwen.html', { root: '.' });
+  });
+  
   // API для работы с G4F провайдерами
   app.use('/api/g4f', g4fHandlers);
   
