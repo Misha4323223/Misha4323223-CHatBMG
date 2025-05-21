@@ -219,6 +219,9 @@ async function tryProviderWithRetries(provider, messages, options) {
     case PROVIDERS.DEEPAI:
       handler = handleDeepAIProvider;
       break;
+    case PROVIDERS.DEEPSPEEK:
+      handler = handleDeepSpeekProvider;
+      break;
     default:
       // По умолчанию используем Qwen как самый стабильный провайдер
       console.warn(`Провайдер ${provider} не найден, используем Qwen`);
@@ -617,6 +620,64 @@ async function handleDeepAIProvider(messages, options = {}) {
     };
   } catch (error) {
     console.error('Ошибка при обращении к DeepAI API:', error);
+    throw error;
+  }
+}
+
+// Обработчик для DeepSpeek
+async function handleDeepSpeekProvider(messages, options = {}) {
+  try {
+    // Извлекаем текст из последнего сообщения пользователя
+    const lastUserMessage = messages.filter(m => m.role === 'user').pop();
+    if (!lastUserMessage) {
+      throw new Error('Не найдено сообщение пользователя в истории');
+    }
+    
+    // Формируем запрос с полным контекстом беседы
+    let formattedMessages = messages.map(msg => ({
+      role: msg.role,
+      content: msg.content
+    }));
+    
+    // Добавляем системное сообщение, если его нет
+    if (!formattedMessages.some(msg => msg.role === 'system')) {
+      formattedMessages.unshift({
+        role: 'system',
+        content: 'Ты DeepSpeek, продвинутый AI ассистент, специализирующийся на программировании и технических вопросах. Ты даешь точные и подробные ответы, объясняя сложные технические концепции простым языком.'
+      });
+    }
+    
+    // Отправляем запрос к API DeepSpeek
+    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
+      },
+      body: JSON.stringify({
+        messages: formattedMessages,
+        model: options.model || 'deepseek-chat',
+        temperature: options.temperature || 0.7,
+        max_tokens: options.maxTokens || 1000,
+        presence_penalty: 0,
+        frequency_penalty: 0,
+        stream: false
+      })
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`DeepSpeek API вернул ошибку: ${response.status} - ${errorText}`);
+    }
+    
+    const data = await response.json();
+    return {
+      response: data.choices[0].message.content,
+      provider: 'DeepSpeek',
+      model: data.model || 'deepseek-chat'
+    };
+  } catch (error) {
+    console.error('Ошибка при обращении к DeepSpeek API:', error);
     throw error;
   }
 }
