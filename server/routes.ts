@@ -111,7 +111,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Сначала сразу возвращаем демо-ответ для мгновенного отклика
       const demoResponse = directAiProvider.getDemoResponse(message);
       
-      // Если указан конкретный провайдер, пытаемся использовать его
+      // Если запрошен Python провайдер (Qwen), используем его
+      if (provider === 'QWEN' || provider === 'Qwen_Qwen_3' || provider === 'Qwen_Max') {
+        try {
+          // Пытаемся получить ответ от Python провайдера
+          console.log(`Пробуем использовать Python провайдер Qwen...`);
+          
+          // Устанавливаем таймаут для запроса
+          const pythonTimeout = 10000; // 10 секунд максимум
+          
+          // Создаем обработчик запроса с таймаутом
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), pythonTimeout);
+          
+          // Выполняем запрос к Python провайдеру
+          const pythonResponse = await fetch('http://localhost:5000/api/python/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message, provider: provider || 'Qwen_Qwen_3' }),
+            signal: controller.signal
+          });
+          
+          // Очищаем таймер
+          clearTimeout(timeoutId);
+          
+          if (pythonResponse.ok) {
+            const result = await pythonResponse.json();
+            if (result && result.success && result.response) {
+              console.log(`✅ Успешно получен ответ от Python провайдера Qwen`);
+              return res.json(result);
+            }
+          }
+        } catch (pythonError) {
+          console.log(`❌ Ошибка при использовании Python провайдера:`, 
+                    pythonError instanceof Error ? pythonError.message : 'Неизвестная ошибка');
+          // Продолжаем выполнение и пробуем другие провайдеры
+        }
+      }
+      
+      // Если указан стандартный провайдер, пытаемся использовать его
       if (provider && AI_PROVIDERS && AI_PROVIDERS[provider]) {
         try {
           // Получаем информацию о выбранном провайдере
