@@ -512,10 +512,17 @@ async function callPythonAI(message, provider = null) {
         if (response.statusCode === 200) {
           try {
             const parsedData = JSON.parse(data);
-            console.log('Ответ от Python:', parsedData.response);
-            resolve(parsedData.response);
+            console.log('Ответ от Python:', parsedData);
+            if (parsedData && parsedData.response) {
+              console.log('✅ Python G4F вернул реальный ответ от AI: ' + parsedData.provider);
+              resolve(parsedData.response);
+            } else {
+              console.log('⚠️ Python G4F вернул некорректный формат данных');
+              resolve(getDemoResponse(message));
+            }
           } catch (err) {
             console.log(`Ошибка при парсинге ответа: ${err.message}`);
+            console.log('Сырые данные:', data);
             resolve(getDemoResponse(message));
           }
         } else {
