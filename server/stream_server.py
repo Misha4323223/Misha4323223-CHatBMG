@@ -95,9 +95,106 @@ def stream_chat():
             yield f"event: start\ndata: {json.dumps({'provider': current_provider})}\n\n"
             
             try:
-                # Используем демо-ответ для отладки
+                # Попробуем сначала использовать запрошенный провайдер
+                if current_provider in providers:
+                    try:
+                        provider = providers[current_provider]
+                        print(f"Пробуем использовать провайдера {current_provider}")
+                        
+                        # Пробуем получить ответ от провайдера
+                        try:
+                            response_stream = g4f.ChatCompletion.create(
+                                model="gpt-3.5-turbo",
+                                messages=messages,
+                                provider=provider,
+                                stream=True,
+                                timeout=timeout
+                            )
+                            
+                            print(f"Получен поток от провайдера {current_provider}")
+                            response_text = ''
+                            chunk_count = 0
+                            
+                            # Пробуем получить первый чанк с таймаутом
+                            got_first_chunk = False
+                            
+                            for chunk in response_stream:
+                                chunk_count += 1
+                                if isinstance(chunk, str):
+                                    response_text += chunk
+                                    print(f"Чанк {chunk_count} от {current_provider}: {chunk[:30]}...")
+                                    yield f"event: chunk\ndata: {json.dumps({'text': chunk, 'provider': current_provider})}\n\n"
+                                    yielded_anything = True
+                                    got_first_chunk = True
+                                    
+                            # Если получили хотя бы один чанк, отправляем завершающее событие
+                            if got_first_chunk:
+                                elapsed = time.time() - start_time
+                                print(f"Стриминг от {current_provider} завершен успешно")
+                                yield f"event: complete\ndata: {json.dumps({'text': response_text, 'provider': current_provider, 'elapsed': elapsed})}\n\n"
+                                return
+                                
+                        except Exception as e:
+                            print(f"Ошибка при работе с провайдером {current_provider}: {str(e)}")
+                    
+                    except Exception as provider_error:
+                        print(f"Ошибка при инициализации провайдера {current_provider}: {str(provider_error)}")
+                else:
+                    print(f"Провайдер {current_provider} не найден в списке доступных")
+                
+                # Если не получилось использовать основной провайдер, попробуем другие группы
+                for group_name in ['primary', 'secondary', 'fallback']:
+                    print(f"Пробуем группу провайдеров: {group_name}")
+                    
+                    for backup_provider in provider_groups[group_name]:
+                        if backup_provider == current_provider or backup_provider not in providers:
+                            continue
+                            
+                        try:
+                            provider = providers[backup_provider]
+                            print(f"Пробуем резервный провайдер {backup_provider}")
+                            
+                            yield f"event: update\ndata: {json.dumps({'text': f'Переключаемся на {backup_provider}...', 'provider': backup_provider})}\n\n"
+                            
+                            try:
+                                response_stream = g4f.ChatCompletion.create(
+                                    model="gpt-3.5-turbo",
+                                    messages=messages,
+                                    provider=provider,
+                                    stream=True,
+                                    timeout=timeout
+                                )
+                                
+                                response_text = ''
+                                chunk_count = 0
+                                got_any_chunks = False
+                                
+                                for chunk in response_stream:
+                                    chunk_count += 1
+                                    if isinstance(chunk, str):
+                                        response_text += chunk
+                                        print(f"Резервный чанк {chunk_count} от {backup_provider}: {chunk[:30]}...")
+                                        yield f"event: chunk\ndata: {json.dumps({'text': chunk, 'provider': backup_provider})}\n\n"
+                                        yielded_anything = True
+                                        got_any_chunks = True
+                                
+                                if got_any_chunks:
+                                    elapsed = time.time() - start_time
+                                    print(f"Стриминг от резервного провайдера {backup_provider} завершен успешно")
+                                    yield f"event: complete\ndata: {json.dumps({'text': response_text, 'provider': backup_provider, 'elapsed': elapsed})}\n\n"
+                                    return
+                                    
+                            except Exception as e:
+                                print(f"Ошибка при работе с резервным провайдером {backup_provider}: {str(e)}")
+                                
+                        except Exception as provider_error:
+                            print(f"Ошибка при инициализации резервного провайдера {backup_provider}: {str(provider_error)}")
+                
+                # Если все провайдеры не сработали, используем демо-ответ
+                print("Все провайдеры не работают, используем демо-ответ")
                 demo_response = get_demo_response(message)
-                print("Отправляем демо-ответ для проверки стриминга")
+                
+                yield f"event: update\ndata: {json.dumps({'text': 'Используем демо-режим...', 'provider': 'BOOOMERANGS-Demo'})}\n\n"
                 
                 # Имитируем стриминг для демо-ответа
                 words = demo_response.split()
