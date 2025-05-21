@@ -50,6 +50,11 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '../client/index.html'));
 });
 
+// Маршрут для простой версии
+app.get('/simple', (req, res) => {
+  res.sendFile(path.join(__dirname, '../client/simple.html'));
+});
+
 // API для генерации изображений
 app.post('/api/generate-image', async (req, res) => {
   try {
