@@ -76,6 +76,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.sendFile('standalone-g4f.html', { root: '.' });
   });
   
+  // BOOOMERANGS приложение
+  app.get('/booom', (req, res) => {
+    res.sendFile('booomerangs-app.html', { root: '.' });
+  });
+  
   // API для работы с G4F провайдерами
   app.use('/api/g4f', g4fHandlers);
   
