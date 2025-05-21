@@ -1,11 +1,8 @@
-// Супер простой сервер для BOOOMERANGS
 const express = require('express');
 const app = express();
 const PORT = 3000;
 
-// Обработка JSON
-app.use(express.json());
-// Статические файлы
+// Обслуживание статических файлов из текущей директории
 app.use(express.static('./'));
 
 // Главная страница
@@ -14,6 +11,6 @@ app.get('/', (req, res) => {
 });
 
 // Запуск сервера
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Сервер запущен на порту ${PORT}`);
+app.listen(PORT, () => {
+  console.log(`BOOOMERANGS сервер запущен на порту ${PORT}`);
 });
