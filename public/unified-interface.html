@@ -1065,35 +1065,8 @@
         const activeStyleOption = document.querySelector('.style-option.active');
         const style = activeStyleOption ? activeStyleOption.getAttribute('data-style') : 'realistic';
         
-        // Отправляем запрос на генерацию изображения через AI
-        const response = await fetch('/api/ai-image/generate', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ prompt, style })
-        });
-        
-        const data = await response.json();
-        
-        if (data.success && data.imageUrl) {
-          // Сохраняем URL изображения
-          currentImageUrl = data.imageUrl;
-          
-          // Устанавливаем изображение
-          imagePreview.onload = function() {
-            // Скрываем индикатор загрузки
-            loadingIndicator.style.display = 'none';
-            // Показываем результат
-            imageResult.style.display = 'flex';
-          };
-          
-          // Загружаем изображение
-          imagePreview.src = currentImageUrl;
-        } else {
-          console.error('Ошибка генерации AI изображения, переключаемся на локальную генерацию:', data.error);
-          
-          // Если не удалось получить изображение от AI, создаем локально на холсте
+        // Генерируем изображение локально, без внешних запросов
+        console.log('Генерируем изображение локально для запроса:', prompt, 'стиль:', style);
           const width = 800;
           const height = 600;
           
