@@ -34,24 +34,8 @@ export default function AuthScreen() {
     setIsLoading(true);
     
     try {
-      console.log("Attempting authentication with token:", values.token);
-      
-      // Используем fetch напрямую для проверки и отладки
-      const response = await fetch("/api/auth", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ token: values.token })
-      });
-      
+      const response = await apiRequest("POST", "/api/auth", { token: values.token });
       const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.message || "Ошибка аутентификации");
-      }
-      
-      console.log("Authentication response:", data);
       
       // Store token and user info in local storage
       localStorage.setItem("access_token", values.token);
@@ -59,8 +43,8 @@ export default function AuthScreen() {
       
       // Show success toast
       toast({
-        title: "Вход успешен",
-        description: "Добро пожаловать в Proxy Chat!",
+        title: "Authentication successful",
+        description: "Welcome to Proxy Chat!",
       });
       
       // Redirect to chat page
@@ -71,8 +55,8 @@ export default function AuthScreen() {
       // Show error toast
       toast({
         variant: "destructive",
-        title: "Ошибка входа",
-        description: error instanceof Error ? error.message : "Неверный токен доступа. Пожалуйста, попробуйте ещё раз.",
+        title: "Authentication failed",
+        description: error instanceof Error ? error.message : "Invalid access token. Please try again.",
       });
     } finally {
       setIsLoading(false);
@@ -97,15 +81,12 @@ export default function AuthScreen() {
                   <FormLabel className="text-sm font-medium text-neutral-700">Access Token</FormLabel>
                   <FormControl>
                     <Input
-                      type="text"
-                      placeholder="Введите токен доступа от OpenAI"
+                      type="password"
+                      placeholder="Enter your access token"
                       className="w-full px-4 py-2 border border-neutral-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                       {...field}
                     />
                   </FormControl>
-                  <div className="text-xs text-gray-500 mt-1">
-                    Подсказка: Вставьте ваш токен доступа от OpenAI
-                  </div>
                   <FormMessage />
                 </FormItem>
               )}

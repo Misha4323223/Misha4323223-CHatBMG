@@ -1,10 +1,9 @@
-modules = ["nodejs-20", "web", "postgresql-16", "python-3.11", "python3"]
+modules = ["nodejs-20", "web", "postgresql-16"]
 run = "npm run dev"
 hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 
 [nix]
 channel = "stable-24_05"
-packages = ["chromedriver", "chromium", "geckodriver", "jq", "lsof"]
 
 [deployment]
 deploymentTarget = "autoscale"
@@ -12,28 +11,8 @@ build = ["npm", "run", "build"]
 run = ["npm", "run", "start"]
 
 [[ports]]
-localPort = 3000
-externalPort = 3000
-
-[[ports]]
-localPort = 3333
-externalPort = 3001
-
-[[ports]]
-localPort = 3334
-externalPort = 3002
-
-[[ports]]
 localPort = 5000
 externalPort = 80
-
-[[ports]]
-localPort = 5001
-externalPort = 3003
-
-[[ports]]
-localPort = 5002
-externalPort = 4200
 
 [workflows]
 runButton = "Project"

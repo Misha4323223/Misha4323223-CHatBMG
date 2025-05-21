@@ -3,15 +3,11 @@ import { useLocation } from "wouter";
 import { User, WSEventType } from "@shared/schema";
 import Sidebar from "@/components/Sidebar";
 import ChatArea from "@/components/ChatArea";
-import ProxyPanel from "@/components/ProxyPanel";
-import ChatGPTPanel from "@/components/ChatGPTPanel";
 import { useWebSocket } from "@/lib/useWebSocket";
 import { useMessages } from "@/lib/useMessages";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { MessageWithSender, UserWithInitials } from "@shared/schema";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { queryClient } from "@/lib/queryClient";
 
 export default function Chat() {
   const [location, setLocation] = useLocation();
@@ -19,27 +15,20 @@ export default function Chat() {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserWithInitials | null>(null);
   const [connectedStatus, setConnectedStatus] = useState<"connected" | "disconnected">("connected");
-  const [currentUser, setCurrentUser] = useState<UserWithInitials | null>(null);
-  const [token, setToken] = useState<string | null>(null);
   
-  // Загрузка данных пользователя и токена из localStorage
+  // Get current user from localStorage
+  const currentUserData = localStorage.getItem("user");
+  const currentUser = currentUserData ? JSON.parse(currentUserData) as UserWithInitials : null;
+  
+  // Get token from localStorage
+  const token = localStorage.getItem("access_token");
+  
+  // Redirect if no token or user data
   useEffect(() => {
-    const currentUserData = localStorage.getItem("user");
-    const tokenData = localStorage.getItem("access_token");
-    
-    if (currentUserData) {
-      setCurrentUser(JSON.parse(currentUserData) as UserWithInitials);
-    }
-    
-    if (tokenData) {
-      setToken(tokenData);
-    }
-    
-    // Проверка наличия токена и данных пользователя
-    if (!tokenData || !currentUserData) {
+    if (!token || !currentUser) {
       setLocation("/");
     }
-  }, [setLocation]);
+  }, [token, currentUser, setLocation]);
   
   // Fetch users
   const { data: users = [] } = useQuery<UserWithInitials[]>({
@@ -149,8 +138,6 @@ export default function Chat() {
   
   if (!currentUser) return null;
   
-  const [activeTab, setActiveTab] = useState("chat");
-
   return (
     <div className="h-screen flex flex-col bg-neutral-100 text-neutral-900">
       {/* Header */}
@@ -175,48 +162,25 @@ export default function Chat() {
         </div>
       </header>
       
-      {/* Вкладки */}
-      <div className="bg-white border-b border-neutral-200 px-4 py-1">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList>
-            <TabsTrigger value="chat">Чат</TabsTrigger>
-            <TabsTrigger value="proxy">Прокси</TabsTrigger>
-            <TabsTrigger value="chatgpt">ChatGPT</TabsTrigger>
-          </TabsList>
-        </Tabs>
-      </div>
-      
       {/* Main Content */}
-      <div className="flex flex-1 h-[calc(100%-100px)] overflow-hidden">
-        {activeTab === "chat" ? (
-          <>
-            <Sidebar 
-              users={users.filter(user => user.id !== currentUser.id)}
-              currentUser={currentUser}
-              selectedUser={selectedUser}
-              onSelectUser={setSelectedUser}
-              isOpen={isMobileSidebarOpen}
-              onToggle={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
-            />
-            
-            <ChatArea 
-              messages={messages}
-              currentUser={currentUser}
-              selectedUser={selectedUser}
-              onSendMessage={handleSendMessage}
-              onOpenSidebar={() => setIsMobileSidebarOpen(true)}
-              connectionStatus={connectedStatus}
-            />
-          </>
-        ) : activeTab === "proxy" ? (
-          <div className="flex-1 p-4 overflow-y-auto">
-            <ProxyPanel />
-          </div>
-        ) : (
-          <div className="flex-1 p-4 overflow-y-auto">
-            <ChatGPTPanel />
-          </div>
-        )}
+      <div className="flex flex-1 h-[calc(100%-56px)] overflow-hidden">
+        <Sidebar 
+          users={users.filter(user => user.id !== currentUser.id)}
+          currentUser={currentUser}
+          selectedUser={selectedUser}
+          onSelectUser={setSelectedUser}
+          isOpen={isMobileSidebarOpen}
+          onToggle={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
+        />
+        
+        <ChatArea 
+          messages={messages}
+          currentUser={currentUser}
+          selectedUser={selectedUser}
+          onSendMessage={handleSendMessage}
+          onOpenSidebar={() => setIsMobileSidebarOpen(true)}
+          connectionStatus={connectedStatus}
+        />
       </div>
     </div>
   );

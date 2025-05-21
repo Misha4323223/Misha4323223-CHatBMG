@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
-  <rect width="400" height="300" fill="#f0f0f0" />
-  <circle cx="200" cy="150" r="50" fill="#6c63ff" />
-  <rect x="180" y="130" width="40" height="40" fill="#4a56e2" />
-  <line x1="100" y1="100" x2="300" y2="200" stroke="#333" stroke-width="2" />
-  <line x1="100" y1="200" x2="300" y2="100" stroke="#333" stroke-width="2" />
-  <text x="200" y="270" font-family="Arial" font-size="16" text-anchor="middle">Сгенерированное SVG изображение</text>
-</svg>
