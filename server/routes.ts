@@ -205,6 +205,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const deepspeekRoutes = require('./deepspeek-routes');
   app.use('/api/deepspeek', deepspeekRoutes);
   
+  // API для проверки состояния провайдеров
+  const checkProvidersRoutes = require('./check-providers');
+  app.use('/api/providers', checkProvidersRoutes);
+  
   // Проверка работы Python провайдера при запуске
   (async () => {
     try {
