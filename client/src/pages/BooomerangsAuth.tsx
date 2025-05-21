@@ -1,62 +1,60 @@
 import { useState } from "react";
-import { useLocation } from "wouter";
-import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { authSchema } from "@shared/schema";
-import { apiRequest } from "@/lib/queryClient";
+import { z } from "zod";
+import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Card, CardContent } from "@/components/ui/card";
-import { AlertCircle } from "lucide-react";
+const schema = z.object({
+  token: z.string().min(1, { message: "Токен доступа обязателен" }),
+});
 
-// Extend the auth schema for the form
-const formSchema = authSchema.extend({});
+type FormData = z.infer<typeof schema>;
 
 export default function BooomerangsAuth() {
-  const [location, setLocation] = useLocation();
-  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Form setup with validation
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      token: "",
-    },
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<FormData>({
+    resolver: zodResolver(schema),
   });
 
-  // Handle form submission
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const onSubmit = async (data: FormData) => {
     setIsLoading(true);
-    
     try {
-      const response = await apiRequest("POST", "/api/auth", { token: values.token });
-      const data = await response.json();
-      
-      // Store token and user info in local storage
-      localStorage.setItem("access_token", values.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
-      
-      // Show success toast
-      toast({
-        title: "Авторизация успешна",
-        description: "Добро пожаловать в BOOOMERANGS AI!",
+      const response = await fetch("/api/auth", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ token: data.token }),
       });
-      
-      // Redirect to chat page
+
+      if (!response.ok) {
+        throw new Error("Ошибка авторизации");
+      }
+
+      const userData = await response.json();
+      localStorage.setItem("auth_token", data.token);
+      localStorage.setItem("user", JSON.stringify(userData.user));
+
+      toast({
+        title: "Успешно",
+        description: "Добро пожаловать в чат!",
+      });
+
       setLocation("/chat");
     } catch (error) {
-      console.error("Authentication error:", error);
-      
-      // Show error toast
+      console.error(error);
       toast({
-        variant: "destructive",
-        title: "Ошибка авторизации",
-        description: error instanceof Error ? error.message : "Неверный токен доступа. Пожалуйста, попробуйте снова.",
+        title: "Ошибка",
+        description: "Неверный токен доступа",
       });
     } finally {
       setIsLoading(false);
@@ -64,180 +62,110 @@ export default function BooomerangsAuth() {
   };
 
   return (
-    <div style={{
-      position: 'fixed',
-      inset: 0,
-      zIndex: 50,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      background: 'linear-gradient(135deg, #1e40af, #3b82f6, #4f46e5)',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
-    }}>
-      <div style={{
-        width: '100%',
-        maxWidth: '28rem',
-        padding: '2.5rem',
-        backgroundColor: 'white',
-        borderRadius: '1.5rem',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-        border: '1px solid rgba(255, 255, 255, 0.2)',
-        position: 'relative',
-        overflow: 'hidden'
-      }}>
-        {/* Декоративный элемент */}
-        <div style={{
-          position: 'absolute',
-          top: '-50px',
-          right: '-50px',
-          width: '150px',
-          height: '150px',
-          borderRadius: '50%',
-          background: 'linear-gradient(45deg, #3b82f6, #4f46e5)',
-          opacity: 0.1
-        }}></div>
-        
-        <div style={{textAlign: 'center', marginBottom: '2rem', position: 'relative'}}>
-          {/* Логотип */}
-          <div style={{display: 'flex', justifyContent: 'center', marginBottom: '1.25rem'}}>
-            <div style={{
-              width: '100px',
-              height: '100px',
-              borderRadius: '50%',
-              background: 'white',
-              border: '4px solid #3b82f6',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '2.5rem',
-              fontWeight: 'bold',
-              color: '#3b82f6',
-              boxShadow: '0 10px 25px -5px rgba(59, 130, 246, 0.5)'
-            }}>B</div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-r from-blue-800 via-blue-600 to-indigo-700">
+      <div className="w-full max-w-md p-8 mx-auto bg-white rounded-3xl shadow-2xl border border-opacity-20 border-white">
+        <div className="text-center mb-8">
+          <div className="flex justify-center mb-6">
+            <div className="w-24 h-24 rounded-full bg-white border-4 border-blue-500 flex items-center justify-center text-4xl font-bold text-blue-500 shadow-lg">
+              B
+            </div>
           </div>
           
-          {/* Заголовок */}
-          <h1 style={{
-            fontSize: '2rem',
-            fontWeight: 'bold',
-            marginBottom: '0.5rem',
-            position: 'relative'
-          }}>
-            <span style={{
-              background: 'linear-gradient(to right, #3b82f6, #4f46e5)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent'
-            }}>BOOOMERANGS</span>
+          <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-transparent bg-clip-text">
+            BOOOMERANGS
           </h1>
           
-          {/* Подзаголовок */}
-          <p style={{
-            color: '#6b7280', 
-            marginBottom: '2rem',
-            fontSize: '0.95rem'
-          }}>
+          <p className="text-gray-500 mb-8">
             Бесплатный доступ к AI без платных API ключей
           </p>
         </div>
         
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} style={{display: 'flex', flexDirection: 'column', gap: '1.5rem'}}>
-            <FormField
-              control={form.control}
-              name="token"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel style={{
-                    fontSize: '0.875rem',
-                    fontWeight: 500,
-                    color: '#4b5563',
-                    marginBottom: '0.5rem',
-                    display: 'block'
-                  }}>ACCESS TOKEN</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="password"
-                      placeholder="Введите свой токен доступа"
-                      style={{
-                        width: '100%',
-                        padding: '0.75rem 1rem',
-                        borderRadius: '0.5rem',
-                        border: '1px solid #e5e7eb',
-                        outline: 'none',
-                        fontSize: '1rem',
-                        color: '#1f2937',
-                        transition: 'all 0.2s',
-                        boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)'
-                      }}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage style={{color: '#ef4444', fontSize: '0.875rem', marginTop: '0.5rem'}} />
-                </FormItem>
-              )}
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <div className="space-y-2">
+            <label htmlFor="token" className="block text-sm font-medium text-gray-700">
+              ACCESS TOKEN
+            </label>
+            <input
+              id="token"
+              type="password"
+              {...register("token")}
+              className={`w-full px-4 py-3 rounded-lg border ${
+                errors.token ? "border-red-500" : "border-gray-300"
+              } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+              placeholder="Введите свой токен доступа"
             />
-            
-            {form.formState.errors.root && (
-              <div style={{
-                backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                color: '#ef4444',
-                padding: '0.75rem',
-                borderRadius: '0.5rem',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem'
-              }}>
-                <AlertCircle style={{width: '1rem', height: '1rem'}} />
-                <span>{form.formState.errors.root.message}</span>
-              </div>
+            {errors.token && (
+              <p className="text-sm text-red-500">{errors.token.message}</p>
             )}
+          </div>
+          
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full py-3 px-4 rounded-lg text-white font-medium transition-all flex items-center justify-center space-x-2"
+            style={{
+              background: "linear-gradient(to right, #3b82f6, #4f46e5)",
+              boxShadow: "0 4px 6px -1px rgba(59, 130, 246, 0.3)"
+            }}
+          >
+            {isLoading ? (
+              <>
+                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>Подключение...</span>
+              </>
+            ) : (
+              <span>Войти в чат</span>
+            )}
+          </button>
+        </form>
+        
+        {/* Примеры сообщений */}
+        <div className="mt-10 pt-8 border-t border-gray-200">
+          <h3 className="text-center text-lg font-semibold text-gray-700 mb-6">
+            Примеры сообщений
+          </h3>
+          
+          <div className="bg-gray-50 rounded-xl p-4 space-y-4">
+            {/* Сообщение пользователя */}
+            <div className="flex justify-end">
+              <div className="max-w-[80%]">
+                <div className="px-4 py-3 rounded-[18px] rounded-br-[4px] text-white relative"
+                  style={{
+                    background: "linear-gradient(to right, #3b82f6, #4f46e5)",
+                    boxShadow: "0 2px 5px rgba(0,0,0,0.1)"
+                  }}>
+                  <p>Привет! Расскажи о возможностях BOOOMERANGS AI</p>
+                </div>
+                <div className="text-xs text-gray-500 mt-1 text-right mr-2">
+                  14:25
+                </div>
+              </div>
+            </div>
             
-            <Button
-              type="submit"
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                borderRadius: '0.5rem',
-                fontSize: '1rem',
-                fontWeight: 500,
-                border: 'none',
-                cursor: isLoading ? 'not-allowed' : 'pointer',
-                background: isLoading ? '#93c5fd' : 'linear-gradient(to right, #3b82f6, #4f46e5)',
-                color: 'white',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.5rem',
-                transition: 'all 0.2s',
-                boxShadow: '0 4px 6px -1px rgba(59, 130, 246, 0.2), 0 2px 4px -1px rgba(59, 130, 246, 0.1)'
-              }}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <>
-                  <div style={{
-                    width: '1.25rem',
-                    height: '1.25rem',
-                    borderRadius: '50%',
-                    border: '2px solid rgba(255, 255, 255, 0.3)',
-                    borderTopColor: 'white',
-                    animation: 'spin 1s linear infinite'
-                  }}></div>
-                  <style>
-                    {`
-                      @keyframes spin {
-                        to { transform: rotate(360deg); }
-                      }
-                    `}
-                  </style>
-                  Подключение...
-                </>
-              ) : (
-                "Войти в чат"
-              )}
-            </Button>
-          </form>
-        </Form>
+            {/* Сообщение от AI */}
+            <div className="flex">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 flex items-center justify-center text-white font-medium mr-2 shadow-md">
+                B
+              </div>
+              <div className="max-w-[80%]">
+                <div className="px-4 py-3 bg-white rounded-[18px] rounded-bl-[4px] relative shadow-sm border border-gray-100">
+                  <p className="text-gray-800">
+                    Привет! BOOOMERANGS AI предоставляет бесплатный доступ к возможностям искусственного интеллекта без необходимости платных API ключей.
+                    <span className="ml-2 inline-block px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                      AI
+                    </span>
+                  </p>
+                </div>
+                <div className="text-xs text-gray-500 mt-1 ml-2">
+                  14:26
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
