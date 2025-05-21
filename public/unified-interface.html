@@ -1013,11 +1013,14 @@
       loadingIndicator.style.display = 'flex';
       
       try {
-        // Используем Unsplash API для получения изображения на основе запроса
-        const randomSeed = Math.floor(Math.random() * 10000);
-        const unsplashUrl = `https://source.unsplash.com/random/800x600/?${encodeURIComponent(prompt)}&sig=${randomSeed}`;
+        // Используем Picsum Photos для получения случайного изображения
+        // Это проще и надежнее, чем Unsplash API, и не требует ключей API
+        const randomId = Math.floor(Math.random() * 1000);
+        const width = 800;
+        const height = 600;
+        const picsumUrl = `https://picsum.photos/seed/${randomId}/${width}/${height}`;
         
-        // Загружаем изображение
+        // Обработчик загрузки изображения
         imagePreview.onload = function() {
           // Скрываем индикатор загрузки
           loadingIndicator.style.display = 'none';
@@ -1025,9 +1028,46 @@
           imageResult.style.display = 'flex';
         };
         
+        // Обработчик ошибки при загрузке изображения
+        imagePreview.onerror = function() {
+          console.error('Ошибка загрузки изображения');
+          
+          // Создаем запасной вариант - цветной градиент
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          
+          // Создаем градиент
+          const gradient = ctx.createLinearGradient(0, 0, width, height);
+          gradient.addColorStop(0, '#3b82f6');
+          gradient.addColorStop(1, '#6366f1');
+          
+          // Заполняем холст градиентом
+          ctx.fillStyle = gradient;
+          ctx.fillRect(0, 0, width, height);
+          
+          // Добавляем текст
+          ctx.font = 'bold 32px Arial';
+          ctx.fillStyle = 'white';
+          ctx.textAlign = 'center';
+          ctx.fillText('BOOOMERANGS', width/2, height/2);
+          ctx.font = 'bold 24px Arial';
+          ctx.fillText(prompt, width/2, height/2 + 40);
+          
+          // Преобразуем холст в URL изображения
+          currentImageUrl = canvas.toDataURL('image/png');
+          imagePreview.src = currentImageUrl;
+          
+          // Скрываем индикатор загрузки
+          loadingIndicator.style.display = 'none';
+          // Показываем результат
+          imageResult.style.display = 'flex';
+        };
+        
         // Устанавливаем URL изображения
-        currentImageUrl = unsplashUrl;
-        imagePreview.src = currentImageUrl;
+        currentImageUrl = picsumUrl;
+        imagePreview.src = picsumUrl;
       } catch (error) {
         console.error('Ошибка:', error);
         
