@@ -152,6 +152,64 @@ const AI_PROVIDERS = {
     }
   },
   
+  // HuggingFace Inference API - бесплатный доступ к моделям
+  HUGGINGFACE: {
+    name: 'HuggingFace',
+    url: 'https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2',
+    needsKey: false,
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    prepareRequest: (message) => {
+      return {
+        inputs: message,
+        parameters: {
+          temperature: 0.7,
+          max_new_tokens: 512
+        }
+      };
+    },
+    extractResponse: async (response) => {
+      try {
+        const jsonResponse = await response.json();
+        if (jsonResponse && jsonResponse[0] && jsonResponse[0].generated_text) {
+          return jsonResponse[0].generated_text;
+        }
+        throw new Error('Неправильный формат ответа');
+      } catch (error) {
+        throw new Error(`Ошибка при обработке ответа: ${error.message}`);
+      }
+    }
+  },
+  
+  // FreeGPT4 - бесплатный API для доступа к моделям
+  FREEGPT4: {
+    name: 'FreeGPT4',
+    url: 'https://freegpt4.org/api/generate',
+    needsKey: false,
+    headers: {
+      'Content-Type': 'application/json',
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
+      'Origin': 'https://freegpt4.org',
+      'Referer': 'https://freegpt4.org/'
+    },
+    prepareRequest: (message) => {
+      return {
+        prompt: message,
+        model: "meta/llama-3-8b-instruct",
+        max_tokens: 800,
+        temperature: 0.7
+      };
+    },
+    extractResponse: async (response) => {
+      const jsonResponse = await response.json();
+      if (jsonResponse && jsonResponse.response) {
+        return jsonResponse.response;
+      }
+      throw new Error('Некорректный ответ от FreeGPT4');
+    }
+  },
+  
   // Альтернативный сервис для демо-режима
   DEMO: {
     name: 'BOOOMERANGS-Demo',

@@ -15,6 +15,7 @@ AVAILABLE_PROVIDERS = {}
 
 # Добавляем провайдеры, которые есть в библиотеке
 for provider_class in g4f.Provider.__providers__:
+    # Проверенные рабочие провайдеры
     if provider_class.__name__ == "You":
         AVAILABLE_PROVIDERS["You"] = provider_class
     elif provider_class.__name__ == "Aichat":
@@ -25,6 +26,17 @@ for provider_class in g4f.Provider.__providers__:
         AVAILABLE_PROVIDERS["ChatgptFree"] = provider_class
     elif provider_class.__name__ == "GPTalk":
         AVAILABLE_PROVIDERS["GPTalk"] = provider_class
+    # Новые бесплатные провайдеры
+    elif provider_class.__name__ == "AItianhuSpace":
+        AVAILABLE_PROVIDERS["AItianhuSpace"] = provider_class
+    elif provider_class.__name__ == "Bard":
+        AVAILABLE_PROVIDERS["Bard"] = provider_class
+    elif provider_class.__name__ == "DeepAi":
+        AVAILABLE_PROVIDERS["DeepAi"] = provider_class
+    elif provider_class.__name__ == "Bing":
+        AVAILABLE_PROVIDERS["Bing"] = provider_class
+    elif provider_class.__name__ == "Phind":
+        AVAILABLE_PROVIDERS["Phind"] = provider_class
 
 # Выводим список провайдеров, которые будем использовать
 print(f"🤖 Загружено {len(AVAILABLE_PROVIDERS)} провайдеров: {', '.join(AVAILABLE_PROVIDERS.keys())}")
