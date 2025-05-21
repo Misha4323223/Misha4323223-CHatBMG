@@ -8,6 +8,7 @@ import AuthScreen from "@/pages/AuthScreen";
 import BooomerangsAuth from "@/pages/BooomerangsAuth";
 import Chat from "@/pages/Chat";
 import AIChat from "@/pages/AIChat";
+import AIProviderChat from "@/pages/AIProviderChat";
 import ImageGeneratorSimple from "@/pages/ImageGeneratorSimple";
 import { useEffect } from "react";
 
