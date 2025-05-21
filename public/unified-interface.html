@@ -1013,14 +1013,105 @@
       loadingIndicator.style.display = 'flex';
       
       try {
-        // Используем Picsum Photos для получения случайного изображения
-        // Это проще и надежнее, чем Unsplash API, и не требует ключей API
-        const randomId = Math.floor(Math.random() * 1000);
+        // Вместо загрузки изображения с внешнего сервера, сразу создаем его на холсте
         const width = 800;
         const height = 600;
-        const picsumUrl = `https://picsum.photos/seed/${randomId}/${width}/${height}`;
         
-        // Обработчик загрузки изображения
+        // Создаем холст
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        
+        // Создаем градиент для фона
+        const gradient = ctx.createLinearGradient(0, 0, width, height);
+        gradient.addColorStop(0, '#3b82f6');
+        gradient.addColorStop(1, '#6366f1');
+        
+        // Заполняем холст градиентом
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, width, height);
+        
+        // Добавляем случайные элементы в зависимости от запроса
+        const keywords = prompt.toLowerCase().split(' ');
+        
+        // Добавляем геометрические фигуры
+        for (let i = 0; i < 20; i++) {
+          // Выбираем случайный цвет
+          ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.5})`;
+          
+          // Случайное положение и размер
+          const x = Math.random() * width;
+          const y = Math.random() * height;
+          const size = 20 + Math.random() * 100;
+          
+          // Случайная форма
+          const shape = Math.floor(Math.random() * 3);
+          
+          if (shape === 0) {
+            // Круг
+            ctx.beginPath();
+            ctx.arc(x, y, size/2, 0, Math.PI * 2);
+            ctx.fill();
+          } else if (shape === 1) {
+            // Квадрат
+            ctx.fillRect(x - size/2, y - size/2, size, size);
+          } else {
+            // Треугольник
+            ctx.beginPath();
+            ctx.moveTo(x, y - size/2);
+            ctx.lineTo(x - size/2, y + size/2);
+            ctx.lineTo(x + size/2, y + size/2);
+            ctx.closePath();
+            ctx.fill();
+          }
+        }
+        
+        // Тематические элементы в зависимости от запроса
+        if (keywords.some(k => ['космос', 'космический', 'звезда', 'звезды', 'galaxy', 'space', 'star'].includes(k))) {
+          // Звезды для космической темы
+          for (let i = 0; i < 200; i++) {
+            const x = Math.random() * width;
+            const y = Math.random() * height;
+            const radius = Math.random() * 2;
+            
+            ctx.fillStyle = 'white';
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+        
+        if (keywords.some(k => ['природа', 'дерево', 'лес', 'гора', 'mountain', 'nature', 'tree'].includes(k))) {
+          // Горы для природной темы
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+          ctx.beginPath();
+          ctx.moveTo(0, height);
+          ctx.lineTo(width * 0.3, height * 0.5);
+          ctx.lineTo(width * 0.5, height * 0.7);
+          ctx.lineTo(width * 0.7, height * 0.4);
+          ctx.lineTo(width, height);
+          ctx.closePath();
+          ctx.fill();
+        }
+        
+        // Добавляем заголовок
+        ctx.font = 'bold 32px Arial';
+        ctx.fillStyle = 'white';
+        ctx.textAlign = 'center';
+        ctx.fillText('BOOOMERANGS', width/2, height - 50);
+        
+        // Добавляем текст запроса
+        const wrappedText = wrapText(ctx, prompt, width - 100, 24);
+        wrappedText.forEach((line, index) => {
+          ctx.font = 'bold 24px Arial';
+          ctx.fillText(line, width/2, 100 + index * 30);
+        });
+        
+        // Преобразуем холст в URL изображения
+        currentImageUrl = canvas.toDataURL('image/png');
+        
+        // Отображаем результат
         imagePreview.onload = function() {
           // Скрываем индикатор загрузки
           loadingIndicator.style.display = 'none';
@@ -1028,46 +1119,7 @@
           imageResult.style.display = 'flex';
         };
         
-        // Обработчик ошибки при загрузке изображения
-        imagePreview.onerror = function() {
-          console.error('Ошибка загрузки изображения');
-          
-          // Создаем запасной вариант - цветной градиент
-          const canvas = document.createElement('canvas');
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          
-          // Создаем градиент
-          const gradient = ctx.createLinearGradient(0, 0, width, height);
-          gradient.addColorStop(0, '#3b82f6');
-          gradient.addColorStop(1, '#6366f1');
-          
-          // Заполняем холст градиентом
-          ctx.fillStyle = gradient;
-          ctx.fillRect(0, 0, width, height);
-          
-          // Добавляем текст
-          ctx.font = 'bold 32px Arial';
-          ctx.fillStyle = 'white';
-          ctx.textAlign = 'center';
-          ctx.fillText('BOOOMERANGS', width/2, height/2);
-          ctx.font = 'bold 24px Arial';
-          ctx.fillText(prompt, width/2, height/2 + 40);
-          
-          // Преобразуем холст в URL изображения
-          currentImageUrl = canvas.toDataURL('image/png');
-          imagePreview.src = currentImageUrl;
-          
-          // Скрываем индикатор загрузки
-          loadingIndicator.style.display = 'none';
-          // Показываем результат
-          imageResult.style.display = 'flex';
-        };
-        
-        // Устанавливаем URL изображения
-        currentImageUrl = picsumUrl;
-        imagePreview.src = picsumUrl;
+        imagePreview.src = currentImageUrl;
       } catch (error) {
         console.error('Ошибка:', error);
         
@@ -1077,6 +1129,30 @@
         // Показываем сообщение об ошибке
         alert('Произошла ошибка при генерации изображения. Пожалуйста, попробуйте еще раз.');
       }
+    }
+    
+    // Вспомогательная функция для переноса текста
+    function wrapText(ctx, text, maxWidth, fontSize) {
+      ctx.font = `bold ${fontSize}px Arial`;
+      
+      const words = text.split(' ');
+      const lines = [];
+      let currentLine = words[0];
+      
+      for (let i = 1; i < words.length; i++) {
+        const word = words[i];
+        const width = ctx.measureText(currentLine + " " + word).width;
+        
+        if (width < maxWidth) {
+          currentLine += " " + word;
+        } else {
+          lines.push(currentLine);
+          currentLine = word;
+        }
+      }
+      
+      lines.push(currentLine);
+      return lines;
     }
     
     // Конвертация изображения в SVG
