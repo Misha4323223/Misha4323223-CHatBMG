@@ -102,6 +102,12 @@ async function getDeepInfraResponse(message, options = {}) {
       req.end();
     });
     
+    // Проверяем ответ на наличие ошибок
+    if (responseData.error || (responseData.response && responseData.response.includes("Ошибка провайдера DeepInfra"))) {
+      console.log(`DeepInfra недоступен или требует API ключ. Переключаемся на резервный провайдер.`);
+      throw new Error(responseData.error || responseData.response);
+    }
+    
     // Извлекаем ответ из данных
     const response = responseData.response;
     
