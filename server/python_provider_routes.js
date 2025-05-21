@@ -46,7 +46,7 @@ async function checkPythonProvider() {
   try {
     console.log('Проверка работоспособности Python G4F...');
     
-    const response = await fetch('http://localhost:5000/python/test', {
+    const response = await fetch('http://localhost:5002/python/test', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -121,7 +121,7 @@ router.post('/chat', async (req, res) => {
     }
     
     try {
-      const response = await fetch('http://localhost:5000/python/chat', {
+      const response = await fetch('http://localhost:5002/python/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -245,7 +245,7 @@ router.post('/chat/stream', async (req, res) => {
     }, totalTimeout);
     
     try {
-      const apiUrl = 'http://localhost:5000/python/chat/stream';
+      const apiUrl = 'http://localhost:5002/python/chat/stream';
       
       // Создаем fetch запрос к Python API
       const response = await fetch(apiUrl, {
