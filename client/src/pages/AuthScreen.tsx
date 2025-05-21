@@ -68,10 +68,10 @@ export default function AuthScreen() {
       <Card className="w-full max-w-md p-8 bg-white rounded-lg shadow-2xl border border-gray-200">
         <div className="text-center mb-6">
           <div className="flex justify-center mb-4">
-            <img src="/images/booomerangs-logo.jpg" alt="BOOOMERANGS" className="h-28 w-auto" />
+            <img src="/images/booomerangs-logo.svg" alt="BOOOMERANGS" className="h-32 w-auto" />
           </div>
           <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">BOOOMERANGS</h1>
-          <p className="text-gray-600 mt-2">Бесплатный AI чат и генератор изображений</p>
+          <p className="text-gray-600 mt-2">Бесплатный доступ к AI без платных API ключей</p>
         </div>
         
         <Form {...form}>
