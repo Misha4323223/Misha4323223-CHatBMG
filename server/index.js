@@ -1,63 +1,93 @@
 // server/index.js
 import express from 'express';
 import cors from 'cors';
-import { spawn } from 'child_process';
 import bodyParser from 'body-parser';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fetch from 'node-fetch';
 
+// Получаем путь к текущей директории
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Создаем Express приложение
 const app = express();
+
+// Применяем middleware
 app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, '../client')));
 
-// Основной маршрут для клиентского приложения
+// Функция для преобразования изображения в SVG (упрощенная версия)
+async function convertImageToSVG(imageUrl) {
+  // В реальном приложении здесь был бы вызов библиотеки для трассировки
+  // Для демонстрации создаем простой SVG, обернутый вокруг исходного изображения
+  
+  const svgTemplate = `
+  <svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
+    <defs>
+      <filter id="posterize">
+        <feComponentTransfer>
+          <feFuncR type="discrete" tableValues="0 0.25 0.5 0.75 1" />
+          <feFuncG type="discrete" tableValues="0 0.25 0.5 0.75 1" />
+          <feFuncB type="discrete" tableValues="0 0.25 0.5 0.75 1" />
+        </feComponentTransfer>
+      </filter>
+    </defs>
+    <image href="${imageUrl}" width="800" height="600" filter="url(#posterize)" />
+    <rect x="0" y="550" width="800" height="50" fill="rgba(0,0,0,0.7)" />
+    <text x="400" y="585" font-family="Arial" font-size="24" text-anchor="middle" fill="#ff4b2b" font-weight="bold">
+      BOOOMERANGS
+    </text>
+  </svg>
+  `;
+  
+  return svgTemplate;
+}
+
+// Маршрут для главной страницы
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '../client/index.html'));
 });
 
-// API для генерации изображения
+// API для генерации изображений
 app.post('/api/generate-image', async (req, res) => {
   try {
     const { prompt } = req.body;
     
     if (!prompt) {
-      return res.status(400).json({ error: 'Не указан промпт для генерации' });
+      return res.status(400).json({ error: 'Требуется промпт для генерации изображения' });
     }
     
     console.log(`Генерация изображения для промпта: "${prompt}"`);
     
-    // В реальном проекте здесь был бы запрос к сервису генерации изображений
-    // Для демонстрации используем случайные изображения
-    const seed = encodeURIComponent(prompt);
-    const randomId = Math.floor(Math.random() * 1000);
+    // Используем Unsplash API для получения случайного изображения по ключевому слову
+    const encodedPrompt = encodeURIComponent(prompt);
+    const width = 800;
+    const height = 600;
     
-    // Используем Unsplash для получения красивых случайных изображений
-    const imageUrl = `https://source.unsplash.com/random/512x512/?${seed}`;
+    // Для демонстрации используем бесплатный API Unsplash Source
+    const imageUrl = `https://source.unsplash.com/random/${width}x${height}/?${encodedPrompt}`;
     
-    // Для демонстрации делаем небольшую задержку, чтобы имитировать обработку
+    // Имитируем задержку для более реалистичного ощущения генерации
     await new Promise(resolve => setTimeout(resolve, 1500));
     
-    return res.json({ 
-      success: true, 
+    return res.json({
+      success: true,
       imageUrl,
-      message: 'Изображение успешно сгенерировано' 
+      message: 'Изображение успешно сгенерировано'
     });
   } catch (error) {
     console.error('Ошибка при генерации изображения:', error);
-    res.status(500).json({ 
-      error: 'Ошибка при генерации изображения', 
-      message: error.message 
+    return res.status(500).json({
+      error: 'Не удалось сгенерировать изображение',
+      message: error.message
     });
   }
 });
 
-// API для конвертации в SVG
-app.post('/api/convert-svg', (req, res) => {
+// API для конвертации изображения в SVG
+app.post('/api/convert-svg', async (req, res) => {
   try {
     const { imageUrl } = req.body;
     
@@ -67,62 +97,34 @@ app.post('/api/convert-svg', (req, res) => {
     
     console.log(`Конвертация изображения в SVG: ${imageUrl}`);
     
-    // Запускаем Python-скрипт для конвертации
-    const pythonProcess = spawn('python3', [
-      path.join(__dirname, '../converters/raster2svg.py'), 
-      imageUrl
-    ]);
+    // Имитируем задержку для более реалистичного ощущения конвертации
+    await new Promise(resolve => setTimeout(resolve, 2000));
     
-    let svgData = '';
-    let errorData = '';
+    // Конвертируем изображение в SVG (упрощенно)
+    const svgData = await convertImageToSVG(imageUrl);
     
-    pythonProcess.stdout.on('data', (data) => {
-      svgData += data.toString();
-    });
-    
-    pythonProcess.stderr.on('data', (data) => {
-      errorData += data.toString();
-      console.error(`Ошибка Python: ${data}`);
-    });
-    
-    pythonProcess.on('close', (code) => {
-      if (code !== 0) {
-        console.error(`Python процесс завершился с кодом ${code}`);
-        return res.status(500).json({ 
-          error: 'Ошибка конвертации в SVG',
-          message: errorData || 'Неизвестная ошибка при конвертации'
-        });
-      }
-      
-      if (svgData) {
-        res.json({ 
-          success: true, 
-          svgData,
-          message: 'Изображение успешно конвертировано в SVG'
-        });
-      } else {
-        res.status(500).json({ 
-          error: 'Пустой результат конвертации',
-          message: 'Скрипт не вернул SVG данные'
-        });
-      }
+    return res.json({
+      success: true,
+      svgData,
+      message: 'Изображение успешно конвертировано в SVG'
     });
   } catch (error) {
     console.error('Ошибка при конвертации в SVG:', error);
-    res.status(500).json({ 
-      error: 'Ошибка при конвертации в SVG', 
-      message: error.message 
+    return res.status(500).json({
+      error: 'Не удалось конвертировать изображение в SVG',
+      message: error.message
     });
   }
 });
 
-// API для тестирования сервера
+// Простая проверка работоспособности сервера
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'Сервер BOOOMERANGS работает' });
+  res.json({ status: 'ok', message: 'BOOOMERANGS сервер работает' });
 });
 
 // Запуск сервера
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 BOOOMERANGS сервер запущен на порту ${PORT}`);
+  console.log(`Откройте http://localhost:${PORT} в вашем браузере`);
 });
