@@ -37,31 +37,66 @@ console.log(result);
 Это базовая реализация. Для более сложных случаев рекомендую...`;
 }
 
-// Демо-функция для показа работы DeepSpeek
+// Функция для получения ответа от DeepSpeek через настоящую AI модель
 async function getDeepSpeekResponse(query) {
   // Используем модуль direct-ai-provider для доступа к AI
   const directAiProvider = require('./direct-ai-provider');
   
   try {
-    // Пытаемся получить ответ от Qwen через AItianhu
+    console.log(`DeepSpeek: Отправка запроса к настоящей AI модели Qwen...`);
+    
+    // Пытаемся получить ответ от Qwen через AItianhu (самый стабильный провайдер)
     const response = await directAiProvider.getChatResponse(query, { provider: 'AItianhu' });
+    
+    console.log(`DeepSpeek: Успешно получен ответ от настоящей AI модели Qwen`);
     
     return {
       success: true,
       response: response,
       provider: "DeepSpeek",
-      model: "DeepSpeek AI"
+      model: "DeepSpeek AI (Qwen)"
     };
   } catch (error) {
-    console.error("Ошибка DeepSpeek:", error);
+    console.error("Ошибка DeepSpeek с AItianhu:", error);
     
-    // Если не удалось получить ответ от Qwen, используем локальную генерацию
-    return {
-      success: true,
-      response: generateJavaScriptResponse(query),
-      provider: "DeepSpeek-Local",
-      model: "DeepSpeek AI"
-    };
+    // В случае ошибки с AItianhu пробуем запасной вариант - Python G4F с Qwen_2_5_Max
+    try {
+      console.log(`DeepSpeek: Пробуем запасной вариант через Python G4F...`);
+      
+      // Используем Python провайдер как запасной вариант
+      const pythonProviderRoutes = require('./python_provider_routes');
+      
+      const pythonResponse = await pythonProviderRoutes.callPythonAI(query, 'Qwen_Qwen_2_5_Max');
+      
+      if (pythonResponse) {
+        console.log(`DeepSpeek: Успешно получен ответ от Python G4F`);
+        
+        return {
+          success: true,
+          response: pythonResponse,
+          provider: "DeepSpeek",
+          model: "DeepSpeek AI (Qwen 2.5 Max)"
+        };
+      }
+      
+      // Если Python G4F тоже не сработал, пробуем Phind
+      const phindResponse = await directAiProvider.getChatResponse(query, { provider: 'Phind' });
+      
+      return {
+        success: true,
+        response: phindResponse,
+        provider: "DeepSpeek",
+        model: "DeepSpeek AI (Phind)"
+      };
+    } catch (backupError) {
+      console.error("Все резервные провайдеры DeepSpeek не сработали:", backupError);
+      
+      // В случае полного отказа возвращаем ошибку
+      return {
+        success: false,
+        error: "Не удалось связаться с AI-провайдерами для DeepSpeek"
+      };
+    }
   }
 }
 
