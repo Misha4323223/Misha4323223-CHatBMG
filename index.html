@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BOOOMERANGS: Генерация + Превью</title>
+  <title>BOOOMERANGS: Генерация изображений</title>
   <style>
     body {
       font-family: sans-serif;
@@ -11,167 +11,122 @@
       color: white;
       text-align: center;
       padding: 2rem;
-      max-width: 800px;
-      margin: 0 auto;
     }
     header {
-      font-size: 2.5rem;
-      margin-bottom: 1.5rem;
-      background: linear-gradient(45deg, #ff4b2b, #ff416c);
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-      font-weight: bold;
-    }
-    .subtitle {
-      opacity: 0.8;
-      margin-bottom: 20px;
+      font-size: 2rem;
+      margin-bottom: 1rem;
+      color: #ff4b2b;
     }
     img {
       max-width: 100%;
       border-radius: 10px;
-      box-shadow: 0 0 15px rgba(255, 75, 43, 0.3);
-      margin-top: 1.5rem;
+      margin-top: 1rem;
+      display: none;
     }
     button {
-      padding: 12px 25px;
+      padding: 10px 20px;
       border: none;
-      background: linear-gradient(45deg, #ff4b2b, #ff416c);
-      color: white;
+      background-color: #00e676;
+      color: #000;
       font-size: 1rem;
       cursor: pointer;
       border-radius: 8px;
-      font-weight: bold;
-      margin: 10px 5px;
+      margin: 10px;
     }
     button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 5px 15px rgba(255, 75, 43, 0.4);
-      transition: all 0.3s ease;
-    }
-    .input-area {
-      margin: 20px 0;
-    }
-    textarea {
-      width: 100%;
-      padding: 12px;
-      background: #222;
-      border: 1px solid #444;
-      color: white;
-      border-radius: 8px;
-      min-height: 80px;
-      font-family: inherit;
-      margin-bottom: 10px;
+      background-color: #00c853;
     }
     .loading {
       display: none;
       margin: 20px auto;
     }
     .spinner {
-      width: 40px;
-      height: 40px;
-      border: 3px solid rgba(255, 75, 43, 0.2);
-      border-top-color: #ff4b2b;
+      display: inline-block;
+      width: 30px;
+      height: 30px;
+      border: 3px solid rgba(255,255,255,0.3);
       border-radius: 50%;
-      animation: spin 1s infinite linear;
-      margin: 0 auto;
+      border-top-color: white;
+      animation: spin 1s ease-in-out infinite;
     }
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
     .svg-container {
-      margin-top: 20px;
-      padding: 15px;
-      background-color: #222;
-      border-radius: 10px;
       display: none;
-    }
-    footer {
-      margin-top: 40px;
-      font-size: 0.8rem;
-      opacity: 0.7;
+      margin-top: 20px;
     }
   </style>
 </head>
 <body>
-  <header>🚀 BOOOMERANGS</header>
-  <p class="subtitle">Генерация изображений и конвертация в SVG без API ключей</p>
+  <header>🚀 BOOOMERANGS Генерация Изображения</header>
 
-  <div class="input-area">
-    <textarea id="prompt" placeholder="Опишите изображение, которое хотите создать (например: закат над горами)"></textarea>
+  <input type="text" id="prompt-input" placeholder="Введите описание изображения" style="padding: 10px; width: 80%; max-width: 500px; margin-bottom: 15px;">
+  
+  <div>
+    <button onclick="generateImage()">Сгенерировать изображение</button>
+    <button onclick="convertToSVG()" id="svg-button" style="display:none">Конвертировать в SVG</button>
   </div>
 
-  <button onclick="generateImage()">Сгенерировать изображение</button>
-  
   <div class="loading" id="loading">
     <div class="spinner"></div>
     <p>Генерация изображения...</p>
   </div>
-
-  <div>
-    <img id="preview" alt="Превью появится здесь" style="display:none;">
-  </div>
   
-  <div id="action-buttons" style="display:none;">
-    <button onclick="convertToSVG()">Конвертировать в SVG</button>
-    <button onclick="downloadImage()">Скачать изображение</button>
+  <div>
+    <img id="preview" alt="Превью появится здесь..." />
   </div>
   
   <div class="svg-container" id="svg-container"></div>
 
-  <footer>
-    &copy; 2024 BOOOMERANGS - Бесплатный сервис генерации изображений
-  </footer>
-
   <script>
     // Глобальные переменные
     let currentImageUrl = '';
-    let currentSvgData = '';
     
-    // Элементы страницы
+    // DOM элементы
     const previewImage = document.getElementById('preview');
-    const promptInput = document.getElementById('prompt');
-    const actionButtons = document.getElementById('action-buttons');
+    const promptInput = document.getElementById('prompt-input');
+    const svgButton = document.getElementById('svg-button');
+    const loadingElement = document.getElementById('loading');
     const svgContainer = document.getElementById('svg-container');
-    const loadingIndicator = document.getElementById('loading');
     
     // Функция генерации изображения
     async function generateImage() {
-      const prompt = promptInput.value.trim() || 'landscape';
-      const encodedPrompt = encodeURIComponent(prompt);
+      // Получаем промпт от пользователя
+      const prompt = promptInput.value.trim() || 'nature landscape';
       
       // Скрываем предыдущие результаты
       previewImage.style.display = 'none';
-      actionButtons.style.display = 'none';
+      svgButton.style.display = 'none';
       svgContainer.style.display = 'none';
       
       // Показываем индикатор загрузки
-      loadingIndicator.style.display = 'block';
+      loadingElement.style.display = 'block';
       
       try {
-        // Для простоты напрямую используем Unsplash API
-        const width = 800;
-        const height = 600;
-        currentImageUrl = `https://source.unsplash.com/random/${width}x${height}/?${encodedPrompt}`;
+        // Генерируем URL для изображения с Unsplash
+        const randomSeed = Math.floor(Math.random() * 1000);
+        currentImageUrl = `https://source.unsplash.com/random/800x600/?${encodeURIComponent(prompt)}&sig=${randomSeed}`;
         
-        // Загружаем и отображаем изображение
+        // Настраиваем обработчики событий изображения
         previewImage.onload = function() {
+          // Скрываем загрузку и показываем изображение
+          loadingElement.style.display = 'none';
           previewImage.style.display = 'block';
-          actionButtons.style.display = 'block';
-          loadingIndicator.style.display = 'none';
+          svgButton.style.display = 'inline-block';
         };
         
         previewImage.onerror = function() {
-          alert('Ошибка при загрузке изображения');
-          loadingIndicator.style.display = 'none';
+          loadingElement.style.display = 'none';
+          alert('Ошибка при загрузке изображения. Попробуйте другой запрос.');
         };
         
-        // Добавляем случайный параметр, чтобы избежать кэширования
-        previewImage.src = `${currentImageUrl}&_=${Date.now()}`;
-        
+        // Устанавливаем источник изображения
+        previewImage.src = currentImageUrl;
       } catch (error) {
-        alert('Ошибка при генерации изображения');
-        loadingIndicator.style.display = 'none';
+        loadingElement.style.display = 'none';
+        alert('Произошла ошибка при генерации изображения');
+        console.error(error);
       }
     }
     
@@ -179,23 +134,16 @@
     function convertToSVG() {
       if (!currentImageUrl) return;
       
-      // Создаем SVG с оригинальным изображением и логотипом
-      const svgData = `
+      // Создаём простой SVG с исходным изображением
+      const svgCode = `
         <svg xmlns="http://www.w3.org/2000/svg" width="800" height="600">
-          <defs>
-            <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" style="stop-color:#ff4b2b;stop-opacity:1" />
-              <stop offset="100%" style="stop-color:#ff416c;stop-opacity:1" />
-            </linearGradient>
-            <filter id="posterize">
-              <feComponentTransfer>
-                <feFuncR type="discrete" tableValues="0 0.25 0.5 0.75 1" />
-                <feFuncG type="discrete" tableValues="0 0.25 0.5 0.75 1" />
-                <feFuncB type="discrete" tableValues="0 0.25 0.5 0.75 1" />
-              </feComponentTransfer>
-            </filter>
-          </defs>
-          <rect width="800" height="600" fill="url(#grad)" opacity="0.2" />
+          <filter id="posterize">
+            <feComponentTransfer>
+              <feFuncR type="discrete" tableValues="0 0.25 0.5 0.75 1" />
+              <feFuncG type="discrete" tableValues="0 0.25 0.5 0.75 1" />
+              <feFuncB type="discrete" tableValues="0 0.25 0.5 0.75 1" />
+            </feComponentTransfer>
+          </filter>
           <image href="${currentImageUrl}" width="800" height="600" filter="url(#posterize)" />
           <rect x="0" y="550" width="800" height="50" fill="rgba(0,0,0,0.7)" />
           <text x="400" y="585" font-family="Arial" font-size="24" text-anchor="middle" fill="#ff4b2b" font-weight="bold">
@@ -204,49 +152,30 @@
         </svg>
       `;
       
-      // Сохраняем данные SVG
-      currentSvgData = svgData;
-      
       // Отображаем SVG
-      svgContainer.innerHTML = svgData;
+      svgContainer.innerHTML = svgCode;
       svgContainer.style.display = 'block';
       
-      // Добавляем кнопку для скачивания SVG
+      // Добавляем кнопку для скачивания
       const downloadButton = document.createElement('button');
       downloadButton.textContent = 'Скачать SVG';
-      downloadButton.onclick = downloadSVG;
+      downloadButton.onclick = function() {
+        // Создаем блоб из SVG данных
+        const blob = new Blob([svgCode], { type: 'image/svg+xml' });
+        const url = URL.createObjectURL(blob);
+        
+        // Создаем ссылку для скачивания
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'booomerangs_image.svg';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      };
+      
+      // Добавляем кнопку под SVG
       svgContainer.appendChild(downloadButton);
-    }
-    
-    // Функция скачивания изображения
-    function downloadImage() {
-      if (!currentImageUrl) return;
-      
-      // Создаем ссылку для скачивания
-      const link = document.createElement('a');
-      link.href = currentImageUrl;
-      link.download = 'booomerangs-image.jpg';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-    
-    // Функция скачивания SVG
-    function downloadSVG() {
-      if (!currentSvgData) return;
-      
-      // Создаем Blob из SVG данных
-      const blob = new Blob([currentSvgData], { type: 'image/svg+xml' });
-      const url = URL.createObjectURL(blob);
-      
-      // Создаем ссылку для скачивания
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'booomerangs-image.svg';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
     }
   </script>
 </body>
