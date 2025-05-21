@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import AuthScreen from "@/pages/AuthScreen";
 import Chat from "@/pages/Chat";
+import ImageGenerator from "@/pages/ImageGenerator";
 import { useEffect } from "react";
 
 function Router() {
@@ -15,8 +16,12 @@ function Router() {
   useEffect(() => {
     const token = localStorage.getItem("access_token");
     
-    // If no token and not on auth page, redirect to auth
-    if (!token && location !== "/") {
+    // Страницы, доступные без аутентификации
+    const publicPages = ["/", "/image-generator"];
+    const isPublicPage = publicPages.includes(location);
+    
+    // If no token and not on public page, redirect to auth
+    if (!token && !isPublicPage) {
       setLocation("/");
     }
     
@@ -30,6 +35,7 @@ function Router() {
     <Switch>
       <Route path="/" component={AuthScreen} />
       <Route path="/chat" component={Chat} />
+      <Route path="/image-generator" component={ImageGenerator} />
       <Route component={NotFound} />
     </Switch>
   );
