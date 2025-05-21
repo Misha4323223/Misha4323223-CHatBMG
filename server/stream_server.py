@@ -32,6 +32,7 @@ for name in ["Qwen_Qwen_2_5_Max", "Qwen_Qwen_3", "You", "DeepInfra", "Gemini", "
 
 # Пытаемся найти провайдеры Llama и другие перспективные модели
 llama_providers = []
+gpt_providers = []  # Для провайдеров GPT
 all_provider_names = []
 try:
     all_provider_names = [name for name in dir(g4f.Provider) if not name.startswith('_')]
@@ -50,6 +51,29 @@ for name in all_provider_names:
             llama_providers.append(name)
             print(f"🦙 Успешно загружен Llama провайдер: {name}")
             
+# Ищем GPT провайдеры специально
+gpt_potential_providers = [
+    "DeepAI", "AiChats", "Poe", "AIChatOnline", "GigaChat", "GPTalk", 
+    "ChatGpt", "Chatgpt4Online", "OpenaiChat", "GPROChat", "FreeChatgpt", 
+    "You", "MyShell", "FreeGpt", "Gemini", "Bing", "OpenaiAPI",
+    "DeepInfra", "GptGo"
+]
+
+for name in gpt_potential_providers:
+    if name not in providers and name in all_provider_names:
+        provider = get_provider(name)
+        if provider:
+            providers[name] = provider
+            gpt_providers.append(name)
+            print(f"🔥 Успешно загружен потенциальный GPT провайдер: {name}")
+            
+# Проверяем основные провайдеры, которые могут предоставить GPT-3.5
+priority_gpt_providers = ["DeepInfra", "You", "Gemini", "ChatGpt"]
+for name in priority_gpt_providers:
+    if name in providers:
+        # Пробуем проверить, поддерживает ли данный провайдер GPT-3.5 Turbo
+        print(f"⚡ Проверка поддержки GPT-3.5 Turbo у провайдера {name}...")
+        
 # Ищем Llama 3 специально
 for name in ["HuggingFace", "HuggingSpace", "HuggingChat", "Ollama", "Replicate"]:
     if name not in providers and name in all_provider_names:
@@ -79,10 +103,13 @@ else:
 
 # Организуем провайдеры в группы по надежности
 provider_groups = {
-    'primary': ['Qwen_Qwen_2_5_Max', 'Qwen_Qwen_3', 'You'],
-    'secondary': ['DeepInfra', 'Gemini', 'GeminiPro', 'Phind'],
-    'fallback': ['You', 'DeepInfra']
+    'primary': ['Qwen_Qwen_2_5_Max', 'Qwen_Qwen_3', 'You', 'DeepInfra'],
+    'secondary': ['Gemini', 'GeminiPro', 'Phind', 'ChatGpt'],
+    'fallback': ['You', 'DeepInfra', 'GPTalk', 'FreeGpt', 'GptGo']
 }
+
+# Добавляем группу для GPT-3.5
+gpt_providers_group = ['DeepInfra', 'You', 'ChatGpt', 'GPTalk', 'FreeGpt', 'GptGo']
 
 # Добавляем Claude в группы, если доступен
 if anthropic_available:
@@ -209,37 +236,108 @@ def stream_chat():
                                         print("⚠️ Другая ошибка при запросе к Claude")
                                         raise
                             elif current_provider == "You":
-                                print(f"⭐ Запрос к You.com (с поддержкой Llama 3)")
-                                # You.com поддерживает много моделей, включая llama-3
-                                try:
-                                    model_to_use = "llama-3"  # Используем llama-3 вместо gpt-3.5-turbo
-                                    print(f"🔄 Используем модель {model_to_use} для провайдера You")
-                                    response_stream = g4f.ChatCompletion.create(
-                                        model=model_to_use,
-                                        messages=messages,
-                                        provider=provider,
-                                        stream=True,
-                                        timeout=timeout
-                                    )
-                                    print("✅ Provider You успешно отправил запрос к Llama 3!")
-                                except Exception as you_error:
-                                    error_str = str(you_error)
-                                    print(f"❌ Ошибка You с моделью llama-3: {error_str}")
-                                    # Попробуем другую модель
+                                # Проверка запроса пользователя - если он просит GPT-3.5, мы попробуем использовать его
+                                if "gpt" in message.lower() or "test-gpt" in message.lower():
+                                    print(f"⭐ Запрос к You.com с моделью GPT")
                                     try:
-                                        fallback_model = "claude-3-haiku"  # Альтернативная модель
-                                        print(f"🔄 Пробуем альтернативную модель {fallback_model}")
+                                        model_to_use = "gpt-4o-mini"  # You поддерживает GPT-4o mini
+                                        print(f"🔄 Используем модель {model_to_use} для провайдера You")
                                         response_stream = g4f.ChatCompletion.create(
-                                            model=fallback_model,
+                                            model=model_to_use,
                                             messages=messages,
                                             provider=provider,
                                             stream=True,
                                             timeout=timeout
                                         )
-                                        print(f"✅ Provider You успешно использовал модель {fallback_model}!")
-                                    except Exception as fallback_error:
-                                        print(f"❌ Ошибка при использовании резервной модели: {str(fallback_error)}")
-                                        raise
+                                        print("✅ Provider You успешно отправил запрос к GPT!")
+                                    except Exception as gpt_error:
+                                        error_str = str(gpt_error)
+                                        print(f"❌ Ошибка You с моделью GPT: {error_str}")
+                                        
+                                        # Сначала пробуем другую GPT модель
+                                        try:
+                                            fallback_model = "gpt-4-turbo"
+                                            print(f"🔄 Пробуем другую GPT модель {fallback_model}")
+                                            response_stream = g4f.ChatCompletion.create(
+                                                model=fallback_model,
+                                                messages=messages,
+                                                provider=provider,
+                                                stream=True,
+                                                timeout=timeout
+                                            )
+                                            print(f"✅ Provider You успешно использовал модель {fallback_model}!")
+                                        except Exception:
+                                            # Если не получилось с GPT, пробуем Llama
+                                            try:
+                                                llama_model = "llama-3"
+                                                print(f"🔄 Переключаемся на Llama модель {llama_model}")
+                                                response_stream = g4f.ChatCompletion.create(
+                                                    model=llama_model,
+                                                    messages=messages,
+                                                    provider=provider,
+                                                    stream=True,
+                                                    timeout=timeout
+                                                )
+                                                print(f"✅ Provider You успешно переключился на {llama_model}!")
+                                            except Exception as fallback_error:
+                                                print(f"❌ Ошибка при использовании Llama: {str(fallback_error)}")
+                                                raise
+                                else:
+                                    # Стандартный запрос через Llama 3
+                                    print(f"⭐ Запрос к You.com (с поддержкой Llama 3)")
+                                    try:
+                                        model_to_use = "llama-3"  # Используем llama-3 вместо gpt-3.5-turbo
+                                        print(f"🔄 Используем модель {model_to_use} для провайдера You")
+                                        response_stream = g4f.ChatCompletion.create(
+                                            model=model_to_use,
+                                            messages=messages,
+                                            provider=provider,
+                                            stream=True,
+                                            timeout=timeout
+                                        )
+                                        print("✅ Provider You успешно отправил запрос к Llama 3!")
+                                    except Exception as you_error:
+                                        error_str = str(you_error)
+                                        print(f"❌ Ошибка You с моделью llama-3: {error_str}")
+                                        # Пробуем другую модель
+                                        try:
+                                            fallback_model = "claude-3-haiku"  # Альтернативная модель
+                                            print(f"🔄 Пробуем альтернативную модель {fallback_model}")
+                                            response_stream = g4f.ChatCompletion.create(
+                                                model=fallback_model,
+                                                messages=messages,
+                                                provider=provider,
+                                                stream=True,
+                                                timeout=timeout
+                                            )
+                                            print(f"✅ Provider You успешно использовал модель {fallback_model}!")
+                                        except Exception as fallback_error:
+                                            print(f"❌ Ошибка при использовании резервной модели: {str(fallback_error)}")
+                                            raise
+                            elif current_provider in gpt_providers_group:
+                                # Провайдеры, которые могут работать с GPT
+                                print(f"⭐ Запрос к провайдеру {current_provider} с поддержкой GPT")
+                                try:
+                                    # Выбираем модель в зависимости от провайдера
+                                    gpt_model_to_use = "gpt-3.5-turbo"
+                                    if current_provider == "ChatGpt":
+                                        gpt_model_to_use = "gpt-3.5-turbo"
+                                    elif current_provider == "GPTalk":
+                                        gpt_model_to_use = "gpt-3.5-turbo"
+                                    
+                                    print(f"🔄 Используем модель {gpt_model_to_use} для провайдера {current_provider}")
+                                    response_stream = g4f.ChatCompletion.create(
+                                        model=gpt_model_to_use,
+                                        messages=messages,
+                                        provider=provider,
+                                        stream=True,
+                                        timeout=timeout
+                                    )
+                                    print(f"✅ Provider {current_provider} успешно отправил запрос!")
+                                except Exception as gpt_error:
+                                    error_str = str(gpt_error)
+                                    print(f"❌ Ошибка {current_provider}: {error_str}")
+                                    raise
                             else:
                                 # Для всех остальных провайдеров используем стандартный запрос
                                 # с корректировкой модели в зависимости от провайдера
