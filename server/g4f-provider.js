@@ -1,41 +1,70 @@
 // G4F провайдеры для бесплатного доступа к AI моделям
 const fetch = require('node-fetch');
 
-// Список доступных провайдеров
+// Список доступных провайдеров, отсортированных по стабильности
 const PROVIDERS = {
-  QWEN: 'qwen',
-  DIFY: 'dify',
-  AICHAT: 'aichat',
-  CHATGPT: 'chatgpt',
-  GEMINI: 'gemini',
-  GIGA: 'gigachat',
-  DEEPAI: 'deepai'
+  QWEN: 'qwen',        // Самый стабильный
+  DIFY: 'dify',        // Хорошая альтернатива
+  GEMINI: 'gemini',    // Требует валидный API ключ
+  DEEPAI: 'deepai',    // Часто ограничения
+  AICHAT: 'aichat',    // Менее стабильный
+  CHATGPT: 'chatgpt',  // Может быть нестабильным
+  GIGA: 'gigachat'     // Требует российский номер телефона
 };
 
-// Функция для получения списка доступных провайдеров
+// Порядок провайдеров от самых стабильных к менее стабильным
+const PROVIDER_PRIORITY = [
+  PROVIDERS.QWEN,
+  PROVIDERS.DIFY,
+  PROVIDERS.GEMINI,
+  PROVIDERS.DEEPAI,
+  PROVIDERS.AICHAT,
+  PROVIDERS.CHATGPT
+];
+
+// Функция для получения списка доступных провайдеров в порядке приоритета
 function getProviders() {
-  return Object.values(PROVIDERS);
+  return PROVIDER_PRIORITY;
 }
 
 // Функция для проверки доступности провайдера
 async function checkProviderAvailability(provider) {
   try {
-    // Проверка доступности через пинг API
-    return true; // по умолчанию считаем доступными
+    // Проверка доступности через быстрый запрос
+    switch (provider.toLowerCase()) {
+      case PROVIDERS.QWEN:
+        const qwenResponse = await fetch('https://api.lingyiwanwu.com/v1/models', {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+          timeout: 5000
+        });
+        return qwenResponse.ok;
+        
+      case PROVIDERS.DIFY:
+        const difyResponse = await fetch('https://api.dify.ai/v1/health', {
+          method: 'GET',
+          timeout: 5000
+        });
+        return difyResponse.ok;
+        
+      default:
+        // По умолчанию считаем доступными
+        return true;
+    }
   } catch (error) {
     console.error(`Провайдер ${provider} недоступен:`, error);
     return false;
   }
 }
 
-// Основная функция для получения ответа от модели
+// Основная функция для получения ответа от модели с каскадным перебором провайдеров
 async function getResponse(message, options = {}) {
   const {
-    provider = PROVIDERS.QWEN,
+    provider = null, // Если не указан, будем перебирать по приоритету
     model = null,
     temperature = 0.7,
     maxTokens = 800,
-    maxRetries = 3
+    maxRetries = 2
   } = options;
 
   // Валидация параметров
@@ -43,7 +72,51 @@ async function getResponse(message, options = {}) {
     throw new Error('Сообщение не может быть пустым');
   }
 
-  // Выбор правильного обработчика в зависимости от провайдера
+  // Если указан конкретный провайдер, используем только его
+  if (provider) {
+    return tryProviderWithRetries(provider, message, { model, temperature, maxTokens, maxRetries });
+  }
+  
+  // Иначе перебираем провайдеры по приоритету
+  const providersToTry = [...PROVIDER_PRIORITY]; // Копируем массив приоритетов
+  let lastError = null;
+  
+  // Проходим по всем провайдерам в порядке приоритета
+  for (const currentProvider of providersToTry) {
+    try {
+      // Проверяем доступность провайдера
+      const isAvailable = await checkProviderAvailability(currentProvider);
+      if (!isAvailable) {
+        console.log(`Провайдер ${currentProvider} недоступен, пропускаем`);
+        continue;
+      }
+      
+      // Пробуем получить ответ от текущего провайдера
+      console.log(`Пробуем получить ответ от провайдера ${currentProvider}...`);
+      const result = await tryProviderWithRetries(currentProvider, message, { 
+        model, 
+        temperature, 
+        maxTokens,
+        maxRetries: 1 // Для каскадного перебора достаточно 1 попытки на провайдер
+      });
+      
+      return result;
+    } catch (err) {
+      lastError = err;
+      console.error(`Ошибка при использовании провайдера ${currentProvider}:`, err.message);
+      // Продолжаем со следующим провайдером
+    }
+  }
+  
+  // Если ни один провайдер не сработал
+  throw new Error(`Не удалось получить ответ от всех доступных провайдеров: ${lastError ? lastError.message : 'неизвестная ошибка'}`);
+}
+
+// Вспомогательная функция для попыток с ретраями на одном провайдере
+async function tryProviderWithRetries(provider, message, options) {
+  const { model, temperature, maxTokens, maxRetries } = options;
+  
+  // Получаем обработчик для указанного провайдера
   let handler;
   switch (provider.toLowerCase()) {
     case PROVIDERS.QWEN:
@@ -80,14 +153,14 @@ async function getResponse(message, options = {}) {
       return result;
     } catch (err) {
       error = err;
-      console.error(`Ошибка при попытке ${retries + 1}:`, err);
+      console.error(`Ошибка при попытке ${retries + 1} для провайдера ${provider}:`, err.message);
       retries += 1;
       // Экспоненциальная задержка перед следующей попыткой
       await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retries)));
     }
   }
 
-  throw new Error(`Не удалось получить ответ после ${maxRetries} попыток: ${error.message}`);
+  throw new Error(`Не удалось получить ответ от провайдера ${provider} после ${maxRetries} попыток: ${error ? error.message : 'неизвестная ошибка'}`);
 }
 
 // Обработчик для модели Qwen от Alibaba
