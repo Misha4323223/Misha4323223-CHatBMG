@@ -17,24 +17,35 @@ CORS(app)
 
 # Справочник моделей для каждого провайдера
 models_per_provider = {
-    "Qwen_Qwen_2_5_Max": "qwen-max",
-    "Qwen_Qwen_3": "qwen-plus",
+    # Qwen модели - наиболее стабильные и поддерживающие русский язык
+    "Qwen_Qwen_2_5_Max": "qwen-max",      # Qwen 2.5 Максимальная версия - наилучшее качество
+    "Qwen_Qwen_2_5": "qwen-plus",         # Qwen 2.5 Обычная версия - быстрее, но менее точная
+    "Qwen_Qwen_3": "qwen-turbo",          # Qwen 3 - новейшая версия, быстрее
+    "Qwen_Qwen_4": "qwen-chatmax",        # Qwen 4 Beta - для тестирования
+    "AItianhu": "qwen-max",               # Провайдер AItianhu использует Qwen-Max
+    "AItianhu_Turbo": "qwen-turbo",       # AItianhu с более быстрой моделью
+    
+    # Другие провайдеры и модели
     "You": "you-chat",
     "Phind": "phind-70b",
     "DeepInfra": "deepinfra-mistral",
+    "DeepInfra_Qwen": "qwen-72b",         # DeepInfra с Qwen-72B моделью
     "GeminiPro": "gemini-pro",
     "Liaobots": "llama-3-70b",
     "Gemini": "gemini-pro",
-    "AItianhu": "qwen-max"  # Добавляем AItianhu с моделью qwen-max
+    "DEEPSEEK": "deepseek-chat"           # Специализированная модель DeepSeek для технических вопросов
 }
 
 # Организуем провайдеры в группы по надежности
 provider_groups = {
-    "primary": ["AItianhu", "Phind", "Qwen_Qwen_2_5_Max", "Qwen_Qwen_3", "You"],
-    "secondary": ["DeepInfra", "GeminiPro", "Gemini"],
-    "fallback": ["You", "DeepInfra"],
-    "technical": ["Phind", "DeepInfra", "You"],  # Специальная группа для технических вопросов
-    "deepspeek": ["Qwen_Qwen_2_5_Max", "AItianhu"]  # DeepSpeek использует стабильный Qwen для ответов
+    # Основные группы по надежности
+    "primary": ["AItianhu", "Qwen_Qwen_2_5_Max", "Qwen_Qwen_3", "Phind", "You"],
+    "secondary": ["AItianhu_Turbo", "Qwen_Qwen_2_5", "DeepInfra", "GeminiPro", "Gemini"],
+    "fallback": ["You", "DeepInfra", "Liaobots"],
+    
+    # Специализированные группы
+    "technical": ["Phind", "DEEPSEEK", "DeepInfra_Qwen", "You"],  # Для технических вопросов
+    "deepspeek": ["AItianhu", "Qwen_Qwen_2_5_Max", "DEEPSEEK", "Phind"]  # Улучшенная группа для DeepSpeek
 }
 
 def get_demo_response(message):

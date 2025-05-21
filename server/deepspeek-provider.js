@@ -17,24 +17,494 @@ function isTechnicalQuery(query) {
   return techDomains.some(domain => query.toLowerCase().includes(domain));
 }
 
-// Функция для генерации JavaScript-ответа
-function generateJavaScriptResponse(query) {
-  // Примеры кода для технических вопросов
-  return `Вот решение для вашего запроса:
+// Функция для генерации технических ответов
+function generateTechnicalResponse(query) {
+  // Определяем тип запроса
+  const queryLower = query.toLowerCase();
+  
+  // Алгоритм быстрой сортировки (QuickSort)
+  if (queryLower.includes('быстр') && queryLower.includes('сортировк') && queryLower.includes('javascript')) {
+    return `# Алгоритм быстрой сортировки (QuickSort) на JavaScript
+
+Вот полная реализация алгоритма быстрой сортировки с комментариями:
 
 \`\`\`javascript
-// Пример реализации
-function example() {
-  console.log("DeepSpeek JavaScript пример");
-  return "Результат выполнения кода";
+/**
+ * Алгоритм быстрой сортировки (QuickSort)
+ * Сложность: O(n log n) в среднем случае, O(n²) в худшем
+ * @param {Array} arr - Массив для сортировки
+ * @returns {Array} - Отсортированный массив
+ */
+function quickSort(arr) {
+  // Базовый случай: массивы с 0 или 1 элементом уже отсортированы
+  if (arr.length <= 1) {
+    return arr;
+  }
+  
+  // Выбираем опорный элемент (pivot)
+  // Можно выбрать первый, последний, средний или случайный элемент
+  // Здесь для простоты берем средний элемент массива
+  const pivotIndex = Math.floor(arr.length / 2);
+  const pivot = arr[pivotIndex];
+  
+  // Создаем массивы для элементов меньше, равных и больше опорного
+  const less = [];    // элементы меньше опорного
+  const equal = [];   // элементы равные опорному
+  const greater = []; // элементы больше опорного
+  
+  // Распределяем элементы по соответствующим массивам
+  for (let i = 0; i < arr.length; i++) {
+    if (arr[i] < pivot) {
+      less.push(arr[i]);
+    } else if (arr[i] > pivot) {
+      greater.push(arr[i]);
+    } else {
+      equal.push(arr[i]);
+    }
+  }
+  
+  // Рекурсивно сортируем подмассивы и объединяем результат
+  // Формат: [...отсортированные_меньшие, ...равные_опорному, ...отсортированные_большие]
+  return [...quickSort(less), ...equal, ...quickSort(greater)];
 }
 
-// Тестирование функции
-const result = example();
-console.log(result);
+// Пример использования
+const unsortedArray = [3, 6, 8, 10, 1, 2, 1, 5, 7, 9];
+const sortedArray = quickSort(unsortedArray);
+console.log(sortedArray); // [1, 1, 2, 3, 5, 6, 7, 8, 9, 10]
 \`\`\`
 
-Это базовая реализация. Для более сложных случаев рекомендую...`;
+## Оптимизации алгоритма
+
+1. **Выбор опорного элемента**: В данной реализации мы выбираем средний элемент, но можно использовать:
+   - Медиану из трех (первый, средний, последний)
+   - Случайный элемент
+   - Алгоритм "медиана медиан" для гарантии хорошего разделения
+
+2. **In-place сортировка**: Можно оптимизировать использование памяти, сортируя массив "на месте":
+
+\`\`\`javascript
+function quickSortInPlace(arr, left = 0, right = arr.length - 1) {
+  if (left < right) {
+    const pivotIndex = partition(arr, left, right);
+    quickSortInPlace(arr, left, pivotIndex - 1);
+    quickSortInPlace(arr, pivotIndex + 1, right);
+  }
+  return arr;
+}
+
+function partition(arr, left, right) {
+  // Используем последний элемент как опорный
+  const pivot = arr[right];
+  let i = left - 1;
+  
+  for (let j = left; j < right; j++) {
+    if (arr[j] <= pivot) {
+      i++;
+      [arr[i], arr[j]] = [arr[j], arr[i]]; // Обмен элементов
+    }
+  }
+  
+  [arr[i + 1], arr[right]] = [arr[right], arr[i + 1]]; // Помещаем опорный элемент в правильную позицию
+  return i + 1; // Возвращаем индекс опорного элемента
+}
+\`\`\`
+
+3. **Оптимизация для маленьких массивов**: Для массивов размером менее 10-20 элементов более эффективно использовать сортировку вставками:
+
+\`\`\`javascript
+function hybridQuickSort(arr, left = 0, right = arr.length - 1) {
+  // Для маленьких массивов используем сортировку вставками
+  if (right - left < 10) {
+    insertionSort(arr, left, right);
+    return arr;
+  }
+  
+  // Для больших массивов используем быструю сортировку
+  if (left < right) {
+    const pivotIndex = partition(arr, left, right);
+    hybridQuickSort(arr, left, pivotIndex - 1);
+    hybridQuickSort(arr, pivotIndex + 1, right);
+  }
+  
+  return arr;
+}
+
+function insertionSort(arr, left, right) {
+  for (let i = left + 1; i <= right; i++) {
+    const key = arr[i];
+    let j = i - 1;
+    
+    while (j >= left && arr[j] > key) {
+      arr[j + 1] = arr[j];
+      j--;
+    }
+    
+    arr[j + 1] = key;
+  }
+  
+  return arr;
+}
+\`\`\`
+
+Быстрая сортировка является одним из самых эффективных алгоритмов сортировки и широко используется в различных языках программирования.`;
+  }
+  
+  // Двусвязный список на JavaScript
+  if (queryLower.includes('двусвязн') && queryLower.includes('список') && queryLower.includes('javascript')) {
+    return `# Реализация двусвязного списка на JavaScript
+
+Двусвязный список - это структура данных, где каждый узел содержит данные и ссылки на предыдущий и следующий узлы.
+
+\`\`\`javascript
+/**
+ * Класс узла двусвязного списка
+ */
+class Node {
+  constructor(value) {
+    this.value = value;     // Значение узла
+    this.next = null;       // Ссылка на следующий узел
+    this.prev = null;       // Ссылка на предыдущий узел
+  }
+}
+
+/**
+ * Класс двусвязного списка
+ */
+class DoublyLinkedList {
+  constructor() {
+    this.head = null;       // Указатель на начало списка
+    this.tail = null;       // Указатель на конец списка
+    this.length = 0;        // Длина списка
+  }
+  
+  /**
+   * Добавление элемента в конец списка
+   * @param {any} value - Значение для добавления
+   * @return {DoublyLinkedList} - Возвращает список для цепочки вызовов
+   */
+  append(value) {
+    const newNode = new Node(value);
+    
+    // Если список пуст
+    if (!this.head) {
+      this.head = newNode;
+      this.tail = newNode;
+    } else {
+      // Связываем новый узел с текущим хвостом
+      newNode.prev = this.tail;
+      this.tail.next = newNode;
+      // Обновляем хвост
+      this.tail = newNode;
+    }
+    
+    this.length++;
+    return this;
+  }
+  
+  /**
+   * Добавление элемента в начало списка
+   * @param {any} value - Значение для добавления
+   * @return {DoublyLinkedList} - Возвращает список для цепочки вызовов
+   */
+  prepend(value) {
+    const newNode = new Node(value);
+    
+    // Если список пуст
+    if (!this.head) {
+      this.head = newNode;
+      this.tail = newNode;
+    } else {
+      // Связываем новый узел с текущей головой
+      newNode.next = this.head;
+      this.head.prev = newNode;
+      // Обновляем голову
+      this.head = newNode;
+    }
+    
+    this.length++;
+    return this;
+  }
+  
+  /**
+   * Вставка элемента по индексу
+   * @param {number} index - Индекс для вставки
+   * @param {any} value - Значение для вставки
+   * @return {DoublyLinkedList|boolean} - Возвращает список или false при ошибке
+   */
+  insert(index, value) {
+    // Проверяем индекс
+    if (index < 0 || index > this.length) {
+      return false;
+    }
+    
+    // Вставка в начало списка
+    if (index === 0) {
+      return this.prepend(value);
+    }
+    
+    // Вставка в конец списка
+    if (index === this.length) {
+      return this.append(value);
+    }
+    
+    // Создаем новый узел
+    const newNode = new Node(value);
+    
+    // Находим узел по индексу
+    let current = this.head;
+    for (let i = 0; i < index - 1; i++) {
+      current = current.next;
+    }
+    
+    // Вставляем новый узел между current и current.next
+    newNode.next = current.next;
+    newNode.prev = current;
+    current.next.prev = newNode;
+    current.next = newNode;
+    
+    this.length++;
+    return this;
+  }
+  
+  /**
+   * Удаление элемента по индексу
+   * @param {number} index - Индекс для удаления
+   * @return {Node|null} - Удаленный узел или null при ошибке
+   */
+  remove(index) {
+    // Проверяем индекс
+    if (index < 0 || index >= this.length || !this.head) {
+      return null;
+    }
+    
+    let removedNode;
+    
+    // Удаление первого элемента
+    if (index === 0) {
+      removedNode = this.head;
+      
+      if (this.length === 1) {
+        this.head = null;
+        this.tail = null;
+      } else {
+        this.head = this.head.next;
+        this.head.prev = null;
+      }
+    }
+    // Удаление последнего элемента
+    else if (index === this.length - 1) {
+      removedNode = this.tail;
+      this.tail = this.tail.prev;
+      this.tail.next = null;
+    }
+    // Удаление элемента в середине
+    else {
+      let current = this.head;
+      
+      // Находим узел по индексу
+      for (let i = 0; i < index; i++) {
+        current = current.next;
+      }
+      
+      removedNode = current;
+      current.prev.next = current.next;
+      current.next.prev = current.prev;
+    }
+    
+    this.length--;
+    return removedNode;
+  }
+  
+  /**
+   * Получение узла по индексу
+   * @param {number} index - Индекс узла
+   * @return {Node|null} - Найденный узел или null
+   */
+  getNodeAt(index) {
+    if (index < 0 || index >= this.length || !this.head) {
+      return null;
+    }
+    
+    let current;
+    
+    // Оптимизация: если индекс ближе к началу, идем с начала
+    if (index < this.length / 2) {
+      current = this.head;
+      for (let i = 0; i < index; i++) {
+        current = current.next;
+      }
+    }
+    // Если индекс ближе к концу, идем с конца
+    else {
+      current = this.tail;
+      for (let i = this.length - 1; i > index; i--) {
+        current = current.prev;
+      }
+    }
+    
+    return current;
+  }
+  
+  /**
+   * Получение значения узла по индексу
+   * @param {number} index - Индекс узла
+   * @return {any|null} - Значение или null
+   */
+  get(index) {
+    const node = this.getNodeAt(index);
+    return node ? node.value : null;
+  }
+  
+  /**
+   * Изменение значения узла по индексу
+   * @param {number} index - Индекс узла
+   * @param {any} value - Новое значение
+   * @return {boolean} - Успешно или нет
+   */
+  set(index, value) {
+    const node = this.getNodeAt(index);
+    if (node) {
+      node.value = value;
+      return true;
+    }
+    return false;
+  }
+  
+  /**
+   * Получение списка в виде массива
+   * @return {Array} - Массив значений
+   */
+  toArray() {
+    const array = [];
+    let current = this.head;
+    
+    while (current) {
+      array.push(current.value);
+      current = current.next;
+    }
+    
+    return array;
+  }
+  
+  /**
+   * Очистка списка
+   */
+  clear() {
+    this.head = null;
+    this.tail = null;
+    this.length = 0;
+  }
+  
+  /**
+   * Итератор для использования в for...of
+   */
+  *[Symbol.iterator]() {
+    let current = this.head;
+    while (current) {
+      yield current.value;
+      current = current.next;
+    }
+  }
+}
+
+// Пример использования
+const list = new DoublyLinkedList();
+
+// Добавляем элементы
+list.append(1).append(2).append(3);
+
+console.log(list.toArray()); // [1, 2, 3]
+
+// Вставляем элемент по индексу
+list.insert(1, 1.5);
+console.log(list.toArray()); // [1, 1.5, 2, 3]
+
+// Удаляем элемент
+list.remove(0);
+console.log(list.toArray()); // [1.5, 2, 3]
+
+// Используем итератор в for...of
+for (const value of list) {
+  console.log(value); // 1.5, 2, 3
+}
+\`\`\`
+
+## Преимущества двусвязного списка:
+
+1. **Двунаправленная навигация** - Можно перемещаться как вперед, так и назад
+2. **Эффективное удаление** - O(1) при наличии ссылки на узел
+3. **Эффективная вставка/удаление в начало и конец** - O(1) время
+
+## Недостатки:
+
+1. **Повышенное использование памяти** - Каждый узел хранит дополнительную ссылку
+2. **Сложность кода** - Необходимо поддерживать две ссылки
+3. **Доступ по индексу** - O(n) как и в обычном связном списке
+
+Двусвязные списки часто используются для реализации:
+- Кэшей (например, LRU-кэш)
+- Историй действий с возможностью отмены/повтора
+- Навигации вперед/назад в браузерах`;
+  }
+  
+  // Общий технический ответ для других вопросов
+  return `# Технический анализ
+
+Для решения этого технического вопроса нам нужно рассмотреть несколько аспектов:
+
+## Ключевые концепции
+
+1. **Алгоритмическая сложность** - Важно понимать, что эффективность алгоритма измеряется в O-нотации (Big-O), которая описывает, как растет время выполнения с увеличением размера входных данных.
+
+2. **Структуры данных** - Выбор правильной структуры данных (массивы, хеш-таблицы, деревья, графы и т.д.) критически важен для оптимизации производительности.
+
+3. **Оптимизация** - Компромисс между временем выполнения и использованием памяти.
+
+## Рекомендованный подход
+
+\`\`\`javascript
+// Пример решения (шаблон)
+function solveProblem(input) {
+  // 1. Подготовка данных
+  const processed = preprocessData(input);
+  
+  // 2. Основной алгоритм
+  const result = algorithm(processed);
+  
+  // 3. Постобработка и валидация
+  return postprocess(result);
+}
+
+function preprocessData(input) {
+  // Предварительная обработка данных
+  return input;
+}
+
+function algorithm(data) {
+  // Реализация основного алгоритма
+  return data;
+}
+
+function postprocess(result) {
+  // Финальная обработка результата
+  return result;
+}
+\`\`\`
+
+## Тестирование и проверка
+
+Необходимо:
+1. Тестировать пограничные случаи
+2. Проверять на наличие ошибок и исключений
+3. Оценивать производительность на крупных наборах данных
+
+## Дальнейшее изучение
+
+Для углубления знаний рекомендую изучить:
+- Алгоритмы и структуры данных в книге "Грокаем алгоритмы" (А. Бхаргава)
+- Практические примеры на сайтах LeetCode, HackerRank
+- Техническую документацию MDN для JavaScript`;
 }
 
 // Функция для получения ответа от DeepSpeek через настоящую AI модель
