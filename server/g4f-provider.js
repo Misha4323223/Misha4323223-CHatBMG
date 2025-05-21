@@ -14,7 +14,8 @@ const PROVIDERS = {
   PERPLEXITY: 'perplexity', // Требует конкретную модель
   GEMINI: 'gemini',      // Требует валидный API ключ
   GIGA: 'gigachat',      // Требует российский номер телефона
-  YOU: 'you'             // Провайдер YEW-bot
+  YOU: 'you',            // Провайдер YEW-bot
+  DEEPSPEEK: 'deepspeek' // Новый провайдер DeepSpeek, который мы добавляем
 };
 
 // Модели провайдеров - каждый провайдер работает с разными моделями
@@ -27,7 +28,8 @@ const PROVIDER_MODELS = {
   [PROVIDERS.PERPLEXITY]: 'llama-3.1-sonar-small-128k-online',
   [PROVIDERS.DEEPAI]: 'deepai-text-generator',
   [PROVIDERS.GEMINI]: 'gemini-pro',
-  [PROVIDERS.YOU]: 'you-chat'
+  [PROVIDERS.YOU]: 'you-chat',
+  [PROVIDERS.DEEPSPEEK]: 'deepspeek-model' // Добавляем модель для DeepSpeek
 };
 
 // Провайдеры, требующие API ключ (отключены)
@@ -41,6 +43,7 @@ const KEY_REQUIRED_PROVIDERS = [
 // Порядок провайдеров от самых стабильных к менее стабильным
 // Обновлено по рекомендации пользователя - только бесплатные
 const PROVIDER_PRIORITY = [
+  PROVIDERS.DEEPSPEEK,    // DeepSpeek (новый приоритетный провайдер)
   PROVIDERS.YOU,          // You.com (стабильный, но медленный)
   PROVIDERS.AICHAT,       // Быстрый, но нестабильный
   // Провайдеры, требующие ключи (временно отключены):
