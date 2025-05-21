@@ -19,7 +19,8 @@ const svgGenerator = require('./svg-generator');
 const g4fHandlers = require('./g4f-handlers');
 const directAiRoutes = require('./direct-ai-routes');
 const pythonProviderRoutes = require('./python_provider_routes');
-const deepspeekProvider = require('./deepspeek-provider');
+const deepspeekProvider = require('./deepspeek-fixed');
+const chatFreeProvider = require('./simple-chatfree');
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Create HTTP server
@@ -247,7 +248,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const directAiProvider = require('./direct-ai-provider');
       
       // Если провайдер qwen, используем AItianhu который реализует доступ к Qwen AI
-      const actualProvider = provider === 'qwen' ? 'AItianhu' : provider;
+      // Если провайдер chatfree, используем наш локальный провайдер
+      let actualProvider = provider;
+      
+      if (provider === 'qwen') {
+        actualProvider = 'AItianhu';
+      } else if (provider === 'chatfree') {
+        // Используем наш локальный провайдер для ChatFree
+        try {
+          const chatFreeProvider = require('./simple-chatfree');
+          const chatFreeResponse = await chatFreeProvider.getChatFreeResponse(message);
+          
+          if (chatFreeResponse.success) {
+            return chatFreeResponse;
+          } else {
+            throw new Error(chatFreeResponse.error || 'Ошибка ChatFree');
+          }
+        } catch (error) {
+          console.error(`❌ Ошибка при использовании ChatFree:`, error);
+          actualProvider = 'AItianhu'; // Фолбэк на стабильный провайдер
+        }
+      }
       
       // Получаем ответ
       const response = await directAiProvider.getChatResponse(message, { provider: actualProvider });
@@ -308,7 +329,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`📊 Для DeepSpeek используем быстрый режим`);
         
         // Получаем функцию для генерации ответа от DeepSpeek
-        const deepspeekProvider = require('./deepspeek-provider');
+        const deepspeekProvider = require('./deepspeek-fixed');
         
         // Вызываем функцию DeepSpeek для обработки запроса
         try {
