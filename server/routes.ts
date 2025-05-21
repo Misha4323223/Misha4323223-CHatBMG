@@ -98,6 +98,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.sendFile('booomerangs-streaming.html', { root: '.' });
   });
   
+  // BOOOMERANGS быстрая версия (запасной вариант без стриминга)
+  app.get('/quick', (req, res) => {
+    res.sendFile('booomerangs-quick.html', { root: '.' });
+  });
+  
   // API для работы с G4F провайдерами
   app.use('/api/g4f', g4fHandlers);
   

@@ -422,4 +422,153 @@ router.post('/chat', async (req, res) => {
   }
 });
 
+// Новый API эндпоинт для мгновенного отправления первого доступного ответа без стриминга
+router.post('/chat/quick', async (req, res) => {
+  try {
+    const {
+      message,
+      provider = null,
+      timeout = 20000
+    } = req.body;
+    
+    // Проверяем, что сообщение присутствует
+    if (!message) {
+      return res.status(400).json({
+        success: false,
+        error: 'Сообщение не может быть пустым'
+      });
+    }
+    
+    console.log(`Запрос к Python G4F (quick): ${message.substring(0, 50)}${message.length > 50 ? '...' : ''}`);
+    
+    // Получаем демо-ответ на случай ошибки
+    const demoResponse = getDemoResponse(message);
+    
+    // Вызываем Python скрипт с сообщением и опциональным провайдером
+    const args = [
+      'server/g4f_python_provider.py',
+      message
+    ];
+    
+    // Если указан провайдер, добавляем его в аргументы
+    if (provider) {
+      args.push(provider);
+    }
+    
+    // Создаем флаг для отслеживания завершения
+    let isCompleted = false;
+    
+    // Устанавливаем таймер для демо-ответа
+    const demoTimer = setTimeout(() => {
+      if (!isCompleted) {
+        console.log(`⏱️ Таймаут (${timeout}ms), отправляем демо-ответ`);
+        isCompleted = true;
+        
+        return res.json({
+          success: true,
+          response: demoResponse,
+          provider: 'BOOOMERANGS-Live',
+          model: 'timeout-fallback'
+        });
+      }
+    }, timeout);
+    
+    try {
+      // Вызываем скрипт как дочерний процесс
+      const pythonProcess = require('child_process').spawn('python', args);
+      
+      let output = '';
+      
+      // Обрабатываем вывод stdout
+      pythonProcess.stdout.on('data', (data) => {
+        if (isCompleted) return;
+        
+        output += data.toString();
+      });
+      
+      // Обрабатываем ошибки stderr
+      pythonProcess.stderr.on('data', (data) => {
+        console.error(`Python G4F ошибка: ${data.toString()}`);
+      });
+      
+      // Обрабатываем завершение процесса
+      pythonProcess.on('close', (code) => {
+        // Если ответ уже был отправлен, не делаем ничего
+        if (isCompleted) return;
+        
+        clearTimeout(demoTimer);
+        isCompleted = true;
+        
+        if (code !== 0) {
+          console.error(`Python G4F завершился с кодом ${code}`);
+          
+          return res.json({
+            success: true,
+            response: demoResponse,
+            provider: 'BOOOMERANGS-Fallback',
+            model: 'error-recovery'
+          });
+        }
+        
+        try {
+          // Пытаемся найти JSON в выводе
+          const jsonMatch = output.match(/{.*}/s);
+          
+          if (jsonMatch) {
+            const jsonData = JSON.parse(jsonMatch[0]);
+            
+            return res.json({
+              success: true,
+              response: jsonData.response,
+              provider: jsonData.provider || 'Python-G4F',
+              model: jsonData.model || 'g4f-python'
+            });
+          } else {
+            console.error('Не удалось найти JSON в выводе Python:', output);
+            
+            return res.json({
+              success: true,
+              response: demoResponse,
+              provider: 'BOOOMERANGS-Fallback',
+              model: 'parse-error'
+            });
+          }
+        } catch (parseError) {
+          console.error('Ошибка при парсинге вывода Python:', parseError);
+          
+          return res.json({
+            success: true,
+            response: demoResponse,
+            provider: 'BOOOMERANGS-Fallback',
+            model: 'json-error'
+          });
+        }
+      });
+    } catch (processError) {
+      // Если произошла ошибка при запуске процесса
+      clearTimeout(demoTimer);
+      
+      if (!isCompleted) {
+        isCompleted = true;
+        console.error('Ошибка при запуске Python процесса:', processError);
+        
+        return res.json({
+          success: true,
+          response: demoResponse,
+          provider: 'BOOOMERANGS-Fallback',
+          model: 'process-error'
+        });
+      }
+    }
+  } catch (error) {
+    console.error('Ошибка при обработке /chat/quick:', error);
+    
+    return res.status(500).json({
+      success: false,
+      error: 'Внутренняя ошибка сервера',
+      message: error.message
+    });
+  }
+});
+
 module.exports = router;
