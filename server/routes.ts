@@ -92,7 +92,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // API с Python-версией G4F
   app.use('/api/python', pythonProviderRoutes);
   
-  // API для работы с BOOOMERANGS AI интеграцией - супербыстрый ответ
+  // API для работы с BOOOMERANGS AI интеграцией (с поддержкой Qwen и других провайдеров)
   app.post('/api/ai/chat', async (req, res) => {
     try {
       const { message, provider } = req.body;

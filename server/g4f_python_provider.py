@@ -189,6 +189,13 @@ if __name__ == "__main__":
     
     try:
         result = get_chat_response(message, specific_provider)
+        
+        # Убедимся, что response - строка для корректного форматирования
+        if isinstance(result, dict) and "response" in result:
+            if not isinstance(result["response"], str):
+                result["response"] = str(result["response"])
+        
+        # Выводим результат с поддержкой Unicode
         print(json.dumps(result, ensure_ascii=False))
     except Exception as e:
         print(json.dumps({

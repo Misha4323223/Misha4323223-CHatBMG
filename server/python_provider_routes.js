@@ -22,11 +22,12 @@ router.post('/chat', async (req, res) => {
     
     console.log(`Запрос к Python G4F: ${message.substring(0, 50)}${message.length > 50 ? '...' : ''}`);
     
-    // Получаем демо-ответ на случай таймаута или ошибки
+    // Сейчас изменим поведение - будем ждать настоящий ответ от Python провайдера
+    // и только при таймауте или ошибке вернем демо-ответ
     const demoResponse = getDemoResponse(message);
     
-    // Устанавливаем таймаут для ответа
-    const timeoutMs = 15000; // 15 секунд на получение ответа
+    // Устанавливаем таймаут для ответа, но теперь больше времени (20 сек)
+    const timeoutMs = 20000; // 20 секунд на получение ответа (Qwen может работать медленно)
     let responseTimeout = setTimeout(() => {
       if (!res.headersSent) {
         console.log('⏱️ Таймаут при ожидании ответа от Python G4F, отправляем демо-ответ');
