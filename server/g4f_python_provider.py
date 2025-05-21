@@ -92,8 +92,19 @@ def try_provider(provider_name, message, timeout=10):
         # Обертка с таймаутом (временно без настоящего таймаута)
         start_time = time.time()
         
+        # Используем модель в зависимости от провайдера
+        model = "gpt-4o-mini"  # Модель по умолчанию
+        
+        # Специфические модели для разных провайдеров
+        if provider_name == "You":
+            model = "gpt-4o-mini"
+        elif provider_name == "Phind":
+            model = "claude-3-haiku" 
+        elif provider_name == "Bing":
+            model = "gpt-4"
+            
         response = g4f.ChatCompletion.create(
-            model="gpt-3.5-turbo",
+            model=model,
             provider=provider,
             messages=[{"role": "user", "content": message}],
         )
@@ -127,7 +138,7 @@ def get_chat_response(message, specific_provider=None):
         print(f"Указанный провайдер {specific_provider} не ответил, пробуем другие...")
     
     # Порядок перебора провайдеров (от более стабильных к менее)
-    providers_priority = ["You", "Aichat", "Bing"]
+    providers_priority = ["Bing", "You", "DeepAi", "Phind", "Aichat", "FreeGpt", "Bard", "AItianhuSpace"]
     
     # Перебираем провайдеры
     for provider_name in providers_priority:
