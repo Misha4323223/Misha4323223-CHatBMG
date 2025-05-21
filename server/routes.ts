@@ -92,7 +92,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // API с Python-версией G4F
   app.use('/api/python-g4f', pythonProviderRoutes);
   
-  // API для работы с BOOOMERANGS AI интеграцией - максимально упрощенная версия
+  // API для работы с BOOOMERANGS AI интеграцией - оптимизированная версия
   app.post('/api/ai/chat', async (req, res) => {
     try {
       const { message, forceDemo } = req.body;
@@ -104,12 +104,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      console.log(`Запрос к AI: "${message.substring(0, 50)}${message.length > 50 ? '...' : ''}"`);
-      
       // Импортируем провайдер напрямую
       const directAiProvider = require('./direct-ai-provider');
       
-      // Для стабильной демонстрации используем демо-режим
+      // Для стабильной работы используем демо-режим без лишних логов и задержек
       const demoResponse = directAiProvider.getDemoResponse(message);
       
       return res.json({
