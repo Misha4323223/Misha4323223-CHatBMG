@@ -1,36 +1,40 @@
 // G4F интеграция для BOOOMERANGS
-const { G4F } = require('g4f');
+const g4f = require('g4f');
+const { G4F } = g4f;
 
-const g4f = new G4F();
-
-// Фильтруем провайдеры, исключая нестабильные
-const safeProviders = G4F.providers.filter(
-  (p) => !['FreeGpt', 'Liaobots', 'You'].includes(p.name)
-);
+// Список провайдеров с приоритетом стабильности
+const PROVIDERS = [
+  { name: 'Bing', model: 'gpt-4' },
+  { name: 'ChatgptAi', model: 'gpt-3.5-turbo' },
+  { name: 'Phind', model: 'phind-gpt-4' },
+  { name: 'Perplexity', model: 'mixtral-8x7b-instruct' },
+  { name: 'GptGo', model: 'gpt-3.5-turbo' },
+  { name: 'You', model: 'gpt-3.5-turbo' }
+];
 
 async function chatWithG4F(message) {
-  console.log('Доступные провайдеры:', safeProviders.map(p => p.name).join(', '));
+  console.log('Перебираем провайдеры...');
   
-  for (const provider of safeProviders) {
+  for (const providerInfo of PROVIDERS) {
     try {
-      console.log(`Пробуем провайдер: ${provider.name}`);
+      console.log(`Пробуем провайдер: ${providerInfo.name} с моделью ${providerInfo.model}`);
       
-      // Выбираем модель - предпочитаем GPT-4, если доступна
-      const model = provider.models.includes('gpt-4') ? 'gpt-4' : provider.models[0];
-      console.log(`Использую модель: ${model}`);
-
-      const res = await provider.createChatCompletion({
-        model,
-        messages: [{ role: 'user', content: message }],
-      });
-
+      // Используем g4f напрямую для каждого провайдера
+      const response = await g4f.G4F.call(
+        providerInfo.name,
+        [{ role: 'user', content: message }],
+        providerInfo.model
+      );
+      
+      console.log(`Успешно получен ответ от ${providerInfo.name}`);
+      
       return {
-        response: res,
-        provider: provider.name,
-        model: model
+        response,
+        provider: providerInfo.name,
+        model: providerInfo.model
       };
     } catch (err) {
-      console.warn(`Провайдер ${provider.name} не сработал:`, err.message);
+      console.warn(`Провайдер ${providerInfo.name} не сработал:`, err.message);
     }
   }
 
@@ -39,11 +43,7 @@ async function chatWithG4F(message) {
 
 // Получение списка доступных провайдеров
 function getAvailableProviders() {
-  return safeProviders.map(p => ({
-    name: p.name,
-    models: p.models,
-    supports_stream: p.supports_stream
-  }));
+  return PROVIDERS;
 }
 
 module.exports = {
