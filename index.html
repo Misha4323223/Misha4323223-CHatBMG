@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Генератор изображений по тексту</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    h1 {
+      text-align: center;
+      color: #4a56e2;
+      margin-bottom: 20px;
+    }
+    .container {
+      background-color: #f9f9f9;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+    }
+    textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      min-height: 100px;
+      margin-bottom: 15px;
+      font-family: inherit;
+    }
+    button {
+      background-color: #4a56e2;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #3a46c2;
+    }
+    .result {
+      margin-top: 20px;
+      display: none;
+      text-align: center;
+    }
+    .result img {
+      max-width: 100%;
+      border-radius: 4px;
+      max-height: 500px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Генератор изображений по тексту</h1>
+  
+  <div class="container">
+    <label for="prompt">Опишите желаемое изображение:</label>
+    <textarea id="prompt" placeholder="Например: горный пейзаж на закате, космический корабль, футуристический город..."></textarea>
+    
+    <button id="generate">Создать изображение</button>
+    
+    <div id="result" class="result">
+      <h3>Результат:</h3>
+      <img id="image" src="" alt="Сгенерированное изображение">
+    </div>
+  </div>
+  
+  <script>
+    document.getElementById('generate').addEventListener('click', function() {
+      const prompt = document.getElementById('prompt').value.trim();
+      
+      if (!prompt) {
+        alert('Пожалуйста, введите описание изображения');
+        return;
+      }
+      
+      // Используем Unsplash API для получения изображения по запросу
+      const encodedPrompt = encodeURIComponent(prompt);
+      const imageUrl = `https://source.unsplash.com/800x600/?${encodedPrompt}&random=${Math.random()}`;
+      
+      // Отображаем результат
+      document.getElementById('image').src = imageUrl;
+      document.getElementById('result').style.display = 'block';
+    });
+  </script>
+</body>
+</html>
