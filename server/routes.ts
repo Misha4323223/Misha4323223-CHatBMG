@@ -221,6 +221,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const claudeProvider = require('./claude-provider');
   app.use('/api/claude', claudeProvider);
   
+  // API для DeepInfra - высококачественные модели
+  const deepInfraProvider = require('./deepinfra-provider');
+  app.use('/api/deepinfra', deepInfraProvider);
+  
   // Проверка работы Python провайдера при запуске
   (async () => {
     try {
