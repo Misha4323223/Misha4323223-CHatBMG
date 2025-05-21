@@ -11,17 +11,8 @@
  */
 async function getDeepSpeekResponse(query) {
   try {
-    // Проверяем, является ли запрос техническим
-    const isTechnicalQuery = /\b(программирование|код|алгоритм|javascript|python|react|api|web|sql|database|function|class|объект|массив|frontend|backend)\b/i.test(query);
-    
-    if (!isTechnicalQuery) {
-      return {
-        success: false,
-        response: "Я DeepSpeek AI, специализированный ассистент для технических вопросов. Лучше всего я отвечаю на вопросы о программировании, разработке, алгоритмах и технологиях. Пожалуйста, задайте мне технический вопрос.",
-        provider: "DeepSpeek",
-        model: "deepseek-chat-local"
-      };
-    }
+    // Мы всегда возвращаем ответ от DeepSpeek, нет необходимости 
+    // проверять технический характер запроса в этой функции
     
     // Создаем специализированный ответ в зависимости от темы вопроса
     let response = '';
