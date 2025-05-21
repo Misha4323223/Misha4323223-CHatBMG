@@ -129,10 +129,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Ошибка при обработке запроса:', error);
       
+      const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
+      
       return res.status(500).json({
         success: false,
         error: 'Ошибка при обработке запроса',
-        message: error.message
+        message: errorMessage
       });
     }
   });

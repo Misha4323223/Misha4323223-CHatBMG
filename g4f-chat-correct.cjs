@@ -4,14 +4,16 @@ const g4f = require('g4f');
 // Создаем экземпляр G4F
 const g4fInstance = new g4f.G4F();
 
-// Список приоритетных провайдеров
+// Список приоритетных провайдеров 
+// Выбираем только бесплатные, которые не требуют API ключей
 const PROVIDERS = [
   { name: 'Bing', models: ['gpt-4'] },
+  { name: 'You', models: ['you-chat'] },
+  { name: 'GptGo', models: ['gpt-3.5-turbo'] },
   { name: 'ChatgptAi', models: ['gpt-3.5-turbo'] },
   { name: 'Phind', models: ['phind-gpt-4'] },
-  { name: 'Perplexity', models: ['llama-3.1-sonar-small-128k-online'] },
-  { name: 'GptGo', models: ['gpt-3.5-turbo'] },
-  { name: 'You', models: ['you-chat'] }
+  { name: 'Qwen', models: ['qwen-max'] },
+  { name: 'Cohere', models: ['command-r-plus'] }
 ];
 
 // Набор предварительно подготовленных ответов для критических сценариев
