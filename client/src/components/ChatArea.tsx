@@ -1,20 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { MessageWithSender, UserWithInitials } from "@shared/schema";
 import MessageBubble from "@/components/MessageBubble";
+import BooomerangsLogo from "@/components/BooomerangsLogo";
 import { AlertCircle } from "lucide-react";
-
-// Встроенный компонент логотипа BOOOMERANGS
-const BooomerangsLogo = ({ size = 32, className = "" }) => {
-  return (
-    <div className={`relative flex items-center justify-center ${className}`} style={{ width: size, height: size }}>
-      <div 
-        className="absolute inset-0 rounded-full bg-white border-4 border-blue-500"
-        style={{ width: size, height: size }}
-      ></div>
-      <div className="text-blue-600 font-bold" style={{ fontSize: size/4 }}>B</div>
-    </div>
-  );
-};
 
 interface ChatAreaProps {
   messages: MessageWithSender[];
