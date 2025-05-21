@@ -61,6 +61,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.sendFile('g4f-chat.html', { root: '.' });
   });
   
+  // Простой G4F тест
+  app.get('/simple-g4f', (req, res) => {
+    res.sendFile('simple-g4f.html', { root: '.' });
+  });
+  
+  // Прямой тест G4F
+  app.get('/direct-g4f', (req, res) => {
+    res.sendFile('direct-g4f-test.html', { root: '.' });
+  });
+  
   // API для работы с G4F провайдерами
   app.use('/api/g4f', g4fHandlers);
   

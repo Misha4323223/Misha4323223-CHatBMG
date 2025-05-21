@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Автономный G4F-доступ</title>
+  <style>
+    :root {
+      --primary-color: #4a56e2;
+      --primary-light: #6c63ff;
+      --primary-dark: #3a46c2;
+      --background-color: #f9fafc;
+      --card-bg: #ffffff;
+      --text-color: #333;
+      --border-color: #ddd;
+      --shadow-color: rgba(0, 0, 0, 0.1);
+    }
+    
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --primary-color: #5e68fa;
+        --primary-light: #8c85ff;
+        --primary-dark: #4a54e6;
+        --background-color: #1a1a2e;
+        --card-bg: #252538;
+        --text-color: #f0f0f0;
+        --border-color: #40405c;
+        --shadow-color: rgba(0, 0, 0, 0.3);
+      }
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.6;
+      color: var(--text-color);
+      background-color: var(--background-color);
+      padding: 20px;
+      max-width: 1000px;
+      margin: 0 auto;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    header {
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(45deg, var(--primary-color), var(--primary-light));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      display: inline-block;
+    }
+    
+    .subtitle {
+      opacity: 0.8;
+      margin-bottom: 10px;
+    }
+    
+    main {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      flex: 1;
+    }
+    
+    .chat-container {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      gap: 10px;
+      min-height: 0;
+      padding: 20px;
+      background-color: var(--card-bg);
+      border-radius: 8px;
+      box-shadow: 0 2px 8px var(--shadow-color);
+    }
+    
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+      border: 1px solid var(--border-color);
+      border-radius: 5px;
+      background-color: rgba(0, 0, 0, 0.02);
+      margin-bottom: 10px;
+    }
+    
+    .message {
+      padding: 10px 15px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      max-width: 80%;
+      word-wrap: break-word;
+    }
+    
+    .user-message {
+      background-color: var(--primary-color);
+      color: white;
+      align-self: flex-end;
+      margin-left: auto;
+    }
+    
+    .ai-message {
+      background-color: rgba(0, 0, 0, 0.05);
+      align-self: flex-start;
+    }
+    
+    .input-area {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    
+    textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 5px;
+      min-height: 100px;
+      resize: vertical;
+      background-color: var(--card-bg);
+      color: var(--text-color);
+    }
+    
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .provider-select {
+      padding: 8px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 5px;
+      background-color: var(--card-bg);
+      color: var(--text-color);
+    }
+    
+    .send-button {
+      padding: 10px 20px;
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    
+    .send-button:hover {
+      background-color: var(--primary-dark);
+    }
+    
+    .loading {
+      display: none;
+      text-align: center;
+      margin: 10px 0;
+    }
+    
+    .spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: var(--primary-color);
+      animation: spin 1s linear infinite;
+      margin-right: 8px;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .error {
+      display: none;
+      padding: 10px;
+      border-radius: 5px;
+      background-color: #fff5f5;
+      border: 1px solid #ffcccc;
+      color: #e53e3e;
+      margin-bottom: 10px;
+    }
+    
+    .status {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.9rem;
+      opacity: 0.8;
+      padding: 5px 10px;
+      background-color: rgba(0, 0, 0, 0.03);
+      border-radius: 5px;
+    }
+    
+    .status-indicator {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 5px;
+    }
+    
+    .status-ok {
+      background-color: #4caf50;
+    }
+    
+    .status-error {
+      background-color: #f44336;
+    }
+    
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 1.5rem;
+      }
+      
+      .message {
+        max-width: 90%;
+      }
+      
+      .controls {
+        flex-direction: column;
+        gap: 10px;
+      }
+      
+      .send-button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Автономный G4F чат</h1>
+    <p class="subtitle">Прямое подключение к бесплатным моделям AI без сервера</p>
+  </header>
+  
+  <main>
+    <div class="chat-container">
+      <div class="error" id="error"></div>
+      
+      <div class="chat-messages" id="chat-messages">
+        <div class="message ai-message">
+          Привет! Я AI ассистент, работающий через бесплатные API. Что я могу для вас сделать?
+        </div>
+      </div>
+      
+      <div class="status">
+        <span>
+          <span class="status-indicator status-ok" id="status-indicator"></span>
+          <span id="status-text">Готов к работе</span>
+        </span>
+        <span id="model-info">Модель: Qwen-2.5-Ultra</span>
+      </div>
+      
+      <div class="loading" id="loading">
+        <div class="spinner"></div> Получение ответа...
+      </div>
+      
+      <div class="input-area">
+        <textarea id="prompt" placeholder="Напишите ваш вопрос или запрос..."></textarea>
+        
+        <div class="controls">
+          <select class="provider-select" id="provider">
+            <option value="qwen">Qwen (стабильный)</option>
+            <option value="dify">Dify.AI</option>
+            <option value="deepai">DeepAI</option>
+          </select>
+          
+          <button class="send-button" id="send-button">Отправить</button>
+        </div>
+      </div>
+    </div>
+  </main>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const promptInput = document.getElementById('prompt');
+      const providerSelect = document.getElementById('provider');
+      const sendButton = document.getElementById('send-button');
+      const chatMessages = document.getElementById('chat-messages');
+      const loadingDiv = document.getElementById('loading');
+      const errorDiv = document.getElementById('error');
+      const statusIndicator = document.getElementById('status-indicator');
+      const statusText = document.getElementById('status-text');
+      const modelInfo = document.getElementById('model-info');
+      
+      // Проверка доступности API
+      async function checkApiAvailability() {
+        try {
+          statusIndicator.className = 'status-indicator';
+          statusText.textContent = 'Проверка доступности...';
+          
+          // Пробуем получить доступ к Qwen API
+          const response = await fetch('https://api.lingyiwanwu.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              messages: [{ role: 'user', content: 'Hi' }],
+              model: 'qwen-2.5-ultra-preview',
+              temperature: 0.7,
+              max_tokens: 10
+            })
+          });
+          
+          // Если получили ответ, значит API доступен
+          if (response.ok) {
+            statusIndicator.className = 'status-indicator status-ok';
+            statusText.textContent = 'API доступен';
+            return true;
+          } else {
+            throw new Error('API вернул ошибку: ' + response.status);
+          }
+        } catch (error) {
+          console.error('Ошибка проверки API:', error);
+          statusIndicator.className = 'status-indicator status-error';
+          statusText.textContent = 'API недоступен';
+          showError('API недоступен: ' + error.message);
+          return false;
+        }
+      }
+      
+      // Отправка сообщения
+      async function sendMessage() {
+        const prompt = promptInput.value.trim();
+        const provider = providerSelect.value;
+        
+        if (!prompt) {
+          showError('Пожалуйста, введите текст сообщения');
+          return;
+        }
+        
+        // Отображаем сообщение пользователя
+        addMessage(prompt, true);
+        promptInput.value = '';
+        
+        // Показываем индикатор загрузки
+        loadingDiv.style.display = 'block';
+        errorDiv.style.display = 'none';
+        sendButton.disabled = true;
+        
+        try {
+          let apiUrl, requestBody, responseProcessor;
+          
+          // Выбираем API в зависимости от провайдера
+          switch (provider) {
+            case 'qwen':
+              apiUrl = 'https://api.lingyiwanwu.com/v1/chat/completions';
+              requestBody = {
+                messages: [{ role: 'user', content: prompt }],
+                model: 'qwen-2.5-ultra-preview',
+                temperature: 0.7,
+                max_tokens: 800
+              };
+              responseProcessor = data => ({
+                text: data.choices[0].message.content,
+                model: data.model || 'qwen-2.5-ultra-preview'
+              });
+              break;
+              
+            case 'dify':
+              apiUrl = 'https://api.dify.ai/v1/chat-messages';
+              requestBody = {
+                query: prompt,
+                user: "anonymous-" + Math.random().toString(36).substring(2, 10),
+                response_mode: 'blocking',
+                conversation_id: Math.random().toString(36).substring(2, 10)
+              };
+              responseProcessor = data => ({
+                text: data.answer,
+                model: 'dify-ai'
+              });
+              break;
+              
+            case 'deepai':
+              apiUrl = 'https://api.deepai.org/api/text-generator';
+              requestBody = {
+                text: prompt
+              };
+              responseProcessor = data => ({
+                text: data.output,
+                model: 'deepai-text-generator'
+              });
+              break;
+              
+            default:
+              throw new Error('Неизвестный провайдер');
+          }
+          
+          // Отправляем запрос к выбранному API
+          const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestBody)
+          });
+          
+          if (!response.ok) {
+            throw new Error(`API вернул ошибку: ${response.status}`);
+          }
+          
+          const data = await response.json();
+          const result = responseProcessor(data);
+          
+          // Отображаем ответ
+          addMessage(result.text, false);
+          modelInfo.textContent = 'Модель: ' + result.model;
+          
+        } catch (error) {
+          console.error('Ошибка:', error);
+          showError('Ошибка при получении ответа: ' + error.message);
+          addMessage('Извините, произошла ошибка при получении ответа. Пожалуйста, попробуйте еще раз или выберите другого провайдера.', false);
+        } finally {
+          loadingDiv.style.display = 'none';
+          sendButton.disabled = false;
+        }
+      }
+      
+      // Добавление сообщения в чат
+      function addMessage(text, isUser) {
+        const messageEl = document.createElement('div');
+        messageEl.className = `message ${isUser ? 'user-message' : 'ai-message'}`;
+        
+        // Заменяем переносы строк на HTML-переносы
+        const formattedText = text.replace(/\n/g, '<br>');
+        messageEl.innerHTML = formattedText;
+        
+        chatMessages.appendChild(messageEl);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+      
+      // Показать сообщение об ошибке
+      function showError(message) {
+        errorDiv.textContent = message;
+        errorDiv.style.display = 'block';
+      }
+      
+      // Обработчики событий
+      sendButton.addEventListener('click', sendMessage);
+      
+      promptInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && e.ctrlKey) {
+          e.preventDefault();
+          sendMessage();
+        }
+      });
+      
+      // Проверяем доступность API при загрузке
+      checkApiAvailability();
+    });
+  </script>
+</body>
+</html>
