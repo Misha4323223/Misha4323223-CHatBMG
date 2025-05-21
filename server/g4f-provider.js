@@ -32,17 +32,17 @@ const PROVIDER_MODELS = {
 const KEY_REQUIRED_PROVIDERS = [
   PROVIDERS.PERPLEXITY,
   PROVIDERS.GEMINI,
-  PROVIDERS.GIGA
+  PROVIDERS.GIGA,
+  PROVIDERS.DEEPAI     // Добавлен в список требующих ключ, так как без ключа не работает
 ];
 
 // Порядок провайдеров от самых стабильных к менее стабильным
 // Включаем только бесплатные провайдеры, не требующие API ключей
 const PROVIDER_PRIORITY = [
-  PROVIDERS.QWEN,        // Самый стабильный, бесплатный 
-  PROVIDERS.LIAOBOTS,    // Хороший бесплатный провайдер
   PROVIDERS.PHIND,       // Хороший бесплатный провайдер
-  PROVIDERS.DIFY,        // Хороший бесплатный провайдер
-  PROVIDERS.DEEPAI,      // Бесплатный с ограничениями
+  PROVIDERS.LIAOBOTS,    // Хороший бесплатный провайдер
+  PROVIDERS.QWEN,        // Потенциально работающий, бесплатный
+  PROVIDERS.DIFY,        // Потенциально работающий, бесплатный
   PROVIDERS.AICHAT,      // Менее стабильный, но бесплатный
   PROVIDERS.CHATGPT      // Нестабильный, но бесплатный
 ];
