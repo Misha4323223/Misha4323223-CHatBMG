@@ -363,5 +363,5 @@ if __name__ == '__main__':
     available_providers = [name for name in dir(g4f.Provider) if not name.startswith('_') and name[0].isupper()]
     print(f"🤖 Загружено {len(available_providers)} провайдеров: {', '.join(available_providers)}")
     
-    # Используем порт 5003 вместо 5002, который может быть занят
-    app.run(host='0.0.0.0', port=5003, debug=False)
+    # Используем порт 5004, так как 5002 и 5003 могут быть заняты
+    app.run(host='0.0.0.0', port=5004, debug=False)

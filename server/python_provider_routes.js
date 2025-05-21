@@ -58,7 +58,7 @@ async function checkPythonProvider() {
       
       const options = {
         hostname: 'localhost',
-        port: 5002,
+        port: 5004,
         path: '/python/test',
         method: 'POST',
         headers: {
@@ -176,7 +176,7 @@ router.post('/chat', async (req, res) => {
       const data = await new Promise((resolve, reject) => {
         const options = {
           hostname: 'localhost',
-          port: 5002,
+          port: 5004,
           path: '/python/chat',
           method: 'POST',
           headers: {
@@ -331,7 +331,7 @@ router.post('/chat/stream', async (req, res) => {
       await new Promise((resolve, reject) => {
         const options = {
           hostname: 'localhost',
-          port: 5002,
+          port: 5004,
           path: '/python/chat/stream',
           method: 'POST',
           headers: {
@@ -493,7 +493,7 @@ async function callPythonAI(message, provider = null) {
     
     const options = {
       hostname: 'localhost',
-      port: 5002,
+      port: 5004,
       path: `/python/chat${queryParams}`,
       method: 'POST',
       headers: {
