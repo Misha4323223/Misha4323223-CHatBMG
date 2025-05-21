@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BOOOMERANGS: AI Chat с реалтайм-ответами</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #111;
+      color: white;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    
+    .logo {
+      font-size: 1.5rem;
+      background: linear-gradient(45deg, #ff4b2b, #ff416c);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      font-weight: bold;
+    }
+    
+    main {
+      flex: 1;
+      padding: 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+      width: 100%;
+    }
+    
+    /* Чат */
+    .chat {
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 180px);
+      max-height: 800px;
+      border-radius: 12px;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    
+    .message {
+      max-width: 80%;
+      padding: 1rem;
+      border-radius: 12px;
+      line-height: 1.5;
+    }
+    
+    .message-user {
+      align-self: flex-end;
+      background: linear-gradient(45deg, #ff4b2b, #ff416c);
+      border-bottom-right-radius: 0;
+    }
+    
+    .message-ai {
+      align-self: flex-start;
+      background: rgba(255, 255, 255, 0.1);
+      border-bottom-left-radius: 0;
+    }
+    
+    .message p {
+      margin-bottom: 0.5rem;
+    }
+    
+    .message p:last-child {
+      margin-bottom: 0;
+    }
+    
+    .message .cursor {
+      display: inline-block;
+      width: 8px;
+      height: 18px;
+      background: #fff;
+      margin-left: 4px;
+      animation: blink 1s infinite;
+      vertical-align: middle;
+    }
+    
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+    
+    .message-meta {
+      font-size: 0.8rem;
+      margin-top: 8px;
+      opacity: 0.7;
+    }
+    
+    .chat-input-container {
+      padding: 1rem;
+      background: rgba(0, 0, 0, 0.3);
+    }
+    
+    .input-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    
+    .bottom-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .chat-input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.05);
+      color: white;
+      font-size: 1rem;
+      resize: none;
+      min-height: 60px;
+    }
+    
+    .chat-input:focus {
+      outline: none;
+      border-color: #ff416c;
+    }
+    
+    .button {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      background: linear-gradient(45deg, #ff4b2b, #ff416c);
+      color: white;
+      font-size: 1rem;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(255, 75, 43, 0.3);
+    }
+    
+    .button:disabled {
+      opacity: 0.5;
+      transform: none;
+      box-shadow: none;
+      cursor: not-allowed;
+    }
+    
+    .model-selector {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    
+    .model-option {
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: white;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      flex: 1;
+      text-align: center;
+      min-width: 120px;
+    }
+    
+    .model-option:hover {
+      background: rgba(255, 255, 255, 0.1);
+      transform: translateY(-2px);
+    }
+    
+    .model-option.selected {
+      background: rgba(255, 75, 43, 0.3);
+      border-color: rgba(255, 75, 43, 0.6);
+    }
+    
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+      color: rgba(255, 255, 255, 0.7);
+    }
+    
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background-color: #4CAF50;
+    }
+    
+    .status-dot.offline {
+      background-color: #F44336;
+    }
+    
+    .status-dot.connecting {
+      background-color: #FFC107;
+      animation: pulse 1.5s infinite;
+    }
+    
+    @keyframes pulse {
+      0% { opacity: 0.5; }
+      50% { opacity: 1; }
+      100% { opacity: 0.5; }
+    }
+    
+    /* Мобильная адаптация */
+    @media (max-width: 768px) {
+      header {
+        padding: 1rem;
+      }
+      
+      main {
+        padding: 1rem;
+      }
+      
+      .message {
+        max-width: 90%;
+      }
+      
+      .model-selector {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+      
+      .model-option {
+        flex: 1 0 calc(50% - 0.5rem);
+        min-width: auto;
+      }
+      
+      .bottom-controls {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      
+      .button {
+        width: 100%;
+      }
+    }
+    
+    /* Табы и кнопки */
+    .tabs {
+      display: flex;
+      margin-bottom: 1rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .tab {
+      padding: 0.75rem 1.5rem;
+      cursor: pointer;
+      color: rgba(255, 255, 255, 0.7);
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+    }
+    
+    .tab:hover {
+      color: white;
+    }
+    
+    .tab.active {
+      color: white;
+      border-bottom: 2px solid #ff416c;
+    }
+    
+    .tab-content {
+      display: none;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    /* Генератор изображений */
+    .image-generator {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    
+    .image-preview {
+      width: 100%;
+      min-height: 300px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(255, 255, 255, 0.5);
+      overflow: hidden;
+    }
+    
+    .preview-image {
+      max-width: 100%;
+      max-height: 500px;
+      border-radius: 8px;
+    }
+    
+    .image-prompt {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.05);
+      color: white;
+      font-size: 1rem;
+      resize: none;
+      min-height: 60px;
+    }
+    
+    .generate-controls {
+      display: flex;
+      gap: 1rem;
+    }
+    
+    .style-select {
+      flex: 1;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .downloading {
+      pointer-events: none;
+      opacity: 0.7;
+    }
+    
+    footer {
+      padding: 1rem 2rem;
+      text-align: center;
+      font-size: 0.875rem;
+      color: rgba(255, 255, 255, 0.5);
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">🚀 BOOOMERANGS</div>
+    <div class="status-indicator">
+      <div id="status-dot" class="status-dot offline"></div>
+      <span id="connection-status">Готов к работе</span>
+    </div>
+  </header>
+  
+  <main>
+    <div class="tabs">
+      <button class="tab active" data-tab="chat">Чат</button>
+      <button class="tab" data-tab="image-gen">Генератор изображений</button>
+    </div>
+    
+    <div id="chat-tab" class="tab-content active">
+      <div class="chat">
+        <div class="chat-messages" id="chat-messages">
+          <div class="message message-ai">
+            <p>Привет! Я BOOOMERANGS AI ассистент с поддержкой стриминга. Это значит, что вы увидите мой ответ постепенно, как будто я печатаю его в реальном времени. Попробуйте задать мне вопрос!</p>
+            <div class="message-meta">BOOOMERANGS AI</div>
+          </div>
+        </div>
+        <div class="chat-input-container">
+          <div class="input-controls">
+            <textarea class="chat-input" id="chat-input" placeholder="Введите ваше сообщение..." rows="2"></textarea>
+            <div class="model-selector" id="model-selector">
+              <div class="model-option selected" data-model="DEMO">Демо</div>
+              <div class="model-option" data-model="QWEN">Qwen AI</div>
+              <div class="model-option" data-model="Qwen_Max">Qwen Max</div>
+            </div>
+            <div class="bottom-controls">
+              <button class="button" id="send-message">Отправить</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div id="image-gen-tab" class="tab-content">
+      <div class="image-generator">
+        <div class="image-preview" id="image-preview">
+          <p>Здесь появится сгенерированное изображение</p>
+        </div>
+        <textarea class="image-prompt" id="image-prompt" placeholder="Опишите изображение, которое хотите создать..." rows="2"></textarea>
+        <div class="generate-controls">
+          <select class="style-select" id="style-select">
+            <option value="realistic">Реалистичный</option>
+            <option value="cartoon">Мультяшный</option>
+            <option value="sketch">Скетч</option>
+            <option value="anime">Аниме</option>
+            <option value="portrait">Портрет</option>
+          </select>
+          <button class="button" id="generate-button">Сгенерировать</button>
+        </div>
+        <p>Также доступно преобразование изображения в SVG формат.</p>
+      </div>
+    </div>
+  </main>
+  
+  <footer>
+    <p>© 2025 BOOOMERANGS. Все права защищены.</p>
+  </footer>
+  
+  <script>
+    // Элементы интерфейса
+    const tabs = document.querySelectorAll('.tab');
+    const tabContents = document.querySelectorAll('.tab-content');
+    const modelOptions = document.querySelectorAll('.model-option');
+    const chatMessages = document.getElementById('chat-messages');
+    const chatInput = document.getElementById('chat-input');
+    const sendMessageButton = document.getElementById('send-message');
+    const imagePreview = document.getElementById('image-preview');
+    const imagePrompt = document.getElementById('image-prompt');
+    const styleSelect = document.getElementById('style-select');
+    const generateButton = document.getElementById('generate-button');
+    const statusDot = document.getElementById('status-dot');
+    const connectionStatus = document.getElementById('connection-status');
+    
+    // Состояние чата
+    let isGenerating = false;
+    let currentMessageElement = null;
+    let currentMessageText = '';
+    let activeEventSource = null;
+    let selectedModel = 'DEMO';
+    
+    // Обработка переключения вкладок
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        // Убираем класс active у всех вкладок и контента
+        tabs.forEach(t => t.classList.remove('active'));
+        tabContents.forEach(content => content.classList.remove('active'));
+        
+        // Добавляем класс active текущей вкладке и соответствующему контенту
+        tab.classList.add('active');
+        const tabId = tab.getAttribute('data-tab');
+        document.getElementById(`${tabId}-tab`).classList.add('active');
+      });
+    });
+    
+    // Обработка выбора модели
+    modelOptions.forEach(option => {
+      option.addEventListener('click', () => {
+        // Убираем класс selected у всех моделей
+        modelOptions.forEach(o => o.classList.remove('selected'));
+        
+        // Добавляем класс selected выбранной модели
+        option.classList.add('selected');
+        
+        // Сохраняем выбранную модель
+        selectedModel = option.getAttribute('data-model');
+        console.log(`Выбрана модель: ${selectedModel}`);
+      });
+    });
+    
+    // Создание сообщения для чата
+    function createMessage(isUser = false) {
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `message ${isUser ? 'message-user' : 'message-ai'}`;
+      
+      // Для сообщений AI добавляем параграф и курсор
+      if (!isUser) {
+        const paragraph = document.createElement('p');
+        
+        // Добавляем мигающий курсор для эффекта набора текста
+        const cursor = document.createElement('span');
+        cursor.className = 'cursor';
+        
+        paragraph.appendChild(document.createTextNode(''));
+        paragraph.appendChild(cursor);
+        
+        messageDiv.appendChild(paragraph);
+        
+        // Добавляем метаданные
+        const metaDiv = document.createElement('div');
+        metaDiv.className = 'message-meta';
+        metaDiv.textContent = 'BOOOMERANGS...';
+        messageDiv.appendChild(metaDiv);
+      } else {
+        // Для пользовательских сообщений просто добавляем параграф с текстом
+        const paragraph = document.createElement('p');
+        messageDiv.appendChild(paragraph);
+      }
+      
+      return messageDiv;
+    }
+    
+    // Добавление сообщения пользователя
+    function addUserMessage(text) {
+      const messageDiv = createMessage(true);
+      const paragraph = messageDiv.querySelector('p');
+      paragraph.textContent = text;
+      
+      chatMessages.appendChild(messageDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+      
+      return messageDiv;
+    }
+    
+    // Начало генерации ответа AI
+    function startAIMessage() {
+      currentMessageElement = createMessage(false);
+      chatMessages.appendChild(currentMessageElement);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+      
+      return currentMessageElement;
+    }
+    
+    // Обновление текста сообщения AI
+    function updateAIMessage(text, meta = null) {
+      if (!currentMessageElement) return;
+      
+      const paragraph = currentMessageElement.querySelector('p');
+      if (paragraph) {
+        // Сохраняем курсор
+        const cursor = paragraph.querySelector('.cursor');
+        
+        // Обновляем текст
+        paragraph.textContent = text;
+        
+        // Возвращаем курсор
+        if (cursor) {
+          paragraph.appendChild(cursor);
+        }
+      }
+      
+      // Обновляем метаданные, если они предоставлены
+      if (meta) {
+        const metaDiv = currentMessageElement.querySelector('.message-meta');
+        if (metaDiv) {
+          metaDiv.textContent = meta;
+        }
+      }
+      
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+    
+    // Завершение генерации ответа AI
+    function finishAIMessage(provider = null, model = null) {
+      if (!currentMessageElement) return;
+      
+      // Удаляем курсор
+      const cursor = currentMessageElement.querySelector('.cursor');
+      if (cursor) {
+        cursor.remove();
+      }
+      
+      // Обновляем метаданные с информацией о провайдере и модели
+      const metaInfo = provider ? 
+        `${provider}${model ? ` · ${model}` : ''}` : 
+        'BOOOMERANGS AI';
+      
+      const metaDiv = currentMessageElement.querySelector('.message-meta');
+      if (metaDiv) {
+        metaDiv.textContent = metaInfo;
+      }
+      
+      // Сбрасываем текущий элемент сообщения
+      currentMessageElement = null;
+      currentMessageText = '';
+      isGenerating = false;
+      
+      // Разблокируем кнопку отправки
+      sendMessageButton.disabled = false;
+      chatInput.disabled = false;
+      
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+    
+    // Обработка отправки сообщения через EventSource (SSE) или обычный запрос
+    async function sendMessage() {
+      const messageText = chatInput.value.trim();
+      if (!messageText || isGenerating) return;
+      
+      // Добавляем сообщение пользователя
+      addUserMessage(messageText);
+      
+      // Очищаем поле ввода и блокируем его на время генерации
+      chatInput.value = '';
+      chatInput.disabled = true;
+      sendMessageButton.disabled = true;
+      
+      // Начинаем генерацию ответа
+      isGenerating = true;
+      currentMessageText = '';
+      startAIMessage();
+      
+      // Обновляем статус соединения
+      updateConnectionStatus('connecting');
+      
+      // Если выбран демо-режим, используем обычный запрос
+      if (selectedModel === 'DEMO') {
+        try {
+          // Имитируем задержку для естественности
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          // Генерируем демо-ответ
+          const lowerMessage = messageText.toLowerCase();
+          let response = '';
+          
+          if (lowerMessage.includes('привет') || lowerMessage.includes('здравствуй')) {
+            response = 'Привет! Я ассистент BOOOMERANGS. Чем могу помочь?';
+          } else if (lowerMessage.includes('как дела') || lowerMessage.includes('как ты')) {
+            response = 'У меня всё отлично! А как ваши дела?';
+          } else if (lowerMessage.includes('изображени') || lowerMessage.includes('картинк')) {
+            response = 'Если вы хотите создать изображение, перейдите на вкладку "Генератор Изображений" или нажмите на соответствующую вкладку сверху.';
+          } else if (lowerMessage.includes('booomerangs')) {
+            response = 'BOOOMERANGS - это мультимодальный AI-сервис для общения и создания изображений без API-ключей.';
+          } else {
+            const backupResponses = [
+              `Спасибо за ваш вопрос! BOOOMERANGS предоставляет доступ к AI моделям без необходимости платных API ключей.`,
+              `Интересный вопрос! BOOOMERANGS позволяет генерировать тексты и изображения бесплатно через интерфейс браузера.`,
+              `BOOOMERANGS - это инновационный инструмент для работы с искусственным интеллектом без платных подписок.`
+            ];
+            response = backupResponses[Math.floor(Math.random() * backupResponses.length)];
+          }
+          
+          // Имитируем печатание текста
+          const words = response.split(' ');
+          for (let i = 0; i < words.length; i++) {
+            await new Promise(resolve => setTimeout(resolve, 50));
+            currentMessageText += words[i] + ' ';
+            updateAIMessage(currentMessageText);
+          }
+          
+          finishAIMessage('BOOOMERANGS-Demo', 'демо-режим');
+          updateConnectionStatus('connected');
+          
+        } catch (error) {
+          console.error('Ошибка в демо-режиме:', error);
+          updateAIMessage('Произошла ошибка. Пожалуйста, попробуйте еще раз.');
+          finishAIMessage('Ошибка', '');
+          updateConnectionStatus('error');
+        }
+        
+        return;
+      }
+      
+      // Для остальных моделей используем стриминговый API
+      try {
+        // Создаем уникальный ID клиента
+        const clientId = `client_${Date.now()}`;
+        
+        // Закрываем предыдущее соединение, если оно было активно
+        if (activeEventSource) {
+          activeEventSource.close();
+        }
+        
+        // Отправляем запрос к API для стриминга
+        const response = await fetch('/api/python/chat/stream', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            message: messageText,
+            provider: selectedModel,
+            clientId
+          })
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Ошибка API: ${response.status}`);
+        }
+        
+        // Читаем поток ответа
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        
+        // Создаем переменные для хранения информации о провайдере и модели
+        let responseProvider = 'BOOOMERANGS AI';
+        let responseModel = '';
+        
+        // Обрабатываем события в потоке ответа
+        while (true) {
+          const { done, value } = await reader.read();
+          
+          if (done) {
+            // Поток завершен
+            break;
+          }
+          
+          // Декодируем данные
+          const chunk = decoder.decode(value, { stream: true });
+          
+          // Обрабатываем SSE формат
+          const lines = chunk.split('\n\n');
+          
+          for (const line of lines) {
+            if (!line.trim()) continue;
+            
+            try {
+              // Находим тип события и данные
+              const eventMatch = line.match(/event: (.+)/);
+              const dataMatch = line.match(/data: (.+)/);
+              
+              if (eventMatch && dataMatch) {
+                const eventType = eventMatch[1];
+                const data = JSON.parse(dataMatch[1]);
+                
+                switch (eventType) {
+                  case 'connected':
+                    // Соединение установлено
+                    console.log('Соединение установлено:', data);
+                    updateConnectionStatus('connected');
+                    break;
+                    
+                  case 'update':
+                    // Получен фрагмент текста
+                    if (data.chunk) {
+                      currentMessageText += data.chunk + ' ';
+                      updateAIMessage(currentMessageText);
+                      
+                      // Сохраняем информацию о провайдере
+                      if (data.provider) responseProvider = data.provider;
+                      if (data.model) responseModel = data.model;
+                      
+                      // Обновляем метаданные в процессе генерации
+                      updateAIMessage(currentMessageText, `${responseProvider} ${data.done ? 'завершено' : 'печатает...'}`);
+                    }
+                    
+                    if (data.done) {
+                      // Генерация завершена
+                      console.log('Генерация текста завершена');
+                    }
+                    break;
+                    
+                  case 'complete':
+                    // Ответ полностью сгенерирован
+                    console.log('Ответ завершен:', data);
+                    updateConnectionStatus('connected');
+                    finishAIMessage(responseProvider, responseModel);
+                    break;
+                    
+                  case 'error':
+                    // Произошла ошибка
+                    console.error('Ошибка стриминга:', data);
+                    updateConnectionStatus('error');
+                    
+                    // Добавляем информацию об ошибке в ответ
+                    if (currentMessageText) {
+                      currentMessageText += '\n\n[Ошибка: ' + data.message + ']';
+                    } else {
+                      currentMessageText = 'Произошла ошибка при генерации ответа. Пожалуйста, попробуйте еще раз или выберите другую модель.';
+                    }
+                    
+                    updateAIMessage(currentMessageText);
+                    finishAIMessage('Ошибка', 'Не удалось завершить ответ');
+                    break;
+                    
+                  case 'log':
+                    // Логи от сервера
+                    console.log('Лог от сервера:', data.message);
+                    break;
+                }
+              }
+            } catch (parseError) {
+              console.error('Ошибка при обработке SSE события:', parseError, line);
+            }
+          }
+        }
+        
+        // Завершаем ответ, если он еще не завершен
+        if (isGenerating) {
+          finishAIMessage(responseProvider, responseModel);
+          updateConnectionStatus('disconnected');
+        }
+        
+      } catch (error) {
+        console.error('Ошибка при отправке запроса:', error);
+        
+        // Добавляем информацию об ошибке в ответ
+        if (currentMessageText) {
+          updateAIMessage(currentMessageText + '\n\n[Ошибка: Не удалось получить полный ответ от AI]');
+        } else {
+          updateAIMessage('Произошла ошибка при соединении с AI. Пожалуйста, попробуйте еще раз или выберите другую модель.');
+        }
+        
+        finishAIMessage('Ошибка', error.message);
+        updateConnectionStatus('error');
+      }
+    }
+    
+    // Обновление статуса соединения
+    function updateConnectionStatus(status) {
+      switch (status) {
+        case 'connected':
+          statusDot.className = 'status-dot';
+          connectionStatus.textContent = 'Подключено';
+          break;
+          
+        case 'connecting':
+          statusDot.className = 'status-dot connecting';
+          connectionStatus.textContent = 'Подключение...';
+          break;
+          
+        case 'error':
+          statusDot.className = 'status-dot offline';
+          connectionStatus.textContent = 'Ошибка соединения';
+          break;
+          
+        case 'disconnected':
+        default:
+          statusDot.className = 'status-dot offline';
+          connectionStatus.textContent = 'Готов к работе';
+          break;
+      }
+    }
+    
+    // Генерация изображения
+    async function generateImage() {
+      const prompt = imagePrompt.value.trim();
+      const style = styleSelect.value;
+      
+      if (!prompt) return;
+      
+      // Блокируем кнопку генерации
+      generateButton.disabled = true;
+      generateButton.textContent = 'Генерация...';
+      imagePreview.classList.add('downloading');
+      imagePreview.innerHTML = '<p>Генерация изображения...</p>';
+      
+      try {
+        // Отправляем запрос на генерацию изображения
+        const response = await fetch('/api/svg/generate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ prompt, style })
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Ошибка API: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.success && data.imageUrl) {
+          // Отображаем изображение
+          imagePreview.innerHTML = `<img class="preview-image" src="${data.imageUrl}" alt="${prompt}">`;
+          
+          // Добавляем кнопки для скачивания
+          const buttons = document.createElement('div');
+          buttons.style.display = 'flex';
+          buttons.style.gap = '1rem';
+          buttons.style.marginTop = '1rem';
+          
+          // Кнопка для скачивания PNG
+          const pngButton = document.createElement('button');
+          pngButton.className = 'button';
+          pngButton.textContent = 'Скачать PNG';
+          pngButton.onclick = () => {
+            window.open(data.imageUrl, '_blank');
+          };
+          
+          // Кнопка для скачивания SVG
+          const svgButton = document.createElement('button');
+          svgButton.className = 'button';
+          svgButton.textContent = 'Скачать SVG';
+          svgButton.onclick = async () => {
+            try {
+              // Запрос на конвертацию в SVG
+              const svgResponse = await fetch('/api/svg/convert', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ imageUrl: data.imageUrl, style })
+              });
+              
+              if (!svgResponse.ok) {
+                throw new Error(`Ошибка конвертации: ${svgResponse.status}`);
+              }
+              
+              const svgData = await svgResponse.json();
+              
+              if (svgData.success && svgData.svgUrl) {
+                window.open(svgData.svgUrl, '_blank');
+              } else {
+                alert('Не удалось конвертировать изображение в SVG');
+              }
+            } catch (error) {
+              console.error('Ошибка при конвертации:', error);
+              alert('Произошла ошибка при конвертации в SVG');
+            }
+          };
+          
+          buttons.appendChild(pngButton);
+          buttons.appendChild(svgButton);
+          imagePreview.appendChild(buttons);
+        } else {
+          throw new Error('Не удалось получить URL изображения');
+        }
+      } catch (error) {
+        console.error('Ошибка при генерации изображения:', error);
+        imagePreview.innerHTML = `<p>Ошибка: ${error.message}</p>`;
+      } finally {
+        // Разблокируем кнопку генерации
+        generateButton.disabled = false;
+        generateButton.textContent = 'Сгенерировать';
+        imagePreview.classList.remove('downloading');
+      }
+    }
+    
+    // Обработчик отправки сообщения
+    function handleSendMessage() {
+      if (isGenerating) return;
+      sendMessage();
+    }
+    
+    // Добавляем обработчики событий
+    sendMessageButton.addEventListener('click', handleSendMessage);
+    
+    chatInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        handleSendMessage();
+      }
+    });
+    
+    generateButton.addEventListener('click', generateImage);
+    
+    // Инициализация статуса соединения
+    updateConnectionStatus('disconnected');
+  </script>
+</body>
+</html>
