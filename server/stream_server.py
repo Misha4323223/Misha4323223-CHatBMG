@@ -95,6 +95,10 @@ def stream_chat():
             yield f"event: start\ndata: {json.dumps({'provider': current_provider})}\n\n"
             
             try:
+                # Исправляем имя провайдера, если нужно
+                if current_provider == "Qwen_Max":
+                    current_provider = "Qwen_Qwen_2_5_Max"
+                
                 # Попробуем сначала использовать запрошенный провайдер
                 if current_provider in providers:
                     try:
