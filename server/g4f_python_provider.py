@@ -94,7 +94,7 @@ def get_demo_response(message):
     # Общий ответ, если ни один шаблон не подошел
     return "Я BOOOMERANGS AI ассистент. К сожалению, внешние AI-провайдеры сейчас недоступны, но я все равно могу помочь с базовой информацией о BOOOMERANGS и подсказать, как использовать генератор изображений!"
 
-def try_provider(provider_name, message, timeout=15):
+def try_provider(provider_name, message, timeout=15, use_stream=False):
     """Попытка получить ответ от провайдера с обработкой ошибок и системой резервных моделей"""
     if provider_name not in AVAILABLE_PROVIDERS:
         print(f"❌ Провайдер {provider_name} не найден")
@@ -120,6 +120,21 @@ def try_provider(provider_name, message, timeout=15):
         "DDG": ["gpt-3.5"],
         "FreeGpt": ["gpt-3.5"]
     }
+    
+    # Провайдеры, которые поддерживают стриминг
+    streaming_providers = [
+        "Qwen_Max", "Qwen_3", "Gemini", "GeminiPro", "DeepInfra", "You"
+    ]
+    
+    # Определяем, поддерживает ли провайдер стриминг
+    supports_streaming = provider_name in streaming_providers
+    
+    # Если запрошен стриминг, но провайдер его не поддерживает, выводим предупреждение
+    if use_stream and not supports_streaming:
+        print(f"⚠️ Провайдер {provider_name} не поддерживает стриминг, будет использован обычный запрос")
+    
+    # Используем стриминг только если он запрошен и провайдер его поддерживает
+    use_streaming = use_stream and supports_streaming
     
     # Получаем список моделей для данного провайдера
     models_to_try = provider_models.get(provider_name, ["gpt-3.5-turbo"])
@@ -155,30 +170,59 @@ def try_provider(provider_name, message, timeout=15):
                     {"role": "user", "content": message}
                 ]
             
-            print(f"  📝 Пробуем модель: {model}")
+            print(f"  📝 Пробуем модель: {model}, стриминг: {use_streaming}")
+            
+            # Параметры запроса
+            request_params = {
+                "model": model,
+                "provider": provider,
+                "messages": messages,
+                "timeout": timeout,  # Используем переданный таймаут
+            }
+            
+            # Добавляем stream=True если используем стриминг
+            if use_streaming:
+                request_params["stream"] = True
             
             # Выполняем запрос
-            response = g4f.ChatCompletion.create(
-                model=model,
-                provider=provider,
-                messages=messages,
-                timeout=timeout  # Используем переданный таймаут
-            )
+            response = g4f.ChatCompletion.create(**request_params)
             
             # Проверяем результат
-            if not response or (isinstance(response, str) and len(response.strip()) == 0):
-                print(f"  ⚠️ Модель {model} вернула пустой ответ")
-                attempt_info.append(f"{model}: пустой ответ")
-                continue
-            
-            elapsed = time.time() - start_time
-            print(f"✅ {provider_name} (модель {model}) успешно ответил за {elapsed:.2f} сек")
-            
-            return {
-                "response": response,
-                "provider": provider_name,
-                "model": model
-            }
+            if use_streaming:
+                # Для стриминга проверяем, что response является итератором
+                if hasattr(response, '__iter__') or hasattr(response, '__next__'):
+                    print(f"✅ {provider_name} (модель {model}) успешно начал стриминг")
+                    
+                    # Для стриминга возвращаем итератор
+                    elapsed = time.time() - start_time
+                    return {
+                        "streaming": True,
+                        "response": response,
+                        "provider": provider_name,
+                        "model": model,
+                        "elapsed": elapsed
+                    }
+                else:
+                    print(f"⚠️ Провайдер {provider_name} не вернул итератор для стриминга")
+                    # Продолжаем перебор моделей
+                    continue
+            else:
+                # Для обычного запроса проверяем, что ответ не пустой
+                if not response or (isinstance(response, str) and len(response.strip()) == 0):
+                    print(f"  ⚠️ Модель {model} вернула пустой ответ")
+                    attempt_info.append(f"{model}: пустой ответ")
+                    continue
+                
+                elapsed = time.time() - start_time
+                print(f"✅ {provider_name} (модель {model}) успешно ответил за {elapsed:.2f} сек")
+                
+                return {
+                    "streaming": False,
+                    "response": response,
+                    "provider": provider_name,
+                    "model": model,
+                    "elapsed": elapsed
+                }
             
         except Exception as e:
             error_msg = str(e)
@@ -198,9 +242,12 @@ def try_provider(provider_name, message, timeout=15):
     print(f"❌ Провайдер {provider_name} не смог ответить. Попытки: {', '.join(attempt_info)}")
     return None
 
-def get_chat_response(message, specific_provider=None):
-    """Получение ответа с улучшенной системой резервных провайдеров (fallback)"""
+def get_chat_response(message, specific_provider=None, use_stream=False):
+    """Получение ответа с улучшенной системой резервных провайдеров (fallback) и поддержкой стриминга"""
     results = []
+    
+    # Приоритетные провайдеры для стриминга
+    streaming_priority = ["Qwen_Max", "Qwen_3", "DeepInfra", "You", "Gemini", "GeminiPro"]
     
     # Определяем группы провайдеров для fallback
     provider_groups = {
@@ -210,10 +257,18 @@ def get_chat_response(message, specific_provider=None):
         "fallback": ["FreeGpt", "ChatgptFree", "Yqcloud", "ChatGLM"]
     }
     
+    # Если включен стриминг, перераспределяем приоритеты в пользу провайдеров с поддержкой стриминга
+    if use_stream:
+        # Создаем новый список приоритетов, начиная с провайдеров с поддержкой стриминга
+        provider_groups["primary"] = [p for p in streaming_priority if p in provider_groups["primary"]]
+        provider_groups["primary"].extend([p for p in provider_groups["primary"] if p not in provider_groups["primary"]])
+        
+        print(f"🔄 Включен режим стриминга, приоритет отдан провайдерам: {streaming_priority}")
+    
     # Если указан конкретный провайдер, сначала пробуем его
     if specific_provider and specific_provider in AVAILABLE_PROVIDERS:
         print(f"🔍 Попытка использования запрошенного провайдера: {specific_provider}")
-        result = try_provider(specific_provider, message)
+        result = try_provider(specific_provider, message, use_stream=use_stream)
         if result:
             print(f"✅ Успешно получен ответ от запрошенного провайдера: {specific_provider}")
             return result
@@ -227,7 +282,7 @@ def get_chat_response(message, specific_provider=None):
         
         for provider_name in provider_groups[group_name]:
             if provider_name in AVAILABLE_PROVIDERS:
-                result = try_provider(provider_name, message)
+                result = try_provider(provider_name, message, use_stream=use_stream)
                 if result:
                     group_results.append(result)
                     # Возвращаем результат сразу после первого успешного провайдера
@@ -246,9 +301,11 @@ def get_chat_response(message, specific_provider=None):
     # Если все провайдеры не ответили, используем демо-ответ
     print("⚠️ Все провайдеры недоступны, используем демо-режим")
     return {
+        "streaming": False,
         "response": get_demo_response(message),
         "provider": "BOOOMERANGS-Demo",
-        "model": "demo-mode"
+        "model": "demo-mode",
+        "elapsed": 0.0
     }
 
 # Обработка аргументов командной строки
@@ -265,16 +322,69 @@ if __name__ == "__main__":
     message = sys.argv[1]
     specific_provider = sys.argv[2] if len(sys.argv) > 2 else None
     
+    # Проверяем, запрошен ли стриминг
+    use_stream = False
+    if len(sys.argv) > 3 and sys.argv[3].lower() == "stream":
+        use_stream = True
+    
     try:
-        result = get_chat_response(message, specific_provider)
+        result = get_chat_response(message, specific_provider, use_stream=use_stream)
         
-        # Убедимся, что response - строка для корректного форматирования
-        if isinstance(result, dict) and "response" in result:
-            if not isinstance(result["response"], str):
-                result["response"] = str(result["response"])
-        
-        # Выводим результат с поддержкой Unicode
-        print(json.dumps(result, ensure_ascii=False))
+        # Если результат содержит стриминг, мы не можем вернуть итератор через JSON
+        if result and result.get("streaming", False) and use_stream:
+            # Для стриминга будем возвращать частями текст через стандартный вывод
+            # Преобразуем итератор стриминга в текст
+            print(json.dumps({
+                "streaming": True,
+                "starting": True,
+                "provider": result.get("provider", "Unknown"),
+                "model": result.get("model", "unknown"),
+            }, ensure_ascii=False))
+            
+            try:
+                stream_iterator = result.get("response", [])
+                accumulated_text = ""
+                
+                for chunk in stream_iterator:
+                    if chunk:
+                        # Выводим каждый чанк как отдельную строку JSON
+                        print(json.dumps({
+                            "streaming": True,
+                            "chunk": str(chunk),
+                            "provider": result.get("provider", "Unknown"),
+                            "model": result.get("model", "unknown"),
+                        }, ensure_ascii=False))
+                        sys.stdout.flush()  # Важно для передачи данных в реальном времени
+                        
+                        accumulated_text += str(chunk)
+                
+                # Отправляем финальный результат
+                print(json.dumps({
+                    "streaming": True,
+                    "complete": True,
+                    "response": accumulated_text,
+                    "provider": result.get("provider", "Unknown"),
+                    "model": result.get("model", "unknown"),
+                }, ensure_ascii=False))
+                
+            except Exception as stream_error:
+                print(json.dumps({
+                    "streaming": True,
+                    "error": str(stream_error),
+                    "response": get_demo_response("ошибка стриминга"),
+                    "provider": "BOOOMERANGS-Fallback",
+                    "model": "streaming-error"
+                }, ensure_ascii=False))
+        else:
+            # Обычный режим
+            # Убедимся, что response - строка для корректного форматирования
+            if isinstance(result, dict) and "response" in result:
+                if not isinstance(result["response"], str):
+                    result["response"] = str(result["response"])
+            
+            # Выводим результат с поддержкой Unicode
+            print(json.dumps(result, ensure_ascii=False))
+            
     except Exception as e:
         print(json.dumps({
             "error": str(e),

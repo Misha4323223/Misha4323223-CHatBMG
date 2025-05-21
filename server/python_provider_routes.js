@@ -129,61 +129,121 @@ router.post('/chat/stream', (req, res) => {
       
       const outputText = data.toString();
       
-      // Проверяем, содержит ли вывод JSON
-      if (outputText.includes('{') && outputText.includes('}')) {
-        try {
-          // Пытаемся найти JSON в выводе
-          const jsonMatch = outputText.match(/{.*}/);
-          if (jsonMatch) {
-            const jsonData = JSON.parse(jsonMatch[0]);
+      // Проверяем на наличие нескольких JSON-объектов (для стриминга)
+      const jsonStrings = outputText.match(/{[^{}]*}/g);
+      
+      if (jsonStrings && jsonStrings.length > 0) {
+        for (const jsonString of jsonStrings) {
+          try {
+            const jsonData = JSON.parse(jsonString);
             
-            // Отправляем полный ответ
-            clearTimeout(demoTimeout);
-            isCompleted = true;
-            
-            // Отправляем ответ по словам для имитации стриминга
-            const responseWords = jsonData.response.split(' ');
-            let sentWords = 0;
-            
-            const streamInterval = setInterval(() => {
-              if (sentWords < responseWords.length) {
-                const chunk = responseWords.slice(sentWords, sentWords + 3).join(' ');
-                sentWords += 3;
-                
+            // Если это стриминг-ответ
+            if (jsonData.streaming) {
+              // Отменяем таймаут демо-ответа при первом чанке
+              if (jsonData.starting || jsonData.chunk) {
+                clearTimeout(demoTimeout);
+              }
+              
+              // Если это начало стриминга
+              if (jsonData.starting) {
+                sendEvent('info', {
+                  message: `Начало стриминга от ${jsonData.provider || 'AI'}`,
+                  provider: jsonData.provider,
+                  model: jsonData.model
+                });
+                continue;
+              }
+              
+              // Если это чанк стриминга
+              if (jsonData.chunk) {
                 sendEvent('update', {
-                  chunk,
-                  done: sentWords >= responseWords.length,
+                  chunk: jsonData.chunk,
+                  done: false,
                   provider: jsonData.provider || 'Python-G4F',
-                  model: jsonData.model || 'g4f-python'
+                  model: jsonData.model || 'streaming'
+                });
+                continue;
+              }
+              
+              // Если это завершение стриминга
+              if (jsonData.complete) {
+                // Отправляем событие завершения
+                sendEvent('complete', {
+                  message: 'Генерация завершена',
+                  provider: jsonData.provider || 'Python-G4F',
+                  model: jsonData.model || 'streaming',
+                  response: jsonData.response
                 });
                 
-                if (sentWords >= responseWords.length) {
-                  clearInterval(streamInterval);
+                // Устанавливаем флаг завершения
+                isCompleted = true;
+                
+                // Удаляем клиента из хранилища
+                sseClients.delete(clientId);
+                continue;
+              }
+              
+              // Если это ошибка стриминга
+              if (jsonData.error) {
+                sendEvent('error', { 
+                  message: jsonData.error,
+                  provider: jsonData.provider || 'Python-G4F'
+                });
+                
+                // Устанавливаем флаг завершения если это полная ошибка
+                if (!jsonData.chunk) {
+                  isCompleted = true;
+                  sseClients.delete(clientId);
+                }
+                continue;
+              }
+            } else {
+              // Обычный ответ (не стриминг)
+              // Отправляем полный ответ
+              clearTimeout(demoTimeout);
+              isCompleted = true;
+              
+              // Отправляем ответ по словам для имитации стриминга
+              const responseWords = jsonData.response.split(' ');
+              let sentWords = 0;
+              
+              const streamInterval = setInterval(() => {
+                if (sentWords < responseWords.length) {
+                  const chunk = responseWords.slice(sentWords, sentWords + 3).join(' ');
+                  sentWords += 3;
                   
-                  // Отправляем событие завершения
-                  sendEvent('complete', {
-                    message: 'Генерация завершена',
+                  sendEvent('update', {
+                    chunk,
+                    done: sentWords >= responseWords.length,
                     provider: jsonData.provider || 'Python-G4F',
                     model: jsonData.model || 'g4f-python'
                   });
                   
-                  // Удаляем клиента из хранилища
-                  sseClients.delete(clientId);
+                  if (sentWords >= responseWords.length) {
+                    clearInterval(streamInterval);
+                    
+                    // Отправляем событие завершения
+                    sendEvent('complete', {
+                      message: 'Генерация завершена',
+                      provider: jsonData.provider || 'Python-G4F',
+                      model: jsonData.model || 'g4f-python'
+                    });
+                    
+                    // Удаляем клиента из хранилища
+                    sseClients.delete(clientId);
+                  }
+                } else {
+                  clearInterval(streamInterval);
                 }
-              } else {
-                clearInterval(streamInterval);
-              }
-            }, 100); // Отправляем небольшими кусками каждые 100мс
-          } else {
-            // Если JSON не найден, отправляем сырой вывод как обновление
-            sendEvent('log', { message: outputText });
+              }, 100); // Отправляем небольшими кусками каждые 100мс
+            }
+          } catch (jsonError) {
+            console.error('Ошибка при обработке JSON из Python:', jsonError, jsonString);
+            sendEvent('log', { message: jsonString });
           }
-        } catch (jsonError) {
-          console.error('Ошибка при обработке JSON из Python:', jsonError);
-          sendEvent('log', { message: outputText });
         }
       } else {
-        // Отправляем любой другой вывод как лог
+        // Если JSON не найден, отправляем сырой вывод как лог
         sendEvent('log', { message: outputText });
       }
     });
