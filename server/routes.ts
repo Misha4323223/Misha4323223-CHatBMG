@@ -120,7 +120,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/api/direct-ai', directAiRoutes);
   
   // API с Python-версией G4F
-  app.use('/api/python', pythonProviderRoutes);
+  app.use('/api/python', pythonProviderRoutes.router);
   
   // API для стриминга от провайдеров, поддерживающих stream=True
   const streamingRoutes = require('./streaming-routes');
