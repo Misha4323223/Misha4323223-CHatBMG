@@ -8,13 +8,77 @@ const fetch = require('node-fetch');
 
 // Технические домены для определения запросов
 const techDomains = [
-  "javascript", "python", "java", "c++", "programming",
-  "algorithm", "database", "api", "frontend", "backend"
+  // Языки программирования
+  "javascript", "typescript", "js", "ts", "python", "java", "c++", "c#", "csharp", "php", 
+  "ruby", "rust", "go", "golang", "swift", "kotlin", "scala", "perl", "bash", "powershell",
+  
+  // Технологии и фреймворки
+  "react", "angular", "vue", "node", "express", "django", "flask", "spring", "asp.net",
+  "laravel", "wordpress", "bootstrap", "tailwind", "jquery", "redux", "graphql", "rest", "api",
+  
+  // Структуры данных и алгоритмы
+  "алгоритм", "algorithm", "структур", "structure", "сортировк", "sorting", "поиск", "search",
+  "хеш", "hash", "дерев", "tree", "граф", "graph", "список", "list", "массив", "array",
+  "очередь", "queue", "стек", "stack", "бинарн", "binary", "рекурси", "recursion",
+  
+  // Общие технические термины
+  "код", "code", "programming", "программирован", "разработк", "development", "debug", "отладк",
+  "функци", "function", "класс", "class", "метод", "method", "переменн", "variable",
+  "наследован", "inheritance", "интерфейс", "interface", "асинхрон", "async", "промис", "promise",
+  
+  // Базы данных
+  "sql", "nosql", "mysql", "postgresql", "mongodb", "sqlite", "oracle", "база данных", "database",
+  "запрос", "query", "таблиц", "table", "join", "индекс", "index", "транзакци", "transaction",
+  
+  // DevOps и инфраструктура
+  "docker", "kubernetes", "k8s", "git", "ci/cd", "pipeline", "aws", "azure", "облак", "cloud",
+  "сервер", "server", "контейнер", "container", "виртуализац", "virtualization", "микросервис", "microservice",
+  
+  // Frontend и backend
+  "frontend", "backend", "fullstack", "верстк", "интерфейс", "ui", "ux", "сайт", "website"
 ];
 
-// Функция для определения технических запросов
+// Уровни сложности технических вопросов
+const expertLevels = {
+  basic: ['как', 'начать', 'основы', 'базов', 'простой', 'легкий', 'beginner', 'starter', 'basic'],
+  intermediate: ['улучшить', 'оптимизир', 'продвинут', 'intermediate', 'improve', 'optimize'],
+  advanced: ['сложн', 'advanced', 'complex', 'high level', 'expert', 'оптимальн', 'производительн', 'performance']
+};
+
+/**
+ * Функция для определения технических запросов
+ * @param {string} query - Запрос пользователя
+ * @returns {boolean} - Является ли запрос техническим
+ */
 function isTechnicalQuery(query) {
   return techDomains.some(domain => query.toLowerCase().includes(domain));
+}
+
+/**
+ * Определяет уровень технической сложности вопроса
+ * @param {string} query - Текст запроса пользователя
+ * @returns {string} - Уровень сложности: 'basic', 'intermediate', 'advanced' или 'general'
+ */
+function determineExpertLevel(query) {
+  const lowerQuery = query.toLowerCase();
+  
+  // Проверяем на продвинутый уровень (приоритет выше)
+  if (expertLevels.advanced.some(term => lowerQuery.includes(term))) {
+    return 'advanced';
+  }
+  
+  // Проверяем на средний уровень 
+  if (expertLevels.intermediate.some(term => lowerQuery.includes(term))) {
+    return 'intermediate';
+  }
+  
+  // Проверяем на базовый уровень
+  if (expertLevels.basic.some(term => lowerQuery.includes(term))) {
+    return 'basic';
+  }
+  
+  // По умолчанию - обычный технический вопрос
+  return 'general';
 }
 
 // Функция для генерации технических ответов
@@ -509,23 +573,79 @@ function postprocess(result) {
 
 // Функция для получения ответа от DeepSpeek через настоящую AI модель
 async function getDeepSpeekResponse(query) {
-  // Список провайдеров для DeepSpeek, отсортированный по приоритету
-  const technicalProviders = [
-    // Наиболее стабильные провайдеры - пробуем в первую очередь
-    "AItianhu",          // Qwen
-    "Qwen_Qwen_2_5_Max", // Python G4F с Qwen 2.5 Max
-    "Phind",             // Технический AI специалист
-    "DEEPSEEK",          // G4F провайдер
-    "OpenaiAPI",         // OpenAI через G4F
-    "OPENROUTER",        // Маршрутизатор моделей
-    "PERPLEXITY",        // Perplexity AI (технический)
-    "DeepInfra",         // DeepInfra AI
-    "GigaChat",          // Российский AI
-    "Gemini",            // Gemini API
-    "GeminiPro",         // Gemini Pro API
-    "Anthropic",         // Claude API
-    "HuggingChat"        // Бесплатный провайдер Hugging Face
-  ];
+  // Определяем уровень технической сложности запроса
+  const expertLevel = determineExpertLevel(query);
+  console.log(`DeepSpeek: Определен уровень запроса: ${expertLevel}`);
+  
+  // Выбираем провайдеры в зависимости от уровня сложности
+  let technicalProviders;
+  
+  // Создаем системный промпт на основе уровня сложности
+  let systemPrompt;
+  
+  switch (expertLevel) {
+    case 'advanced':
+      // Для продвинутых вопросов используем наиболее мощные модели
+      technicalProviders = [
+        "Qwen_Qwen_2_5_Max", // Python G4F с Qwen 2.5 Max (самая мощная версия)
+        "DEEPSEEK",          // G4F провайдер специализированный на техническом контенте
+        "AItianhu",          // Qwen через AItianhu
+        "Phind",             // Технический AI специалист
+        "PERPLEXITY",        // Perplexity AI (хорош для технических вопросов)
+        "Anthropic"          // Claude особенно хорош для сложных задач
+      ];
+      
+      systemPrompt = `Вы опытный инженер-программист с глубоким пониманием технических концепций. Пользователь задает сложный технический вопрос. Предоставьте детальный, глубокий ответ с примерами кода и объяснениями сложных концепций. Включите информацию о сложных случаях, граничных условиях и оптимизациях. Не упрощайте объяснения.`;
+      break;
+      
+    case 'intermediate':
+      // Для среднего уровня сложности - баланс между глубиной и доступностью
+      technicalProviders = [
+        "AItianhu",          // Qwen через AItianhu
+        "Qwen_Qwen_3",       // Python G4F с Qwen 3 (быстрее работает)
+        "Phind",             // Технический AI специалист
+        "DEEPSEEK",          // G4F провайдер
+        "DeepInfra",         // DeepInfra AI
+        "Gemini"             // Хорошо для обучающего контента
+      ];
+      
+      systemPrompt = `Вы технический специалист, обучающий программистов среднего уровня. Объясните концепции с достаточной глубиной, включая примеры кода и практические рекомендации. Обратите внимание на типичные ошибки и предложите способы улучшения текущих решений.`;
+      break;
+      
+    case 'basic':
+      // Для базового уровня - фокус на объяснение основ
+      technicalProviders = [
+        "AItianhu_Turbo",    // Быстрая версия Qwen
+        "Qwen_Qwen_3",       // Python G4F с Qwen 3
+        "Gemini",            // Хорошо для объяснений базовых концепций
+        "HuggingChat",       // Бесплатный провайдер с хорошим объяснением
+        "GigaChat",          // Российский AI с поддержкой русского языка
+        "You"                // Хорошо обрабатывает новичковые вопросы
+      ];
+      
+      systemPrompt = `Вы терпеливый преподаватель программирования для начинающих. Объясните базовые концепции простым языком, без жаргона. Используйте понятные примеры и аналогии. Предоставьте простой, рабочий код, детально объяснив каждую строку. Дайте ссылки на ресурсы для дальнейшего изучения.`;
+      break;
+      
+    default: // 'general'
+      // Для общих технических вопросов - универсальный подход
+      technicalProviders = [
+        "AItianhu",          // Qwen через AItianhu
+        "Qwen_Qwen_2_5_Max", // Python G4F с Qwen 2.5 Max
+        "Phind",             // Технический AI специалист
+        "DEEPSEEK",          // G4F провайдер
+        "OpenaiAPI",         // OpenAI через G4F
+        "OPENROUTER",        // Маршрутизатор моделей
+        "PERPLEXITY",        // Perplexity AI (технический)
+        "DeepInfra",         // DeepInfra AI
+        "GigaChat",          // Российский AI
+        "Gemini",            // Gemini API
+        "GeminiPro",         // Gemini Pro API
+        "Anthropic",         // Claude API
+        "HuggingChat"        // Бесплатный провайдер Hugging Face
+      ];
+      
+      systemPrompt = `Вы технический помощник DeepSpeek, специализирующийся на вопросах программирования и технологий. Предоставьте четкий, информативный ответ, адаптированный к контексту вопроса. Включите примеры кода, если они уместны.`;
+  }
   
   // Используем модули для доступа к AI
   const directAiProvider = require('./direct-ai-provider');
@@ -534,43 +654,50 @@ async function getDeepSpeekResponse(query) {
   // Проходим по списку провайдеров и пробуем каждый
   for (const provider of technicalProviders) {
     try {
-      console.log(`DeepSpeek: Пробуем провайдер ${provider}...`);
+      console.log(`DeepSpeek: Пробуем провайдер ${provider} для уровня ${expertLevel}...`);
       
       let response;
       
       // Определяем, какой метод использовать для этого провайдера
       if (provider === "Qwen_Qwen_2_5_Max" || provider.startsWith("Qwen_")) {
         // Этот провайдер доступен только через Python G4F
-        response = await pythonProviderRoutes.callPythonAI(query, provider);
+        // Добавляем системный промпт к запросу
+        const enhancedQuery = `${systemPrompt}\n\nВопрос пользователя: ${query}`;
+        response = await pythonProviderRoutes.callPythonAI(enhancedQuery, provider);
         
         if (response) {
-          console.log(`DeepSpeek: Успешно получен ответ от ${provider} через Python G4F`);
+          console.log(`DeepSpeek: Успешно получен ответ от ${provider} через Python G4F (уровень: ${expertLevel})`);
           
           return {
             success: true,
             response: response,
             provider: "DeepSpeek",
-            model: `DeepSpeek AI (${provider})`
+            model: `DeepSpeek AI (${provider})`,
+            expertLevel: expertLevel
           };
         }
       } else {
         // Остальные провайдеры доступны через direct-ai-provider
-        response = await directAiProvider.getChatResponse(query, { provider: provider });
+        response = await directAiProvider.getChatResponse(query, { 
+          provider: provider,
+          systemPrompt: systemPrompt
+        });
         
         if (response) {
-          console.log(`DeepSpeek: Успешно получен ответ от ${provider}`);
+          console.log(`DeepSpeek: Успешно получен ответ от ${provider} (уровень: ${expertLevel})`);
           
           return {
             success: true,
             response: response,
             provider: "DeepSpeek",
-            model: `DeepSpeek AI (${provider})`
+            model: `DeepSpeek AI (${provider})`,
+            expertLevel: expertLevel
           };
         }
       }
     } catch (error) {
       // Логируем ошибку и продолжаем со следующим провайдером
-      console.error(`DeepSpeek: Ошибка с провайдером ${provider}:`, error.message);
+      console.error(`DeepSpeek: Ошибка с провайдером ${provider} (уровень ${expertLevel}):`, error.message);
     }
   }
   
