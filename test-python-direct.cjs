@@ -59,18 +59,18 @@ async function testPythonG4F(provider, message) {
 
 // Запуск теста с указанным провайдером
 async function runTest() {
-  // Доступные провайдеры в Python G4F
+  // Доступные провайдеры в Python G4F для проверки
   const providers = [
-    'DeepInfra', 
-    'Qwen_Qwen_2_5_Max', 
-    'Anthropic',
-    'Phind', 
-    'Gemini',
-    'You'
+    'You',            // You.com - обычно бесплатный
+    'HuggingChat',    // HuggingFace Chat - бесплатный
+    'Anthropic',      // Claude через G4F
+    'Phind',          // Phind - для технических вопросов
+    'AiChats',        // AiChats - обычно бесплатный
+    'FreeGpt'         // FreeGpt - предположительно бесплатный
   ];
   
   // Выбранный для теста провайдер (можно изменить)
-  const providerToTest = 'Qwen_Qwen_2_5_Max';
+  const providerToTest = 'AiChats';
   
   // Тестовый вопрос
   const testMessage = "Объясни, как работает трансформерная архитектура в нейронных сетях простыми словами";
