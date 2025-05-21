@@ -13,7 +13,8 @@ const PROVIDERS = {
   PHIND: 'phind',        // Более новый провайдер
   PERPLEXITY: 'perplexity', // Требует конкретную модель
   GEMINI: 'gemini',      // Требует валидный API ключ
-  GIGA: 'gigachat'       // Требует российский номер телефона
+  GIGA: 'gigachat',      // Требует российский номер телефона
+  YOU: 'you'             // Провайдер YEW-bot
 };
 
 // Модели провайдеров - каждый провайдер работает с разными моделями
@@ -25,7 +26,8 @@ const PROVIDER_MODELS = {
   [PROVIDERS.PHIND]: 'phind-model',
   [PROVIDERS.PERPLEXITY]: 'llama-3.1-sonar-small-128k-online',
   [PROVIDERS.DEEPAI]: 'deepai-text-generator',
-  [PROVIDERS.GEMINI]: 'gemini-pro'
+  [PROVIDERS.GEMINI]: 'gemini-pro',
+  [PROVIDERS.YOU]: 'you-chat'
 };
 
 // Провайдеры, требующие API ключ (отключены)
@@ -37,14 +39,16 @@ const KEY_REQUIRED_PROVIDERS = [
 ];
 
 // Порядок провайдеров от самых стабильных к менее стабильным
-// Включаем только бесплатные провайдеры, не требующие API ключей
+// По рекомендации пользователя временно отключены некоторые провайдеры
 const PROVIDER_PRIORITY = [
-  PROVIDERS.PHIND,       // Хороший бесплатный провайдер
-  PROVIDERS.LIAOBOTS,    // Хороший бесплатный провайдер
-  PROVIDERS.QWEN,        // Потенциально работающий, бесплатный
-  PROVIDERS.DIFY,        // Потенциально работающий, бесплатный
-  PROVIDERS.AICHAT,      // Менее стабильный, но бесплатный
-  PROVIDERS.CHATGPT      // Нестабильный, но бесплатный
+  // PROVIDERS.PHIND отключен временно    
+  // PROVIDERS.LIAOBOTS отключен временно
+  PROVIDERS.YOU,         // Добавлен провайдер You через yew-bot
+  PROVIDERS.DEEPAI,      // Если есть API ключ
+  PROVIDERS.QWEN,        // Потенциально работающий
+  PROVIDERS.DIFY,        // Потенциально работающий
+  PROVIDERS.AICHAT,      // Менее стабильный
+  PROVIDERS.CHATGPT      // Нестабильный
 ];
 
 // Функция для получения списка доступных провайдеров в порядке приоритета
