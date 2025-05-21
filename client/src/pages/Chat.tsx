@@ -178,14 +178,32 @@ export default function Chat() {
           onToggle={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
         />
         
-        <ChatArea 
-          messages={messages}
-          currentUser={currentUser}
-          selectedUser={selectedUser}
-          onSendMessage={handleSendMessage}
-          onOpenSidebar={() => setIsMobileSidebarOpen(true)}
-          connectionStatus={connectedStatus}
-        />
+        <div className="flex flex-col flex-1">
+          {isImageGeneratorOpen && (
+            <ImageGeneratorWidget onClose={() => setIsImageGeneratorOpen(false)} />
+          )}
+          
+          <div className="flex justify-end px-4 py-2 bg-white border-b">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setIsImageGeneratorOpen(!isImageGeneratorOpen)}
+              className="flex items-center gap-1"
+            >
+              <ImageIcon size={16} />
+              <span>{isImageGeneratorOpen ? 'Скрыть генератор' : 'Создать изображение'}</span>
+            </Button>
+          </div>
+          
+          <ChatArea 
+            messages={messages}
+            currentUser={currentUser}
+            selectedUser={selectedUser}
+            onSendMessage={handleSendMessage}
+            onOpenSidebar={() => setIsMobileSidebarOpen(true)}
+            connectionStatus={connectedStatus}
+          />
+        </div>
       </div>
     </div>
   );
