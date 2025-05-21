@@ -38,6 +38,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // API для генератора изображений
   app.use('/api/svg', svgGenerator);
   
+  // Импортируем модуль генерации изображений с AI
+  const aiImageGenerator = require('./ai-image-generator');
+
+  // API для генерации изображений через бесплатные AI провайдеры
+  app.post("/api/ai-image/generate", async (req, res) => {
+    try {
+      const { prompt, style = 'realistic' } = req.body;
+      
+      if (!prompt) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Необходимо указать текстовый запрос (prompt)'
+        });
+      }
+      
+      // Вызываем функцию генерации изображения
+      const result = await aiImageGenerator.generateImage(prompt, style);
+      
+      res.json(result);
+    } catch (error) {
+      console.error('Ошибка при генерации изображения:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Внутренняя ошибка сервера при генерации изображения'
+      });
+    }
+  });
+  
+  // Создаем маршрут для доступа к сгенерированным изображениям
+  app.use('/output', app.static(path.join(__dirname, '..', 'output')));
+  
   // Тестовая страница
   app.get('/test', (req, res) => {
     res.sendFile('test-page.html', { root: '.' });
@@ -106,6 +137,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // BOOOMERANGS только генератор изображений (стабильная версия)
   app.get('/image-generator', (req, res) => {
     res.sendFile('public/image-generator.html', { root: '.' });
+  });
+  
+  // BOOOMERANGS AI генератор изображений
+  app.get('/ai-images', (req, res) => {
+    res.sendFile('public/ai-image-app.html', { root: '.' });
   });
   
   // BOOOMERANGS приложение со стримингом
