@@ -213,6 +213,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const ollamaProvider = require('./ollama-provider');
   app.use('/api/ollama', ollamaProvider);
   
+  // API для улучшенного ChatFree провайдера
+  const chatFreeImproved = require('./chatfree-improved');
+  app.use('/api/chatfree', chatFreeImproved);
+  
   // Проверка работы Python провайдера при запуске
   (async () => {
     try {
@@ -299,14 +303,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
           actualProvider = 'AItianhu';
         }
       } else if (provider === 'chatfree') {
-        // Используем наш локальный провайдер для ChatFree
+        // Используем улучшенный провайдер для ChatFree с системой обхода блокировок
         try {
-          const chatFreeProvider = require('./simple-chatfree');
-          const chatFreeResponse = await chatFreeProvider.getChatFreeResponse(message);
+          const chatFreeImproved = require('./chatfree-improved');
+          console.log(`Пробуем использовать улучшенную версию ChatFree...`);
+          
+          const chatFreeResponse = await chatFreeImproved.getChatFreeResponse(message, {
+            systemPrompt: "Вы полезный ассистент. Отвечайте точно и по существу, используя дружелюбный тон."
+          });
           
           if (chatFreeResponse.success) {
+            console.log(`✅ Успешно получен ответ от улучшенного ChatFree провайдера`);
             return chatFreeResponse;
           } else {
+            // Пробуем использовать простую версию как запасной вариант
+            const simpleChatFree = require('./simple-chatfree');
+            const simpleResponse = await simpleChatFree.getChatFreeResponse(message);
+            
+            if (simpleResponse.success) {
+              console.log(`✅ Успешно получен ответ от простого ChatFree провайдера`);
+              return simpleResponse;
+            }
+            
             throw new Error(chatFreeResponse.error || 'Ошибка ChatFree');
           }
         } catch (error) {
