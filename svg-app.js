@@ -1,4 +1,34 @@
-<!DOCTYPE html>
+// Импортируем необходимые модули
+import express from 'express';
+import cors from 'cors';
+import fetch from 'node-fetch';
+import potrace from 'potrace';
+import sharp from 'sharp';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+
+// Настройка Express
+const app = express();
+const PORT = 3100; // Используем другой порт для отдельного приложения
+
+// Настройка пути для ES модулей
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Настройка промежуточного ПО (middleware)
+app.use(express.json());
+app.use(cors());
+
+// Создаем директории
+const tempDir = path.join(__dirname, 'temp');
+const publicDir = path.join(__dirname, 'public');
+
+if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir);
+if (!fs.existsSync(publicDir)) fs.mkdirSync(publicDir);
+
+// HTML для генератора SVG
+const htmlPage = `<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -318,7 +348,7 @@
                                 'Content-Type': 'application/json'
                             },
                             body: JSON.stringify({
-                                message: `Опиши подробно, как может выглядеть изображение по запросу: "${prompt}". Опиши визуальные элементы, стиль, цвета и детали.`,
+                                message: \`Опиши подробно, как может выглядеть изображение по запросу: "\${prompt}". Опиши визуальные элементы, стиль, цвета и детали.\`,
                                 provider: 'Qwen_Qwen_2_5',
                                 max_retries: 2
                             })
@@ -359,4 +389,142 @@
         });
     </script>
 </body>
-</html>
+</html>`;
+
+// Сохраняем HTML файл
+fs.writeFileSync(path.join(publicDir, 'index.html'), htmlPage);
+
+// Функция для генерации изображения через Picsum Photos API
+async function generateImage(prompt) {
+  console.log(`Генерация изображения для запроса: "${prompt}"`);
+  
+  try {
+    // Создаем хеш из промпта для получения стабильных, но разных изображений
+    const seed = prompt.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % 1000;
+    
+    // Используем Picsum Photos API для получения случайных изображений
+    const imageUrl = `https://picsum.photos/seed/${seed}/800/600`;
+    console.log(`Запрос изображения по URL: ${imageUrl}`);
+    
+    const response = await fetch(imageUrl);
+    
+    if (!response.ok) {
+      throw new Error(`Ошибка при загрузке изображения: ${response.status}`);
+    }
+    
+    // Получаем изображение как буфер
+    const buffer = await response.arrayBuffer();
+    return Buffer.from(buffer);
+  } catch (error) {
+    console.error('Ошибка при генерации изображения:', error);
+    
+    // Создаем градиент с помощью Sharp, если API недоступно
+    try {
+      console.log('Создание градиента для резервного изображения...');
+      
+      // Выбираем цвет на основе промпта
+      const seed = prompt.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+      const r = (seed * 123) % 255;
+      const g = (seed * 45) % 255;
+      const b = (seed * 67) % 255;
+      
+      // Создаем простое изображение с градиентом
+      return await sharp({
+        create: {
+          width: 800,
+          height: 600,
+          channels: 3,
+          background: { r, g, b }
+        }
+      })
+      .png()
+      .toBuffer();
+    } catch (sharpError) {
+      console.error('Ошибка при создании резервного изображения:', sharpError);
+      throw error;
+    }
+  }
+}
+
+// Функция для конвертации PNG в SVG с использованием Potrace
+function convertToSvg(imageBuffer) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      // Создаем временный файл для трассировки
+      const tempPngPath = path.join(tempDir, `temp_${Date.now()}.png`);
+      
+      // Оптимизируем изображение с помощью Sharp перед трассировкой
+      await sharp(imageBuffer)
+        .grayscale() // Преобразуем в черно-белое для лучшей трассировки
+        .toFile(tempPngPath);
+      
+      // Настраиваем параметры трассировки
+      const params = {
+        threshold: 128, // Пороговое значение для бинаризации
+        turdSize: 2,    // Минимальный размер шумового объекта
+        optTolerance: 0.2, // Допуск оптимизации
+        alphaMax: 1,    // Максимальный угол поворота
+        color: '#000000' // Цвет контура
+      };
+      
+      // Выполняем трассировку изображения
+      potrace.trace(tempPngPath, params, (err, svg) => {
+        // Удаляем временный файл после трассировки
+        fs.unlink(tempPngPath, () => {});
+        
+        if (err) {
+          console.error('Ошибка при трассировке:', err);
+          return reject(err);
+        }
+        
+        resolve(svg);
+      });
+    } catch (error) {
+      console.error('Ошибка при конвертации в SVG:', error);
+      reject(error);
+    }
+  });
+}
+
+// Маршрут для статических файлов
+app.use(express.static(publicDir));
+
+// Маршрут для главной страницы
+app.get('/', (req, res) => {
+  res.sendFile(path.join(publicDir, 'index.html'));
+});
+
+// Маршрут для генерации SVG
+app.post('/generate', async (req, res) => {
+  try {
+    const { prompt } = req.body;
+    
+    if (!prompt) {
+      return res.status(400).json({ error: 'Отсутствует параметр prompt' });
+    }
+    
+    console.log(`Получен запрос на генерацию SVG: "${prompt}"`);
+    
+    // Генерируем изображение
+    const imageBuffer = await generateImage(prompt);
+    
+    // Конвертируем в SVG
+    const svg = await convertToSvg(imageBuffer);
+    
+    // Отправляем SVG в ответе
+    res.json({ svg });
+    
+  } catch (error) {
+    console.error('Ошибка при обработке запроса:', error);
+    res.status(500).json({ 
+      error: 'Произошла ошибка при обработке запроса',
+      message: error.message
+    });
+  }
+});
+
+// Запускаем сервер
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`SVG Generator запущен на порту ${PORT}`);
+  console.log(`Откройте http://localhost:${PORT} в браузере`);
+});
