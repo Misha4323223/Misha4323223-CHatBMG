@@ -9,7 +9,7 @@ import { fileURLToPath } from 'url';
 
 // Настройка Express
 const app = express();
-const PORT = 3100;
+const PORT = 5000;
 
 // Настройка пути для ES модулей
 const __filename = fileURLToPath(import.meta.url);

@@ -10,7 +10,7 @@ import { fileURLToPath } from 'url';
 
 // Настройка Express
 const app = express();
-const PORT = 3100; // Используем другой порт для отдельного приложения
+const PORT = 5000; // Обновлено для работы в Replit
 
 // Настройка пути для ES модулей
 const __filename = fileURLToPath(import.meta.url);
