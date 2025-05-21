@@ -33,41 +33,86 @@ async function getClaudeResponse(message, options = {}) {
   const systemPrompt = options.systemPrompt || CLAUDE_CONFIG.systemPrompt[promptType];
   
   try {
-    console.log(`Claude: Отправка запроса к модели ${model}...`);
+    console.log(`Claude: Отправка прямого запроса к модели ${model}...`);
     
-    // Формируем запрос к Python G4F с провайдером Anthropic
-    const fullMessage = {
-      message,
-      systemPrompt
-    };
+    // Используем прямой вызов API без автоматического переключения
+    const response = await fetch('http://localhost:5004/python/direct', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message,
+        provider: 'Anthropic',  // Именно так называется провайдер в g4f
+        systemPrompt,
+        timeout: 30000  // Увеличенный таймаут для Claude
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
     
-    // Получаем ответ от Python G4F
-    const response = await pythonProviderRoutes.callPythonAI(
-      JSON.stringify(fullMessage), 
-      'Anthropic'
-    );
-    
-    if (!response) {
-      throw new Error('Python G4F не вернул ответ от Anthropic');
+    // Проверяем ответ от сервера
+    if (data.error) {
+      throw new Error(data.error);
     }
     
-    console.log(`Claude: Успешно получен ответ от модели ${model}`);
+    if (!data.response || data.response.trim() === '') {
+      throw new Error('Claude вернул пустой ответ');
+    }
+    
+    console.log(`Claude: Успешно получен прямой ответ от модели ${model}`);
     
     return {
       success: true,
-      response,
+      response: data.response,
       provider: 'Claude',
-      model
+      model: model
     };
   } catch (error) {
     console.error(`Claude Error: ${error.message}`);
     
-    return {
-      success: false,
-      error: `Ошибка Claude: ${error.message}`,
-      provider: 'Claude',
-      model
-    };
+    // В случае ошибки пробуем использовать обычный метод с автопереключением
+    try {
+      console.log(`Claude: Попытка получить ответ через обычный API после ошибки...`);
+      
+      // Формируем запрос к Python G4F с провайдером Anthropic
+      const fullMessage = {
+        message,
+        systemPrompt
+      };
+      
+      // Получаем ответ от Python G4F с автопереключением
+      const response = await pythonProviderRoutes.callPythonAI(
+        JSON.stringify(fullMessage), 
+        'Anthropic'
+      );
+      
+      if (!response) {
+        throw new Error('Python G4F не вернул ответ');
+      }
+      
+      console.log(`Claude: Успешно получен ответ через обычный API`);
+      
+      return {
+        success: true,
+        response,
+        provider: 'Claude (fallback)',
+        model
+      };
+    } catch (fallbackError) {
+      console.error(`Claude Fallback Error: ${fallbackError.message}`);
+      
+      return {
+        success: false,
+        error: `Ошибка Claude: ${error.message}`,
+        provider: 'Claude',
+        model
+      };
+    }
   }
 }
 
