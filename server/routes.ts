@@ -108,6 +108,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.sendFile('booomerangs-stable.html', { root: '.' });
   });
   
+  // BOOOMERANGS с Flask-стримингом (самая надежная версия)
+  app.get('/flask', (req, res) => {
+    res.sendFile('booomerangs-flask-stream.html', { root: '.' });
+  });
+  
   // API для работы с G4F провайдерами
   app.use('/api/g4f', g4fHandlers);
   
@@ -120,6 +125,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // API для стриминга от провайдеров, поддерживающих stream=True
   const streamingRoutes = require('./streaming-routes');
   app.use('/api/streaming', streamingRoutes);
+  
+  // API для Flask-стриминга (надежный вариант)
+  const flaskStreamBridge = require('./stream-flask-bridge');
+  app.use('/api/flask-stream', flaskStreamBridge);
   
   // Проверка работы Python провайдера при запуске
   (async () => {
