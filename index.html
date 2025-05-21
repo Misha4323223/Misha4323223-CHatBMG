@@ -1,193 +1,253 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI Бесплатные Сервисы</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BOOOMERANGS: Генерация + Превью</title>
   <style>
-    :root {
-      --primary-color: #4a56e2;
-      --primary-light: #6c63ff;
-      --primary-dark: #3a46c2;
-      --background-color: #f9fafc;
-      --card-bg: #ffffff;
-      --text-color: #333;
-      --border-color: #ddd;
-      --shadow-color: rgba(0, 0, 0, 0.1);
-    }
-    
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --primary-color: #5e68fa;
-        --primary-light: #8c85ff;
-        --primary-dark: #4a54e6;
-        --background-color: #1a1a2e;
-        --card-bg: #252538;
-        --text-color: #f0f0f0;
-        --border-color: #40405c;
-        --shadow-color: rgba(0, 0, 0, 0.3);
-      }
-    }
-    
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-    
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      line-height: 1.6;
-      color: var(--text-color);
-      background-color: var(--background-color);
-      padding: 20px;
-      max-width: 1000px;
-      margin: 0 auto;
-      min-height: 100vh;
-    }
-    
-    header {
+      font-family: sans-serif;
+      background: #111;
+      color: white;
       text-align: center;
-      margin-bottom: 40px;
+      padding: 2rem;
+      max-width: 800px;
+      margin: 0 auto;
     }
-    
-    h1 {
+    header {
       font-size: 2.5rem;
-      margin-bottom: 0.5rem;
-      background: linear-gradient(45deg, var(--primary-color), var(--primary-light));
+      margin-bottom: 1.5rem;
+      background: linear-gradient(45deg, #ff4b2b, #ff416c);
       -webkit-background-clip: text;
       background-clip: text;
       color: transparent;
-      display: inline-block;
+      font-weight: bold;
     }
-    
     .subtitle {
       opacity: 0.8;
       margin-bottom: 20px;
-      font-size: 1.2rem;
     }
-    
-    .card-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 20px;
+    img {
+      max-width: 100%;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(255, 75, 43, 0.3);
+      margin-top: 1.5rem;
     }
-    
-    .card {
-      background-color: var(--card-bg);
-      border-radius: 12px;
-      box-shadow: 0 4px 12px var(--shadow-color);
-      padding: 25px;
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-      text-decoration: none;
-      color: var(--text-color);
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-    }
-    
-    .card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 8px 24px var(--shadow-color);
-    }
-    
-    .card-title {
-      font-size: 1.5rem;
-      margin-bottom: 15px;
-      color: var(--primary-color);
-    }
-    
-    .card-description {
-      margin-bottom: 20px;
-      flex-grow: 1;
-    }
-    
-    .card-footer {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-top: auto;
-    }
-    
-    .card-tag {
-      background-color: rgba(106, 90, 205, 0.1);
-      color: var(--primary-color);
-      padding: 6px 12px;
-      border-radius: 20px;
-      font-size: 0.85rem;
-    }
-    
-    .card-arrow {
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      background-color: var(--primary-color);
-      display: flex;
-      align-items: center;
-      justify-content: center;
+    button {
+      padding: 12px 25px;
+      border: none;
+      background: linear-gradient(45deg, #ff4b2b, #ff416c);
       color: white;
-      font-size: 12px;
+      font-size: 1rem;
+      cursor: pointer;
+      border-radius: 8px;
+      font-weight: bold;
+      margin: 10px 5px;
     }
-    
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(255, 75, 43, 0.4);
+      transition: all 0.3s ease;
+    }
+    .input-area {
+      margin: 20px 0;
+    }
+    textarea {
+      width: 100%;
+      padding: 12px;
+      background: #222;
+      border: 1px solid #444;
+      color: white;
+      border-radius: 8px;
+      min-height: 80px;
+      font-family: inherit;
+      margin-bottom: 10px;
+    }
+    .loading {
+      display: none;
+      margin: 20px auto;
+    }
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(255, 75, 43, 0.2);
+      border-top-color: #ff4b2b;
+      border-radius: 50%;
+      animation: spin 1s infinite linear;
+      margin: 0 auto;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .svg-container {
+      margin-top: 20px;
+      padding: 15px;
+      background-color: #222;
+      border-radius: 10px;
+      display: none;
+    }
     footer {
-      margin-top: 60px;
-      text-align: center;
-      opacity: 0.8;
-      font-size: 0.9rem;
-    }
-    
-    @media (max-width: 768px) {
-      h1 {
-        font-size: 2rem;
-      }
-      
-      .subtitle {
-        font-size: 1rem;
-      }
-      
-      .card-grid {
-        grid-template-columns: 1fr;
-      }
+      margin-top: 40px;
+      font-size: 0.8rem;
+      opacity: 0.7;
     }
   </style>
 </head>
 <body>
-  <header>
-    <h1>AI Бесплатные Сервисы</h1>
-    <p class="subtitle">Доступ к AI моделям и генераторам изображений без API ключей</p>
-  </header>
+  <header>🚀 BOOOMERANGS</header>
+  <p class="subtitle">Генерация изображений и конвертация в SVG без API ключей</p>
+
+  <div class="input-area">
+    <textarea id="prompt" placeholder="Опишите изображение, которое хотите создать (например: закат над горами)"></textarea>
+  </div>
+
+  <button onclick="generateImage()">Сгенерировать изображение</button>
   
-  <main class="card-grid">
-    <a href="/g4f-chat" class="card">
-      <h2 class="card-title">G4F Чат</h2>
-      <p class="card-description">Общайтесь с AI моделями через бесплатные провайдеры. Поддерживаются Qwen, Dify.AI и другие модели без необходимости API ключей.</p>
-      <div class="card-footer">
-        <span class="card-tag">Текстовый AI</span>
-        <span class="card-arrow">→</span>
-      </div>
-    </a>
-    
-    <a href="/demo" class="card">
-      <h2 class="card-title">Генератор Изображений</h2>
-      <p class="card-description">Создавайте изображения по текстовому описанию с использованием бесплатных провайдеров и конвертируйте их в SVG.</p>
-      <div class="card-footer">
-        <span class="card-tag">Генерация изображений</span>
-        <span class="card-arrow">→</span>
-      </div>
-    </a>
-    
-    <a href="/test" class="card">
-      <h2 class="card-title">Тестовая страница</h2>
-      <p class="card-description">Страница для тестирования различных возможностей платформы и экспериментов с новыми функциями.</p>
-      <div class="card-footer">
-        <span class="card-tag">Тестирование</span>
-        <span class="card-arrow">→</span>
-      </div>
-    </a>
-  </main>
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <p>Генерация изображения...</p>
+  </div>
+
+  <div>
+    <img id="preview" alt="Превью появится здесь" style="display:none;">
+  </div>
   
+  <div id="action-buttons" style="display:none;">
+    <button onclick="convertToSVG()">Конвертировать в SVG</button>
+    <button onclick="downloadImage()">Скачать изображение</button>
+  </div>
+  
+  <div class="svg-container" id="svg-container"></div>
+
   <footer>
-    <p>© 2024 AI Бесплатные Сервисы | Все функции доступны без API ключей</p>
+    &copy; 2024 BOOOMERANGS - Бесплатный сервис генерации изображений
   </footer>
+
+  <script>
+    // Глобальные переменные
+    let currentImageUrl = '';
+    let currentSvgData = '';
+    
+    // Элементы страницы
+    const previewImage = document.getElementById('preview');
+    const promptInput = document.getElementById('prompt');
+    const actionButtons = document.getElementById('action-buttons');
+    const svgContainer = document.getElementById('svg-container');
+    const loadingIndicator = document.getElementById('loading');
+    
+    // Функция генерации изображения
+    async function generateImage() {
+      const prompt = promptInput.value.trim() || 'landscape';
+      const encodedPrompt = encodeURIComponent(prompt);
+      
+      // Скрываем предыдущие результаты
+      previewImage.style.display = 'none';
+      actionButtons.style.display = 'none';
+      svgContainer.style.display = 'none';
+      
+      // Показываем индикатор загрузки
+      loadingIndicator.style.display = 'block';
+      
+      try {
+        // Для простоты напрямую используем Unsplash API
+        const width = 800;
+        const height = 600;
+        currentImageUrl = `https://source.unsplash.com/random/${width}x${height}/?${encodedPrompt}`;
+        
+        // Загружаем и отображаем изображение
+        previewImage.onload = function() {
+          previewImage.style.display = 'block';
+          actionButtons.style.display = 'block';
+          loadingIndicator.style.display = 'none';
+        };
+        
+        previewImage.onerror = function() {
+          alert('Ошибка при загрузке изображения');
+          loadingIndicator.style.display = 'none';
+        };
+        
+        // Добавляем случайный параметр, чтобы избежать кэширования
+        previewImage.src = `${currentImageUrl}&_=${Date.now()}`;
+        
+      } catch (error) {
+        alert('Ошибка при генерации изображения');
+        loadingIndicator.style.display = 'none';
+      }
+    }
+    
+    // Функция конвертации в SVG
+    function convertToSVG() {
+      if (!currentImageUrl) return;
+      
+      // Создаем SVG с оригинальным изображением и логотипом
+      const svgData = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="800" height="600">
+          <defs>
+            <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#ff4b2b;stop-opacity:1" />
+              <stop offset="100%" style="stop-color:#ff416c;stop-opacity:1" />
+            </linearGradient>
+            <filter id="posterize">
+              <feComponentTransfer>
+                <feFuncR type="discrete" tableValues="0 0.25 0.5 0.75 1" />
+                <feFuncG type="discrete" tableValues="0 0.25 0.5 0.75 1" />
+                <feFuncB type="discrete" tableValues="0 0.25 0.5 0.75 1" />
+              </feComponentTransfer>
+            </filter>
+          </defs>
+          <rect width="800" height="600" fill="url(#grad)" opacity="0.2" />
+          <image href="${currentImageUrl}" width="800" height="600" filter="url(#posterize)" />
+          <rect x="0" y="550" width="800" height="50" fill="rgba(0,0,0,0.7)" />
+          <text x="400" y="585" font-family="Arial" font-size="24" text-anchor="middle" fill="#ff4b2b" font-weight="bold">
+            BOOOMERANGS
+          </text>
+        </svg>
+      `;
+      
+      // Сохраняем данные SVG
+      currentSvgData = svgData;
+      
+      // Отображаем SVG
+      svgContainer.innerHTML = svgData;
+      svgContainer.style.display = 'block';
+      
+      // Добавляем кнопку для скачивания SVG
+      const downloadButton = document.createElement('button');
+      downloadButton.textContent = 'Скачать SVG';
+      downloadButton.onclick = downloadSVG;
+      svgContainer.appendChild(downloadButton);
+    }
+    
+    // Функция скачивания изображения
+    function downloadImage() {
+      if (!currentImageUrl) return;
+      
+      // Создаем ссылку для скачивания
+      const link = document.createElement('a');
+      link.href = currentImageUrl;
+      link.download = 'booomerangs-image.jpg';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+    
+    // Функция скачивания SVG
+    function downloadSVG() {
+      if (!currentSvgData) return;
+      
+      // Создаем Blob из SVG данных
+      const blob = new Blob([currentSvgData], { type: 'image/svg+xml' });
+      const url = URL.createObjectURL(blob);
+      
+      // Создаем ссылку для скачивания
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'booomerangs-image.svg';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
+  </script>
 </body>
 </html>
