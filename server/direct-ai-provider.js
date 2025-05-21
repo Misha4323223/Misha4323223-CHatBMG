@@ -28,7 +28,60 @@ const AI_PROVIDERS = {
     }
   },
   
-  // Интеграция с Bing через Устар
+  // Интеграция с Perplexity AI - дает доступ к текущей информации из интернета
+  PERPLEXITY: {
+    name: 'Perplexity',
+    url: 'https://api.perplexity.ai/chat/completions',
+    needsKey: true,
+    headers: (apiKey) => ({
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`
+    }),
+    prepareRequest: (message) => {
+      return {
+        model: "llama-3.1-sonar-small-128k-online",
+        messages: [
+          {
+            role: "system",
+            content: "Отвечай точно и кратко, используя актуальную информацию из интернета."
+          },
+          {
+            role: "user",
+            content: message
+          }
+        ],
+        temperature: 0.2,
+        max_tokens: 1000,
+        top_p: 0.9,
+        search_domain_filter: [],
+        return_images: false,
+        return_related_questions: false,
+        search_recency_filter: "month",
+        top_k: 0,
+        stream: false,
+        presence_penalty: 0,
+        frequency_penalty: 1
+      };
+    },
+    extractResponse: async (response) => {
+      const jsonResponse = await response.json();
+      if (jsonResponse && jsonResponse.choices && jsonResponse.choices.length > 0) {
+        const content = jsonResponse.choices[0].message.content;
+        const sources = jsonResponse.citations || [];
+        
+        // Добавляем источники, если они есть
+        if (sources && sources.length > 0) {
+          const sourcesText = "\n\n**Источники:**\n" + sources.slice(0, 3).map((src, i) => `${i+1}. ${src}`).join('\n');
+          return content + sourcesText;
+        }
+        
+        return content;
+      }
+      throw new Error('Некорректный ответ от Perplexity');
+    }
+  },
+  
+  // Интеграция с Bing 
   BING: {
     name: 'Bing',
     url: 'https://www.bing.com/turing/conversation/create',
@@ -149,7 +202,7 @@ async function getProviderResponseWithTimeout(providerKey, message, timeoutMs = 
 }
 
 // Функция для попытки получения ответа от провайдера с обработкой ошибок
-async function tryProvider(providerKey, message) {
+async function tryProvider(providerKey, message, options = {}) {
   // Проверка существования провайдера
   if (!AI_PROVIDERS[providerKey]) {
     console.log(`Провайдер ${providerKey} не найден`);
@@ -159,14 +212,32 @@ async function tryProvider(providerKey, message) {
   const provider = AI_PROVIDERS[providerKey];
   console.log(`Попытка использования провайдера ${provider.name}...`);
   
+  // Проверка наличия API ключа для провайдеров, которые его требуют
+  if (provider.needsKey) {
+    const apiKey = options.apiKey || process.env.PERPLEXITY_API_KEY;
+    if (!apiKey) {
+      console.log(`❌ ${provider.name} требует API ключ, но он не предоставлен`);
+      return null;
+    }
+  }
+  
   try {
     // Подготовка запроса
     const requestData = provider.prepareRequest(message);
     
+    // Подготовка заголовков с учетом API ключа
+    let headers;
+    if (provider.needsKey && typeof provider.headers === 'function') {
+      const apiKey = options.apiKey || process.env.PERPLEXITY_API_KEY;
+      headers = provider.headers(apiKey);
+    } else {
+      headers = provider.headers || { 'Content-Type': 'application/json' };
+    }
+    
     // Выполнение запроса
     const response = await fetch(provider.url, {
       method: 'POST',
-      headers: provider.headers || { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify(requestData)
     });
     
@@ -188,7 +259,7 @@ async function tryProvider(providerKey, message) {
     return {
       response: responseText,
       provider: provider.name,
-      model: 'external-api'
+      model: provider.name === 'Perplexity' ? 'llama-3.1-sonar' : 'external-api'
     };
   } catch (error) {
     console.error(`❌ ${provider.name} не отвечает:`, error.message);
@@ -233,16 +304,22 @@ async function getChatResponse(message, options = {}) {
   // Если указан конкретный провайдер, используем только его
   if (specificProvider && AI_PROVIDERS[specificProvider]) {
     try {
-      return await getProviderResponseWithTimeout(specificProvider, message, timeout);
+      // Используем tryProvider вместо getProviderResponseWithTimeout для надежности
+      const result = await Promise.race([
+        tryProvider(specificProvider, message),
+        new Promise((resolve) => setTimeout(() => resolve(null), timeout))
+      ]);
+      
+      if (result) {
+        console.log(`Успешно получен ответ от указанного провайдера ${specificProvider}`);
+        return result;
+      }
+      
+      console.log(`Указанный провайдер ${specificProvider} не ответил в течение ${timeout}мс`);
+      // Продолжаем выполнение и пробуем другие провайдеры
     } catch (error) {
       console.log(`Указанный провайдер ${specificProvider} недоступен:`, error.message);
-      // В случае ошибки используем демо-режим
-      return {
-        response: getDemoResponse(message),
-        provider: 'BOOOMERANGS-Demo',
-        model: 'demo-mode',
-        error: error.message
-      };
+      // Продолжаем выполнение и пробуем другие провайдеры
     }
   }
   
@@ -250,28 +327,31 @@ async function getChatResponse(message, options = {}) {
   const providerPriority = ['YOU', 'DEMO'];
   
   // Перебираем все провайдеры до первого успешного
-  let lastError = null;
-  
   for (const providerKey of providerPriority) {
-    try {
-      console.log(`Пробуем получить ответ от провайдера ${providerKey}...`);
-      const result = await getProviderResponseWithTimeout(providerKey, message, timeout);
-      console.log(`Успешно получен ответ от ${result.provider}`);
+    console.log(`Пробуем получить ответ от провайдера ${providerKey}...`);
+    
+    // Используем tryProvider с таймаутом
+    const result = await Promise.race([
+      tryProvider(providerKey, message),
+      new Promise((resolve) => setTimeout(() => resolve(null), timeout))
+    ]);
+    
+    if (result) {
+      console.log(`✅ Успешно получен ответ от ${result.provider}`);
       return result;
-    } catch (error) {
-      console.error(`Ошибка при использовании провайдера ${providerKey}:`, error.message);
-      lastError = error;
-      // Продолжаем со следующим провайдером
     }
+    
+    console.log(`❌ Провайдер ${providerKey} не ответил в течение ${timeout}мс`);
+    // Продолжаем со следующим провайдером
   }
   
   // Если все провайдеры не ответили, возвращаем демо-ответ
-  console.log('Все провайдеры недоступны, используем демо-режим');
+  console.log('⚠️ Все провайдеры недоступны, используем демо-режим');
   return {
     response: getDemoResponse(message),
     provider: 'BOOOMERANGS-Demo',
     model: 'demo-mode',
-    error: lastError ? lastError.message : 'Все провайдеры недоступны'
+    error: 'Все провайдеры недоступны или не ответили в срок'
   };
 }
 

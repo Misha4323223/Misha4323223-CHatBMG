@@ -39,13 +39,14 @@ const KEY_REQUIRED_PROVIDERS = [
 ];
 
 // Порядок провайдеров от самых стабильных к менее стабильным
-// Обновлено по рекомендации пользователя
+// Обновлено по рекомендации пользователя - только бесплатные
 const PROVIDER_PRIORITY = [
   PROVIDERS.YOU,          // You.com (стабильный, но медленный)
-  PROVIDERS.DEEPAI,       // DeepAI (если доступен API-ключ)
   PROVIDERS.AICHAT,       // Быстрый, но нестабильный
-  PROVIDERS.CHATGPT,      // Если есть access_token
-  // Временно отключенные провайдеры:
+  // Провайдеры, требующие ключи (временно отключены):
+  // PROVIDERS.DEEPAI,    // DeepAI (требуется API-ключ)
+  // PROVIDERS.CHATGPT,   // Требуется access_token
+  // Временно недоступные провайдеры:
   // PROVIDERS.PHIND,     // Недоступен из Replit
   // PROVIDERS.LIAOBOTS,  // Недоступен из Replit
   // PROVIDERS.QWEN,      // Нестабильный

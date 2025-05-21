@@ -88,7 +88,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // API с прямым доступом к AI провайдерам (более стабильный вариант)
   app.use('/api/direct-ai', directAiRoutes);
   
-  // API для работы с BOOOMERANGS AI интеграцией
+  // API для работы с BOOOMERANGS AI интеграцией - упрощенная версия
   app.post('/api/ai/chat', async (req, res) => {
     try {
       const { message, provider } = req.body;
@@ -102,66 +102,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`Запрос к AI: "${message.substring(0, 50)}${message.length > 50 ? '...' : ''}"`);
       
-      // Используем нашу прямую интеграцию с провайдерами
-      try {
-        // Направляем запрос к прямой интеграции с провайдерами
-        const directResponse = await fetch('http://localhost:5000/api/direct-ai/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            message,
-            provider,
-            timeout: 8000 // Меньший таймаут для быстрого ответа
-          })
-        });
-        
-        if (directResponse.ok) {
-          const result = await directResponse.json();
-          return res.json({
-            success: true,
-            response: result.response,
-            provider: result.provider,
-            model: result.model
-          });
-        }
-      } catch (directError) {
-        console.error('Ошибка при обращении к прямым провайдерам:', directError);
-        
-        // Fallback на G4F, если прямые провайдеры не работают
-        try {
-          const g4fResponse = await fetch('http://localhost:5000/api/g4f/chat', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-              message,
-              forceDemo: true // Используем принудительно демо-режим для быстрого ответа
-            })
-          });
-          
-          if (g4fResponse.ok) {
-            const result = await g4fResponse.json();
-            return res.json({
-              success: true,
-              response: result.response,
-              provider: result.provider || 'g4f',
-              model: result.model || 'unknown'
-            });
-          }
-        } catch (g4fError) {
-          console.error('Ошибка при обращении к G4F API:', g4fError);
-          // Продолжаем выполнение и используем встроенные демо-ответы
-        }
-      }
-      
-      // Если все провайдеры недоступны, используем встроенные демо-ответы
+      // Получаем прямую интеграцию с AI провайдерами
       const directAiProvider = require('./direct-ai-provider');
-      const demoResponse = directAiProvider.getDemoResponse(message);
       
+      // Вызываем обработчик запросов AI с таймаутом 10 секунд
+      const result = await directAiProvider.getChatResponse(message, { 
+        specificProvider: provider,
+        timeout: 10000
+      });
+      
+      // Возвращаем результат запроса
       return res.json({
         success: true,
-        response: demoResponse,
-        provider: 'BOOOMERANGS-Demo',
-        model: 'demo-mode'
+        response: result.response,
+        provider: result.provider,
+        model: result.model
       });
     } catch (error) {
       console.error('Ошибка при обработке запроса:', error);
