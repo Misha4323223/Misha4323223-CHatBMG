@@ -90,7 +90,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/api/direct-ai', directAiRoutes);
   
   // API с Python-версией G4F
-  app.use('/api/python-g4f', pythonProviderRoutes);
+  app.use('/api/python', pythonProviderRoutes);
   
   // API для работы с BOOOMERANGS AI интеграцией - супербыстрый ответ
   app.post('/api/ai/chat', async (req, res) => {
@@ -136,11 +136,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           // Создаем обработчик запроса с таймаутом
           try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), timeout);
+            
             const fetchPromise = fetch(selectedProvider.url, {
               method: 'POST',
               headers: selectedProvider.headers || { 'Content-Type': 'application/json' },
               body: JSON.stringify(requestData),
-              timeout: timeout // Добавляем таймаут
+              signal: controller.signal
             });
             
             // Запускаем запрос с ограничением по времени
@@ -166,7 +169,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             // Пытаемся получить ответ от провайдера
             fetchWithTimeout
-              .then(async (response) => {
+              .then(async (response: Response) => {
+                // Очищаем таймер для AbortController
+                clearTimeout(timeoutId);
+                
                 // Если уже отправили демо-ответ из-за таймаута, не выполняем дальнейшую обработку
                 if (responseTimedOut) return;
                 
