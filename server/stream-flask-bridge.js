@@ -98,6 +98,7 @@ router.post('/chat', async (req, res) => {
       'Connection': 'keep-alive'
     });
     
+    console.log(`Пересылаем запрос на Flask-сервер: ${JSON.stringify(req.body)}`);
     // Создаем запрос к Flask серверу
     const flaskReq = http.request({
       host: 'localhost',

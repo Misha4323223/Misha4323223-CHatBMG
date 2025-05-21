@@ -69,7 +69,7 @@ def stream_chat():
     try:
         data = request.get_json()
         message = data.get('message', '')
-        provider_name = data.get('provider', 'Qwen_Max')
+        provider_name = data.get('provider', 'Qwen_Qwen_2_5_Max')
         timeout = data.get('timeout', 20000) / 1000  # Переводим миллисекунды в секунды
         
         if not message:

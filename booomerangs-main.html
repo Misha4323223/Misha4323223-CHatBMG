@@ -736,7 +736,7 @@
         if (useStreaming) {
           console.log(`Отправка запроса к провайдеру ${selectedModel} через стриминг API`);
           // Используем стриминг через Flask-сервер (самый надежный вариант)
-          const response = await fetch('/api/flask-stream', {
+          const response = await fetch('/api/flask-stream/chat', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
