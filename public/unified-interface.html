@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BOOOMERANGS - Универсальный AI-интерфейс</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    }
+    
+    :root {
+      --primary: #3b82f6;
+      --primary-dark: #2563eb;
+      --primary-light: #60a5fa;
+      --secondary: #6366f1;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-300: #d1d5db;
+      --gray-400: #9ca3af;
+      --gray-500: #6b7280;
+      --gray-600: #4b5563;
+      --gray-700: #374151;
+      --gray-800: #1f2937;
+      --gray-900: #111827;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --error: #ef4444;
+      --gradient-start: #3b82f6;
+      --gradient-end: #6366f1;
+    }
+    
+    body {
+      min-height: 100vh;
+      background-color: var(--gray-50);
+      color: var(--gray-800);
+    }
+    
+    .app-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--gray-200);
+    }
+    
+    .logo-container {
+      display: flex;
+      align-items: center;
+    }
+    
+    .logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: white;
+      border: 3px solid var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: bold;
+      color: var(--primary);
+      box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
+      margin-right: 12px;
+    }
+    
+    .brand-name {
+      font-weight: bold;
+      font-size: 24px;
+      background: linear-gradient(to right, var(--gradient-start), var(--gradient-end));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      color: transparent;
+    }
+    
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    
+    .tab-button {
+      padding: 10px 16px;
+      background-color: white;
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      color: var(--gray-600);
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .tab-button:hover {
+      background-color: var(--gray-100);
+    }
+    
+    .tab-button.active {
+      background: linear-gradient(to right, var(--gradient-start), var(--gradient-end));
+      color: white;
+      border-color: transparent;
+      box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
+    }
+    
+    .tab-content {
+      display: none;
+      flex-grow: 1;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      overflow: hidden;
+    }
+    
+    .tab-content.active {
+      display: flex;
+      flex-direction: column;
+      animation: fadeIn 0.3s ease-out;
+    }
+    
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    /* Стили для чата */
+    .chat-container {
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
+    }
+    
+    .chat-header {
+      padding: 16px;
+      border-bottom: 1px solid var(--gray-200);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .model-selector {
+      position: relative;
+    }
+    
+    .model-selector select {
+      appearance: none;
+      background-color: white;
+      border: 1px solid var(--gray-300);
+      border-radius: 6px;
+      padding: 8px 36px 8px 12px;
+      font-size: 14px;
+      line-height: 1.5;
+      color: var(--gray-700);
+      box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      cursor: pointer;
+    }
+    
+    .model-selector::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      right: 12px;
+      transform: translateY(-50%);
+      width: 0;
+      height: 0;
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-top: 5px solid var(--gray-500);
+      pointer-events: none;
+    }
+    
+    .messages-area {
+      flex-grow: 1;
+      overflow-y: auto;
+      padding: 20px;
+    }
+    
+    .welcome-message {
+      text-align: center;
+      padding: 40px 20px;
+      max-width: 600px;
+      margin: 40px auto;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+    }
+    
+    .welcome-logo {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: white;
+      border: 4px solid var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      font-weight: bold;
+      color: var(--primary);
+      box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.3);
+      margin: 0 auto 20px;
+    }
+    
+    .welcome-title {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 12px;
+      background: linear-gradient(to right, var(--gradient-start), var(--gradient-end));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      color: transparent;
+    }
+    
+    .welcome-text {
+      color: var(--gray-500);
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+    
+    .message-row {
+      display: flex;
+      margin-bottom: 20px;
+    }
+    
+    .message-row.user {
+      justify-content: flex-end;
+    }
+    
+    .message-container {
+      max-width: 70%;
+    }
+    
+    .user .message-container {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+    }
+    
+    .message-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      color: white;
+      margin-right: 12px;
+      flex-shrink: 0;
+    }
+    
+    .message-avatar.ai {
+      background: linear-gradient(135deg, var(--secondary), var(--primary));
+      box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.3);
+    }
+    
+    .message-bubble {
+      padding: 12px 16px;
+      border-radius: 16px;
+      position: relative;
+      word-wrap: break-word;
+      white-space: pre-wrap;
+      line-height: 1.5;
+    }
+    
+    .user .message-bubble {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: white;
+      border-radius: 16px 16px 4px 16px;
+      box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.2);
+    }
+    
+    .user .message-bubble::after {
+      content: '';
+      position: absolute;
+      bottom: -5px;
+      right: -3px;
+      width: 12px;
+      height: 12px;
+      background: var(--secondary);
+      transform: rotate(45deg);
+      z-index: -1;
+    }
+    
+    .ai .message-bubble {
+      background: white;
+      color: var(--gray-800);
+      border-radius: 16px 16px 16px 4px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+      border: 1px solid var(--gray-100);
+    }
+    
+    .ai .message-bubble::after {
+      content: '';
+      position: absolute;
+      bottom: -5px;
+      left: -3px;
+      width: 12px;
+      height: 12px;
+      background: white;
+      border-bottom: 1px solid var(--gray-100);
+      border-left: 1px solid var(--gray-100);
+      transform: rotate(45deg);
+      z-index: -1;
+    }
+    
+    .message-metadata {
+      display: flex;
+      align-items: center;
+      margin-top: 6px;
+      font-size: 12px;
+      color: var(--gray-500);
+    }
+    
+    .message-time {
+      margin-right: 8px;
+    }
+    
+    .message-model {
+      display: inline-block;
+      padding: 2px 8px;
+      background-color: rgba(59, 130, 246, 0.1);
+      color: var(--primary);
+      border-radius: 12px;
+      font-weight: 500;
+    }
+    
+    .message-bubble pre,
+    .message-bubble code {
+      background-color: rgba(0, 0, 0, 0.05);
+      padding: 8px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-family: monospace;
+      font-size: 14px;
+      margin: 8px 0;
+    }
+    
+    .message-bubble code {
+      padding: 2px 4px;
+      margin: 0 2px;
+    }
+    
+    .input-area {
+      padding: 16px;
+      border-top: 1px solid var(--gray-200);
+      background: white;
+    }
+    
+    .message-form {
+      display: flex;
+      gap: 10px;
+    }
+    
+    .message-input {
+      flex-grow: 1;
+      padding: 12px 16px;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      outline: none;
+      font-size: 14px;
+      line-height: 1.5;
+      box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    }
+    
+    .message-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    .send-button {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: white;
+      border: none;
+      border-radius: 8px;
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+      transition: all 0.2s ease-in-out;
+    }
+    
+    .send-button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+    
+    .send-button:active {
+      transform: translateY(0);
+    }
+    
+    .send-button svg {
+      width: 20px;
+      height: 20px;
+    }
+    
+    .send-button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    
+    .typing-indicator {
+      display: flex;
+      align-items: center;
+    }
+    
+    .typing-bubble {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      background: white;
+      border-radius: 18px 18px 18px 4px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+      border: 1px solid var(--gray-100);
+    }
+    
+    .typing-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin: 0 2px;
+      animation: typing-bounce 1.5s infinite ease-in-out;
+    }
+    
+    .typing-dot:nth-child(1) {
+      background-color: #bfdbfe;
+      animation-delay: 0s;
+    }
+    
+    .typing-dot:nth-child(2) {
+      background-color: #93c5fd;
+      animation-delay: 0.2s;
+    }
+    
+    .typing-dot:nth-child(3) {
+      background-color: #60a5fa;
+      animation-delay: 0.4s;
+    }
+    
+    @keyframes typing-bounce {
+      0%, 60%, 100% {
+        transform: translateY(0);
+      }
+      30% {
+        transform: translateY(-4px);
+      }
+    }
+    
+    /* Стили для генератора изображений */
+    .image-gen-container {
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
+    }
+    
+    .image-gen-header {
+      padding: 16px;
+      border-bottom: 1px solid var(--gray-200);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .image-gen-content {
+      flex-grow: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    .image-prompt-form {
+      width: 100%;
+      max-width: 800px;
+      display: flex;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+    
+    .image-prompt-input {
+      flex-grow: 1;
+      padding: 12px 16px;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      outline: none;
+      font-size: 14px;
+      line-height: 1.5;
+      box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    }
+    
+    .image-prompt-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    .generate-button {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 0 20px;
+      font-weight: 500;
+      cursor: pointer;
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+      transition: all 0.2s ease-in-out;
+    }
+    
+    .generate-button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+    
+    .loading-indicator {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      margin: 40px 0;
+    }
+    
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 4px solid rgba(59, 130, 246, 0.1);
+      border-radius: 50%;
+      border-top-color: var(--primary);
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+    
+    .image-result {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      width: 100%;
+      max-width: 800px;
+    }
+    
+    .image-preview {
+      width: 100%;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+    
+    .image-preview img {
+      width: 100%;
+      display: block;
+    }
+    
+    .image-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 16px;
+    }
+    
+    .action-button {
+      padding: 8px 16px;
+      background-color: white;
+      border: 1px solid var(--gray-300);
+      border-radius: 6px;
+      color: var(--gray-700);
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .action-button:hover {
+      background-color: var(--gray-100);
+      border-color: var(--gray-400);
+    }
+    
+    .action-button.primary {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: white;
+      border: none;
+    }
+    
+    .action-button.primary:hover {
+      box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
+    }
+    
+    .svg-result {
+      display: none;
+      margin-top: 24px;
+      width: 100%;
+      max-width: 800px;
+      border: 1px solid var(--gray-200);
+      border-radius: 12px;
+      padding: 16px;
+      background-color: var(--gray-50);
+    }
+    
+    .svg-preview {
+      width: 100%;
+      min-height: 400px;
+      background-color: white;
+      border-radius: 8px;
+      margin-bottom: 16px;
+    }
+    
+    /* Адаптивные стили */
+    @media (max-width: 768px) {
+      .header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+      
+      .tabs {
+        width: 100%;
+        overflow-x: auto;
+        padding-bottom: 4px;
+      }
+      
+      .message-container {
+        max-width: 85%;
+      }
+      
+      .image-actions {
+        flex-direction: column;
+        width: 100%;
+      }
+      
+      .image-prompt-form {
+        flex-direction: column;
+      }
+      
+      .welcome-message {
+        padding: 20px;
+        margin: 20px auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <header class="header">
+      <div class="logo-container">
+        <div class="logo">B</div>
+        <h1 class="brand-name">BOOOMERANGS</h1>
+      </div>
+    </header>
+    
+    <div class="tabs">
+      <button class="tab-button active" data-tab="chat">AI Чат</button>
+      <button class="tab-button" data-tab="image-generator">Генератор Изображений</button>
+    </div>
+    
+    <!-- Вкладка Чат -->
+    <div class="tab-content active" id="chat-tab">
+      <div class="chat-container">
+        <div class="chat-header">
+          <h2>Чат с AI</h2>
+          <div class="model-selector">
+            <select id="model-select">
+              <option value="AItianhu">Qwen AI</option>
+              <option value="Phind">Phind AI</option>
+              <option value="HuggingChat">HuggingChat</option>
+              <option value="auto" selected>Автовыбор</option>
+            </select>
+          </div>
+        </div>
+        
+        <div id="messages-area" class="messages-area">
+          <div id="welcome-message" class="welcome-message">
+            <div class="welcome-logo">B</div>
+            <h2 class="welcome-title">Добро пожаловать в BOOOMERANGS AI</h2>
+            <p class="welcome-text">Получите доступ к современным моделям искусственного интеллекта без необходимости платных API ключей. Задайте вопрос прямо сейчас!</p>
+          </div>
+        </div>
+        
+        <div class="input-area">
+          <form id="message-form" class="message-form">
+            <input 
+              type="text" 
+              id="message-input" 
+              class="message-input" 
+              placeholder="Введите ваше сообщение..." 
+              autocomplete="off"
+            >
+            <button type="submit" id="send-button" class="send-button">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 2L11 13"></path>
+                <path d="M22 2L15 22L11 13L2 9L22 2Z"></path>
+              </svg>
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Вкладка Генератора изображений -->
+    <div class="tab-content" id="image-generator-tab">
+      <div class="image-gen-container">
+        <div class="image-gen-header">
+          <h2>Генератор Изображений</h2>
+        </div>
+        
+        <div class="image-gen-content">
+          <form id="image-prompt-form" class="image-prompt-form">
+            <input 
+              type="text" 
+              id="image-prompt-input" 
+              class="image-prompt-input" 
+              placeholder="Опишите изображение, которое хотите создать..." 
+              autocomplete="off"
+            >
+            <button type="submit" id="generate-button" class="generate-button">Сгенерировать</button>
+          </form>
+          
+          <div id="loading-indicator" class="loading-indicator">
+            <div class="spinner"></div>
+            <p>Генерация изображения...</p>
+          </div>
+          
+          <div id="image-result" class="image-result">
+            <div class="image-preview">
+              <img id="image-preview" src="" alt="Сгенерированное изображение">
+            </div>
+            
+            <div class="image-actions">
+              <button id="convert-svg-button" class="action-button primary">Конвертировать в SVG</button>
+              <button id="download-image-button" class="action-button">Скачать изображение</button>
+            </div>
+          </div>
+          
+          <div id="svg-result" class="svg-result">
+            <div id="svg-preview" class="svg-preview"></div>
+            <button id="download-svg-button" class="action-button primary">Скачать SVG</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // Переключение вкладок
+    const tabButtons = document.querySelectorAll('.tab-button');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
+    tabButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const tabName = button.getAttribute('data-tab');
+        
+        // Активация кнопки
+        tabButtons.forEach(btn => btn.classList.remove('active'));
+        button.classList.add('active');
+        
+        // Активация содержимого вкладки
+        tabContents.forEach(content => content.classList.remove('active'));
+        document.getElementById(`${tabName}-tab`).classList.add('active');
+      });
+    });
+    
+    // Функции для чата
+    const messagesArea = document.getElementById('messages-area');
+    const welcomeMessage = document.getElementById('welcome-message');
+    const messageForm = document.getElementById('message-form');
+    const messageInput = document.getElementById('message-input');
+    const sendButton = document.getElementById('send-button');
+    const modelSelect = document.getElementById('model-select');
+    
+    // Массив сообщений
+    let messages = [];
+    let isWaitingForResponse = false;
+    
+    // Активировать кнопку отправки только если есть текст
+    messageInput.addEventListener('input', () => {
+      sendButton.disabled = messageInput.value.trim() === '' || isWaitingForResponse;
+    });
+    
+    // Обработка отправки формы для чата
+    messageForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      sendChatMessage();
+    });
+    
+    // Функция отправки сообщения чата
+    async function sendChatMessage() {
+      const messageText = messageInput.value.trim();
+      if (messageText === '' || isWaitingForResponse) return;
+      
+      // Скрывать приветственное сообщение после первого сообщения
+      if (welcomeMessage.style.display !== 'none') {
+        welcomeMessage.style.display = 'none';
+      }
+      
+      // Выбранная модель
+      const selectedModel = modelSelect.value;
+      
+      // Добавляем сообщение пользователя
+      const messageTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      
+      addMessageToUI({
+        id: Date.now(),
+        text: messageText,
+        sender: 'user',
+        time: messageTime
+      });
+      
+      // Очищаем поле ввода и блокируем кнопку
+      messageInput.value = '';
+      sendButton.disabled = true;
+      
+      // Показываем индикатор набора текста
+      showTypingIndicator();
+      
+      // Отправляем запрос к API
+      isWaitingForResponse = true;
+      
+      try {
+        const response = await fetch('/api/ai/chat', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            message: messageText,
+            provider: selectedModel === 'auto' ? null : selectedModel
+          })
+        });
+        
+        const data = await response.json();
+        
+        // Скрываем индикатор набора текста
+        hideTypingIndicator();
+        
+        if (data.success) {
+          // Добавляем ответ от AI
+          addMessageToUI({
+            id: Date.now() + 1,
+            text: data.response,
+            sender: 'ai',
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            model: data.model || 'AI',
+            provider: data.provider || 'Unknown'
+          });
+        } else {
+          // Обработка ошибки
+          addMessageToUI({
+            id: Date.now() + 1,
+            text: "Извините, произошла ошибка при получении ответа. Пожалуйста, попробуйте еще раз.",
+            sender: 'ai',
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            model: 'Error',
+            provider: 'System'
+          });
+        }
+      } catch (error) {
+        console.error('Ошибка:', error);
+        
+        // Скрываем индикатор набора текста
+        hideTypingIndicator();
+        
+        // Обработка ошибки
+        addMessageToUI({
+          id: Date.now() + 1,
+          text: "Произошла ошибка при обращении к серверу. Пожалуйста, проверьте соединение и попробуйте еще раз.",
+          sender: 'ai',
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          model: 'Error',
+          provider: 'System'
+        });
+      } finally {
+        isWaitingForResponse = false;
+      }
+    }
+    
+    // Функция для добавления сообщения в UI
+    function addMessageToUI(message) {
+      // Сохраняем сообщение в массив
+      messages.push(message);
+      
+      // Создаем элемент сообщения
+      const messageRow = document.createElement('div');
+      messageRow.className = `message-row ${message.sender}`;
+      messageRow.style.animationDelay = `${messages.length * 0.05}s`;
+      
+      if (message.sender === 'user') {
+        messageRow.innerHTML = `
+          <div class="message-container">
+            <div class="message-bubble">${formatMessageText(message.text)}</div>
+            <div class="message-metadata">
+              <span class="message-time">${message.time}</span>
+            </div>
+          </div>
+        `;
+      } else {
+        messageRow.innerHTML = `
+          <div class="message-avatar ai">B</div>
+          <div class="message-container">
+            <div class="message-bubble">${formatMessageText(message.text)}</div>
+            <div class="message-metadata">
+              <span class="message-time">${message.time}</span>
+              ${message.model ? `<span class="message-model">${message.model}</span>` : ''}
+            </div>
+          </div>
+        `;
+      }
+      
+      // Добавляем элемент в контейнер сообщений
+      messagesArea.appendChild(messageRow);
+      
+      // Прокручиваем до нового сообщения
+      messageRow.scrollIntoView({ behavior: 'smooth' });
+    }
+    
+    // Функция для форматирования текста сообщения (код, ссылки и т.д.)
+    function formatMessageText(text) {
+      // Заменяем блоки кода (обрамленные тройными обратными кавычками)
+      let formattedText = text.replace(/```([^`]+)```/g, '<pre>$1</pre>');
+      
+      // Заменяем однострочный код (обрамленный одинарными обратными кавычками)
+      formattedText = formattedText.replace(/`([^`]+)`/g, '<code>$1</code>');
+      
+      // Заменяем перенос строки на <br>
+      formattedText = formattedText.replace(/\n/g, '<br>');
+      
+      return formattedText;
+    }
+    
+    // Показываем индикатор набора текста
+    function showTypingIndicator() {
+      const typingRow = document.createElement('div');
+      typingRow.className = 'message-row ai typing-indicator';
+      typingRow.id = 'typing-indicator';
+      
+      typingRow.innerHTML = `
+        <div class="message-avatar ai">B</div>
+        <div class="typing-bubble">
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+        </div>
+      `;
+      
+      messagesArea.appendChild(typingRow);
+      typingRow.scrollIntoView({ behavior: 'smooth' });
+    }
+    
+    // Скрываем индикатор набора текста
+    function hideTypingIndicator() {
+      const typingIndicator = document.getElementById('typing-indicator');
+      if (typingIndicator) {
+        typingIndicator.remove();
+      }
+    }
+    
+    // Функции для генератора изображений
+    const imagePromptForm = document.getElementById('image-prompt-form');
+    const imagePromptInput = document.getElementById('image-prompt-input');
+    const generateButton = document.getElementById('generate-button');
+    const loadingIndicator = document.getElementById('loading-indicator');
+    const imageResult = document.getElementById('image-result');
+    const imagePreview = document.getElementById('image-preview');
+    const convertSvgButton = document.getElementById('convert-svg-button');
+    const downloadImageButton = document.getElementById('download-image-button');
+    const svgResult = document.getElementById('svg-result');
+    const svgPreview = document.getElementById('svg-preview');
+    const downloadSvgButton = document.getElementById('download-svg-button');
+    
+    let currentImageUrl = '';
+    
+    // Обработка отправки формы для генератора изображений
+    imagePromptForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      generateImage();
+    });
+    
+    // Функция генерации изображения
+    async function generateImage() {
+      const prompt = imagePromptInput.value.trim();
+      if (!prompt) return;
+      
+      // Скрываем предыдущие результаты
+      imageResult.style.display = 'none';
+      svgResult.style.display = 'none';
+      
+      // Показываем индикатор загрузки
+      loadingIndicator.style.display = 'flex';
+      
+      try {
+        // Вызываем API для генерации изображения
+        const response = await fetch('/api/image/generate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ prompt })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          currentImageUrl = data.imageUrl;
+          
+          // Загружаем изображение
+          imagePreview.onload = function() {
+            // Скрываем индикатор загрузки
+            loadingIndicator.style.display = 'none';
+            // Показываем результат
+            imageResult.style.display = 'flex';
+          };
+          
+          imagePreview.src = currentImageUrl;
+        } else {
+          throw new Error('Ошибка при генерации изображения');
+        }
+      } catch (error) {
+        console.error('Ошибка:', error);
+        
+        // Скрываем индикатор загрузки
+        loadingIndicator.style.display = 'none';
+        
+        // Показываем сообщение об ошибке
+        alert('Произошла ошибка при генерации изображения. Пожалуйста, попробуйте еще раз.');
+      }
+    }
+    
+    // Конвертация изображения в SVG
+    convertSvgButton.addEventListener('click', async () => {
+      if (!currentImageUrl) return;
+      
+      // Показываем индикатор загрузки
+      imageResult.style.display = 'none';
+      loadingIndicator.style.display = 'flex';
+      
+      try {
+        // Вызываем API для конвертации в SVG
+        const response = await fetch('/api/image/convert-svg', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ imageUrl: currentImageUrl })
+        });
+        
+        const data = await response.json();
+        
+        // Скрываем индикатор загрузки
+        loadingIndicator.style.display = 'none';
+        
+        if (data.success) {
+          // Показываем SVG результат
+          svgPreview.innerHTML = data.svgContent;
+          svgResult.style.display = 'block';
+        } else {
+          throw new Error('Ошибка при конвертации в SVG');
+        }
+      } catch (error) {
+        console.error('Ошибка:', error);
+        
+        // Скрываем индикатор загрузки
+        loadingIndicator.style.display = 'none';
+        // Показываем исходное изображение
+        imageResult.style.display = 'flex';
+        
+        // Показываем сообщение об ошибке
+        alert('Произошла ошибка при конвертации изображения в SVG. Пожалуйста, попробуйте еще раз.');
+      }
+    });
+    
+    // Скачивание изображения
+    downloadImageButton.addEventListener('click', () => {
+      if (!currentImageUrl) return;
+      
+      const link = document.createElement('a');
+      link.href = currentImageUrl;
+      link.download = 'booomerangs-image.jpg';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    });
+    
+    // Скачивание SVG
+    downloadSvgButton.addEventListener('click', () => {
+      if (!svgPreview.innerHTML) return;
+      
+      const svgContent = svgPreview.innerHTML;
+      const blob = new Blob([svgContent], { type: 'image/svg+xml' });
+      const url = URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'booomerangs-image.svg';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    });
+  </script>
+</body>
+</html>
