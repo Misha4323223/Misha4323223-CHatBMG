@@ -182,32 +182,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const directAiProvider = require('./direct-ai-provider');
       const { AI_PROVIDERS } = directAiProvider;
       
-      // Сначала сразу возвращаем демо-ответ для мгновенного отклика
-      const demoResponse = directAiProvider.getDemoResponse(message);
+      // Импортируем Python провайдер
+      const pythonProviderRoutes = require('./python_provider_routes');
       
-      // Если запрошен Python провайдер (Qwen), используем его
-      if (provider === 'QWEN' || provider === 'Qwen_Qwen_2_5_Max' || provider === 'Qwen_Qwen_3' || provider === 'You' || provider === 'GeminiPro') {
-        try {
-          // Пытаемся получить ответ от Python провайдера с использованием callPythonAI
-          console.log(`Пробуем использовать Python провайдер ${provider}...`);
-          
-          // Используем нашу новую функцию callPythonAI
-          const aiResponse = await pythonProviderRoutes.callPythonAI(message, provider);
-          
-          if (aiResponse) {
-            console.log(`✅ Успешно получен ответ от Python провайдера ${provider}`);
-            return res.json({
-              success: true,
-              response: aiResponse,
-              provider: provider,
-              model: provider
-            });
-          }
-        } catch (pythonError) {
-          console.log(`❌ Ошибка при использовании Python провайдера:`, 
-                    pythonError instanceof Error ? pythonError.message : 'Неизвестная ошибка');
-          // Продолжаем выполнение и пробуем другие провайдеры
+      // Сначала создаем демо-ответ для запасного варианта
+      const demoResponse = generateDemoResponse(message);
+      
+      // Всегда пытаемся сначала использовать Python G4F сервер для любого запроса
+      try {
+        // Пытаемся получить ответ от Python провайдера с использованием callPythonAI
+        console.log(`Пробуем использовать Python провайдер ${provider || 'You'}...`);
+        
+        // Используем нашу новую функцию callPythonAI
+        const aiResponse = await pythonProviderRoutes.callPythonAI(message, provider || 'You');
+        
+        if (aiResponse) {
+          console.log(`✅ Успешно получен ответ от Python провайдера ${provider || 'You'}`);
+          return res.json({
+            success: true,
+            response: aiResponse,
+            provider: provider || 'You',
+            model: provider || 'You'
+          });
         }
+      } catch (pythonError) {
+        console.log(`❌ Ошибка при использовании Python провайдера:`, 
+                  pythonError instanceof Error ? pythonError.message : 'Неизвестная ошибка');
+        // Продолжаем выполнение и пробуем другие провайдеры
       }
       
       // Если указан стандартный провайдер, пытаемся использовать его
