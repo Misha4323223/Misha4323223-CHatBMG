@@ -16,13 +16,37 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isCurrentUser })
     return (
       <div className="flex items-end justify-end mb-4">
         <div className="flex flex-col space-y-1 items-end">
-          <div className="message-bubble sent bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-3 shadow-md max-w-[80%] rounded-[18px_18px_4px_18px] break-words relative">
+          <div 
+            className="p-3 max-w-[80%] break-words text-white relative"
+            style={{
+              background: 'linear-gradient(135deg, #3b82f6, #6366f1)',
+              borderRadius: '18px 18px 4px 18px',
+              boxShadow: '0 4px 15px -3px rgba(59, 130, 246, 0.3)'
+            }}
+          >
             <p className="text-[15px]">{message.text}</p>
-            <div className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-gradient-to-r from-blue-600 to-indigo-600 transform rotate-45 z-[-1]"></div>
+            <div 
+              className="absolute w-3 h-3 transform rotate-45 z-[-1]"
+              style={{
+                bottom: '-5px',
+                right: '-2px',
+                background: '#6366f1'
+              }}
+            ></div>
           </div>
-          <div className="flex items-center text-xs text-gray-500 pr-2">
+          <div className="flex items-center text-xs text-gray-500 pr-2 mt-1">
             <span>{messageTime}</span>
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg 
+              xmlns="http://www.w3.org/2000/svg" 
+              className="h-4 w-4 ml-1" 
+              style={{color: '#3b82f6'}}
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="2" 
+              strokeLinecap="round" 
+              strokeLinejoin="round"
+            >
               {message.status === "read" ? 
                 <path d="M18 6L9 17l-5-5"/> : 
                 <path d="M5 12l5 5L20 7"/>
@@ -38,18 +62,49 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isCurrentUser })
     <div className="flex items-end mb-4">
       <div className="flex flex-col space-y-1 max-w-[80%]">
         <div className="flex items-end">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 text-white flex items-center justify-center mr-2 flex-shrink-0 mb-1 shadow-md">
+          <div 
+            className="w-8 h-8 rounded-full text-white flex items-center justify-center mr-2 flex-shrink-0 mb-1"
+            style={{
+              background: 'linear-gradient(135deg, #8b5cf6, #6366f1)',
+              boxShadow: '0 4px 10px -2px rgba(99, 102, 241, 0.3)'
+            }}
+          >
             <span className="font-medium">{message.sender.initials}</span>
           </div>
-          <div className="message-bubble received bg-white p-3 shadow-md rounded-[18px_18px_18px_4px] break-words border border-gray-100 relative">
+          <div 
+            className="p-3 break-words relative bg-white"
+            style={{
+              borderRadius: '18px 18px 18px 4px',
+              boxShadow: '0 4px 15px -5px rgba(0, 0, 0, 0.1)',
+              border: '1px solid rgba(243, 244, 246, 1)'
+            }}
+          >
             <p className="text-[15px] text-gray-800">{message.text}</p>
-            <div className="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-white border-b border-l border-gray-100 transform rotate-45 z-[-1]"></div>
+            <div 
+              className="absolute w-3 h-3 transform rotate-45 z-[-1]"
+              style={{
+                bottom: '-5px',
+                left: '-2px',
+                background: 'white',
+                borderBottom: '1px solid rgba(243, 244, 246, 1)',
+                borderLeft: '1px solid rgba(243, 244, 246, 1)'
+              }}
+            ></div>
           </div>
         </div>
         <div className="flex items-center">
           <span className="text-xs text-gray-500 ml-10">{messageTime}</span>
           {message.sender.username === "BOOOMERANGS AI" && (
-            <span className="ml-2 text-xs px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded-full">AI</span>
+            <span 
+              className="ml-2 text-xs px-2 py-0.5 rounded-full"
+              style={{
+                background: 'rgba(59, 130, 246, 0.1)',
+                color: '#3b82f6',
+                fontWeight: '500'
+              }}
+            >
+              AI
+            </span>
           )}
         </div>
       </div>

@@ -44,14 +44,36 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   // If no user is selected, show a welcome screen with logo
   if (!selectedUser) {
     return (
-      <div className="flex-1 flex flex-col bg-gradient-to-b from-gray-50 to-gray-100 items-center justify-center text-gray-700 p-6">
-        <div className="text-center max-w-md">
-          <BooomerangsLogo size={128} className="mx-auto mb-6" />
-          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-700 mb-3">BOOOMERANGS AI</h1>
-          <p className="text-gray-600 mb-8">Бесплатный доступ к возможностям искусственного интеллекта без платных API ключей</p>
-          <div className="flex items-center justify-center">
-            <span className="flex items-center text-blue-600">
-              <span className="mr-2">👈</span> Выберите пользователя из списка слева, чтобы начать общение
+      <div className="flex-1 flex flex-col items-center justify-center p-6"
+        style={{
+          background: 'radial-gradient(circle at center, rgba(219, 234, 254, 0.5) 0%, rgba(224, 231, 255, 0.2) 70%)'
+        }}>
+        <div className="text-center max-w-md p-10 rounded-3xl bg-white shadow-xl"
+            style={{borderRadius: '24px', boxShadow: '0 20px 40px -10px rgba(59, 130, 246, 0.15)'}}>
+          <div className="mb-8">
+            <BooomerangsLogo size={140} className="mx-auto mb-6" />
+            <h1 className="text-4xl font-bold mb-3 leading-tight"
+              style={{
+                backgroundImage: 'linear-gradient(135deg, #3b82f6, #6366f1)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+                color: 'transparent'
+              }}>
+              BOOOMERANGS AI
+            </h1>
+            <p className="text-gray-600 mb-8 text-lg">
+              Бесплатный доступ к возможностям искусственного интеллекта без платных API ключей
+            </p>
+          </div>
+          
+          <div className="py-3 px-5 bg-blue-50 rounded-xl inline-flex items-center"
+            style={{border: '1px solid rgba(59, 130, 246, 0.2)'}}>
+            <span className="flex items-center text-blue-700">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              Выберите пользователя из списка слева, чтобы начать общение
             </span>
           </div>
         </div>
@@ -62,13 +84,15 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   return (
     <div className="flex-1 flex flex-col bg-white">
       {/* Chat Header */}
-      <div className="border-b border-gray-200 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 flex items-center shadow-sm">
+      <div className="border-b border-gray-100 p-4 flex items-center shadow-sm" 
+           style={{background: 'linear-gradient(135deg, rgba(219, 234, 254, 0.8), rgba(224, 231, 255, 0.8))'}}>
         <div className="lg:hidden mr-3">
           <button 
-            className="p-1 text-blue-600 hover:text-blue-800 focus:outline-none transition-colors" 
+            className="p-1.5 rounded-full bg-white text-blue-600 hover:text-blue-800 focus:outline-none transition-colors shadow-sm border border-blue-100" 
             onClick={onOpenSidebar}
+            style={{boxShadow: '0 2px 5px -1px rgba(59, 130, 246, 0.15)'}}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
@@ -76,21 +100,37 @@ const ChatArea: React.FC<ChatAreaProps> = ({
         
         <div className="flex items-center justify-between flex-1">
           <div className="flex items-center">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white flex items-center justify-center mr-3 flex-shrink-0 shadow-md">
-              <span className="font-medium">{selectedUser.initials}</span>
+            <div 
+              className="w-11 h-11 rounded-full text-white flex items-center justify-center mr-3 flex-shrink-0" 
+              style={{
+                background: 'linear-gradient(135deg, #3b82f6, #6366f1)', 
+                boxShadow: '0 4px 10px -2px rgba(59, 130, 246, 0.3)'
+              }}
+            >
+              <span className="font-medium text-lg">{selectedUser.initials}</span>
             </div>
             <div>
-              <h2 className="font-semibold text-gray-800">{selectedUser.username}</h2>
+              <h2 className="font-semibold text-gray-800 text-lg">{selectedUser.username}</h2>
               <div className="flex items-center text-sm text-gray-600">
-                <span className={`status-dot ${selectedUser.isOnline ? 'bg-green-500' : 'bg-gray-500'} mr-1.5 w-2 h-2 rounded-full inline-block`}></span>
-                <span>{selectedUser.isOnline ? 'Online' : 'Offline'}</span>
+                <div className="relative flex items-center">
+                  <span 
+                    className={`w-2.5 h-2.5 rounded-full inline-block mr-1.5 ${selectedUser.isOnline ? '' : 'bg-gray-400'}`}
+                    style={selectedUser.isOnline ? {background: '#10b981', boxShadow: '0 0 0 2px rgba(16, 185, 129, 0.2)'} : {}}
+                  ></span>
+                  <span>{selectedUser.isOnline ? 'В сети' : 'Не в сети'}</span>
+                </div>
               </div>
             </div>
           </div>
           
-          <div className="hidden md:flex items-center">
-            <BooomerangsLogo size={32} className="mr-2" />
-            <span className="text-sm font-medium text-blue-600">BOOOMERANGS AI</span>
+          <div className="hidden md:flex items-center bg-white py-2 px-4 rounded-full shadow-sm border border-blue-50">
+            <BooomerangsLogo size={26} className="mr-2" />
+            <span 
+              className="font-medium bg-clip-text text-transparent" 
+              style={{background: 'linear-gradient(to right, #3b82f6, #6366f1)'}}
+            >
+              BOOOMERANGS AI
+            </span>
           </div>
         </div>
       </div>
@@ -119,9 +159,10 @@ const ChatArea: React.FC<ChatAreaProps> = ({
       </div>
       
       {/* Message Input Area */}
-      <div className="border-t border-gray-200 p-4 bg-white shadow-sm">
+      <div className="border-t border-gray-100 p-4 bg-white" style={{boxShadow: '0 -2px 10px rgba(0, 0, 0, 0.03)'}}>
         {connectionStatus === "disconnected" && (
-          <div className="mb-3 bg-red-50 text-red-600 p-3 rounded-md text-sm flex items-center">
+          <div className="mb-3 p-3 rounded-xl text-sm flex items-center" 
+               style={{background: 'rgba(248, 113, 113, 0.1)', color: '#ef4444', border: '1px solid rgba(248, 113, 113, 0.2)'}}>
             <AlertCircle className="h-4 w-4 mr-2" />
             <span>Соединение потеряно. Переподключение...</span>
           </div>
@@ -129,13 +170,17 @@ const ChatArea: React.FC<ChatAreaProps> = ({
         
         <div className="flex items-center">
           <div className="hidden sm:flex mr-3">
-            <BooomerangsLogo size={28} />
+            <BooomerangsLogo size={32} />
           </div>
           <form onSubmit={handleSubmit} className="flex-1 flex items-center space-x-2">
             <div className="relative flex-1">
               <input 
                 type="text" 
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-800"
+                className="w-full px-5 py-3.5 border border-gray-200 rounded-xl bg-white text-gray-800"
+                style={{
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
+                  transition: 'all 0.2s ease'
+                }}
                 placeholder="Введите сообщение..." 
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
@@ -144,7 +189,13 @@ const ChatArea: React.FC<ChatAreaProps> = ({
             </div>
             <button 
               type="submit" 
-              className="px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg text-white font-medium hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all shadow-sm transform hover:scale-[1.02] active:scale-[0.98] duration-200 disabled:opacity-50"
+              className="p-3.5 text-white rounded-xl disabled:opacity-50"
+              style={{
+                background: 'linear-gradient(135deg, #3b82f6, #6366f1)',
+                boxShadow: '0 4px 10px -2px rgba(59, 130, 246, 0.3)',
+                transition: 'all 0.2s ease',
+                transform: newMessage.trim() ? 'scale(1)' : 'scale(0.98)'
+              }}
               disabled={connectionStatus === "disconnected" || !newMessage.trim()}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
