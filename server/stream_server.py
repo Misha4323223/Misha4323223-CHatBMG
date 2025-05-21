@@ -88,6 +88,18 @@ def stream_chat():
         
         if not message:
             return Response('Не указано сообщение', status=400)
+            
+        # Обработка специальных команд для тестирования провайдеров
+        if message.lower().startswith('test-claude:'):
+            message = message[11:].strip()  # Удаляем префикс
+            provider_name = 'Anthropic'
+            print(f"🔵 Специальный запрос: тестирование Claude с сообщением: '{message}'")
+        elif message.lower().startswith('test-provider:'):
+            parts = message[13:].strip().split(':', 1)
+            if len(parts) == 2:
+                provider_name = parts[0].strip()
+                message = parts[1].strip()
+                print(f"🔵 Специальный запрос: тестирование провайдера {provider_name} с сообщением: '{message}'")
         
         print(f"Получен запрос стриминга: '{message}' от провайдера {provider_name}")
         
