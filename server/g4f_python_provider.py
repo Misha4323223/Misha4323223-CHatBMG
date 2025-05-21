@@ -34,7 +34,7 @@ provider_groups = {
     "secondary": ["DeepInfra", "GeminiPro", "Gemini"],
     "fallback": ["You", "DeepInfra"],
     "technical": ["Phind", "DeepInfra", "You"],  # Специальная группа для технических вопросов
-    "deepspeek": ["Phind"]  # DeepSpeek использует Phind в качестве реального провайдера
+    "deepspeek": ["Qwen_Qwen_2_5_Max", "AItianhu"]  # DeepSpeek использует стабильный Qwen для ответов
 }
 
 def get_demo_response(message):
