@@ -83,6 +83,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.sendFile('booomerangs-main.html', { root: '.' });
   });
   
+  // BOOOMERANGS новый прямой доступ
+  app.get('/ai', (req, res) => {
+    res.sendFile('booomerangs-direct.html', { root: '.' });
+  });
+  
   // BOOOMERANGS приложение со стримингом
   app.get('/booom-streaming', (req, res) => {
     res.sendFile('booomerangs-app-streaming-fixed.html', { root: '.' });
