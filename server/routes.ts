@@ -186,35 +186,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const demoResponse = directAiProvider.getDemoResponse(message);
       
       // Если запрошен Python провайдер (Qwen), используем его
-      if (provider === 'QWEN' || provider === 'Qwen_Qwen_3' || provider === 'Qwen_Max') {
+      if (provider === 'QWEN' || provider === 'Qwen_Qwen_2_5_Max' || provider === 'Qwen_Qwen_3' || provider === 'You' || provider === 'GeminiPro') {
         try {
-          // Пытаемся получить ответ от Python провайдера
-          console.log(`Пробуем использовать Python провайдер Qwen...`);
+          // Пытаемся получить ответ от Python провайдера с использованием callPythonAI
+          console.log(`Пробуем использовать Python провайдер ${provider}...`);
           
-          // Увеличиваем таймаут для запроса к Qwen
-          const pythonTimeout = 25000; // 25 секунд максимум
+          // Используем нашу новую функцию callPythonAI
+          const aiResponse = await pythonProviderRoutes.callPythonAI(message, provider);
           
-          // Создаем обработчик запроса с таймаутом
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), pythonTimeout);
-          
-          // Выполняем запрос к Python провайдеру
-          const pythonResponse = await fetch('http://localhost:5000/api/python/chat', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message, provider: provider || 'Qwen_Qwen_3' }),
-            signal: controller.signal
-          });
-          
-          // Очищаем таймер
-          clearTimeout(timeoutId);
-          
-          if (pythonResponse.ok) {
-            const result = await pythonResponse.json();
-            if (result && result.success && result.response) {
-              console.log(`✅ Успешно получен ответ от Python провайдера Qwen`);
-              return res.json(result);
-            }
+          if (aiResponse) {
+            console.log(`✅ Успешно получен ответ от Python провайдера ${provider}`);
+            return res.json({
+              success: true,
+              response: aiResponse,
+              provider: provider,
+              model: provider
+            });
           }
         } catch (pythonError) {
           console.log(`❌ Ошибка при использовании Python провайдера:`, 

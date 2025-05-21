@@ -484,4 +484,55 @@ router.post('/test', async (req, res) => {
   await checkPythonProvider();
 })();
 
-module.exports = router;
+// Функция для прямого вызова Python AI с использованием http.request
+async function callPythonAI(message, provider = null) {
+  return new Promise((resolve, reject) => {
+    const http = require('http');
+    const queryParams = provider ? `?provider=${provider}` : '';
+    const requestData = JSON.stringify({ message });
+    
+    const options = {
+      hostname: 'localhost',
+      port: 5002,
+      path: `/python/chat${queryParams}`,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(requestData)
+      }
+    };
+
+    const req = http.request(options, (response) => {
+      let data = '';
+      response.on('data', (chunk) => {
+        data += chunk;
+      });
+
+      response.on('end', () => {
+        if (response.statusCode === 200) {
+          try {
+            const parsedData = JSON.parse(data);
+            console.log('Ответ от Python:', parsedData.response);
+            resolve(parsedData.response);
+          } catch (err) {
+            console.log(`Ошибка при парсинге ответа: ${err.message}`);
+            resolve(getDemoResponse(message));
+          }
+        } else {
+          console.log(`Ошибка от Python G4F: ${response.statusCode}`);
+          resolve(getDemoResponse(message));
+        }
+      });
+    });
+
+    req.on('error', (error) => {
+      console.log(`Ошибка при обращении к Python G4F: ${error.message}`);
+      resolve(getDemoResponse(message));
+    });
+
+    req.write(requestData);
+    req.end();
+  });
+}
+
+module.exports = { router, startPythonServer, checkPythonProvider, callPythonAI };
