@@ -1,634 +1,382 @@
-// API маршруты для Python-версии G4F
+/**
+ * Маршруты для Python-провайдера G4F
+ */
 const express = require('express');
 const router = express.Router();
+const fetch = require('node-fetch');
 const { spawn } = require('child_process');
-const { getDemoResponse } = require('./direct-ai-provider');
+const { pipeline } = require('stream');
+const path = require('path');
 
-// Хранилище для активных SSE клиентов
-const sseClients = new Map();
+// Хранилище для процесса Python-сервера
+let pythonProcess = null;
+let isStarting = false;
+let demoResponse = null;
 
-// API endpoint для чата с Python G4F
-// Эндпоинт для стриминга ответов с использованием Server-Sent Events (SSE)
-router.post('/chat/stream', (req, res) => {
+// Запуск Python-сервера
+async function startPythonServer() {
+  if (pythonProcess || isStarting) return;
+  
+  isStarting = true;
+  console.log('Запуск Python G4F сервера...');
+  
+  pythonProcess = spawn('python', ['server/g4f_python_provider.py']);
+  
+  pythonProcess.stdout.on('data', (data) => {
+    console.log(`[Python G4F] ${data.toString().trim()}`);
+  });
+  
+  pythonProcess.stderr.on('data', (data) => {
+    console.error(`[Python G4F Error] ${data.toString().trim()}`);
+  });
+  
+  pythonProcess.on('close', (code) => {
+    console.log(`Python G4F процесс завершился с кодом ${code}`);
+    pythonProcess = null;
+    isStarting = false;
+  });
+  
+  // Ждем, пока сервер запустится
+  await new Promise(resolve => setTimeout(resolve, 2000));
+  isStarting = false;
+}
+
+// Проверка работоспособности Python-провайдера
+async function checkPythonProvider() {
   try {
-    const { 
-      message, 
-      provider = null,
-      clientId = Date.now().toString(), // Уникальный ID для клиента
-      timeout = 20000 // Таймаут по умолчанию - 20 секунд
-    } = req.body;
+    console.log('Проверка работоспособности Python G4F...');
     
-    // Проверяем, что сообщение присутствует
+    const response = await fetch('http://localhost:5000/python/test', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        message: 'hi',
+        provider: 'Qwen_Max',
+        timeout: 5000
+      })
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ошибка: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    demoResponse = data.response; // Сохраняем для демо-режима
+    
+    console.log('✅ Python G4F провайдер готов к работе');
+    return true;
+  } catch (error) {
+    console.error('❌ Ошибка при проверке Python G4F:', error.message);
+    return false;
+  }
+}
+
+// Получение демо-ответа, если настоящий сервис недоступен
+function getDemoResponse(message = '') {
+  const messageLower = message.toLowerCase();
+  
+  if (messageLower.includes('привет') || messageLower.includes('здравствуй') || 
+      messageLower.includes('hello') || messageLower.includes('hi')) {
+    return 'Привет! Я BOOOMERANGS AI ассистент. Чем могу помочь вам сегодня?';
+  } else if (messageLower.includes('как дела') || messageLower.includes('как ты') || 
+             messageLower.includes('how are you')) {
+    return 'У меня всё отлично, спасибо что спросили! Как ваши дела?';
+  } else if (messageLower.includes('изображен') || messageLower.includes('картин') || 
+             messageLower.includes('image') || messageLower.includes('picture')) {
+    return 'Вы можете создать изображение, перейдя на вкладку "Генератор изображений". Просто опишите то, что хотите увидеть, и выберите стиль!';
+  } else if (messageLower.includes('booomerangs')) {
+    return 'BOOOMERANGS - это бесплатный мультимодальный AI-сервис для общения и создания изображений. Мы обеспечиваем доступ к возможностям искусственного интеллекта без необходимости платных API ключей!';
+  } else if (demoResponse) {
+    // Если у нас есть сохраненный ответ от предыдущей успешной проверки
+    return demoResponse;
+  } else {
+    const responses = [
+      'Это демо-режим BOOOMERANGS. Я могу отвечать на простые вопросы, но для полноценной работы необходимо подключение к AI-провайдерам.',
+      'BOOOMERANGS использует различные AI-провайдеры, чтобы предоставлять ответы бесплатно. Сейчас вы видите демо-ответ, поскольку провайдеры недоступны.',
+      'В данный момент BOOOMERANGS работает в демо-режиме. Попробуйте перезагрузить страницу или зайти позже для доступа к полной версии.'
+    ];
+    
+    return responses[Math.floor(Math.random() * responses.length)];
+  }
+}
+
+// Обработка стандартного API запроса
+router.post('/chat', async (req, res) => {
+  try {
+    const { message, provider = 'Qwen_Max', timeout = 20000 } = req.body;
+    
     if (!message) {
       return res.status(400).json({ 
         success: false, 
-        error: 'Сообщение не может быть пустым' 
+        error: 'Не указан текст сообщения' 
       });
     }
     
-    console.log(`Запрос к Python G4F (стриминг): ${message.substring(0, 50)}${message.length > 50 ? '...' : ''}`);
+    // Запускаем Python-сервер, если он не запущен
+    if (!pythonProcess && !isStarting) {
+      await startPythonServer();
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
     
-    // Настраиваем заголовки для SSE
+    try {
+      const response = await fetch('http://localhost:5000/python/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ message, provider, timeout }),
+        timeout: timeout + 5000 // Добавляем запас по времени
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ошибка: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      // Сохраняем успешный ответ для демо-режима
+      if (data.response) {
+        demoResponse = data.response;
+      }
+      
+      return res.json(data);
+    } catch (error) {
+      console.error('Ошибка при запросе к Python G4F:', error.message);
+      
+      // Возвращаем демо-ответ в случае ошибки
+      return res.json({
+        success: true,
+        response: getDemoResponse(message),
+        provider: 'BOOOMERANGS-Demo',
+        model: 'demo-mode',
+        elapsed: 0.5
+      });
+    }
+  } catch (error) {
+    console.error('Ошибка при обработке запроса:', error);
+    return res.status(500).json({ 
+      success: false, 
+      error: 'Внутренняя ошибка сервера' 
+    });
+  }
+});
+
+// Потоковый API для вывода данных в режиме реального времени
+router.post('/chat/stream', async (req, res) => {
+  try {
+    const { message, provider = 'Qwen_Max', timeout = 20000 } = req.body;
+    
+    if (!message) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Не указан текст сообщения' 
+      });
+    }
+    
+    // Настраиваем SSE заголовки
     res.writeHead(200, {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
       'Connection': 'keep-alive'
     });
     
-    // Получаем демо-ответ на случай ошибки
-    const demoResponse = getDemoResponse(message);
+    // Сообщаем клиенту, что соединение установлено
+    res.write(`event: connected\ndata: ${JSON.stringify({
+      message: 'Соединение установлено',
+      clientId: Date.now().toString()
+    })}\n\n`);
     
-    // Отправляем начальное сообщение клиенту
-    const sendEvent = (event, data) => {
-      res.write(`event: ${event}\n`);
-      res.write(`data: ${JSON.stringify(data)}\n\n`);
+    // Запускаем Python-сервер, если он не запущен
+    if (!pythonProcess && !isStarting) {
+      await startPythonServer();
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+    
+    console.log(`Запрос к Python G4F (стриминг): ${message.substring(0, 30)}${message.length > 30 ? '...' : ''}`);
+    
+    // Настраиваем таймеры
+    const demoFallbackTimeout = 5000; // 5 секунд на демо-фоллбэк
+    const totalTimeout = timeout || 25000; // Общий таймаут
+    
+    let demoTimeoutId = null;
+    let totalTimeoutId = null;
+    let isDemoSent = false;
+    let isResponseComplete = false;
+    
+    // Функция для отправки демо-ответа, если нет ответа от API
+    const sendDemoFallback = () => {
+      if (isResponseComplete || isDemoSent) return;
+      
+      isDemoSent = true;
+      console.log('⏱️ Превышен таймаут демо-ответа, отправляем резервный ответ');
+      
+      const demoText = getDemoResponse(message);
+      
+      // Отправляем демо-ответ порциями для имитации стриминга
+      res.write(`event: fallback\ndata: ${JSON.stringify({
+        text: demoText,
+        demo: true
+      })}\n\n`);
+      
+      // Имитируем окончание ответа
+      res.write(`event: complete\ndata: ${JSON.stringify({
+        text: demoText,
+        provider: 'BOOOMERANGS-Demo',
+        model: 'demo-mode',
+        elapsed: 0.5
+      })}\n\n`);
+      
+      res.end();
     };
     
-    // Добавляем клиента в хранилище
-    sseClients.set(clientId, { res, sendEvent });
-    
-    // Отправляем первое сообщение с подтверждением подключения
-    sendEvent('connected', { 
-      message: 'Соединение установлено',
-      clientId
-    });
-    
-    // Вызываем Python скрипт с сообщением и опциональным провайдером
-    const args = [
-      'server/g4f_python_provider.py',
-      message
-    ];
-    
-    // Если указан провайдер, добавляем его в аргументы
-    if (provider) {
-      args.push(provider);
-    }
-    
-    // Создаем флаг для отслеживания завершения
-    let isCompleted = false;
-    
-    // Запускаем демо-ответ через задержку, если Python не ответит быстро
-    // Используем переданный таймаут или значение по умолчанию
-    const demoDelay = Math.min(5000, timeout / 4); // Не больше 5 секунд, но не меньше 1/4 от общего таймаута
-    console.log(`⏱️ Настроен таймаут для демо-ответа: ${demoDelay}мс, общий таймаут: ${timeout}мс`);
-    
-    const demoTimeout = setTimeout(() => {
-      if (!isCompleted) {
-        console.log(`Запуск демо-ответа после ${demoDelay}мс ожидания...`);
-        
-        // Отправляем уведомление о переключении на демо-режим
-        sendEvent('info', {
-          message: 'AI провайдер отвечает дольше обычного, начинаем отображать демо-ответ',
-          provider: 'BOOOMERANGS-Live'
-        });
-        
-        // Отправляем демо-ответ по частям для имитации стриминга
-        const demoWords = demoResponse.split(' ');
-        let sentWords = 0;
-        
-        const demoInterval = setInterval(() => {
-          if (sentWords < demoWords.length && !isCompleted) {
-            const chunk = demoWords.slice(sentWords, sentWords + 3).join(' ');
-            sentWords += 3;
-            
-            sendEvent('update', {
-              chunk,
-              done: sentWords >= demoWords.length,
-              provider: 'BOOOMERANGS-Live',
-              model: 'streaming-demo'
-            });
-            
-            if (sentWords >= demoWords.length) {
-              clearInterval(demoInterval);
-              
-              // Отправляем событие завершения
-              sendEvent('complete', {
-                message: 'Генерация завершена',
-                provider: 'BOOOMERANGS-Live',
-                model: 'streaming-demo'
-              });
-              
-              // Удаляем клиента из хранилища
-              isCompleted = true;
-              sseClients.delete(clientId);
-            }
-          } else {
-            clearInterval(demoInterval);
-          }
-        }, 100); // Отправляем каждые 100мс для имитации печати
-      }
-    }, demoDelay);
-    
-    // Вызываем скрипт как дочерний процесс
-    const pythonProcess = spawn('python', args);
-    
-    // Обрабатываем частичные ответы от скрипта
-    pythonProcess.stdout.on('data', (data) => {
-      // Если соединение уже закрыто, прерываем обработку
-      if (isCompleted) return;
-      
-      const outputText = data.toString();
-      
-      // Проверяем на наличие нескольких JSON-объектов (для стриминга)
-      const jsonStrings = outputText.match(/{[^{}]*}/g);
-      
-      if (jsonStrings && jsonStrings.length > 0) {
-        for (const jsonString of jsonStrings) {
-          try {
-            const jsonData = JSON.parse(jsonString);
-            
-            // Если это стриминг-ответ
-            if (jsonData.streaming) {
-              // Отменяем таймаут демо-ответа при первом чанке
-              if (jsonData.starting || jsonData.chunk) {
-                clearTimeout(demoTimeout);
-              }
-              
-              // Если это начало стриминга
-              if (jsonData.starting) {
-                sendEvent('info', {
-                  message: `Начало стриминга от ${jsonData.provider || 'AI'}`,
-                  provider: jsonData.provider,
-                  model: jsonData.model
-                });
-                continue;
-              }
-              
-              // Если это чанк стриминга
-              if (jsonData.chunk) {
-                sendEvent('update', {
-                  chunk: jsonData.chunk,
-                  done: false,
-                  provider: jsonData.provider || 'Python-G4F',
-                  model: jsonData.model || 'streaming'
-                });
-                continue;
-              }
-              
-              // Если это завершение стриминга
-              if (jsonData.complete) {
-                // Отправляем событие завершения
-                sendEvent('complete', {
-                  message: 'Генерация завершена',
-                  provider: jsonData.provider || 'Python-G4F',
-                  model: jsonData.model || 'streaming',
-                  response: jsonData.response
-                });
-                
-                // Устанавливаем флаг завершения
-                isCompleted = true;
-                
-                // Удаляем клиента из хранилища
-                sseClients.delete(clientId);
-                continue;
-              }
-              
-              // Если это ошибка стриминга
-              if (jsonData.error) {
-                sendEvent('error', { 
-                  message: jsonData.error,
-                  provider: jsonData.provider || 'Python-G4F'
-                });
-                
-                // Устанавливаем флаг завершения если это полная ошибка
-                if (!jsonData.chunk) {
-                  isCompleted = true;
-                  sseClients.delete(clientId);
-                }
-                continue;
-              }
-            } else {
-              // Обычный ответ (не стриминг)
-              // Отправляем полный ответ
-              clearTimeout(demoTimeout);
-              isCompleted = true;
-              
-              // Отправляем ответ по словам для имитации стриминга
-              const responseWords = jsonData.response.split(' ');
-              let sentWords = 0;
-              
-              const streamInterval = setInterval(() => {
-                if (sentWords < responseWords.length) {
-                  const chunk = responseWords.slice(sentWords, sentWords + 3).join(' ');
-                  sentWords += 3;
-                  
-                  sendEvent('update', {
-                    chunk,
-                    done: sentWords >= responseWords.length,
-                    provider: jsonData.provider || 'Python-G4F',
-                    model: jsonData.model || 'g4f-python'
-                  });
-                  
-                  if (sentWords >= responseWords.length) {
-                    clearInterval(streamInterval);
-                    
-                    // Отправляем событие завершения
-                    sendEvent('complete', {
-                      message: 'Генерация завершена',
-                      provider: jsonData.provider || 'Python-G4F',
-                      model: jsonData.model || 'g4f-python'
-                    });
-                    
-                    // Удаляем клиента из хранилища
-                    sseClients.delete(clientId);
-                  }
-                } else {
-                  clearInterval(streamInterval);
-                }
-              }, 100); // Отправляем небольшими кусками каждые 100мс
-            }
-          } catch (jsonError) {
-            console.error('Ошибка при обработке JSON из Python:', jsonError, jsonString);
-            sendEvent('log', { message: jsonString });
-          }
+    // Установка таймаутов
+    console.log(`⏱️ Настроен таймаут для демо-ответа: ${demoFallbackTimeout}мс, общий таймаут: ${totalTimeout}мс`);
+    demoTimeoutId = setTimeout(sendDemoFallback, demoFallbackTimeout);
+    totalTimeoutId = setTimeout(() => {
+      if (!isResponseComplete) {
+        console.log('⏱️ Превышен общий таймаут запроса');
+        if (!isDemoSent) {
+          sendDemoFallback();
         }
-      } else {
-        // Если JSON не найден, отправляем сырой вывод как лог
-        sendEvent('log', { message: outputText });
+        res.end();
       }
-    });
+    }, totalTimeout);
     
-    // Обрабатываем ошибки
-    pythonProcess.stderr.on('data', (data) => {
-      const errorText = data.toString();
-      console.error(`Ошибка Python G4F: ${errorText}`);
+    try {
+      const apiUrl = 'http://localhost:5000/python/chat/stream';
       
-      // Отправляем ошибку клиенту
-      if (!isCompleted) {
-        sendEvent('error', { message: errorText });
+      // Создаем fetch запрос к Python API
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'text/event-stream'
+        },
+        body: JSON.stringify({ message, provider, timeout })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ошибка: ${response.status}`);
       }
-    });
-    
-    // Обрабатываем завершение процесса
-    pythonProcess.on('close', (code) => {
-      if (code !== 0 && !isCompleted) {
-        console.error(`Python G4F завершился с кодом ${code}`);
+      
+      // Получен ответ от сервера, останавливаем таймаут демо-ответа
+      clearTimeout(demoTimeoutId);
+      
+      // Обработка потокового ответа
+      const reader = response.body.getReader();
+      
+      while (true) {
+        const { done, value } = await reader.read();
         
-        // Если процесс завершился с ошибкой и ещё не был отправлен ответ
-        sendEvent('error', { 
-          message: `Python процесс завершился с кодом ${code}` 
-        });
+        if (done) {
+          isResponseComplete = true;
+          break;
+        }
         
-        // Отправляем демо-ответ после ошибки
-        sendEvent('update', {
-          chunk: demoResponse,
-          done: true,
-          provider: 'BOOOMERANGS-Fallback',
-          model: 'error-recovery'
-        });
+        // Пересылаем данные клиенту без изменений
+        const chunk = Buffer.from(value).toString('utf8');
+        res.write(chunk);
         
-        // Отправляем событие завершения
-        sendEvent('complete', {
-          message: 'Генерация завершена (после ошибки)',
-          provider: 'BOOOMERANGS-Fallback',
-          model: 'error-recovery'
-        });
+        // Форсируем отправку данных
+        if (res.flush) {
+          res.flush();
+        }
       }
       
-      // Закрываем соединение, если оно ещё открыто
-      if (!isCompleted) {
-        isCompleted = true;
-        sseClients.delete(clientId);
-      }
-    });
-    
-    // Обрабатываем закрытие соединения клиентом
-    req.on('close', () => {
-      isCompleted = true;
-      clearTimeout(demoTimeout);
+      isResponseComplete = true;
       
-      // Убиваем процесс Python, если он ещё запущен
-      if (pythonProcess && !pythonProcess.killed) {
-        pythonProcess.kill();
-      }
+    } catch (error) {
+      console.error('Ошибка при получении стримингового ответа:', error.message);
       
-      // Удаляем клиента из хранилища
-      sseClients.delete(clientId);
-      console.log(`Клиент ${clientId} отключился`);
-    });
-    
+      // Если еще не отправлен демо-ответ, отправляем его
+      if (!isDemoSent && !isResponseComplete) {
+        sendDemoFallback();
+      } else if (!isResponseComplete) {
+        // Отправляем ошибку, если демо-ответ уже отправлен
+        res.write(`event: error\ndata: ${JSON.stringify({
+          error: 'Ошибка соединения с сервером',
+          message: error.message
+        })}\n\n`);
+        
+        res.end();
+      }
+    } finally {
+      // Очищаем таймеры
+      clearTimeout(demoTimeoutId);
+      clearTimeout(totalTimeoutId);
+      
+      // Закрываем соединение, если оно еще открыто
+      if (!isResponseComplete) {
+        res.end();
+      }
+    }
   } catch (error) {
-    console.error('Ошибка при обработке запроса стриминга:', error);
+    console.error('Ошибка обработки стримингового запроса:', error);
     
-    // Если соединение ещё открыто, отправляем ошибку
     if (!res.headersSent) {
-      res.status(500).json({
+      return res.status(500).json({ 
         success: false, 
-        error: 'Ошибка при обработке запроса',
+        error: 'Внутренняя ошибка сервера',
         message: error.message
       });
+    } else {
+      res.write(`event: error\ndata: ${JSON.stringify({
+        error: 'Внутренняя ошибка сервера',
+        message: error.message
+      })}\n\n`);
+      
+      res.end();
     }
   }
+  
+  // Обработка закрытия соединения клиентом
+  req.on('close', () => {
+    console.log('Клиент отключился');
+  });
 });
 
-// Обычный API endpoint для чата с Python G4F
-router.post('/chat', async (req, res) => {
+// Тестовый маршрут
+router.post('/test', async (req, res) => {
   try {
-    const { 
-      message, 
-      provider = null
-    } = req.body;
+    const { message, provider, timeout } = req.body;
     
-    // Проверяем, что сообщение присутствует
-    if (!message) {
-      return res.status(400).json({ 
-        success: false, 
-        error: 'Сообщение не может быть пустым' 
-      });
+    // Запускаем Python-сервер, если он не запущен
+    if (!pythonProcess && !isStarting) {
+      await startPythonServer();
+      await new Promise(resolve => setTimeout(resolve, 2000));
     }
     
-    console.log(`Запрос к Python G4F: ${message.substring(0, 50)}${message.length > 50 ? '...' : ''}`);
+    const result = await checkPythonProvider();
     
-    // Сейчас изменим поведение - будем ждать настоящий ответ от Python провайдера
-    // и только при таймауте или ошибке вернем демо-ответ
-    const demoResponse = getDemoResponse(message);
-    
-    // Устанавливаем таймаут для ответа, но теперь больше времени (20 сек)
-    const timeoutMs = 20000; // 20 секунд на получение ответа (Qwen может работать медленно)
-    let responseTimeout = setTimeout(() => {
-      if (!res.headersSent) {
-        console.log('⏱️ Таймаут при ожидании ответа от Python G4F, отправляем демо-ответ');
-        res.json({
-          success: true,
-          response: demoResponse,
-          provider: 'BOOOMERANGS-Live',
-          model: 'instant-response (timeout)'
-        });
-      }
-    }, timeoutMs);
-    
-    // Пытаемся получить реальный ответ от Python G4F
-    try {
-      // Вызываем Python скрипт с сообщением и опциональным провайдером
-      const args = [
-        'server/g4f_python_provider.py',
-        message
-      ];
-      
-      // Если указан провайдер, добавляем его в аргументы
-      if (provider) {
-        args.push(provider);
-      }
-      
-      // Вызываем скрипт как дочерний процесс
-      const pythonProcess = spawn('python', args);
-      
-      let responseData = '';
-      let errorData = '';
-      
-      // Обрабатываем вывод скрипта
-      pythonProcess.stdout.on('data', (data) => {
-        responseData += data.toString();
+    if (result) {
+      return res.json({
+        success: true,
+        response: demoResponse || 'Python G4F провайдер работает',
+        provider: 'Python-Test',
+        model: 'test-mode'
       });
-      
-      // Обрабатываем ошибки скрипта
-      pythonProcess.stderr.on('data', (data) => {
-        errorData += data.toString();
-        console.error(`Ошибка Python G4F: ${data.toString()}`);
-      });
-      
-      // Обрабатываем завершение работы скрипта
-      pythonProcess.on('close', (code) => {
-        // Очищаем таймаут, чтобы избежать отправки демо-ответа
-        clearTimeout(responseTimeout);
-        
-        if (code !== 0) {
-          console.error(`Python G4F завершился с кодом ${code}: ${errorData}`);
-          if (!res.headersSent) {
-            res.json({
-              success: true,
-              response: demoResponse,
-              provider: 'BOOOMERANGS-Live',
-              model: 'instant-response (python error)'
-            });
-          }
-          return;
-        }
-        
-        try {
-          // Пытаемся извлечь JSON из ответа Python
-          // Ищем последнюю строку в выводе, которая может быть JSON
-          const lines = responseData.split('\n');
-          let jsonLine = '';
-          
-          // Идем от конца к началу, ищем строку, похожую на JSON
-          for (let i = lines.length - 1; i >= 0; i--) {
-            const line = lines[i].trim();
-            if (line.startsWith('{') && line.endsWith('}')) {
-              jsonLine = line;
-              break;
-            }
-          }
-          
-          if (jsonLine) {
-            const result = JSON.parse(jsonLine);
-            console.log(`✅ Python G4F успешно ответил: "${result.provider}"`);
-            
-            // Если у нас есть ответ и заголовки еще не отправлены
-            if (!res.headersSent) {
-              res.json({
-                success: true,
-                response: result.response || responseData,
-                provider: result.provider || 'Python-G4F',
-                model: result.model || 'unknown'
-              });
-            }
-          } else if (responseData.trim()) {
-            // Если JSON не найден, но есть текстовый ответ
-            console.log('Python G4F вернул текстовый ответ');
-            if (!res.headersSent) {
-              res.json({
-                success: true,
-                response: responseData.trim(),
-                provider: 'Python-G4F',
-                model: 'direct-response'
-              });
-            }
-          } else {
-            console.error('Python G4F не вернул JSON в ответе');
-            if (!res.headersSent) {
-              res.json({
-                success: true,
-                response: demoResponse,
-                provider: 'BOOOMERANGS-Live',
-                model: 'instant-response (empty python response)'
-              });
-            }
-          }
-        } catch (parseError) {
-          console.error('Ошибка при разборе ответа Python G4F:', parseError);
-          if (!res.headersSent) {
-            res.json({
-              success: true,
-              response: demoResponse,
-              provider: 'BOOOMERANGS-Live',
-              model: 'instant-response (parse error)'
-            });
-          }
-        }
-      });
-    } catch (backgroundError) {
-      console.error('Ошибка при фоновом запуске Python G4F:', backgroundError);
-    }
-    
-  } catch (error) {
-    console.error('Ошибка при обработке запроса:', error);
-    
-    res.status(500).json({
-      success: false, 
-      error: 'Ошибка при обработке запроса',
-      message: error.message
-    });
-  }
-});
-
-// Новый API эндпоинт для мгновенного отправления первого доступного ответа без стриминга
-router.post('/chat/quick', async (req, res) => {
-  try {
-    const {
-      message,
-      provider = null,
-      timeout = 20000
-    } = req.body;
-    
-    // Проверяем, что сообщение присутствует
-    if (!message) {
-      return res.status(400).json({
+    } else {
+      return res.json({
         success: false,
-        error: 'Сообщение не может быть пустым'
+        error: 'Python G4F провайдер недоступен'
       });
-    }
-    
-    console.log(`Запрос к Python G4F (quick): ${message.substring(0, 50)}${message.length > 50 ? '...' : ''}`);
-    
-    // Получаем демо-ответ на случай ошибки
-    const demoResponse = getDemoResponse(message);
-    
-    // Вызываем Python скрипт с сообщением и опциональным провайдером
-    const args = [
-      'server/g4f_python_provider.py',
-      message
-    ];
-    
-    // Если указан провайдер, добавляем его в аргументы
-    if (provider) {
-      args.push(provider);
-    }
-    
-    // Создаем флаг для отслеживания завершения
-    let isCompleted = false;
-    
-    // Устанавливаем таймер для демо-ответа
-    const demoTimer = setTimeout(() => {
-      if (!isCompleted) {
-        console.log(`⏱️ Таймаут (${timeout}ms), отправляем демо-ответ`);
-        isCompleted = true;
-        
-        return res.json({
-          success: true,
-          response: demoResponse,
-          provider: 'BOOOMERANGS-Live',
-          model: 'timeout-fallback'
-        });
-      }
-    }, timeout);
-    
-    try {
-      // Вызываем скрипт как дочерний процесс
-      const pythonProcess = require('child_process').spawn('python', args);
-      
-      let output = '';
-      
-      // Обрабатываем вывод stdout
-      pythonProcess.stdout.on('data', (data) => {
-        if (isCompleted) return;
-        
-        output += data.toString();
-      });
-      
-      // Обрабатываем ошибки stderr
-      pythonProcess.stderr.on('data', (data) => {
-        console.error(`Python G4F ошибка: ${data.toString()}`);
-      });
-      
-      // Обрабатываем завершение процесса
-      pythonProcess.on('close', (code) => {
-        // Если ответ уже был отправлен, не делаем ничего
-        if (isCompleted) return;
-        
-        clearTimeout(demoTimer);
-        isCompleted = true;
-        
-        if (code !== 0) {
-          console.error(`Python G4F завершился с кодом ${code}`);
-          
-          return res.json({
-            success: true,
-            response: demoResponse,
-            provider: 'BOOOMERANGS-Fallback',
-            model: 'error-recovery'
-          });
-        }
-        
-        try {
-          // Пытаемся найти JSON в выводе
-          const jsonMatch = output.match(/{.*}/s);
-          
-          if (jsonMatch) {
-            const jsonData = JSON.parse(jsonMatch[0]);
-            
-            return res.json({
-              success: true,
-              response: jsonData.response,
-              provider: jsonData.provider || 'Python-G4F',
-              model: jsonData.model || 'g4f-python'
-            });
-          } else {
-            console.error('Не удалось найти JSON в выводе Python:', output);
-            
-            return res.json({
-              success: true,
-              response: demoResponse,
-              provider: 'BOOOMERANGS-Fallback',
-              model: 'parse-error'
-            });
-          }
-        } catch (parseError) {
-          console.error('Ошибка при парсинге вывода Python:', parseError);
-          
-          return res.json({
-            success: true,
-            response: demoResponse,
-            provider: 'BOOOMERANGS-Fallback',
-            model: 'json-error'
-          });
-        }
-      });
-    } catch (processError) {
-      // Если произошла ошибка при запуске процесса
-      clearTimeout(demoTimer);
-      
-      if (!isCompleted) {
-        isCompleted = true;
-        console.error('Ошибка при запуске Python процесса:', processError);
-        
-        return res.json({
-          success: true,
-          response: demoResponse,
-          provider: 'BOOOMERANGS-Fallback',
-          model: 'process-error'
-        });
-      }
     }
   } catch (error) {
-    console.error('Ошибка при обработке /chat/quick:', error);
-    
-    return res.status(500).json({
-      success: false,
-      error: 'Внутренняя ошибка сервера',
-      message: error.message
+    console.error('Ошибка при тестировании Python G4F:', error);
+    return res.status(500).json({ 
+      success: false, 
+      error: 'Внутренняя ошибка сервера' 
     });
   }
 });
+
+// Инициализация
+(async () => {
+  // Запускаем сервер и проверяем его работоспособность
+  await startPythonServer();
+  await checkPythonProvider();
+})();
 
 module.exports = router;

@@ -738,6 +738,7 @@
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
+              'Accept': 'text/event-stream', // Важно для стриминга
               'Connection': 'keep-alive'
             },
             body: JSON.stringify({
@@ -751,7 +752,7 @@
             throw new Error(`Ошибка API: ${response.status}`);
           }
           
-          // Получаем поток данных
+          // Получаем поток данных с помощью Reader API
           const reader = response.body.getReader();
           const decoder = new TextDecoder();
           
@@ -759,96 +760,160 @@
           let responseProvider = 'BOOOMERANGS AI';
           let responseModel = selectedModel;
           
+          // Буфер для неполных строк SSE
+          let buffer = '';
+          
           // Обрабатываем поток SSE событий
           updateConnectionStatus('connected');
           
-          while (true) {
-            const { done, value } = await reader.read();
-            
-            if (done) {
-              // Поток завершен
-              if (isGenerating) {
-                finishAIMessage(responseProvider, responseModel);
-                updateConnectionStatus('disconnected');
-              }
-              break;
-            }
-            
-            // Декодируем полученные данные
-            const text = decoder.decode(value, { stream: true });
-            
-            // Разбиваем на события SSE
-            const events = text.split('\n\n').filter(event => event.trim());
-            
-            for (const event of events) {
-              const eventTypeMatch = event.match(/^event: (.+)$/m);
-              const dataMatch = event.match(/^data: (.+)$/m);
+          try {
+            while (true) {
+              const { done, value } = await reader.read();
               
-              if (eventTypeMatch && dataMatch) {
-                try {
-                  const eventType = eventTypeMatch[1];
-                  const data = JSON.parse(dataMatch[1]);
-                  
-                  switch (eventType) {
-                    case 'connected':
-                      // Соединение установлено
-                      console.log('Соединение установлено:', data);
-                      break;
-                      
-                    case 'update':
-                      // Получен фрагмент текста
-                      if (data.chunk) {
-                        currentMessageText += data.chunk + ' ';
-                        updateAIMessage(currentMessageText);
-                        
-                        // Сохраняем информацию о провайдере
-                        if (data.provider) responseProvider = data.provider;
-                        if (data.model) responseModel = data.model;
-                        
-                        // Обновляем метаданные в процессе генерации
-                        updateAIMessage(currentMessageText, `${responseProvider} ${data.done ? 'завершено' : 'печатает...'}`);
-                      }
-                      break;
-                      
-                    case 'complete':
-                      // Ответ полностью сгенерирован
-                      console.log('Ответ завершен:', data);
-                      updateConnectionStatus('connected');
-                      finishAIMessage(responseProvider, responseModel);
-                      break;
-                      
-                    case 'info':
-                      // Информационное сообщение
-                      console.log('Информация от сервера:', data.message);
-                      updateAIMessage(currentMessageText, data.message);
-                      break;
-                      
-                    case 'error':
-                      // Произошла ошибка
-                      console.error('Ошибка стриминга:', data);
-                      updateConnectionStatus('error');
-                      
-                      // Добавляем информацию об ошибке в ответ
-                      if (currentMessageText) {
-                        currentMessageText += '\n\n[Ошибка: ' + data.message + ']';
-                      } else {
-                        currentMessageText = 'Произошла ошибка при генерации ответа. Пожалуйста, попробуйте еще раз или выберите другую модель.';
-                      }
-                      
-                      updateAIMessage(currentMessageText);
-                      finishAIMessage('Ошибка', 'Не удалось завершить ответ');
-                      break;
-                      
-                    case 'log':
-                      // Логи от сервера
-                      console.log('Лог от сервера:', data.message);
-                      break;
-                  }
-                } catch (parseError) {
-                  console.error('Ошибка при обработке SSE события:', parseError, event);
+              if (done) {
+                // Поток завершен
+                if (isGenerating) {
+                  finishAIMessage(responseProvider, responseModel);
+                  updateConnectionStatus('disconnected');
                 }
+                break;
+              }
+              
+              // Декодируем полученные данные
+              const chunk = decoder.decode(value, { stream: true });
+              buffer += chunk;
+              
+              // Получаем завершенные события SSE
+              let boundary = buffer.indexOf('\n\n');
+              while (boundary !== -1) {
+                const event = buffer.substring(0, boundary);
+                buffer = buffer.substring(boundary + 2);
+                
+                // Обработка события SSE
+                if (event.trim()) {
+                  const eventTypeMatch = event.match(/^event: (.+)$/m);
+                  const dataMatch = event.match(/^data: (.+)$/m);
+                  
+                  if (eventTypeMatch && dataMatch) {
+                    try {
+                      const eventType = eventTypeMatch[1];
+                      const data = JSON.parse(dataMatch[1]);
+                      
+                      switch (eventType) {
+                        case 'connected':
+                          // Соединение установлено
+                          console.log('Соединение установлено:', data);
+                          break;
+                          
+                        case 'start':
+                          // Начинается генерация ответа
+                          console.log('Начало стриминга:', data);
+                          
+                          // Сохраняем информацию о провайдере
+                          if (data.provider) responseProvider = data.provider;
+                          if (data.model) responseModel = data.model;
+                          
+                          updateAIMessage('', `${responseProvider} начинает отвечать...`);
+                          break;
+                          
+                        case 'update':
+                        case 'chunk':
+                          // Получен фрагмент текста
+                          const textChunk = data.chunk || data.text || '';
+                          if (textChunk) {
+                            currentMessageText += textChunk;
+                            updateAIMessage(currentMessageText);
+                            
+                            // Сохраняем информацию о провайдере
+                            if (data.provider) responseProvider = data.provider;
+                            if (data.model) responseModel = data.model;
+                            
+                            // Обновляем метаданные в процессе генерации
+                            updateAIMessage(currentMessageText, `${responseProvider} печатает...`);
+                          }
+                          break;
+                          
+                        case 'complete':
+                          // Ответ полностью сгенерирован
+                          console.log('Ответ завершен:', data);
+                          
+                          // Если есть полный текст, используем его (на случай пропущенных чанков)
+                          if (data.text) {
+                            currentMessageText = data.text;
+                            updateAIMessage(currentMessageText);
+                          }
+                          
+                          // Показываем дополнительную информацию, если есть
+                          if (data.elapsed) {
+                            const elapsedSec = Math.round(data.elapsed * 100) / 100;
+                            responseModel += ` (${elapsedSec}s)`;
+                          }
+                          
+                          updateConnectionStatus('connected');
+                          finishAIMessage(responseProvider, responseModel);
+                          break;
+                          
+                        case 'info':
+                          // Информационное сообщение
+                          console.log('Информация от сервера:', data.message);
+                          updateAIMessage(currentMessageText, data.message);
+                          break;
+                          
+                        case 'error':
+                          // Произошла ошибка
+                          console.error('Ошибка стриминга:', data);
+                          updateConnectionStatus('error');
+                          
+                          // Добавляем информацию об ошибке в ответ
+                          if (currentMessageText) {
+                            currentMessageText += '\n\n[Ошибка: ' + (data.error || data.message || 'Неизвестная ошибка') + ']';
+                          } else {
+                            currentMessageText = 'Произошла ошибка при генерации ответа. Пожалуйста, попробуйте еще раз или выберите другую модель.';
+                          }
+                          
+                          updateAIMessage(currentMessageText);
+                          finishAIMessage('Ошибка', 'Не удалось завершить ответ');
+                          break;
+                          
+                        case 'fallback':
+                          // Резервный ответ при ошибке
+                          console.log('Активирован fallback:', data);
+                          
+                          if (data.text) {
+                            currentMessageText = data.text;
+                            updateAIMessage(currentMessageText);
+                            finishAIMessage('BOOOMERANGS-Fallback', 'demo-mode');
+                          }
+                          break;
+                          
+                        case 'log':
+                          // Логи от сервера
+                          console.log('Лог от сервера:', data.message);
+                          break;
+                      }
+                    } catch (parseError) {
+                      console.error('Ошибка при обработке SSE события:', parseError, event);
+                    }
+                  }
+                }
+                
+                // Ищем следующее событие
+                boundary = buffer.indexOf('\n\n');
               }
             }
+          } catch (streamError) {
+            console.error('Ошибка при чтении потока:', streamError);
+            
+            // Обрабатываем ошибку стриминга
+            if (currentMessageText) {
+              currentMessageText += '\n\n[Ошибка стриминга: потеряно соединение]';
+            } else {
+              currentMessageText = 'Произошла ошибка при получении ответа. Соединение было прервано.';
+            }
+            
+            updateAIMessage(currentMessageText);
+            finishAIMessage('Ошибка стриминга', streamError.message);
+            updateConnectionStatus('error');
           }
         } else {
           // Для обычного режима используем стандартный API
