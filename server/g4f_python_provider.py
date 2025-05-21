@@ -15,28 +15,33 @@ AVAILABLE_PROVIDERS = {}
 
 # Добавляем провайдеры, которые есть в библиотеке
 for provider_class in g4f.Provider.__providers__:
-    # Проверенные рабочие провайдеры
+    # Наиболее стабильные бесплатные провайдеры
     if provider_class.__name__ == "You":
         AVAILABLE_PROVIDERS["You"] = provider_class
-    elif provider_class.__name__ == "Aichat":
-        AVAILABLE_PROVIDERS["Aichat"] = provider_class
+    elif provider_class.__name__ == "DDG":
+        AVAILABLE_PROVIDERS["DDG"] = provider_class
+    elif provider_class.__name__ == "Phind":
+        AVAILABLE_PROVIDERS["Phind"] = provider_class
+    elif provider_class.__name__ == "DeepInfra":
+        AVAILABLE_PROVIDERS["DeepInfra"] = provider_class
     elif provider_class.__name__ == "FreeGpt":
         AVAILABLE_PROVIDERS["FreeGpt"] = provider_class
     elif provider_class.__name__ == "ChatgptFree":
         AVAILABLE_PROVIDERS["ChatgptFree"] = provider_class
-    elif provider_class.__name__ == "GPTalk":
-        AVAILABLE_PROVIDERS["GPTalk"] = provider_class
-    # Новые бесплатные провайдеры
-    elif provider_class.__name__ == "AItianhuSpace":
-        AVAILABLE_PROVIDERS["AItianhuSpace"] = provider_class
-    elif provider_class.__name__ == "Bard":
-        AVAILABLE_PROVIDERS["Bard"] = provider_class
-    elif provider_class.__name__ == "DeepAi":
-        AVAILABLE_PROVIDERS["DeepAi"] = provider_class
-    elif provider_class.__name__ == "Bing":
-        AVAILABLE_PROVIDERS["Bing"] = provider_class
-    elif provider_class.__name__ == "Phind":
-        AVAILABLE_PROVIDERS["Phind"] = provider_class
+    elif provider_class.__name__ == "Liaobots":
+        AVAILABLE_PROVIDERS["Liaobots"] = provider_class
+    elif provider_class.__name__ == "Gemini":
+        AVAILABLE_PROVIDERS["Gemini"] = provider_class
+    elif provider_class.__name__ == "GeminiPro":
+        AVAILABLE_PROVIDERS["GeminiPro"] = provider_class
+    elif provider_class.__name__ == "Aichat":
+        AVAILABLE_PROVIDERS["Aichat"] = provider_class
+    elif provider_class.__name__ == "ChatGLM":
+        AVAILABLE_PROVIDERS["ChatGLM"] = provider_class
+    elif provider_class.__name__ == "AIChatFree":
+        AVAILABLE_PROVIDERS["AIChatFree"] = provider_class
+    elif provider_class.__name__ == "Yqcloud":
+        AVAILABLE_PROVIDERS["Yqcloud"] = provider_class
 
 # Выводим список провайдеров, которые будем использовать
 print(f"🤖 Загружено {len(AVAILABLE_PROVIDERS)} провайдеров: {', '.join(AVAILABLE_PROVIDERS.keys())}")
