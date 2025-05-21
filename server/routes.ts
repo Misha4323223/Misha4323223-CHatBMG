@@ -84,6 +84,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // API для работы с G4F провайдерами
   app.use('/api/g4f', g4fHandlers);
   
+  // API для работы с BOOOMERANGS AI интеграцией
+  app.post('/api/ai/chat', async (req, res) => {
+    try {
+      const { message } = req.body;
+      
+      if (!message) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Сообщение не может быть пустым' 
+        });
+      }
+      
+      // Пытаемся сначала использовать G4F хендлеры
+      try {
+        const g4fResponse = await fetch('http://localhost:5000/api/g4f/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message })
+        });
+        
+        if (g4fResponse.ok) {
+          const result = await g4fResponse.json();
+          return res.json({
+            success: true,
+            response: result.response,
+            provider: result.provider || 'g4f',
+            model: result.model || 'unknown'
+          });
+        }
+      } catch (err) {
+        console.error('Ошибка при обращении к G4F API:', err);
+        // Продолжаем выполнение и используем демо-ответы
+      }
+      
+      // Если G4F недоступен, используем демо-ответы
+      const demoResponse = generateDemoResponse(message);
+      return res.json({
+        success: true,
+        response: demoResponse.response,
+        provider: 'booomerangs-demo',
+        model: 'demo-mode'
+      });
+    } catch (error) {
+      console.error('Ошибка при обработке запроса:', error);
+      
+      return res.status(500).json({
+        success: false,
+        error: 'Ошибка при обработке запроса',
+        message: error.message
+      });
+    }
+  });
+  
+  // Функция для генерации демо-ответов
+  function generateDemoResponse(message: string) {
+    const lowerMessage = message.toLowerCase();
+    let response;
+    
+    if (lowerMessage.includes('привет') || lowerMessage.includes('здравствуй')) {
+      response = 'Привет! Я ассистент BOOOMERANGS. Чем могу помочь?';
+    } else if (lowerMessage.includes('как дела') || lowerMessage.includes('как ты')) {
+      response = 'У меня всё отлично! А как ваши дела?';
+    } else if (lowerMessage.includes('изображени') || lowerMessage.includes('картинк')) {
+      response = 'Если вы хотите создать изображение, перейдите на вкладку "Генератор Изображений" в верхней части страницы.';
+    } else if (lowerMessage.includes('booomerangs')) {
+      response = 'BOOOMERANGS - это мультимодальный AI-сервис для общения и создания изображений без API-ключей.';
+    } else {
+      const backupResponses = [
+        `Спасибо за ваш вопрос! BOOOMERANGS предоставляет доступ к AI моделям без необходимости платных API ключей.`,
+        `Интересный вопрос! BOOOMERANGS позволяет генерировать тексты и изображения бесплатно через интерфейс браузера.`,
+        `BOOOMERANGS - это инновационный инструмент для работы с искусственным интеллектом без платных подписок.`
+      ];
+      response = backupResponses[Math.floor(Math.random() * backupResponses.length)];
+    }
+    
+    return {
+      response,
+      provider: 'BOOOMERANGS-Demo',
+      model: 'demo-mode'
+    };
+  }
+  
   // Auth endpoint - validate token and return user
   app.post("/api/auth", async (req, res) => {
     try {
