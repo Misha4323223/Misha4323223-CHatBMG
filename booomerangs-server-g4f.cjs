@@ -1,18 +1,26 @@
-// BOOOMERANGS сервер с корректной G4F интеграцией
+// BOOOMERANGS сервер с корректной G4F интеграцией и демо-режимом
 const express = require('express');
 const path = require('path');
+const cors = require('cors');
 const { getResponseFromG4F, getAvailableProviders } = require('./g4f-chat-correct.cjs');
 
 const app = express();
-const PORT = 5000;
+// Используем порт из переменной окружения для совместимости с Replit
+const PORT = process.env.PORT || 5000;
 
-// Поддержка JSON и статических файлов
+// Поддержка JSON, CORS и статических файлов
 app.use(express.json());
+app.use(cors()); // Добавляем CORS для доступа с разных доменов
 app.use(express.static('./'));
 
 // Маршрут для главной страницы
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// Маршрут для доступа к BOOOMERANGS приложению
+app.get('/booom', (req, res) => {
+  res.sendFile(path.join(__dirname, 'booomerangs-app.html'));
 });
 
 // API маршрут для чата с G4F
@@ -29,9 +37,10 @@ app.post('/api/ai/chat', async (req, res) => {
     
     console.log(`Получен запрос: "${message.substring(0, 50)}${message.length > 50 ? '...' : ''}"`);
     
-    // Получаем ответ от G4F
+    // Получаем ответ от G4F с возможностью использования демо-режима
     const result = await getResponseFromG4F(message, {
-      temperature: 0.7
+      temperature: 0.7,
+      timeout: 5000 // Таймаут в 5 секунд, если провайдеры не отвечают, используем демо-режим
     });
     
     console.log(`Ответ получен от провайдера: ${result.provider}`);
@@ -45,16 +54,32 @@ app.post('/api/ai/chat', async (req, res) => {
   } catch (error) {
     console.error('Ошибка при обработке запроса:', error);
     
-    // Если все провайдеры не ответили, используем локальный ответ
-    const backupResponse = generateBackupResponse(req.body.message);
-    
-    res.json({
-      success: true,
-      response: backupResponse.response,
-      provider: backupResponse.provider,
-      model: backupResponse.model,
-      isBackup: true
-    });
+    // Если произошла ошибка, пытаемся использовать резервный ответ от нашего модуля g4f-chat-correct
+    try {
+      // Запрашиваем демо-ответ повторно, но с указанием явной ошибки
+      const result = await getResponseFromG4F(req.body.message, {
+        forceDemo: true
+      });
+      
+      res.json({
+        success: true,
+        response: result.response,
+        provider: result.provider,
+        model: result.model,
+        isBackup: true
+      });
+    } catch (backupError) {
+      // Если даже с демо-режимом не получилось, используем старый механизм резервных ответов
+      const backupResponse = generateBackupResponse(req.body.message);
+      
+      res.json({
+        success: true,
+        response: backupResponse.response,
+        provider: backupResponse.provider,
+        model: backupResponse.model,
+        isBackup: true
+      });
+    }
   }
 });
 
