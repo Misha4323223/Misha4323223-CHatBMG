@@ -24,16 +24,16 @@ def get_provider(name):
         return None
 
 providers = {}
-for name in ["Qwen_Max", "Qwen_3", "You", "DeepInfra", "Gemini", "GeminiPro", "DeepAI"]:
+for name in ["Qwen_Qwen_2_5_Max", "Qwen_Qwen_3", "You", "DeepInfra", "Gemini", "GeminiPro"]:
     provider = get_provider(name)
     if provider:
         providers[name] = provider
 
 # Организуем провайдеры в группы по надежности
 provider_groups = {
-    'primary': ['Qwen_Max', 'Qwen_3', 'You'],
+    'primary': ['Qwen_Qwen_2_5_Max', 'Qwen_Qwen_3', 'You'],
     'secondary': ['DeepInfra', 'Gemini', 'GeminiPro'],
-    'fallback': ['DeepAI']
+    'fallback': ['You']
 }
 
 app = Flask(__name__)

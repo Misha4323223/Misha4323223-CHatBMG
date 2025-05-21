@@ -17,21 +17,20 @@ CORS(app)
 
 # Справочник моделей для каждого провайдера
 models_per_provider = {
-    "Qwen_Max": "qwen-max",
-    "Qwen_3": "qwen-plus",
+    "Qwen_Qwen_2_5_Max": "qwen-max",
+    "Qwen_Qwen_3": "qwen-plus",
     "You": "you-chat",
     "Phind": "phind-70b",
     "DeepInfra": "deepinfra-mistral",
-    "DeepAI": "deepai-chat",
     "GeminiPro": "gemini-pro",
     "Liaobots": "llama-3-70b"
 }
 
 # Организуем провайдеры в группы по надежности
 provider_groups = {
-    "primary": ["Qwen_Max", "Qwen_3", "You"],
+    "primary": ["Qwen_Qwen_2_5_Max", "Qwen_Qwen_3", "You"],
     "secondary": ["DeepInfra", "GeminiPro", "Phind"],
-    "fallback": ["DeepAI", "Liaobots"]
+    "fallback": ["Liaobots"]
 }
 
 def get_demo_response(message):
