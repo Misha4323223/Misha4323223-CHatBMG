@@ -67,7 +67,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Создаем маршрут для доступа к сгенерированным изображениям
-  app.use('/output', app.static(path.join(__dirname, '..', 'output')));
+  app.use('/output', (req, res, next) => {
+    const outputPath = path.join(__dirname, '..', 'output');
+    res.sendFile(req.path, { root: outputPath });
+  });
   
   // Тестовая страница
   app.get('/test', (req, res) => {
