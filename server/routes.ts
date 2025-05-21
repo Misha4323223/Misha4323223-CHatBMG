@@ -217,6 +217,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const chatFreeImproved = require('./chatfree-improved');
   app.use('/api/chatfree', chatFreeImproved);
   
+  // API для Claude от Anthropic через Python G4F
+  const claudeProvider = require('./claude-provider');
+  app.use('/api/claude', claudeProvider);
+  
   // Проверка работы Python провайдера при запуске
   (async () => {
     try {
@@ -265,6 +269,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (provider === 'qwen') {
         actualProvider = 'AItianhu';
+      } else if (provider === 'claude') {
+        // Используем Claude через Python G4F
+        try {
+          console.log(`Пробуем использовать Claude через Python G4F...`);
+          const claudeProvider = require('./claude-provider');
+          const claudeResponse = await claudeProvider.getClaudeResponse(message);
+          
+          if (claudeResponse.success) {
+            console.log(`✅ Успешно получен ответ от Claude`);
+            return claudeResponse;
+          } else {
+            throw new Error(claudeResponse.error || 'Ошибка Claude');
+          }
+        } catch (error) {
+          console.error(`❌ Ошибка при использовании Claude:`, error);
+          actualProvider = 'AItianhu'; // Фолбэк на стабильный провайдер
+        }
       } else if (provider === 'ollama') {
         // Используем Ollama через Python G4F
         try {
