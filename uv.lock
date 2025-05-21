@@ -620,7 +620,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "g4f", specifier = ">=0.5.2.9" },
+    { name = "g4f", specifier = "==0.5.2.9" },
     { name = "numpy", specifier = ">=2.2.6" },
     { name = "pillow", specifier = ">=11.2.1" },
     { name = "requests", specifier = ">=2.32.3" },

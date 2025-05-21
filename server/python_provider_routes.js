@@ -22,17 +22,24 @@ router.post('/chat', async (req, res) => {
     
     console.log(`Запрос к Python G4F: ${message.substring(0, 50)}${message.length > 50 ? '...' : ''}`);
     
-    // Мгновенно отправляем демо-ответ для лучшего UX
+    // Получаем демо-ответ на случай таймаута или ошибки
     const demoResponse = getDemoResponse(message);
-    res.json({
-      success: true,
-      response: demoResponse,
-      provider: 'BOOOMERANGS-Live',
-      model: 'instant-response'
-    });
     
-    // В фоновом режиме пытаемся получить ответ от Python G4F
-    // Это асинхронный процесс, который не влияет на отклик пользователю
+    // Устанавливаем таймаут для ответа
+    const timeoutMs = 15000; // 15 секунд на получение ответа
+    let responseTimeout = setTimeout(() => {
+      if (!res.headersSent) {
+        console.log('⏱️ Таймаут при ожидании ответа от Python G4F, отправляем демо-ответ');
+        res.json({
+          success: true,
+          response: demoResponse,
+          provider: 'BOOOMERANGS-Live',
+          model: 'instant-response (timeout)'
+        });
+      }
+    }, timeoutMs);
+    
+    // Пытаемся получить реальный ответ от Python G4F
     try {
       // Вызываем Python скрипт с сообщением и опциональным провайдером
       const args = [
@@ -64,8 +71,19 @@ router.post('/chat', async (req, res) => {
       
       // Обрабатываем завершение работы скрипта
       pythonProcess.on('close', (code) => {
+        // Очищаем таймаут, чтобы избежать отправки демо-ответа
+        clearTimeout(responseTimeout);
+        
         if (code !== 0) {
           console.error(`Python G4F завершился с кодом ${code}: ${errorData}`);
+          if (!res.headersSent) {
+            res.json({
+              success: true,
+              response: demoResponse,
+              provider: 'BOOOMERANGS-Live',
+              model: 'instant-response (python error)'
+            });
+          }
           return;
         }
         
@@ -87,11 +105,48 @@ router.post('/chat', async (req, res) => {
           if (jsonLine) {
             const result = JSON.parse(jsonLine);
             console.log(`✅ Python G4F успешно ответил: "${result.provider}"`);
+            
+            // Если у нас есть ответ и заголовки еще не отправлены
+            if (!res.headersSent) {
+              res.json({
+                success: true,
+                response: result.response || responseData,
+                provider: result.provider || 'Python-G4F',
+                model: result.model || 'unknown'
+              });
+            }
+          } else if (responseData.trim()) {
+            // Если JSON не найден, но есть текстовый ответ
+            console.log('Python G4F вернул текстовый ответ');
+            if (!res.headersSent) {
+              res.json({
+                success: true,
+                response: responseData.trim(),
+                provider: 'Python-G4F',
+                model: 'direct-response'
+              });
+            }
           } else {
             console.error('Python G4F не вернул JSON в ответе');
+            if (!res.headersSent) {
+              res.json({
+                success: true,
+                response: demoResponse,
+                provider: 'BOOOMERANGS-Live',
+                model: 'instant-response (empty python response)'
+              });
+            }
           }
         } catch (parseError) {
           console.error('Ошибка при разборе ответа Python G4F:', parseError);
+          if (!res.headersSent) {
+            res.json({
+              success: true,
+              response: demoResponse,
+              provider: 'BOOOMERANGS-Live',
+              model: 'instant-response (parse error)'
+            });
+          }
         }
       });
     } catch (backgroundError) {

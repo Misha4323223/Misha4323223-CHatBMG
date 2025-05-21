@@ -116,6 +116,10 @@ def try_provider(provider_name, message, timeout=10):
             model = "claude-3-haiku" 
         elif provider_name == "Bing":
             model = "gpt-4"
+        elif provider_name == "Qwen_Qwen_3":
+            model = "qwen3-8b"
+        elif provider_name == "Qwen_Qwen_2_5_Max":
+            model = "qwen-max"
             
         response = g4f.ChatCompletion.create(
             model=model,
