@@ -39,65 +39,106 @@ console.log(result);
 
 // Функция для получения ответа от DeepSpeek через настоящую AI модель
 async function getDeepSpeekResponse(query) {
-  // Используем модуль direct-ai-provider для доступа к AI
-  const directAiProvider = require('./direct-ai-provider');
+  // Список провайдеров для DeepSpeek, отсортированный по приоритету
+  const technicalProviders = [
+    // Наиболее стабильные провайдеры - пробуем в первую очередь
+    "AItianhu",          // Qwen
+    "Qwen_Qwen_2_5_Max", // Python G4F с Qwen 2.5 Max
+    "Phind",             // Технический AI специалист
+    "DEEPSEEK",          // G4F провайдер
+    "OpenaiAPI",         // OpenAI через G4F
+    "OPENROUTER",        // Маршрутизатор моделей
+    "PERPLEXITY",        // Perplexity AI (технический)
+    "DeepInfra",         // DeepInfra AI
+    "GigaChat",          // Российский AI
+    "Gemini",            // Gemini API
+    "GeminiPro",         // Gemini Pro API
+    "Anthropic",         // Claude API
+    "HuggingChat"        // Бесплатный провайдер Hugging Face
+  ];
   
-  try {
-    console.log(`DeepSpeek: Отправка запроса к настоящей AI модели Qwen...`);
-    
-    // Пытаемся получить ответ от Qwen через AItianhu (самый стабильный провайдер)
-    const response = await directAiProvider.getChatResponse(query, { provider: 'AItianhu' });
-    
-    console.log(`DeepSpeek: Успешно получен ответ от настоящей AI модели Qwen`);
-    
-    return {
-      success: true,
-      response: response,
-      provider: "DeepSpeek",
-      model: "DeepSpeek AI (Qwen)"
-    };
-  } catch (error) {
-    console.error("Ошибка DeepSpeek с AItianhu:", error);
-    
-    // В случае ошибки с AItianhu пробуем запасной вариант - Python G4F с Qwen_2_5_Max
+  // Используем модули для доступа к AI
+  const directAiProvider = require('./direct-ai-provider');
+  const pythonProviderRoutes = require('./python_provider_routes');
+  
+  // Проходим по списку провайдеров и пробуем каждый
+  for (const provider of technicalProviders) {
     try {
-      console.log(`DeepSpeek: Пробуем запасной вариант через Python G4F...`);
+      console.log(`DeepSpeek: Пробуем провайдер ${provider}...`);
       
-      // Используем Python провайдер как запасной вариант
-      const pythonProviderRoutes = require('./python_provider_routes');
+      let response;
       
-      const pythonResponse = await pythonProviderRoutes.callPythonAI(query, 'Qwen_Qwen_2_5_Max');
+      // Определяем, какой метод использовать для этого провайдера
+      if (provider === "Qwen_Qwen_2_5_Max" || provider.startsWith("Qwen_")) {
+        // Этот провайдер доступен только через Python G4F
+        response = await pythonProviderRoutes.callPythonAI(query, provider);
+        
+        if (response) {
+          console.log(`DeepSpeek: Успешно получен ответ от ${provider} через Python G4F`);
+          
+          return {
+            success: true,
+            response: response,
+            provider: "DeepSpeek",
+            model: `DeepSpeek AI (${provider})`
+          };
+        }
+      } else {
+        // Остальные провайдеры доступны через direct-ai-provider
+        response = await directAiProvider.getChatResponse(query, { provider: provider });
+        
+        if (response) {
+          console.log(`DeepSpeek: Успешно получен ответ от ${provider}`);
+          
+          return {
+            success: true,
+            response: response,
+            provider: "DeepSpeek",
+            model: `DeepSpeek AI (${provider})`
+          };
+        }
+      }
+    } catch (error) {
+      // Логируем ошибку и продолжаем со следующим провайдером
+      console.error(`DeepSpeek: Ошибка с провайдером ${provider}:`, error.message);
+    }
+  }
+  
+  // Если ни один из провайдеров не сработал, пробуем g4f Python сервер напрямую
+  try {
+    console.log(`DeepSpeek: Пробуем прямой запрос к Python G4F серверу...`);
+    
+    // Запрос к Python G4F серверу (работает с группами провайдеров)
+    const pythonUrl = `http://localhost:5004/python/chat`;
+    const pythonResponse = await fetch(pythonUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: query })
+    });
+    
+    if (pythonResponse.ok) {
+      const result = await pythonResponse.json();
       
-      if (pythonResponse) {
+      if (result && result.response) {
         console.log(`DeepSpeek: Успешно получен ответ от Python G4F`);
         
         return {
           success: true,
-          response: pythonResponse,
+          response: result.response,
           provider: "DeepSpeek",
-          model: "DeepSpeek AI (Qwen 2.5 Max)"
+          model: `DeepSpeek AI (${result.provider || 'G4F'})`
         };
       }
-      
-      // Если Python G4F тоже не сработал, пробуем Phind
-      const phindResponse = await directAiProvider.getChatResponse(query, { provider: 'Phind' });
-      
-      return {
-        success: true,
-        response: phindResponse,
-        provider: "DeepSpeek",
-        model: "DeepSpeek AI (Phind)"
-      };
-    } catch (backupError) {
-      console.error("Все резервные провайдеры DeepSpeek не сработали:", backupError);
-      
-      // В случае полного отказа возвращаем ошибку
-      return {
-        success: false,
-        error: "Не удалось связаться с AI-провайдерами для DeepSpeek"
-      };
     }
+  } catch (finalError) {
+    console.error("DeepSpeek: Ошибка при прямом запросе к Python G4F:", finalError.message);
   }
+  
+  // В случае полного отказа возвращаем ошибку
+  return {
+    success: false,
+    error: "Не удалось связаться с AI-провайдерами для DeepSpeek"
+  };
 }
 
 // Маршрут для обработки запросов к DeepSpeek
