@@ -7,7 +7,11 @@ import { useWebSocket } from "@/lib/useWebSocket";
 import { useMessages } from "@/lib/useMessages";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { queryClient } from "@/lib/queryClient";
 import { MessageWithSender, UserWithInitials } from "@shared/schema";
+import ImageGeneratorWidget from "@/components/ImageGeneratorWidget";
+import { Button } from "@/components/ui/button";
+import { Image as ImageIcon } from "lucide-react";
 
 export default function Chat() {
   const [location, setLocation] = useLocation();
@@ -15,6 +19,7 @@ export default function Chat() {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserWithInitials | null>(null);
   const [connectedStatus, setConnectedStatus] = useState<"connected" | "disconnected">("connected");
+  const [isImageGeneratorOpen, setIsImageGeneratorOpen] = useState(false);
   
   // Get current user from localStorage
   const currentUserData = localStorage.getItem("user");

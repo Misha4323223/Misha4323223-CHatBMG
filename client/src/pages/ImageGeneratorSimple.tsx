@@ -109,15 +109,16 @@ export default function ImageGeneratorSimple() {
             </div>
             
             <div className="mt-4 text-center">
-              <Button 
-                as="a" 
+              <a 
                 href={imageUrl} 
                 download="generated-image.jpg" 
                 target="_blank"
-                className="mt-3"
+                className="inline-block"
               >
-                Скачать изображение
-              </Button>
+                <Button className="mt-3">
+                  Скачать изображение
+                </Button>
+              </a>
             </div>
           </CardContent>
         </Card>

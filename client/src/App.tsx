@@ -6,7 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import AuthScreen from "@/pages/AuthScreen";
 import Chat from "@/pages/Chat";
-import ImageGenerator from "@/pages/ImageGenerator";
+import ImageGeneratorSimple from "@/pages/ImageGeneratorSimple";
 import { useEffect } from "react";
 
 function Router() {
@@ -35,7 +35,7 @@ function Router() {
     <Switch>
       <Route path="/" component={AuthScreen} />
       <Route path="/chat" component={Chat} />
-      <Route path="/image-generator" component={ImageGenerator} />
+      <Route path="/image-generator" component={ImageGeneratorSimple} />
       <Route component={NotFound} />
     </Switch>
   );
