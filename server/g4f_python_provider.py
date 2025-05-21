@@ -121,6 +121,7 @@ def try_provider(provider_name, message, timeout=10):
             model=model,
             provider=provider,
             messages=[{"role": "user", "content": message}],
+            timeout=15  # Устанавливаем таймаут 15 секунд для всех провайдеров
         )
         
         # Проверяем результат
@@ -152,7 +153,7 @@ def get_chat_response(message, specific_provider=None):
         print(f"Указанный провайдер {specific_provider} не ответил, пробуем другие...")
     
     # Порядок перебора провайдеров (от более стабильных к менее)
-    providers_priority = ["You", "DDG", "DeepInfra", "Phind", "Liaobots", "GeminiPro", "Gemini", "AIChatFree", "FreeGpt", "ChatgptFree", "Yqcloud", "ChatGLM"]
+    providers_priority = ["Qwen", "Qwen_3", "Qwen_Max", "Qwen_72B", "You", "DDG", "DeepInfra", "Phind", "Liaobots", "GeminiPro", "Gemini", "AIChatFree", "FreeGpt", "ChatgptFree", "Yqcloud", "ChatGLM"]
     
     # Перебираем провайдеры
     for provider_name in providers_priority:
