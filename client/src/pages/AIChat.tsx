@@ -218,7 +218,7 @@ export default function AIChat() {
         // Добавляем ответ от AI с информацией о провайдере
         const aiMessage: Message = {
           id: Date.now() + 1,
-          text: data.response,
+          text: data.backupInfo ? `${data.backupInfo}\n\n${data.response}` : data.response,
           sender: "ai",
           model: data.model || "Unknown",
           provider: data.provider || "Unknown",
