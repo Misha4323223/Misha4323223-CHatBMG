@@ -348,16 +348,19 @@ async function getResponseFromProviders(message, analysis, options = {}) {
 router.post('/message', async (req, res) => {
   const { message, imageUrl } = req.body;
   
-  if (!message) {
+  if (!message && !imageUrl) {
     return res.status(400).json({
       success: false,
-      error: 'Сообщение не может быть пустым'
+      error: 'Сообщение или изображение должны быть предоставлены'
     });
   }
   
+  // Если есть только изображение без текста, используем стандартный запрос для анализа
+  const messageText = message || 'Проанализируй это изображение';
+  
   try {
     // Маршрутизируем сообщение к подходящему провайдеру
-    const result = await routeMessage(message, { imageUrl });
+    const result = await routeMessage(messageText, { imageUrl });
     
     res.json(result);
   } catch (error) {
