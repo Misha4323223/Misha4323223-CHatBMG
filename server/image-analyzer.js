@@ -292,9 +292,11 @@ async function analyzeImage(imageBuffer, filename) {
   
   // Импортируем продвинутые анализаторы
   const advancedAnalyzer = require('./advanced-image-analyzer');
+  const smartRecognition = require('./smart-object-recognition');
   
-  // Пробуем экспертные анализаторы по очереди
+  // Пробуем умные анализаторы по очереди
   const analyzers = [
+    () => smartRecognition.recognizeObjects(imageBuffer, filename),
     () => analyzeWithAIProvider(imageBuffer, filename),
     () => advancedAnalyzer.analyzeWithExpertVision(imageBuffer, filename),
     () => advancedAnalyzer.analyzeImageMood(imageBuffer, filename),
