@@ -180,6 +180,12 @@ async function routeMessage(message, options = {}) {
       const result = await imageDetector.analyzeLocalImage(options.imageUrl, message);
       
       if (result.success) {
+        // Сохраняем ответ в память разговора
+        if (options.userId) {
+          const conversationMemory = require('./conversation-memory');
+          conversationMemory.addAiResponse(options.userId, result.response, result.provider, result.model);
+        }
+        
         return {
           success: true,
           response: result.response,
@@ -209,12 +215,45 @@ async function routeMessage(message, options = {}) {
     }
   }
 
-  // Анализируем сообщение
+  // Если есть предпочтительный провайдер (продолжение разговора)
+  if (options.preferredProvider) {
+    console.log(`💭 Продолжаем разговор с провайдером: ${options.preferredProvider}`);
+    
+    // Добавляем контекст к сообщению
+    const messageWithContext = options.context ? options.context + message : message;
+    
+    try {
+      const result = await trySpecificProvider(options.preferredProvider, messageWithContext, options);
+      if (result && result.success) {
+        // Сохраняем ответ в память разговора
+        if (options.userId) {
+          const conversationMemory = require('./conversation-memory');
+          conversationMemory.addAiResponse(options.userId, result.response, result.provider, result.model);
+        }
+        return result;
+      }
+    } catch (error) {
+      console.log(`⚠️ Предпочтительный провайдер ${options.preferredProvider} не ответил, выбираем нового...`);
+    }
+  }
+
+  // Анализируем сообщение для выбора нового провайдера
   const analysis = analyzeMessage(message);
   console.log(`Категория сообщения: ${analysis.category} (совпадений: ${analysis.matchCount})`);
   console.log(`Рекомендуемые провайдеры: ${analysis.providers.join(', ')}`);
   
-  return await getResponseFromProviders(message, analysis, options);
+  // Добавляем контекст к сообщению, если есть
+  const messageWithContext = options.context ? options.context + message : message;
+  
+  const result = await getResponseFromProviders(messageWithContext, analysis, options);
+  
+  // Сохраняем ответ в память разговора
+  if (result && result.success && options.userId) {
+    const conversationMemory = require('./conversation-memory');
+    conversationMemory.addAiResponse(options.userId, result.response, result.provider || result.bestProvider, result.model);
+  }
+  
+  return result;
 }
 
 /**
@@ -374,7 +413,7 @@ async function getResponseFromProviders(message, analysis, options = {}) {
 
 // API маршрут для обработки сообщений
 router.post('/message', async (req, res) => {
-  const { message, imageUrl } = req.body;
+  const { message, imageUrl, userId = 'anonymous' } = req.body;
   
   if (!message && !imageUrl) {
     return res.status(400).json({
@@ -387,8 +426,19 @@ router.post('/message', async (req, res) => {
   const messageText = message || 'Проанализируй это изображение';
   
   try {
-    // Маршрутизируем сообщение к подходящему провайдеру
-    const result = await routeMessage(messageText, { imageUrl });
+    // Получаем контекст разговора
+    const conversationMemory = require('./conversation-memory');
+    const contextData = conversationMemory.getMessageContext(userId, messageText);
+    
+    console.log(`💭 Пользователь ${userId}: ${contextData.shouldContinueWithProvider ? 'продолжаем с ' + contextData.currentProvider : 'выбираем нового провайдера'}`);
+    
+    // Маршрутизируем сообщение к подходящему провайдеру с учетом контекста
+    const result = await routeMessage(messageText, { 
+      imageUrl, 
+      userId,
+      context: contextData.context,
+      preferredProvider: contextData.shouldContinueWithProvider ? contextData.currentProvider : null
+    });
     
     res.json(result);
   } catch (error) {
