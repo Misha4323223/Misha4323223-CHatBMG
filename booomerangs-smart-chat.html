@@ -139,6 +139,9 @@
       padding-bottom: 15px;
       border-bottom: 1px solid var(--border);
       margin-bottom: 15px;
+      background: linear-gradient(135deg, rgba(255, 75, 43, 0.1), rgba(108, 99, 255, 0.1));
+      border-radius: 10px 10px 0 0;
+      padding: 20px;
     }
     
     .chat-title {
@@ -155,8 +158,10 @@
     .chat-messages {
       flex-grow: 1;
       overflow-y: auto;
-      padding: 10px;
+      padding: 20px;
       margin-bottom: 15px;
+      background-color: rgba(0, 0, 0, 0.02);
+      border-radius: 8px;
     }
     
     .message {
@@ -169,19 +174,21 @@
     }
     
     .message.user {
-      background-color: var(--primary);
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
       color: white;
       align-self: flex-end;
       margin-left: auto;
       border-bottom-right-radius: 0;
+      box-shadow: 0 3px 10px rgba(255, 75, 43, 0.2);
     }
     
     .message.ai {
-      background-color: var(--secondary-light);
+      background: linear-gradient(135deg, var(--secondary-dark), var(--secondary-light));
       color: white;
       align-self: flex-start;
       margin-right: auto;
       border-bottom-left-radius: 0;
+      box-shadow: 0 3px 10px rgba(108, 99, 255, 0.2);
     }
     
     .message.thinking {
@@ -296,32 +303,37 @@
     
     .category-badge {
       display: inline-block;
-      padding: 3px 8px;
-      background-color: rgba(108, 99, 255, 0.2);
-      color: var(--secondary);
+      padding: 4px 10px;
+      background: linear-gradient(135deg, rgba(108, 99, 255, 0.2), rgba(126, 118, 255, 0.2));
+      color: var(--secondary-dark);
       border-radius: 50px;
       font-size: 0.75rem;
       margin-right: 5px;
       margin-top: 5px;
+      font-weight: 600;
+      box-shadow: 0 2px 5px rgba(108, 99, 255, 0.1);
     }
     
     .provider-badge {
       display: inline-block;
-      padding: 3px 8px;
-      background-color: rgba(255, 75, 43, 0.2);
-      color: var(--primary);
+      padding: 4px 10px;
+      background: linear-gradient(135deg, rgba(255, 75, 43, 0.2), rgba(255, 100, 71, 0.2));
+      color: var(--primary-dark);
       border-radius: 50px;
       font-size: 0.75rem;
       margin-right: 5px;
       margin-top: 5px;
+      font-weight: 600;
+      box-shadow: 0 2px 5px rgba(255, 75, 43, 0.1);
     }
     
     .info-box {
-      background-color: rgba(108, 99, 255, 0.1);
+      background: linear-gradient(135deg, rgba(108, 99, 255, 0.05), rgba(255, 75, 43, 0.05));
       border-left: 4px solid var(--secondary);
-      padding: 15px;
+      padding: 20px;
       border-radius: 8px;
       margin-bottom: 20px;
+      box-shadow: 0 3px 15px rgba(0, 0, 0, 0.05);
     }
     
     .info-title {
@@ -413,7 +425,6 @@
     
     <nav class="navigation">
       <a href="/" class="nav-button">Главная</a>
-      <a href="/ai" class="nav-button">AI Чат</a>
       <a href="/smart-chat" class="nav-button active">Умный Чат</a>
       <a href="/image-generator" class="nav-button">Генератор Изображений</a>
     </nav>
