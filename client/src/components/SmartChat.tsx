@@ -212,25 +212,25 @@ const SmartChat: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col w-full max-w-4xl mx-auto h-64 bg-gray-900 text-white rounded-lg shadow-lg border border-gray-700 overflow-hidden">
+    <div className="flex flex-col w-full max-w-4xl mx-auto h-20 bg-gray-900 text-white rounded-lg shadow-lg border border-gray-700 overflow-hidden">
       {/* Убрали заголовок для большей компактности */}
       
-      <ScrollArea className="flex-grow p-2">
-        <div className="space-y-2">
+      <ScrollArea className="flex-grow p-1">
+        <div className="space-y-1">
           {messages.map((message) => (
             <div
               key={message.id}
               className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
             >
-              <div className={`flex gap-2 max-w-[80%] ${message.sender === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                <Avatar className={`h-6 w-6 ${message.sender === 'user' ? 'bg-blue-600' : 'bg-gray-700'}`}>
+              <div className={`flex gap-1 max-w-[80%] ${message.sender === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+                <Avatar className={`h-4 w-4 ${message.sender === 'user' ? 'bg-blue-600' : 'bg-gray-700'}`}>
                   <AvatarFallback className="text-xs text-white">
                     {message.sender === 'user' ? 'U' : 'AI'}
                   </AvatarFallback>
                 </Avatar>
                 
                 <div className="flex flex-col">
-                  <div className={`rounded-lg p-2 text-xs ${
+                  <div className={`rounded p-1 text-xs ${
                     message.loading ? 'bg-gray-700 text-gray-300' :
                     message.error ? 'bg-red-900/50 text-red-300' :
                     message.sender === 'user' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-100'
@@ -288,16 +288,16 @@ const SmartChat: React.FC = () => {
         </div>
       )}
       
-      <div className="p-2 border-t border-gray-700">
+      <div className="p-1 border-t border-gray-700">
         <div className="flex gap-1">
           <Button
             variant="outline"
             size="sm"
             onClick={handleImageButtonClick}
             disabled={isLoading}
-            className="h-8 w-8 p-0 border-gray-600 bg-gray-800 text-gray-300 hover:bg-gray-700"
+            className="h-6 w-6 p-0 border-gray-600 bg-gray-800 text-gray-300 hover:bg-gray-700"
           >
-            <Image className="h-3 w-3" />
+            <Image className="h-2 w-2" />
           </Button>
           <input
             ref={fileInputRef}
@@ -312,18 +312,18 @@ const SmartChat: React.FC = () => {
             onKeyDown={handleKeyDown}
             placeholder="Сообщение..."
             disabled={isLoading}
-            className="flex-grow h-8 text-xs bg-gray-800 border-gray-600 text-white placeholder-gray-400"
+            className="flex-grow h-6 text-xs bg-gray-800 border-gray-600 text-white placeholder-gray-400"
           />
           <Button
             onClick={handleSend}
             disabled={isLoading || (!inputText.trim() && !imageUrl)}
             size="sm"
-            className="h-8 w-8 p-0 bg-blue-600 hover:bg-blue-700 text-white"
+            className="h-6 w-6 p-0 bg-blue-600 hover:bg-blue-700 text-white"
           >
             {isLoading ? (
-              <Loader2 className="h-3 w-3 animate-spin" />
+              <Loader2 className="h-2 w-2 animate-spin" />
             ) : (
-              <Send className="h-3 w-3" />
+              <Send className="h-2 w-2" />
             )}
           </Button>
         </div>
