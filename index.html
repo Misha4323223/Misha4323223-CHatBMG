@@ -362,6 +362,8 @@
           </div>
         </div>
         <div class="chat-input-container">
+          <input type="file" id="image-input" accept="image/*" style="display: none;">
+          <button class="button" id="attach-image" onclick="document.getElementById('image-input').click()">📎 Фото</button>
           <textarea class="chat-input" id="chat-input" placeholder="Введите ваше сообщение..." rows="2"></textarea>
           <button class="button" id="send-message">Отправить</button>
         </div>
@@ -533,6 +535,8 @@
     const chatMessages = document.getElementById('chat-messages');
     const chatInput = document.getElementById('chat-input');
     const sendMessageButton = document.getElementById('send-message');
+    const imageInput = document.getElementById('image-input');
+    let selectedImage = null;
     
     // Добавление сообщения в чат
     function addMessage(text, isUser) {
@@ -586,16 +590,36 @@
       chatMessages.scrollTop = chatMessages.scrollHeight;
     }
     
+    // Обработчик выбора изображения
+    imageInput.addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        selectedImage = file;
+        // Показываем превью выбранного изображения
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          chatInput.placeholder = `📎 Изображение выбрано: ${file.name}`;
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
     // Обработка отправки сообщения
     async function sendMessage() {
       const messageText = chatInput.value.trim();
-      if (!messageText) return;
+      if (!messageText && !selectedImage) return;
       
       // Добавляем сообщение пользователя
-      addMessage(messageText, true);
+      if (messageText) {
+        addMessage(messageText, true);
+      }
+      if (selectedImage) {
+        addMessage(`📎 Отправлено изображение: ${selectedImage.name}`, true);
+      }
       
       // Очищаем поле ввода
       chatInput.value = '';
+      chatInput.placeholder = 'Введите ваше сообщение...';
       
       try {
         // Создаем "думающее" сообщение
@@ -612,13 +636,28 @@
         
         try {
           // Пробуем получить ответ от G4F API
-          const result = await fetch('/api/ai/chat', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ message: messageText })
-          });
+          let result;
+          
+          if (selectedImage) {
+            // Если есть изображение, используем FormData
+            const formData = new FormData();
+            formData.append('message', messageText || 'Анализируй это изображение');
+            formData.append('image', selectedImage);
+            
+            result = await fetch('/api/ai/chat', {
+              method: 'POST',
+              body: formData
+            });
+          } else {
+            // Если только текст, используем JSON
+            result = await fetch('/api/ai/chat', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ message: messageText })
+            });
+          }
           
           if (!result.ok) {
             throw new Error(`Ошибка API: ${result.status}`);
