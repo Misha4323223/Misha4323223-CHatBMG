@@ -36,16 +36,7 @@ const categoryIcons: Record<string, React.ReactNode> = {
 };
 
 const SmartChat: React.FC = () => {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      text: 'Привет! Я ваш AI-ассистент с интеллектуальной маршрутизацией. Я автоматически направляю ваши вопросы наиболее подходящим AI-провайдерам в зависимости от темы. Задайте любой вопрос, и я постараюсь дать наилучший ответ!',
-      sender: 'ai',
-      timestamp: new Date(),
-      category: 'general',
-      provider: 'BOOOMERANGS AI'
-    }
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -221,39 +212,36 @@ const SmartChat: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col w-full max-w-4xl mx-auto h-[calc(100vh-8rem)] bg-background rounded-lg shadow-lg border overflow-hidden">
-      <div className="p-4 border-b bg-muted/50">
-        <h2 className="text-lg font-semibold">Интеллектуальный AI-чат</h2>
-        <p className="text-sm text-muted-foreground">Система автоматически направляет вопросы к наиболее подходящим AI-провайдерам</p>
-      </div>
+    <div className="flex flex-col w-full max-w-4xl mx-auto h-64 bg-background rounded-lg shadow-lg border overflow-hidden">
+      {/* Убрали заголовок для большей компактности */}
       
-      <ScrollArea className="flex-grow p-4">
-        <div className="space-y-4">
+      <ScrollArea className="flex-grow p-2">
+        <div className="space-y-2">
           {messages.map((message) => (
             <div
               key={message.id}
               className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
             >
-              <div className={`flex gap-3 max-w-[80%] ${message.sender === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                <Avatar className={`${message.sender === 'user' ? 'bg-primary/10' : 'bg-secondary/10'}`}>
-                  <AvatarFallback>
-                    {message.sender === 'user' ? 'Вы' : 'AI'}
+              <div className={`flex gap-2 max-w-[80%] ${message.sender === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+                <Avatar className={`h-6 w-6 ${message.sender === 'user' ? 'bg-primary/10' : 'bg-secondary/10'}`}>
+                  <AvatarFallback className="text-xs">
+                    {message.sender === 'user' ? 'U' : 'AI'}
                   </AvatarFallback>
                 </Avatar>
                 
                 <div className="flex flex-col">
-                  <div className={`rounded-lg p-4 ${
+                  <div className={`rounded-lg p-2 text-xs ${
                     message.loading ? 'bg-muted' :
                     message.error ? 'bg-destructive/10 text-destructive' :
                     message.sender === 'user' ? 'bg-primary text-primary-foreground' : 'bg-secondary/10'
                   }`}>
                     {message.loading ? (
-                      <div className="flex items-center space-x-2">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        <span>AI обрабатывает ваш запрос...</span>
+                      <div className="flex items-center space-x-1">
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        <span className="text-xs">AI думает...</span>
                       </div>
                     ) : (
-                      <div>
+                      <div className="text-xs">
                         {message.text.split('\n').map((line, i) => (
                           <React.Fragment key={i}>
                             {line}
@@ -264,23 +252,15 @@ const SmartChat: React.FC = () => {
                     )}
                   </div>
                   
-                  {message.sender === 'ai' && !message.loading && !message.error && message.category && (
+                  {message.sender === 'ai' && !message.loading && !message.error && message.provider && (
                     <div className="flex flex-wrap gap-1 mt-1">
-                      {message.category && (
-                        <Badge variant="outline" className="text-xs">
-                          {categoryIcons[message.category] || categoryIcons.general}
-                          <span className="ml-1">{message.category}</span>
-                        </Badge>
-                      )}
-                      {message.provider && (
-                        <Badge variant="secondary" className="text-xs">
-                          Провайдер: {message.provider}
-                        </Badge>
-                      )}
+                      <Badge variant="secondary" className="text-xs h-4 px-1">
+                        {message.provider}
+                      </Badge>
                     </div>
                   )}
                   
-                  <div className="text-xs text-muted-foreground mt-1">
+                  <div className="text-xs text-muted-foreground mt-0.5">
                     {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </div>
                 </div>
@@ -294,29 +274,30 @@ const SmartChat: React.FC = () => {
       <Separator />
       
       {imageUrl && (
-        <div className="p-2 flex items-center gap-2 border-t">
+        <div className="p-1 flex items-center gap-1 border-t">
           <div className="relative">
-            <img src={imageUrl} alt="Selected" className="h-16 w-16 object-cover rounded" />
+            <img src={imageUrl} alt="Selected" className="h-8 w-8 object-cover rounded" />
             <button
               onClick={handleRemoveImage}
-              className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 w-5 h-5 flex items-center justify-center text-xs"
+              className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full p-0.5 w-3 h-3 flex items-center justify-center text-xs"
             >
               ✕
             </button>
           </div>
-          <span className="text-sm text-muted-foreground">Изображение будет отправлено вместе с сообщением</span>
+          <span className="text-xs text-muted-foreground">Изображение</span>
         </div>
       )}
       
-      <div className="p-4 border-t">
-        <div className="flex gap-2">
+      <div className="p-2 border-t">
+        <div className="flex gap-1">
           <Button
             variant="outline"
-            size="icon"
+            size="sm"
             onClick={handleImageButtonClick}
             disabled={isLoading}
+            className="h-8 w-8 p-0"
           >
-            <Image className="h-5 w-5" />
+            <Image className="h-3 w-3" />
           </Button>
           <input
             ref={fileInputRef}
@@ -329,18 +310,20 @@ const SmartChat: React.FC = () => {
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Введите сообщение..."
+            placeholder="Сообщение..."
             disabled={isLoading}
-            className="flex-grow"
+            className="flex-grow h-8 text-xs"
           />
           <Button
             onClick={handleSend}
             disabled={isLoading || (!inputText.trim() && !imageUrl)}
+            size="sm"
+            className="h-8 w-8 p-0"
           >
             {isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="h-3 w-3 animate-spin" />
             ) : (
-              <Send className="h-4 w-4" />
+              <Send className="h-3 w-3" />
             )}
           </Button>
         </div>

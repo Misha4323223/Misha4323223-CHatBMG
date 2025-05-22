@@ -3,12 +3,15 @@ import SmartChat from "@/components/SmartChat";
 
 const SmartChatPage: React.FC = () => {
   return (
-    <div className="container py-8">
-      <h1 className="text-2xl font-bold mb-2">Умный AI-чат BOOOMERANGS</h1>
-      <p className="text-muted-foreground mb-6">
-        Новая версия AI-чата с интеллектуальным выбором провайдера. Система автоматически направляет
-        ваши вопросы к наиболее подходящим AI-моделям в зависимости от темы запроса.
-      </p>
+    <div className="container py-2">
+      <div className="flex items-center gap-2 mb-2">
+        <img 
+          src="/booomerangs-logo.jpg" 
+          alt="BOOOMERANGS" 
+          className="h-6 w-6 object-contain"
+        />
+        <h1 className="text-lg font-bold">BOOOMERANGS AI</h1>
+      </div>
       
       <SmartChat />
     </div>
