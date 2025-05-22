@@ -52,10 +52,14 @@ const SmartChat: React.FC = () => {
   const handleSend = async () => {
     if (!inputText.trim() && !imageUrl) return;
 
+    // Сохраняем текст сообщения перед очисткой
+    const messageText = inputText.trim();
+    const currentImageUrl = imageUrl;
+
     const newUserMessageId = Date.now().toString();
     const userMessage: Message = {
       id: newUserMessageId,
-      text: inputText,
+      text: messageText,
       sender: 'user',
       timestamp: new Date()
     };
@@ -63,6 +67,7 @@ const SmartChat: React.FC = () => {
     // Добавляем сообщение пользователя
     setMessages(prevMessages => [...prevMessages, userMessage]);
     setInputText("");
+    setImageUrl(null); // Очищаем изображение после отправки
 
     // Добавляем временное сообщение для индикации загрузки
     const tempAiMessageId = (Date.now() + 1).toString();
@@ -85,8 +90,8 @@ const SmartChat: React.FC = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ 
-          message: inputText,
-          imageUrl: imageUrl
+          message: messageText,
+          imageUrl: currentImageUrl
         }),
       });
 
