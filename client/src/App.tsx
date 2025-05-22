@@ -10,6 +10,7 @@ import Chat from "@/pages/Chat";
 import AIChat from "@/pages/AIChat";
 import AIProviderChat from "@/pages/AIProviderChat";
 import ImageGeneratorSimple from "@/pages/ImageGeneratorSimple";
+import SmartChatPage from "@/pages/SmartChatPage";
 import { useEffect } from "react";
 
 // Импортируем компонент навигации
@@ -23,7 +24,7 @@ function Router() {
     const token = localStorage.getItem("access_token");
     
     // Страницы, доступные без аутентификации
-    const publicPages = ["/", "/image-generator", "/provider", "/ai-chat"];
+    const publicPages = ["/", "/image-generator", "/provider", "/ai-chat", "/smart-chat"];
     const isPublicPage = publicPages.includes(location);
     
     // If no token and not on public page, redirect to auth
@@ -51,6 +52,7 @@ function Router() {
           <Route path="/ai-chat" component={AIChat} />
           <Route path="/provider" component={AIProviderChat} />
           <Route path="/image-generator" component={ImageGeneratorSimple} />
+          <Route path="/smart-chat" component={SmartChatPage} />
           <Route component={NotFound} />
         </Switch>
       </main>
