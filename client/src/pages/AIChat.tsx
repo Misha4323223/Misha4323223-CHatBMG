@@ -109,30 +109,47 @@ export default function AIChat() {
   const detectBestProvider = (message: string): string | null => {
     message = message.toLowerCase();
     
-    // Технические вопросы и код - DeepSpeek или Phind
+    // Технические вопросы и код - Phind или DeepInfra
     const techKeywords = ["код", "программирование", "javascript", "python", "java", "c++", "api", 
-                         "функция", "coding", "programming", "code", "algorithm", "database", "git"];
+                         "функция", "coding", "programming", "code", "algorithm", "database", "git",
+                         "разработка", "development", "framework", "библиотека", "library", "debug",
+                         "баг", "ошибка", "error", "exception", "компилятор", "compiler"];
     
     if (techKeywords.some(keyword => message.includes(keyword))) {
-      return Math.random() > 0.5 ? 'DeepSpeek' : 'Phind';
+      return 'Phind'; // Phind отлично справляется с вопросами о коде
     }
     
-    // Образование, наука, исследования - Qwen
+    // Образование, наука, глубокий анализ - Claude или DeepInfra
     const scienceKeywords = ["наука", "исследование", "образование", "учеба", "история", 
-                           "физика", "химия", "математика", "research", "science", "education", "math"];
+                           "физика", "химия", "математика", "research", "science", "education", "math",
+                           "анализ", "мышление", "логика", "философия", "ethics", "сравнение", "обоснование",
+                           "аргументы", "доказательство", "гипотеза", "теория"];
     
     if (scienceKeywords.some(keyword => message.includes(keyword))) {
-      return 'Qwen';
+      return Math.random() > 0.5 ? 'Claude' : 'DeepInfra';
     }
     
-    // Длинные сложные вопросы - FreeChat
-    if (message.length > 150) {
-      return 'FreeChat';
+    // Актуальная информация с поиском - Perplexity или You
+    const infoKeywords = ["новости", "последние", "актуально", "сегодня", "текущий", "recent",
+                         "news", "information", "событие", "аналитика", "прогноз", "текущий год",
+                         "данные", "статистика", "инфографика"];
+    
+    if (infoKeywords.some(keyword => message.includes(keyword))) {
+      return 'Perplexity';
     }
     
-    // Случайный выбор между наиболее стабильными провайдерами
-    const stableProviders = ['FreeChat', 'Qwen'];
-    return stableProviders[Math.floor(Math.random() * stableProviders.length)];
+    // Длинные сложные вопросы или творческие задачи - Claude или Qwen
+    if (message.length > 150 || 
+        message.includes("сложн") || 
+        message.includes("творчес") || 
+        message.includes("креатив") ||
+        message.includes("complex") ||
+        message.includes("creative")) {
+      return 'Claude';
+    }
+    
+    // По умолчанию: FreeChat (каскадная система выберет лучший доступный провайдер)
+    return 'FreeChat';
   };
 
   // Функция для отправки сообщения к AI провайдеру
