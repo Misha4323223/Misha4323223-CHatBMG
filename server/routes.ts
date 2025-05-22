@@ -233,6 +233,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const multimodalProvider = require('./multimodal-provider');
   app.use('/api/multimodal', multimodalProvider);
   
+  // API для тестирования провайдеров
+  const providerTestRoute = require('./provider-test-route');
+  app.use('/api/test-providers', providerTestRoute);
+  
   // Проверка работы Python провайдера при запуске
   (async () => {
     try {
