@@ -218,10 +218,11 @@ export default function AIChat() {
         // Добавляем ответ от AI с информацией о провайдере
         const aiMessage: Message = {
           id: Date.now() + 1,
-          text: data.backupInfo ? `${data.backupInfo}\n\n${data.response}` : data.response,
+          text: data.response,
           sender: "ai",
           model: data.model || "Unknown",
           provider: data.provider || "Unknown",
+          backupInfo: data.backupInfo,
           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         };
         
@@ -389,7 +390,7 @@ export default function AIChat() {
                           {getProviderIcon(message.provider)}
                           <span className="ml-1">{message.provider}</span>
                         </span>
-                        {message.model && (
+                        {message.model && message.model !== message.provider && (
                           <span 
                             className="px-2 py-0.5 rounded-full"
                             style={{
