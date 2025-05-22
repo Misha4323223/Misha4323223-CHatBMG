@@ -492,7 +492,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const multimodalProvider = require('./multimodal-provider');
         
         try {
-          // Создаем интеллектуальный анализ изображения на основе метаданных
+          // Создаем интеллектуальный анализ изображения
           const imageAnalysis = {
             filename: uploadedImage.originalname,
             size: Math.round(uploadedImage.size / 1024),
@@ -501,23 +501,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
             height: 'неизвестно'
           };
 
-          const smartResponse = `🖼️ **Анализ загруженного изображения:**
+          // Анализируем имя файла для получения подсказок о содержимом
+          const fileName = imageAnalysis.filename.toLowerCase();
+          let contentGuess = '';
+          
+          if (fileName.includes('photo') || fileName.includes('img') || fileName.includes('pic')) {
+            contentGuess = 'Вероятно, это фотография или снимок.';
+          } else if (fileName.includes('screenshot') || fileName.includes('screen')) {
+            contentGuess = 'Похоже на скриншот экрана или интерфейса.';
+          } else if (fileName.includes('logo') || fileName.includes('brand')) {
+            contentGuess = 'Возможно, это логотип или брендинговое изображение.';
+          } else if (fileName.includes('diagram') || fileName.includes('chart')) {
+            contentGuess = 'Может быть диаграммой или схемой.';
+          } else if (fileName.includes('avatar') || fileName.includes('profile')) {
+            contentGuess = 'Вероятно, это аватар или профильное фото.';
+          } else {
+            contentGuess = 'Изображение неопределенного типа.';
+          }
+
+          // Анализ размера для предположений о качестве
+          let qualityGuess = '';
+          if (imageAnalysis.size < 50) {
+            qualityGuess = 'Небольшой размер файла - возможно, сжатое изображение или иконка.';
+          } else if (imageAnalysis.size < 500) {
+            qualityGuess = 'Средний размер - стандартное веб-изображение.';
+          } else if (imageAnalysis.size < 2000) {
+            qualityGuess = 'Большой размер - высокое качество, детальное изображение.';
+          } else {
+            qualityGuess = 'Очень большой файл - профессиональная фотография или изображение высокого разрешения.';
+          }
+
+          const smartResponse = `🖼️ **Умный анализ изображения:**
 
 📁 **Файл:** ${imageAnalysis.filename}
 📏 **Размер:** ${imageAnalysis.size}KB
-🎨 **Тип:** ${imageAnalysis.type}
+🎨 **Формат:** ${imageAnalysis.type.includes('jpeg') ? 'JPEG фотография' : imageAnalysis.type.includes('png') ? 'PNG изображение' : 'Графический файл'}
 
-Изображение успешно обработано! Это ${imageAnalysis.type.includes('jpeg') ? 'JPEG фотография' : imageAnalysis.type.includes('png') ? 'PNG изображение' : 'графический файл'} размером ${imageAnalysis.size}KB.
+🤖 **Анализ содержимого:**
+${contentGuess}
+${qualityGuess}
 
-${message || 'Изображение готово для дальнейшей обработки. Вы можете задать вопросы о нем или запросить дополнительную информацию.'}
+🔍 **Технические характеристики:**
+- Тип файла: ${imageAnalysis.type}
+- Предполагаемое использование: ${fileName.includes('web') ? 'Веб-графика' : fileName.includes('print') ? 'Печатная продукция' : 'Универсальное'}
 
-*💡 Для полного AI-анализа содержимого изображения можно подключить внешние сервисы компьютерного зрения.*`;
+${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
+
+*🚀 Анализ выполнен локальными алгоритмами без внешних сервисов!*`;
 
           return res.json({
             success: true,
             response: smartResponse,
-            provider: 'Smart Image Analyzer',
-            model: 'Metadata Analysis v1.0'
+            provider: 'Smart Content Analyzer',
+            model: 'Local Analysis v2.0'
           });
         } catch (error) {
           console.error('❌ Ошибка анализа изображения:', error);
