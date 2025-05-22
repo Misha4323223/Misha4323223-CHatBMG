@@ -492,68 +492,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const multimodalProvider = require('./multimodal-provider');
         
         try {
-          // Создаем интеллектуальный анализ изображения
-          const imageAnalysis = {
+          // Импортируем новый анализатор изображений
+          const imageAnalyzer = require('./image-analyzer');
+          
+          console.log('🔍 Запускаем продвинутый анализ изображения...');
+          
+          // Используем буфер изображения для анализа
+          const analysisResult = await imageAnalyzer.analyzeImage(uploadedImage.buffer, uploadedImage.originalname);
+          
+          const imageInfo = {
             filename: uploadedImage.originalname,
             size: Math.round(uploadedImage.size / 1024),
-            type: uploadedImage.mimetype,
-            width: 'неизвестно',
-            height: 'неизвестно'
+            type: uploadedImage.mimetype
           };
 
-          // Анализируем имя файла для получения подсказок о содержимом
-          const fileName = imageAnalysis.filename.toLowerCase();
-          let contentGuess = '';
-          
-          if (fileName.includes('photo') || fileName.includes('img') || fileName.includes('pic')) {
-            contentGuess = 'Вероятно, это фотография или снимок.';
-          } else if (fileName.includes('screenshot') || fileName.includes('screen')) {
-            contentGuess = 'Похоже на скриншот экрана или интерфейса.';
-          } else if (fileName.includes('logo') || fileName.includes('brand')) {
-            contentGuess = 'Возможно, это логотип или брендинговое изображение.';
-          } else if (fileName.includes('diagram') || fileName.includes('chart')) {
-            contentGuess = 'Может быть диаграммой или схемой.';
-          } else if (fileName.includes('avatar') || fileName.includes('profile')) {
-            contentGuess = 'Вероятно, это аватар или профильное фото.';
-          } else {
-            contentGuess = 'Изображение неопределенного типа.';
-          }
+          const smartResponse = `🖼️ **AI Анализ изображения:**
 
-          // Анализ размера для предположений о качестве
-          let qualityGuess = '';
-          if (imageAnalysis.size < 50) {
-            qualityGuess = 'Небольшой размер файла - возможно, сжатое изображение или иконка.';
-          } else if (imageAnalysis.size < 500) {
-            qualityGuess = 'Средний размер - стандартное веб-изображение.';
-          } else if (imageAnalysis.size < 2000) {
-            qualityGuess = 'Большой размер - высокое качество, детальное изображение.';
-          } else {
-            qualityGuess = 'Очень большой файл - профессиональная фотография или изображение высокого разрешения.';
-          }
+📁 **Файл:** ${imageInfo.filename}
+📏 **Размер:** ${imageInfo.size}KB
+🎨 **Формат:** ${imageInfo.type.includes('jpeg') ? 'JPEG фотография' : imageInfo.type.includes('png') ? 'PNG изображение' : 'Графический файл'}
 
-          const smartResponse = `🖼️ **Умный анализ изображения:**
+${analysisResult.success ? `🤖 **Описание содержимого:**
+${analysisResult.description}
 
-📁 **Файл:** ${imageAnalysis.filename}
-📏 **Размер:** ${imageAnalysis.size}KB
-🎨 **Формат:** ${imageAnalysis.type.includes('jpeg') ? 'JPEG фотография' : imageAnalysis.type.includes('png') ? 'PNG изображение' : 'Графический файл'}
-
-🤖 **Анализ содержимого:**
-${contentGuess}
-${qualityGuess}
-
-🔍 **Технические характеристики:**
-- Тип файла: ${imageAnalysis.type}
-- Предполагаемое использование: ${fileName.includes('web') ? 'Веб-графика' : fileName.includes('print') ? 'Печатная продукция' : 'Универсальное'}
+🔧 **Сервис:** ${analysisResult.service}
+📊 **Точность:** ${Math.round(analysisResult.confidence * 100)}%` : `⚠️ **Анализ содержимого:**
+${analysisResult.description}`}
 
 ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
 
-*🚀 Анализ выполнен локальными алгоритмами без внешних сервисов!*`;
+*🚀 Анализ выполнен с помощью бесплатных AI сервисов!*`;
 
           return res.json({
             success: true,
             response: smartResponse,
-            provider: 'Smart Content Analyzer',
-            model: 'Local Analysis v2.0'
+            provider: analysisResult.success ? analysisResult.service : 'Fallback Analyzer',
+            model: analysisResult.success ? `AI Vision (${Math.round(analysisResult.confidence * 100)}% точность)` : 'Local Analysis'
           });
         } catch (error) {
           console.error('❌ Ошибка анализа изображения:', error);
