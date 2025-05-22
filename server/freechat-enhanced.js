@@ -318,7 +318,300 @@ async function getChatFreeEnhancedResponse(message, options = {}) {
     console.log(`⚠️ Ошибка при использовании Qwen: ${error.message}`);
   }
   
-  // 6. Последний вариант - автоматический выбор лучшего провайдера
+  // 6. Специализированные провайдеры для определенных типов запросов
+  
+  // А. Проверяем, связан ли запрос с кодом или программированием
+  if (message.toLowerCase().includes('код') || 
+      message.toLowerCase().includes('программирован') || 
+      message.toLowerCase().includes('javascript') || 
+      message.toLowerCase().includes('python') ||
+      message.toLowerCase().includes('java') ||
+      message.toLowerCase().includes('c++') ||
+      message.toLowerCase().includes('code') ||
+      message.toLowerCase().includes('programming')) {
+    
+    try {
+      console.log(`FreeChat Enhanced: Запрос связан с программированием, используем специализированный провайдер Phind...`);
+      
+      const response = await fetch("http://localhost:5004/python/chat?provider=Phind", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          message: message, 
+          system_prompt: "Вы опытный программист. Отвечайте точно, предоставляя работающие примеры кода, где это уместно." 
+        }),
+        timeout: 30000
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        
+        console.log(`✅ Успешно получен ответ от Phind для вопроса о программировании`);
+        console.log(`Реальный провайдер: ${data.provider || 'неизвестно'}`);
+        
+        if (data && data.response) {
+          return {
+            success: true,
+            response: data.response,
+            provider: 'ChatFree',
+            model: data.provider || "Phind",
+            backupInfo: `💻 Для вопроса о программировании использован специализированный провайдер: ${data.provider || "Phind"}`
+          };
+        }
+      }
+    } catch (error) {
+      console.log(`⚠️ Ошибка при использовании Phind для вопроса о программировании: ${error.message}`);
+    }
+  }
+  
+  // Б. Проверяем, требует ли запрос глубокого анализа или рассуждения
+  if (message.length > 150 || 
+      message.toLowerCase().includes('анализ') || 
+      message.toLowerCase().includes('объясни') || 
+      message.toLowerCase().includes('почему') ||
+      message.toLowerCase().includes('сравни') ||
+      message.toLowerCase().includes('логика') ||
+      message.toLowerCase().includes('философия')) {
+    
+    try {
+      console.log(`FreeChat Enhanced: Запрос требует глубокого анализа, используем специализированный провайдер Claude...`);
+      
+      const response = await fetch("http://localhost:5004/python/chat?provider=Anthropic", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          message: message, 
+          system_prompt: "Вы аналитический ассистент с глубоким критическим мышлением. Анализируйте вопросы детально, рассматривайте разные точки зрения, приводите аргументы и доказательства." 
+        }),
+        timeout: 35000 // Увеличенный таймаут для глубоких рассуждений
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        
+        console.log(`✅ Успешно получен ответ от Claude для глубокого анализа`);
+        console.log(`Реальный провайдер: ${data.provider || 'неизвестно'}`);
+        
+        if (data && data.response) {
+          return {
+            success: true,
+            response: data.response,
+            provider: 'ChatFree',
+            model: data.provider || "Claude",
+            backupInfo: `🧠 Для вопроса, требующего глубокого анализа, использован специализированный провайдер: ${data.provider || "Claude"}`
+          };
+        }
+      }
+    } catch (error) {
+      console.log(`⚠️ Ошибка при использовании Claude для глубокого анализа: ${error.message}`);
+    }
+  }
+  
+  // В. Проверяем, связан ли запрос с творчеством
+  if (message.toLowerCase().includes('творчес') || 
+      message.toLowerCase().includes('креатив') || 
+      message.toLowerCase().includes('придумай') || 
+      message.toLowerCase().includes('сочини') ||
+      message.toLowerCase().includes('стих') ||
+      message.toLowerCase().includes('рассказ') ||
+      message.toLowerCase().includes('история')) {
+    
+    try {
+      console.log(`FreeChat Enhanced: Запрос связан с творчеством, используем специализированный провайдер GeminiPro...`);
+      
+      const response = await fetch("http://localhost:5004/python/chat?provider=GeminiPro", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          message: message, 
+          system_prompt: "Вы творческий ассистент с богатым воображением. Создавайте оригинальные, интересные и эмоциональные тексты." 
+        }),
+        timeout: 30000
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        
+        console.log(`✅ Успешно получен ответ от GeminiPro для творческого запроса`);
+        console.log(`Реальный провайдер: ${data.provider || 'неизвестно'}`);
+        
+        if (data && data.response) {
+          return {
+            success: true,
+            response: data.response,
+            provider: 'ChatFree',
+            model: data.provider || "GeminiPro",
+            backupInfo: `🎨 Для творческого запроса использован специализированный провайдер: ${data.provider || "GeminiPro"}`
+          };
+        }
+      }
+    } catch (error) {
+      console.log(`⚠️ Ошибка при использовании GeminiPro для творческого запроса: ${error.message}`);
+    }
+  }
+  
+  // Г. Проверяем, связан ли запрос с актуальной информацией или новостями
+  if (message.toLowerCase().includes('новост') || 
+      message.toLowerCase().includes('актуал') || 
+      message.toLowerCase().includes('последн') || 
+      message.toLowerCase().includes('текущ') ||
+      message.toLowerCase().includes('событи') ||
+      message.toLowerCase().includes('сегодня') ||
+      message.toLowerCase().includes('news') ||
+      message.toLowerCase().includes('recent')) {
+    
+    try {
+      console.log(`FreeChat Enhanced: Запрос связан с актуальной информацией, используем провайдер You...`);
+      
+      const response = await fetch("http://localhost:5004/python/chat?provider=You", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          message: message, 
+          system_prompt: "Вы информационный ассистент с доступом к актуальным данным. Предоставляйте последнюю информацию и новости по запросу пользователя." 
+        }),
+        timeout: 35000 // Увеличенный таймаут для поиска актуальной информации
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        
+        console.log(`✅ Успешно получен ответ от You для запроса о актуальной информации`);
+        console.log(`Реальный провайдер: ${data.provider || 'неизвестно'}`);
+        
+        if (data && data.response) {
+          return {
+            success: true,
+            response: data.response,
+            provider: 'ChatFree',
+            model: data.provider || "You",
+            backupInfo: `📰 Для запроса об актуальной информации использован провайдер с доступом к последним данным: ${data.provider || "You"}`
+          };
+        }
+      }
+    } catch (error) {
+      console.log(`⚠️ Ошибка при использовании You для запроса об актуальной информации: ${error.message}`);
+      
+      // Если провайдер You недоступен, пробуем PerplexityApi как альтернативу
+      try {
+        console.log(`FreeChat Enhanced: Пробуем использовать PerplexityApi для актуальной информации...`);
+        
+        const response = await fetch("http://localhost:5004/python/chat?provider=PerplexityApi", {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            message: message, 
+            system_prompt: "Вы информационный ассистент с доступом к актуальным данным. Предоставляйте последнюю информацию и новости по запросу пользователя." 
+          }),
+          timeout: 35000
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          
+          console.log(`✅ Успешно получен ответ от PerplexityApi для запроса об актуальной информации`);
+          console.log(`Реальный провайдер: ${data.provider || 'неизвестно'}`);
+          
+          if (data && data.response) {
+            return {
+              success: true,
+              response: data.response,
+              provider: 'ChatFree',
+              model: data.provider || "PerplexityApi",
+              backupInfo: `📰 Для запроса об актуальной информации использован провайдер с доступом к последним данным: ${data.provider || "PerplexityApi"}`
+            };
+          }
+        }
+      } catch (perplexityError) {
+        console.log(`⚠️ Ошибка при использовании PerplexityApi: ${perplexityError.message}`);
+      }
+    }
+  }
+  
+  // Д. Проверяем, связан ли запрос с анализом или обработкой изображений
+  if ((message.toLowerCase().includes('изображен') || 
+      message.toLowerCase().includes('картин') || 
+      message.toLowerCase().includes('фото') ||
+      message.toLowerCase().includes('image') ||
+      message.toLowerCase().includes('picture') ||
+      message.toLowerCase().includes('photo')) &&
+      options.imageUrl) {
+    
+    try {
+      console.log(`FreeChat Enhanced: Запрос связан с обработкой изображения, используем мультимодального провайдера...`);
+      
+      // Определяем, какой мультимодальный провайдер использовать
+      // Claude поддерживает изображения
+      const providerToUse = "Anthropic"; // Claude (через Anthropic)
+      
+      const response = await fetch(`http://localhost:5004/python/image_analysis?provider=${providerToUse}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          message: message,
+          image_url: options.imageUrl,
+          system_prompt: "Вы визуальный аналитик. Подробно описывайте содержимое изображений и отвечайте на вопросы о них."
+        }),
+        timeout: 40000 // Увеличенный таймаут для обработки изображений
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        
+        console.log(`✅ Успешно получен ответ от мультимодального провайдера для анализа изображения`);
+        console.log(`Реальный провайдер: ${data.provider || 'неизвестно'}`);
+        
+        if (data && data.response) {
+          return {
+            success: true,
+            response: data.response,
+            provider: 'ChatFree',
+            model: data.provider || providerToUse,
+            backupInfo: `🖼️ Для анализа изображения использован мультимодальный провайдер: ${data.provider || providerToUse}`
+          };
+        }
+      }
+    } catch (error) {
+      console.log(`⚠️ Ошибка при использовании мультимодального провайдера: ${error.message}`);
+      
+      // Пробуем другой мультимодальный провайдер как резерв
+      try {
+        console.log(`FreeChat Enhanced: Пробуем использовать GeminiPro для анализа изображения...`);
+        
+        const response = await fetch(`http://localhost:5004/python/image_analysis?provider=GeminiPro`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            message: message,
+            image_url: options.imageUrl,
+            system_prompt: "Вы визуальный аналитик. Подробно описывайте содержимое изображений и отвечайте на вопросы о них."
+          }),
+          timeout: 40000
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          
+          console.log(`✅ Успешно получен ответ от GeminiPro для анализа изображения`);
+          console.log(`Реальный провайдер: ${data.provider || 'неизвестно'}`);
+          
+          if (data && data.response) {
+            return {
+              success: true,
+              response: data.response,
+              provider: 'ChatFree',
+              model: data.provider || "GeminiPro",
+              backupInfo: `🖼️ Для анализа изображения использован резервный мультимодальный провайдер: ${data.provider || "GeminiPro"}`
+            };
+          }
+        }
+      } catch (geminiError) {
+        console.log(`⚠️ Ошибка при использовании GeminiPro для анализа изображения: ${geminiError.message}`);
+      }
+    }
+  }
+  
+  // 7. Последний вариант - автоматический выбор лучшего провайдера
   try {
     console.log(`FreeChat Enhanced: Использование Python G4F с автоматическим выбором провайдера...`);
     
