@@ -290,11 +290,18 @@ async function analyzeWithSmartPatterns(imageBuffer, filename) {
 async function analyzeImage(imageBuffer, filename) {
   console.log(`🔍 Начинаем анализ изображения ${filename}...`);
   
-  // Пробуем улучшенные анализаторы по очереди
+  // Импортируем продвинутые анализаторы
+  const advancedAnalyzer = require('./advanced-image-analyzer');
+  
+  // Пробуем экспертные анализаторы по очереди
   const analyzers = [
     () => analyzeWithAIProvider(imageBuffer, filename),
+    () => advancedAnalyzer.analyzeWithExpertVision(imageBuffer, filename),
+    () => advancedAnalyzer.analyzeImageMood(imageBuffer, filename),
+    () => advancedAnalyzer.analyzeContentType(imageBuffer, filename),
     () => analyzeWithPublicAPI(imageBuffer),
     () => analyzeWithPixelAnalysis(imageBuffer),
+    () => advancedAnalyzer.analyzeWithAIMetadata(imageBuffer, filename),
     () => analyzeWithSmartPatterns(imageBuffer, filename)
   ];
   
