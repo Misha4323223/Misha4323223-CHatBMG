@@ -58,30 +58,30 @@
     
     .header-compact {
       display: flex;
-      flex-direction: column;
+      flex-direction: row;
       align-items: center;
-      padding: 5px 0;
+      justify-content: space-between;
+      padding: 5px;
       position: relative;
       background-color: var(--card-bg);
-      border-radius: 15px;
+      border-radius: 10px;
       box-shadow: 0 3px 10px var(--shadow);
-      margin-bottom: 10px;
-    }
-    
-    .logo-container {
-      display: flex;
-      justify-content: center;
       margin-bottom: 5px;
     }
     
+    .left-section {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
     .logo-image {
-      width: 60px;
-      height: 60px;
+      width: 40px;
+      height: 40px;
       border-radius: 50%;
-      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
-      border: 2px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.1);
       transition: transform 0.3s ease, box-shadow 0.3s ease;
-      margin-top: 5px;
     }
     
     .logo-image:hover {
@@ -90,14 +90,14 @@
     }
     
     .tagline {
-      font-size: 1.2rem;
+      font-size: 0.9rem;
       font-weight: 700;
       color: transparent;
       background: linear-gradient(135deg, var(--primary), var(--secondary));
       -webkit-background-clip: text;
       background-clip: text;
-      margin: 3px 0 5px;
-      letter-spacing: 1px;
+      margin: 0;
+      letter-spacing: 0.5px;
     }
     
     .navigation {
@@ -134,25 +134,25 @@
     
     .chat-container {
       background-color: var(--card-bg);
-      border-radius: 15px;
-      box-shadow: 0 5px 15px var(--shadow);
-      padding: 10px;
-      margin-bottom: 10px;
-      height: 15vh;
+      border-radius: 10px;
+      box-shadow: 0 3px 10px var(--shadow);
+      padding: 5px;
+      margin-bottom: 5px;
+      height: 100px;
       display: flex;
       flex-direction: column;
     }
     
     .chat-header {
-      padding: 8px;
+      padding: 5px;
       border-bottom: 1px solid var(--border);
-      margin-bottom: 5px;
-      background: linear-gradient(135deg, rgba(255, 75, 43, 0.1), rgba(108, 99, 255, 0.1));
-      border-radius: 10px 10px 0 0;
+      margin-bottom: 3px;
+      background: linear-gradient(135deg, rgba(255, 75, 43, 0.05), rgba(108, 99, 255, 0.05));
+      border-radius: 5px 5px 0 0;
     }
     
     .chat-title {
-      font-size: 1.1rem;
+      font-size: 0.9rem;
       margin-bottom: 0;
       font-weight: 600;
       text-align: center;
@@ -428,13 +428,13 @@
 <body>
   <div class="container">
     <div class="header-compact">
-      <div class="logo-container">
+      <div class="left-section">
         <img src="booomerangs-logo.jpg" alt="BOOOMERANGS Logo" class="logo-image">
+        <h1 class="tagline">BOOOMERANGS AI</h1>
       </div>
-      <h1 class="tagline">BOOOMERANGS AI</h1>
       <nav class="navigation">
-        <a href="/smart-chat" class="nav-button active">Умный Чат</a>
-        <a href="/image-generator" class="nav-button">Генератор Изображений</a>
+        <a href="/smart-chat" class="nav-button active">Чат</a>
+        <a href="/image-generator" class="nav-button">Генератор</a>
       </nav>
     </div>
     
