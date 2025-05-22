@@ -82,282 +82,235 @@ async function getChatFreeEnhancedResponse(message, options = {}) {
   const systemPrompt = options.systemPrompt || 'Вы полезный ассистент. Отвечайте точно и по существу.';
   const temperature = options.temperature || 0.7;
   
-  // Создаем разные форматы запросов для поддержки различных API
+  // Используем подтвержденно работающие провайдеры через Python G4F
   
-  // 1. Формат нового API ChatGPT.ai
-  const requestBodyChatgptAI = {
-    message: message,
-    context: systemPrompt,
-    web_access: false,
-    stream: false
-  };
-  
-  // 2. Формат OpenAI API (наиболее распространенный формат)
-  const requestBodyOpenAI = {
-    model: model,
-    messages: [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: message }
-    ],
-    temperature: temperature,
-    max_tokens: 2000,
-    stream: false
-  };
-  
-  // 3. Формат альтернативного API
-  const requestBodyAlternative = {
-    prompt: `${systemPrompt}\n\nUser: ${message}\nAssistant:`,
-    max_tokens: 2000,
-    temperature: temperature,
-    top_p: 1.0,
-    presence_penalty: 0.0,
-    frequency_penalty: 0.0
-  };
-  
-  // 4. Формат FakeOpen API (совместимый с ChatGPT)
-  const requestBodyFakeOpen = {
-    model: model,
-    conversation: [{
-      role: "system",
-      content: systemPrompt
-    }, {
-      role: "user",
-      content: message
-    }],
-    temperature: temperature
-  };
-  
-  // 1. Пробуем использовать основной ChatFree API
+  // 1. Пробуем Free2GPT - обычно стабильный провайдер
   try {
-    console.log(`FreeChat Enhanced: Отправка запроса к основному API...`);
+    console.log(`FreeChat Enhanced: Использование Python G4F с провайдером Free2GPT...`);
     
-    const response = await fetch(CHATFREE_API_URL, {
+    const response = await fetch("http://localhost:5004/python/chat?provider=Free2GPT", {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'User-Agent': getRandomUserAgent(),
-        'Accept': 'application/json',
-        'Origin': 'https://chatgpt.ai',
-        'Referer': 'https://chatgpt.ai/',
-        'X-Requested-With': 'XMLHttpRequest'
+      headers: { 
+        'Content-Type': 'application/json'
       },
-      body: JSON.stringify(requestBodyChatgptAI),
-      timeout: 15000 // 15 секунд таймаут
+      body: JSON.stringify({ 
+        message: message, 
+        system_prompt: systemPrompt 
+      }),
+      timeout: 25000 // Увеличиваем таймаут для более надежного ответа
     });
     
     if (response.ok) {
       const data = await response.json();
       
-      console.log(`✅ Успешно получен ответ от основного ChatFree API`);
+      console.log(`✅ Успешно получен ответ от Python G4F с провайдером Free2GPT`);
+      console.log(`Реальный провайдер: ${data.provider || 'неизвестно'}`);
       
-      // Обрабатываем разные форматы ответов
-      if (data.choices && data.choices.length && data.choices[0].message) {
-        // OpenAI-подобный формат
+      if (data && data.response) {
         return {
           success: true,
-          response: data.choices[0].message.content,
+          response: data.response,
           provider: 'ChatFree',
-          model: data.model || model,
-          backupInfo: "🔵 ChatFree отвечает"
-        };
-      } else if (data.message || data.response) {
-        // Формат ChatFree
-        return {
-          success: true,
-          response: data.message || data.response,
-          provider: 'ChatFree',
-          model: data.model || "ChatFree API",
-          backupInfo: "🔵 ChatFree отвечает"
+          model: data.provider || "Free2GPT",
+          backupInfo: data.provider === 'Free2GPT' ? 
+            "🔵 FreeChat использует провайдер Free2GPT" : 
+            `🔄 FreeChat автоматически использует провайдер ${data.provider || "не указан"}`
         };
       }
     }
     
-    console.log(`⚠️ Основной ChatFree API вернул статус ${response.status}, пробуем резервные URL...`);
+    console.log(`⚠️ Free2GPT вернул статус ${response.status}, пробуем FreeGpt...`);
   } catch (error) {
-    console.log(`⚠️ Ошибка основного ChatFree API: ${error.message}, пробуем резервные URL...`);
+    console.log(`⚠️ Ошибка при использовании Free2GPT: ${error.message}`);
   }
   
-  // 2. Пробуем использовать резервные URL для ChatFree
-  for (const backupUrl of BACKUP_URLS) {
-    try {
-      console.log(`FreeChat Enhanced: Отправка запроса к резервному URL ${backupUrl}...`);
+  // 2. Пробуем FreeGpt как альтернативу
+  try {
+    console.log(`FreeChat Enhanced: Использование Python G4F с провайдером FreeGpt...`);
+    
+    const response = await fetch("http://localhost:5004/python/chat?provider=FreeGpt", {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ 
+        message: message, 
+        system_prompt: systemPrompt 
+      }),
+      timeout: 25000
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
       
-      // Определяем, какой формат запроса использовать для конкретного URL
-      let requestBody;
-      let headers = {
-        'Content-Type': 'application/json',
-        'User-Agent': getRandomUserAgent(),
-        'Accept': 'application/json'
-      };
+      console.log(`✅ Успешно получен ответ от Python G4F с провайдером FreeGpt`);
+      console.log(`Реальный провайдер: ${data.provider || 'неизвестно'}`);
       
-      if (backupUrl.includes('chat-gpt.org') || backupUrl.includes('chat-gpt-ai.org')) {
-        // Формат text-completion
-        requestBody = requestBodyTextCompletion;
-        // Добавим рефереры для сайтов
-        headers['Origin'] = backupUrl.includes('chat-gpt.org') ? 'https://chat-gpt.org' : 'https://chat-gpt-ai.org';
-        headers['Referer'] = backupUrl.includes('chat-gpt.org') ? 'https://chat-gpt.org/' : 'https://chat-gpt-ai.org/';
-      } else if (backupUrl.includes('chatgpt4online') || backupUrl.includes('gpt4online')) {
-        // OpenAI формат
-        requestBody = requestBodyOpenAI;
-        // Добавим рефереры для сайтов
-        headers['Origin'] = backupUrl.includes('chatgpt4online') ? 'https://chatgpt4online.org' : 'https://gpt4online.net';
-        headers['Referer'] = backupUrl.includes('chatgpt4online') ? 'https://chatgpt4online.org/' : 'https://gpt4online.net/';
-      } else {
-        // Для остальных используем простой формат
-        requestBody = requestBodySimple;
+      if (data && data.response) {
+        return {
+          success: true,
+          response: data.response,
+          provider: 'ChatFree',
+          model: data.provider || "FreeGpt",
+          backupInfo: data.provider === 'FreeGpt' ? 
+            "🔵 FreeChat использует провайдер FreeGpt" : 
+            `🔄 FreeChat автоматически использует провайдер ${data.provider || "не указан"}`
+        };
       }
+    }
+    
+    console.log(`⚠️ FreeGpt вернул статус ${response.status}, пробуем ChatGpt...`);
+  } catch (error) {
+    console.log(`⚠️ Ошибка при использовании FreeGpt: ${error.message}`);
+  }
+  
+  // 3. Пробуем ChatGpt из библиотеки g4f
+  try {
+    console.log(`FreeChat Enhanced: Использование Python G4F с провайдером ChatGpt...`);
+    
+    const response = await fetch("http://localhost:5004/python/chat?provider=ChatGpt", {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ 
+        message: message, 
+        system_prompt: systemPrompt 
+      }),
+      timeout: 25000
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
       
-      const response = await fetch(backupUrl, {
-        method: 'POST',
-        headers: headers,
-        body: JSON.stringify(requestBody),
-        timeout: 15000 // 15 секунд таймаут
-      });
+      console.log(`✅ Успешно получен ответ от Python G4F с провайдером ChatGpt`);
+      console.log(`Реальный провайдер: ${data.provider || 'неизвестно'}`);
       
-      if (response.ok) {
-        const data = await response.json();
-        
-        console.log(`✅ Успешно получен ответ от резервного URL ${backupUrl}`);
-        console.log(`Формат ответа для отладки:`, JSON.stringify(data).slice(0, 100));
-        
-        // Обрабатываем разные форматы ответов
-        if (data.choices && data.choices.length && data.choices[0].message) {
-          // OpenAI-подобный формат
-          return {
-            success: true,
-            response: data.choices[0].message.content,
-            provider: 'ChatFree',
-            model: data.model || "ChatFree Advanced",
-            backupInfo: "🔵 ChatFree отвечает через GPT-подобную модель"
-          };
-        } else if (data.message || data.response) {
-          // Формат ChatFree
-          return {
-            success: true,
-            response: data.message || data.response,
-            provider: 'ChatFree',
-            model: data.model || "ChatFree API",
-            backupInfo: "🔵 ChatFree отвечает"
-          };
-        } else if (data.content) {
-          // Еще один возможный формат
-          return {
-            success: true, 
-            response: data.content,
-            provider: 'ChatFree',
-            model: data.model || "ChatFree API",
-            backupInfo: "🔵 ChatFree отвечает"
-          };
-        } else if (data.text || data.generated_text || data.completion) {
-          // Формат text-completion
-          const responseText = data.text || data.generated_text || data.completion;
-          return {
-            success: true,
-            response: responseText,
-            provider: 'ChatFree',
-            model: data.model || "ChatFree Text",
-            backupInfo: "🔵 ChatFree отвечает через резервную модель"
-          };
-        } else if (data.answer || data.reply) {
-          // Еще один альтернативный формат
-          return {
-            success: true, 
-            response: data.answer || data.reply,
-            provider: 'ChatFree',
-            model: "ChatFree AI",
-            backupInfo: "🔵 ChatFree отвечает через резервную систему"
-          };
-        } else if (typeof data === 'string') {
-          // Просто текстовый ответ
-          return {
-            success: true,
-            response: data,
-            provider: 'ChatFree',
-            model: "ChatFree Text",
-            backupInfo: "🔵 ChatFree отвечает"
-          };
-        } else {
-          // Неизвестный формат, пробуем найти текст в ответе
-          const possibleResponse = findResponseInObject(data);
-          if (possibleResponse) {
-            return {
-              success: true,
-              response: possibleResponse,
-              provider: 'ChatFree',
-              model: "ChatFree AI",
-              backupInfo: "🔵 ChatFree отвечает через альтернативную модель"
-            };
-          }
-        }
+      if (data && data.response) {
+        return {
+          success: true,
+          response: data.response,
+          provider: 'ChatFree',
+          model: data.provider || "ChatGpt",
+          backupInfo: data.provider === 'ChatGpt' ? 
+            "🔵 FreeChat использует провайдер ChatGpt" : 
+            `🔄 FreeChat автоматически использует провайдер ${data.provider || "не указан"}`
+        };
       }
+    }
+    
+    console.log(`⚠️ ChatGpt вернул статус ${response.status}, пробуем Phind...`);
+  } catch (error) {
+    console.log(`⚠️ Ошибка при использовании ChatGpt: ${error.message}`);
+  }
+  
+  // 4. Проверенный стабильный провайдер Phind 
+  try {
+    console.log(`FreeChat Enhanced: Использование Python G4F с провайдером Phind...`);
+    
+    const response = await fetch("http://localhost:5004/python/chat?provider=Phind", {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        message: message, 
+        system_prompt: systemPrompt 
+      }),
+      timeout: 30000 // Увеличенный таймаут для Phind
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
       
-      console.log(`⚠️ Резервный URL ${backupUrl} вернул статус ${response.status}`);
-    } catch (error) {
-      console.log(`⚠️ Ошибка резервного URL ${backupUrl}: ${error.message}`);
+      console.log(`✅ Успешно получен ответ от Python G4F с провайдером Phind`);
+      console.log(`Реальный провайдер: ${data.provider || 'неизвестно'}`);
+      
+      if (data && data.response) {
+        return {
+          success: true,
+          response: data.response,
+          provider: 'ChatFree',
+          model: data.provider || "Phind AI",
+          backupInfo: data.provider === 'Phind' ? 
+            "🔵 FreeChat использует провайдер Phind" : 
+            `🔄 FreeChat автоматически использует провайдер ${data.provider || "не указан"}`
+        };
+      }
     }
     
-    // Добавляем паузу перед следующей попыткой
-    await delay(1000);
+    console.log(`⚠️ Phind вернул статус ${response.status}, пробуем Qwen...`);
+  } catch (error) {
+    console.log(`⚠️ Ошибка при использовании Phind: ${error.message}`);
   }
   
-  // 3. Если ChatFree и резервные URL недоступны, пробуем Phind через Python G4F
+  // 5. Надежный резервный провайдер Qwen
   try {
-    console.log(`FreeChat Enhanced: Переключение на Phind через Python G4F...`);
+    console.log(`FreeChat Enhanced: Использование Python G4F с провайдером Qwen...`);
     
-    const phindResponse = await pythonProviderRoutes.callPythonAI(message, 'Phind');
+    const response = await fetch("http://localhost:5004/python/chat?provider=Qwen_Qwen_2_5_Max", {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        message: message, 
+        system_prompt: systemPrompt 
+      }),
+      timeout: 30000
+    });
     
-    if (phindResponse) {
-      console.log(`✅ Успешно получен ответ от Phind через Python G4F`);
-      return {
-        success: true,
-        response: phindResponse,
-        provider: 'ChatFree',
-        model: 'Phind AI',
-        backupInfo: "🔍 ChatFree недоступен. Используется резервный провайдер Phind AI."
-      };
+    if (response.ok) {
+      const data = await response.json();
+      
+      console.log(`✅ Успешно получен ответ от Python G4F с провайдером Qwen`);
+      console.log(`Реальный провайдер: ${data.provider || 'неизвестно'}`);
+      
+      if (data && data.response) {
+        return {
+          success: true,
+          response: data.response,
+          provider: 'ChatFree',
+          model: data.provider || "Qwen 2.5",
+          backupInfo: "🚀 FreeChat использует резервный провайдер Qwen 2.5"
+        };
+      }
     }
-  } catch (phindError) {
-    console.log(`⚠️ Ошибка при использовании Phind: ${phindError.message}`);
+    
+    console.log(`⚠️ Qwen вернул статус ${response.status}, пробуем автоматический выбор...`);
+  } catch (error) {
+    console.log(`⚠️ Ошибка при использовании Qwen: ${error.message}`);
   }
   
-  // 4. Если Phind недоступен, пробуем Qwen через Python G4F
+  // 6. Последний вариант - автоматический выбор лучшего провайдера
   try {
-    console.log(`FreeChat Enhanced: Переключение на Qwen через Python G4F...`);
+    console.log(`FreeChat Enhanced: Использование Python G4F с автоматическим выбором провайдера...`);
     
-    const qwenResponse = await pythonProviderRoutes.callPythonAI(message, 'Qwen_Qwen_2_5_Max');
+    // Запрос к Python G4F без указания конкретного провайдера
+    const response = await fetch("http://localhost:5004/python/chat", {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        message: message, 
+        system_prompt: systemPrompt 
+      }),
+      timeout: 30000
+    });
     
-    if (qwenResponse) {
-      console.log(`✅ Успешно получен ответ от Qwen через Python G4F`);
-      return {
-        success: true,
-        response: qwenResponse,
-        provider: 'ChatFree',
-        model: 'Qwen 2.5 Max',
-        backupInfo: "🚀 ChatFree и Phind недоступны. Используется резервный провайдер Qwen 2.5 Max."
-      };
+    if (response.ok) {
+      const data = await response.json();
+      
+      console.log(`✅ Успешно получен ответ от Python G4F с автоматическим выбором`);
+      console.log(`Выбранный провайдер: ${data.provider || 'неизвестно'}`);
+      
+      if (data && data.response) {
+        return {
+          success: true,
+          response: data.response,
+          provider: 'ChatFree',
+          model: data.provider ? `${data.provider}` : 'AI Assistant',
+          backupInfo: `⚠️ FreeChat использует автоматически выбранный провайдер: ${data.provider || "не указан"}`
+        };
+      }
     }
-  } catch (qwenError) {
-    console.log(`⚠️ Ошибка при использовании Qwen: ${qwenError.message}`);
-  }
-  
-  // 5. Как последний вариант, используем G4F с автоматическим выбором провайдера
-  try {
-    console.log(`FreeChat Enhanced: Использование G4F с автоматическим выбором провайдера...`);
-    
-    const g4fResponse = await g4fProvider.getResponse(message);
-    
-    if (g4fResponse && g4fResponse.response) {
-      console.log(`✅ Успешно получен ответ от G4F с провайдером ${g4fResponse.provider || 'Unknown'}`);
-      return {
-        success: true,
-        response: g4fResponse.response,
-        provider: 'ChatFree',
-        model: g4fResponse.provider ? `${g4fResponse.provider}` : 'AI Assistant',
-        backupInfo: "⚠️ Основные провайдеры недоступны. Используется резервный провайдер G4F."
-      };
-    }
-  } catch (g4fError) {
-    console.log(`⚠️ Ошибка при использовании G4F: ${g4fError.message}`);
+  } catch (error) {
+    console.log(`⚠️ Ошибка при использовании автоматического выбора: ${error.message}`);
   }
   
   // Если все методы не сработали, возвращаем ошибку
