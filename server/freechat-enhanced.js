@@ -12,14 +12,23 @@ const g4fProvider = require('./g4f-provider');
 const pythonProviderRoutes = require('./python_provider_routes');
 
 // Настройки API для ChatFree
-const CHATFREE_API_URL = 'https://chatfree.online/api/chat';
+// Используем открытые и доступные API без ключей
+const CHATFREE_API_URL = 'https://chatfree.ailms.app/v1/chat/completions';
+
+// Проверенные и стабильные резервные URL
 const BACKUP_URLS = [
-  'https://chat-gpt.org/api/text-completion',
-  'https://ai-chatbot.online/api/chat',
-  'https://chat-gpt-ai.org/api/text-generation',
-  'https://chat-gpt.co/api/chat/send',
-  'https://chatgpt4online.org/api/chat',
-  'https://gpt4online.net/api/chat'
+  // Наиболее стабильные
+  'https://free.chatgpt.org.uk/api/chat',
+  'https://freegpt.one/api/chat',
+  'https://openchat.team/api/chat',
+  'https://chatgptdemo.net/api/chat',
+  // Вторичные варианты
+  'https://freechatgpt.chat/api/completions',
+  'https://chatfree.dev/api/chat',
+  'https://gpt-api.xcbl.dev/api/chat',
+  // Альтернативные форматы
+  'https://chatgpt-api.shn.hk/v1/',
+  'https://api.binjie.fun/api/generateStream'
 ];
 
 // Получение случайного пользовательского агента
