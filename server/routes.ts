@@ -241,6 +241,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const smartRouter = require('./smart-router');
   app.use('/api/smart', smartRouter);
   
+  // API для загрузки изображений
+  const imageUpload = require('./image-upload');
+  app.use('/api/upload', imageUpload);
+  
+  // Статический доступ к загруженным изображениям
+  app.use('/uploads', (req, res, next) => {
+    const uploadPath = path.join(process.cwd(), 'uploads');
+    res.sendFile(req.path, { root: uploadPath }, (err) => {
+      if (err) next('route');
+    });
+  });
+  
   // Проверка работы Python провайдера при запуске
   (async () => {
     try {

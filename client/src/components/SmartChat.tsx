@@ -6,8 +6,9 @@ import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Send, RefreshCw, ThumbsUp, ThumbsDown, Image, Code, Search, BrainCog, Lightbulb, Calculator } from "lucide-react";
+import { Loader2, Send, RefreshCw, ThumbsUp, ThumbsDown, Image, Code, Search, BrainCog, Lightbulb, Calculator, X, Upload } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useToast } from "@/hooks/use-toast";
 
 interface Message {
   id: string;
@@ -149,15 +150,60 @@ const SmartChat: React.FC = () => {
   };
 
   // Обработка выбора изображения
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const { toast } = useToast();
+  
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        // Изображение в формате data URL
-        setImageUrl(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "Ошибка загрузки",
+          description: "Размер файла не должен превышать 5 МБ",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      try {
+        // Создаем FormData для отправки файла
+        const formData = new FormData();
+        formData.append('image', file);
+        
+        // Отправляем запрос на загрузку
+        const response = await fetch('/api/upload/file', {
+          method: 'POST',
+          body: formData
+        });
+        
+        if (!response.ok) {
+          throw new Error('Ошибка при загрузке файла');
+        }
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          // Устанавливаем URL загруженного изображения
+          setImageUrl(data.imageUrl);
+          toast({
+            title: "Изображение загружено",
+            description: "Изображение успешно загружено",
+          });
+        } else {
+          throw new Error(data.error || 'Ошибка при загрузке');
+        }
+      } catch (error) {
+        console.error('Ошибка загрузки изображения:', error);
+        toast({
+          title: "Ошибка загрузки",
+          description: error instanceof Error ? error.message : "Не удалось загрузить изображение",
+          variant: "destructive"
+        });
+        
+        // Сбрасываем input
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+      }
     }
   };
 
