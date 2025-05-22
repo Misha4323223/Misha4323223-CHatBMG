@@ -31,8 +31,9 @@ async function analyzeLocalImage(imagePath, prompt = 'Что изображен�
     
     console.log(`📊 Размер файла: ${Math.round(imageBuffer.length / 1024)}KB`);
     
-    // Запускаем наш продвинутый детектор объектов
-    const detectionResult = await advancedDetector.detectObjects(imageBuffer, filename);
+    // Запускаем улучшенный умный анализатор
+    const smartAnalyzer = require('./smart-vision-analyzer');
+    const detectionResult = await smartAnalyzer.analyzeImageContent(imageBuffer, filename);
     
     if (detectionResult.success) {
       // Форматируем ответ для пользователя
@@ -74,11 +75,11 @@ function formatAnalysisResponse(detectionResult, filename, userPrompt) {
   response += `${detectionResult.description}\n\n`;
   
   // Обнаруженные объекты
-  if (detectionResult.detectedObjects && detectionResult.detectedObjects.length > 0) {
+  if (detectionResult.recognizedObjects && detectionResult.recognizedObjects.length > 0) {
     response += '🎯 **Обнаруженные объекты:**\n';
-    detectionResult.detectedObjects.forEach(obj => {
+    detectionResult.recognizedObjects.forEach(obj => {
       const confidence = Math.round(obj.confidence * 100);
-      response += `• ${obj.name} (${confidence}% уверенность)\n`;
+      response += `• ${obj.name} - ${obj.description} (${confidence}% уверенность)\n`;
     });
     response += '\n';
   }
