@@ -237,6 +237,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const providerTestRoute = require('./provider-test-route');
   app.use('/api/test-providers', providerTestRoute);
   
+  // API для умной маршрутизации сообщений к подходящим провайдерам
+  const smartRouter = require('./smart-router');
+  app.use('/api/smart', smartRouter);
+  
   // Проверка работы Python провайдера при запуске
   (async () => {
     try {
