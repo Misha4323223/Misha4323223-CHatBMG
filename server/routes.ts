@@ -264,6 +264,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // API для умной маршрутизации сообщений к подходящим провайдерам
   const smartRouter = require('./smart-router');
   app.use('/api/smart', smartRouter);
+
+  // API для сохранения истории чатов
+  const chatHistory = require('./chat-history');
+  const { insertChatSessionSchema, insertAiMessageSchema } = require('@shared/schema');
+
+  // Создание новой сессии чата
+  app.post('/api/chat/sessions', async (req, res) => {
+    try {
+      const { userId, title } = req.body;
+      
+      if (!userId || !title) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'userId и title обязательны' 
+        });
+      }
+
+      const session = await chatHistory.createChatSession(userId, title);
+      res.json({ success: true, session });
+    } catch (error) {
+      console.error('Ошибка создания сессии:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Не удалось создать сессию' 
+      });
+    }
+  });
+
+  // Получение всех сессий пользователя
+  app.get('/api/chat/sessions/:userId', async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const sessions = await chatHistory.getUserChatSessions(userId);
+      res.json({ success: true, sessions });
+    } catch (error) {
+      console.error('Ошибка получения сессий:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Не удалось получить сессии' 
+      });
+    }
+  });
+
+  // Сохранение сообщения
+  app.post('/api/chat/messages', async (req, res) => {
+    try {
+      const messageData = req.body;
+      const message = await chatHistory.saveMessage(messageData);
+      res.json({ success: true, message });
+    } catch (error) {
+      console.error('Ошибка сохранения сообщения:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Не удалось сохранить сообщение' 
+      });
+    }
+  });
+
+  // Получение сообщений сессии
+  app.get('/api/chat/sessions/:sessionId/messages', async (req, res) => {
+    try {
+      const sessionId = parseInt(req.params.sessionId);
+      const messages = await chatHistory.getSessionMessages(sessionId);
+      res.json({ success: true, messages });
+    } catch (error) {
+      console.error('Ошибка получения сообщений:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Не удалось получить сообщения' 
+      });
+    }
+  });
   
   // API для загрузки изображений
   const imageUpload = require('./image-upload');
