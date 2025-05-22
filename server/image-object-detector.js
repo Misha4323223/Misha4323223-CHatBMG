@@ -15,10 +15,14 @@ async function analyzeLocalImage(imagePath, prompt = 'Что изображен�
   try {
     console.log(`🔍 Анализируем изображение: ${imagePath}`);
     
-    // Проверяем существование файла
-    const fullPath = path.join(process.cwd(), imagePath);
+    // Проверяем существование файла (сначала как есть, потом в папке images)
+    let fullPath = path.join(process.cwd(), imagePath);
     if (!fs.existsSync(fullPath)) {
-      throw new Error(`Файл изображения не найден: ${imagePath}`);
+      // Пробуем в папке images
+      fullPath = path.join(process.cwd(), 'uploads', 'images', path.basename(imagePath));
+      if (!fs.existsSync(fullPath)) {
+        throw new Error(`Файл изображения не найден: ${imagePath}`);
+      }
     }
     
     // Читаем изображение
