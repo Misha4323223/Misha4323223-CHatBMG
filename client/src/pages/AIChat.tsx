@@ -87,6 +87,7 @@ interface Message {
   sender: "user" | "ai";
   model?: string;
   provider?: string;
+  backupInfo?: string;
   time: string;
 }
 
@@ -361,6 +362,16 @@ export default function AIChat() {
                         border: '1px solid rgba(243, 244, 246, 1)'
                       }}
                     >
+                      {message.backupInfo && (
+                        <div className="mb-2 text-sm py-1 px-2 rounded-lg" 
+                             style={{
+                               background: 'rgba(59, 130, 246, 0.1)',
+                               color: '#4b5563',
+                               fontWeight: '500'
+                             }}>
+                          {message.backupInfo}
+                        </div>
+                      )}
                       <p className="text-[15px] text-gray-800 whitespace-pre-wrap">{message.text}</p>
                       <div 
                         className="absolute w-3 h-3 transform rotate-45 z-[-1]"
