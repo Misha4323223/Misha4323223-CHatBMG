@@ -133,14 +133,15 @@
     }
     
     .chat-container {
-      background-color: var(--card-bg);
+      background-color: #1a1a2e;
       border-radius: 10px;
       box-shadow: 0 3px 10px var(--shadow);
       padding: 5px;
       margin-bottom: 5px;
-      height: 100px;
+      height: 250px;
       display: flex;
       flex-direction: column;
+      border: 1px solid #40405c;
     }
     
     .chat-header {
@@ -166,10 +167,11 @@
     .chat-messages {
       flex-grow: 1;
       overflow-y: auto;
-      padding: 20px;
-      margin-bottom: 15px;
-      background-color: rgba(0, 0, 0, 0.02);
+      padding: 10px;
+      margin-bottom: 8px;
+      background-color: #252538;
       border-radius: 8px;
+      color: #e6e6e6;
     }
     
     .message {
@@ -182,21 +184,21 @@
     }
     
     .message.user {
-      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      background: #2563eb;
       color: white;
       align-self: flex-end;
       margin-left: auto;
       border-bottom-right-radius: 0;
-      box-shadow: 0 3px 10px rgba(255, 75, 43, 0.2);
+      box-shadow: 0 3px 10px rgba(37, 99, 235, 0.3);
     }
     
     .message.ai {
-      background: linear-gradient(135deg, var(--secondary-dark), var(--secondary-light));
-      color: white;
+      background: #374151;
+      color: #f3f4f6;
       align-self: flex-start;
       margin-right: auto;
       border-bottom-left-radius: 0;
-      box-shadow: 0 3px 10px rgba(108, 99, 255, 0.2);
+      box-shadow: 0 3px 10px rgba(55, 65, 81, 0.3);
     }
     
     .message.thinking {
@@ -250,13 +252,14 @@
     
     .chat-input {
       flex-grow: 1;
-      padding: 12px 15px;
-      border: 1px solid var(--border);
+      padding: 8px 12px;
+      border: 1px solid #40405c;
       border-radius: 8px;
-      background-color: var(--card-bg);
-      color: var(--text);
-      font-size: 1rem;
+      background-color: #374151;
+      color: #f3f4f6;
+      font-size: 0.9rem;
       resize: none;
+      height: 32px;
     }
     
     .chat-input:focus {
