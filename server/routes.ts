@@ -229,6 +229,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const deepInfraProvider = require('./deepinfra-provider');
   app.use('/api/deepinfra', deepInfraProvider);
   
+  // API для мультимодального анализа изображений
+  const multimodalProvider = require('./multimodal-provider');
+  app.use('/api/multimodal', multimodalProvider);
+  
   // Проверка работы Python провайдера при запуске
   (async () => {
     try {
