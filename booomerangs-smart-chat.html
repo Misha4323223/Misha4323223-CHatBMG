@@ -62,35 +62,35 @@
       position: relative;
     }
     
-    .logo {
-      font-size: 2.5rem;
-      font-weight: 800;
-      color: transparent;
-      background: var(--gradient);
-      -webkit-background-clip: text;
-      background-clip: text;
-      letter-spacing: 1px;
+    .logo-container {
+      display: flex;
+      justify-content: center;
       margin-bottom: 10px;
-      position: relative;
-      display: inline-block;
     }
     
-    .logo::after {
-      content: "";
-      position: absolute;
-      bottom: -2px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 50%;
-      height: 3px;
-      background: var(--gradient);
-      border-radius: 2px;
+    .logo-image {
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .logo-image:hover {
+      transform: scale(1.05);
+      box-shadow: 0 8px 25px rgba(108, 99, 255, 0.3);
     }
     
     .tagline {
-      font-size: 1.1rem;
-      color: var(--text-light);
-      margin-bottom: 10px;
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: transparent;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      background-clip: text;
+      margin: 10px 0 20px;
+      letter-spacing: 1px;
     }
     
     .navigation {
@@ -420,8 +420,10 @@
 <body>
   <div class="container">
     <header class="header">
-      <h1 class="logo">BOOOMERANGS</h1>
-      <p class="tagline">Умный AI чат с интеллектуальной маршрутизацией</p>
+      <div class="logo-container">
+        <img src="/images/booomerangs-logo.jpg" alt="BOOOMERANGS Logo" class="logo-image">
+      </div>
+      <h1 class="tagline">BOOOMERANGS AI</h1>
     </header>
     
     <nav class="navigation">
