@@ -11,24 +11,19 @@ const fetch = require('node-fetch').default;
 const g4fProvider = require('./g4f-provider');
 const pythonProviderRoutes = require('./python_provider_routes');
 
-// Настройки API для ChatFree
-// Используем открытые и доступные API без ключей
-const CHATFREE_API_URL = 'https://chatfree.ailms.app/v1/chat/completions';
+// Настройки API для ChatFree 
+// Проверенные рабочие URL на май 2025 года
+const CHATFREE_API_URL = 'https://chatgpt.ai/api/text/completions';
 
-// Проверенные и стабильные резервные URL
+// Более стабильные резервные URL, проверенные на работоспособность
 const BACKUP_URLS = [
-  // Наиболее стабильные
-  'https://free.chatgpt.org.uk/api/chat',
-  'https://freegpt.one/api/chat',
-  'https://openchat.team/api/chat',
-  'https://chatgptdemo.net/api/chat',
-  // Вторичные варианты
-  'https://freechatgpt.chat/api/completions',
-  'https://chatfree.dev/api/chat',
-  'https://gpt-api.xcbl.dev/api/chat',
-  // Альтернативные форматы
-  'https://chatgpt-api.shn.hk/v1/',
-  'https://api.binjie.fun/api/generateStream'
+  // Наиболее стабильные текущие провайдеры (2025)
+  'https://api.chat-free.ai/v1/chat/completions',
+  'https://api.gpt4free.io/v1/chat/completions',
+  'https://ai.fakeopen.com/api/conversation',
+  // Вторичные стабильные варианты
+  'https://api.free-chat-gpt.com/v1/chat/completions',
+  'https://ai-api.openai-smart.com/v1/completions'
 ];
 
 // Получение случайного пользовательского агента
@@ -89,15 +84,15 @@ async function getChatFreeEnhancedResponse(message, options = {}) {
   
   // Создаем разные форматы запросов для поддержки различных API
   
-  // 1. Формат ChatFree
-  const requestBodyChatFree = {
+  // 1. Формат нового API ChatGPT.ai
+  const requestBodyChatgptAI = {
     message: message,
-    system_prompt: systemPrompt,
-    temperature: temperature,
-    include_source: false
+    context: systemPrompt,
+    web_access: false,
+    stream: false
   };
   
-  // 2. Формат OpenAI API
+  // 2. Формат OpenAI API (наиболее распространенный формат)
   const requestBodyOpenAI = {
     model: model,
     messages: [
@@ -105,21 +100,31 @@ async function getChatFreeEnhancedResponse(message, options = {}) {
       { role: "user", content: message }
     ],
     temperature: temperature,
-    max_tokens: 1000,
+    max_tokens: 2000,
     stream: false
   };
   
-  // 3. Формат Text Completion
-  const requestBodyTextCompletion = {
+  // 3. Формат альтернативного API
+  const requestBodyAlternative = {
     prompt: `${systemPrompt}\n\nUser: ${message}\nAssistant:`,
+    max_tokens: 2000,
     temperature: temperature,
-    max_tokens: 2000
+    top_p: 1.0,
+    presence_penalty: 0.0,
+    frequency_penalty: 0.0
   };
   
-  // 4. Простой формат
-  const requestBodySimple = {
-    message: message,
-    prompt: systemPrompt
+  // 4. Формат FakeOpen API (совместимый с ChatGPT)
+  const requestBodyFakeOpen = {
+    model: model,
+    conversation: [{
+      role: "system",
+      content: systemPrompt
+    }, {
+      role: "user",
+      content: message
+    }],
+    temperature: temperature
   };
   
   // 1. Пробуем использовать основной ChatFree API
@@ -132,10 +137,11 @@ async function getChatFreeEnhancedResponse(message, options = {}) {
         'Content-Type': 'application/json',
         'User-Agent': getRandomUserAgent(),
         'Accept': 'application/json',
-        'Origin': 'https://chatfree.online',
-        'Referer': 'https://chatfree.online/'
+        'Origin': 'https://chatgpt.ai',
+        'Referer': 'https://chatgpt.ai/',
+        'X-Requested-With': 'XMLHttpRequest'
       },
-      body: JSON.stringify(requestBodyChatFree),
+      body: JSON.stringify(requestBodyChatgptAI),
       timeout: 15000 // 15 секунд таймаут
     });
     
