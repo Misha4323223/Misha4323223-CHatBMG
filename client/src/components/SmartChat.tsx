@@ -212,7 +212,7 @@ const SmartChat: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col w-full max-w-4xl mx-auto h-20 bg-gray-900 text-white rounded-lg shadow-lg border border-gray-700 overflow-hidden">
+    <div className="flex flex-col w-full max-w-4xl mx-auto h-[70px] bg-gray-900 text-white rounded-lg shadow-lg border border-gray-700 overflow-hidden">
       {/* Убрали заголовок для большей компактности */}
       
       <ScrollArea className="flex-grow p-1">
