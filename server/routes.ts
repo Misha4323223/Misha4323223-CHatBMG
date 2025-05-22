@@ -217,6 +217,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const chatFreeImproved = require('./chatfree-improved');
   app.use('/api/chatfree', chatFreeImproved);
   
+  // API для FreeChat с интеграцией Phind и Qwen
+  const freechatEnhanced = require('./freechat-enhanced');
+  app.use('/api/freechat', freechatEnhanced);
+  
   // API для Claude от Anthropic через Python G4F
   const claudeProvider = require('./claude-provider');
   app.use('/api/claude', claudeProvider);

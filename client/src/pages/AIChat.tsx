@@ -101,6 +101,39 @@ export default function AIChat() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Состояние для выбранного провайдера
+  const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
+
+  // Функция для автоматического определения наилучшего провайдера
+  const detectBestProvider = (message: string): string | null => {
+    message = message.toLowerCase();
+    
+    // Технические вопросы и код - DeepSpeek или Phind
+    const techKeywords = ["код", "программирование", "javascript", "python", "java", "c++", "api", 
+                         "функция", "coding", "programming", "code", "algorithm", "database", "git"];
+    
+    if (techKeywords.some(keyword => message.includes(keyword))) {
+      return Math.random() > 0.5 ? 'DeepSpeek' : 'Phind';
+    }
+    
+    // Образование, наука, исследования - Qwen
+    const scienceKeywords = ["наука", "исследование", "образование", "учеба", "история", 
+                           "физика", "химия", "математика", "research", "science", "education", "math"];
+    
+    if (scienceKeywords.some(keyword => message.includes(keyword))) {
+      return 'Qwen';
+    }
+    
+    // Длинные сложные вопросы - FreeChat
+    if (message.length > 150) {
+      return 'FreeChat';
+    }
+    
+    // Случайный выбор между наиболее стабильными провайдерами
+    const stableProviders = ['FreeChat', 'Qwen'];
+    return stableProviders[Math.floor(Math.random() * stableProviders.length)];
+  };
+
   // Функция для отправки сообщения к AI провайдеру
   const sendMessage = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -120,11 +153,63 @@ export default function AIChat() {
     setIsLoading(true);
     
     try {
-      // Отправляем запрос к API с автоматическим выбором провайдера
-      const response = await fetch("/api/ai/chat", {
+      let endpoint = "/api/ai/chat";
+      let requestData: any = { message: newMessage };
+      
+      // Если провайдер не выбран вручную, используем автоматический выбор
+      const effectiveProvider = selectedProvider || detectBestProvider(newMessage);
+      
+      // Выбираем API в зависимости от выбранного или определенного провайдера
+      if (effectiveProvider) {
+        switch(effectiveProvider.toLowerCase()) {
+          case 'freechat':
+            endpoint = "/api/freechat/chat";
+            break;
+          case 'deepspeek':
+            endpoint = "/api/deepspeek/chat";
+            break;
+          case 'claude':
+            endpoint = "/api/claude/chat";
+            break;
+          case 'deepinfra':
+            endpoint = "/api/deepinfra/chat";
+            break;
+          case 'phind':
+            requestData = { message: newMessage, provider: 'phind' };
+            break;
+          case 'qwen':
+            requestData = { message: newMessage, provider: 'qwen' };
+            break;
+          default:
+            // Если что-то пошло не так, используем стандартный автоматический выбор
+            break;
+        }
+      }
+      
+      // Показываем пользователю, какой провайдер автоматически выбран (если это автоматический режим)
+      if (!selectedProvider && effectiveProvider) {
+        setIsLoading(true);
+        // Временно показываем выбранного провайдера
+        const autoDetectMessage: Message = {
+          id: Date.now() + 0.5,
+          text: `💡 Определен лучший провайдер для вашего вопроса: ${effectiveProvider}`,
+          sender: "ai",
+          model: "Auto-Detect",
+          provider: "System",
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        };
+        
+        setMessages(prev => [...prev, autoDetectMessage]);
+        
+        // Делаем небольшую паузу, чтобы пользователь успел увидеть сообщение
+        await new Promise(resolve => setTimeout(resolve, 800));
+      }
+    
+      // Отправляем запрос к выбранному API
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: newMessage })
+        body: JSON.stringify(requestData)
       });
       
       const data = await response.json();
@@ -145,7 +230,7 @@ export default function AIChat() {
         // Обработка ошибки
         const errorMessage: Message = {
           id: Date.now() + 1,
-          text: "Извините, произошла ошибка при получении ответа. Пожалуйста, попробуйте еще раз.",
+          text: `Извините, произошла ошибка при получении ответа: ${data.error || "Неизвестная ошибка"}. Пожалуйста, попробуйте еще раз или выберите другого провайдера.`,
           sender: "ai",
           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         };
@@ -216,7 +301,7 @@ export default function AIChat() {
                 <div className="py-2 px-4 bg-blue-50 rounded-xl flex items-center"
                     style={{border: '1px solid rgba(59, 130, 246, 0.2)'}}>
                   <span className="text-lg mr-2">💬</span>
-                  <span className="text-blue-700">ChatFree</span>
+                  <span className="text-blue-700">FreeChat</span>
                 </div>
                 <div className="py-2 px-4 bg-blue-50 rounded-xl flex items-center"
                     style={{border: '1px solid rgba(59, 130, 246, 0.2)'}}>
@@ -350,9 +435,68 @@ export default function AIChat() {
         </div>
       </div>
       
-      {/* Форма отправки сообщения */}
+      {/* Провайдеры и Форма отправки сообщения */}
       <div className="border-t border-gray-100 p-4 bg-white" style={{boxShadow: '0 -2px 10px rgba(0, 0, 0, 0.03)'}}>
         <div className="container mx-auto max-w-4xl">
+          {/* Селектор провайдеров */}
+          <div className="mb-3 flex flex-wrap gap-2">
+            <div 
+              onClick={() => setSelectedProvider(null)} 
+              className={`px-3 py-1.5 rounded-full text-sm font-medium cursor-pointer transition-all duration-200 ${
+                selectedProvider === null 
+                  ? 'bg-blue-100 text-blue-700 shadow-sm' 
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              <span className="mr-1">🤖</span> Авто
+            </div>
+            
+            <div 
+              onClick={() => setSelectedProvider('FreeChat')} 
+              className={`px-3 py-1.5 rounded-full text-sm font-medium cursor-pointer transition-all duration-200 ${
+                selectedProvider === 'FreeChat' 
+                  ? 'bg-blue-100 text-blue-700 shadow-sm' 
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              <span className="mr-1">💬</span> FreeChat
+            </div>
+            
+            <div 
+              onClick={() => setSelectedProvider('DeepSpeek')} 
+              className={`px-3 py-1.5 rounded-full text-sm font-medium cursor-pointer transition-all duration-200 ${
+                selectedProvider === 'DeepSpeek' 
+                  ? 'bg-indigo-100 text-indigo-700 shadow-sm' 
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              <span className="mr-1">👨‍💻</span> DeepSpeek
+            </div>
+            
+            <div 
+              onClick={() => setSelectedProvider('Phind')} 
+              className={`px-3 py-1.5 rounded-full text-sm font-medium cursor-pointer transition-all duration-200 ${
+                selectedProvider === 'Phind' 
+                  ? 'bg-yellow-100 text-yellow-700 shadow-sm' 
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              <span className="mr-1">📚</span> Phind
+            </div>
+            
+            <div 
+              onClick={() => setSelectedProvider('Qwen')} 
+              className={`px-3 py-1.5 rounded-full text-sm font-medium cursor-pointer transition-all duration-200 ${
+                selectedProvider === 'Qwen' 
+                  ? 'bg-red-100 text-red-700 shadow-sm' 
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              <span className="mr-1">🚀</span> Qwen
+            </div>
+          </div>
+          
+          {/* Форма отправки сообщения */}
           <form onSubmit={sendMessage} className="flex items-center space-x-2">
             <div className="relative flex-1">
               <input 
@@ -364,7 +508,7 @@ export default function AIChat() {
                   boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
                   transition: 'all 0.2s ease'
                 }}
-                placeholder="Введите сообщение..." 
+                placeholder={selectedProvider ? `Спросить ${selectedProvider}...` : "Введите сообщение..."}
                 disabled={isLoading}
               />
             </div>
@@ -372,7 +516,9 @@ export default function AIChat() {
               type="submit" 
               className="p-3.5 text-white rounded-xl disabled:opacity-50"
               style={{
-                background: 'linear-gradient(135deg, #3b82f6, #6366f1)',
+                background: selectedProvider 
+                  ? getProviderGradient(selectedProvider)
+                  : 'linear-gradient(135deg, #3b82f6, #6366f1)',
                 boxShadow: '0 4px 10px -2px rgba(59, 130, 246, 0.3)',
                 transition: 'all 0.2s ease',
                 transform: newMessage.trim() && !isLoading ? 'scale(1)' : 'scale(0.98)'
@@ -384,6 +530,18 @@ export default function AIChat() {
               </svg>
             </button>
           </form>
+          
+          {/* Индикатор выбранного провайдера */}
+          {selectedProvider && (
+            <div className="mt-2 text-xs text-gray-500 pl-2 flex items-center">
+              <span className="mr-1">
+                {getProviderIcon(selectedProvider)}
+              </span>
+              <span>
+                Используется {selectedProvider}
+              </span>
+            </div>
+          )}
         </div>
       </div>
     </div>
