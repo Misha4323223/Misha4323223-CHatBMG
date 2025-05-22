@@ -433,6 +433,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { message, provider } = req.body;
       const uploadedImage = req.file;
       
+      console.log(`🔍 Проверка загрузки: message="${message}", uploadedImage=${uploadedImage ? 'ЕСТЬ' : 'НЕТ'}`);
+      
       if (!message && !uploadedImage) {
         return res.status(400).json({ 
           success: false, 
@@ -482,9 +484,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Проверяем, является ли вопрос техническим
       const isTechnicalQuestion = techKeywords.some(keyword => finalMessage.toLowerCase().includes(keyword));
       
-      // Специальная обработка для мультимодальных запросов с изображениями
-      if (selectedProvider === 'multimodal' && uploadedImage) {
-        console.log(`🖼️ Используем мультимодальный провайдер для анализа изображения`);
+      // Специальная обработка для любых запросов с изображениями
+      if (uploadedImage) {
+        console.log(`🖼️ НАЙДЕНО ИЗОБРАЖЕНИЕ! Размер: ${uploadedImage.size} байт, тип: ${uploadedImage.mimetype}`);
         
         // Импортируем мультимодальный провайдер
         const multimodalProvider = require('./multimodal-provider');
