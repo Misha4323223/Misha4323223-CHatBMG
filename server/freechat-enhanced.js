@@ -12,10 +12,13 @@ const g4fProvider = require('./g4f-provider');
 const pythonProviderRoutes = require('./python_provider_routes');
 
 // Настройки API для ChatFree
-const CHATFREE_API_URL = 'https://chatfree.org/api/chat/completions';
+const CHATFREE_API_URL = 'https://chatfree.top/api/chat';
 const BACKUP_URLS = [
+  'https://chatfree.org/api/chat/completions',
+  'https://chat-free.top/api/chat',
   'https://chat-app-free.org/api/chat/completions',
-  'https://free-api.cgs.dev/api/completions'
+  'https://free-api.cgs.dev/api/completions',
+  'https://api.chatfree.chat/api/chat'
 ];
 
 // Получение случайного пользовательского агента
@@ -45,8 +48,16 @@ async function getChatFreeEnhancedResponse(message, options = {}) {
   const systemPrompt = options.systemPrompt || 'Вы полезный ассистент. Отвечайте точно и по существу.';
   const temperature = options.temperature || 0.7;
   
-  // Создаем запрос в формате ChatFree
-  const requestBody = {
+  // Создаем запрос в формате ChatFree (для основного URL)
+  const requestBodyMain = {
+    message: message,
+    system_prompt: systemPrompt,
+    temperature: temperature,
+    include_source: false
+  };
+  
+  // Создаем запрос для резервных URL (в формате OpenAI API)
+  const requestBodyBackup = {
     model: model,
     messages: [
       { role: "system", content: systemPrompt },
@@ -67,20 +78,33 @@ async function getChatFreeEnhancedResponse(message, options = {}) {
         'Content-Type': 'application/json',
         'User-Agent': getRandomUserAgent()
       },
-      body: JSON.stringify(requestBody),
+      body: JSON.stringify(requestBodyMain),
       timeout: 15000 // 15 секунд таймаут
     });
     
     if (response.ok) {
       const data = await response.json();
       
+      console.log(`✅ Успешно получен ответ от основного ChatFree API`);
+      
+      // Обрабатываем разные форматы ответов
       if (data.choices && data.choices.length && data.choices[0].message) {
-        console.log(`✅ Успешно получен ответ от основного ChatFree API`);
+        // OpenAI-подобный формат
         return {
           success: true,
           response: data.choices[0].message.content,
           provider: 'ChatFree',
-          model: model
+          model: data.model || model,
+          backupInfo: "🔵 ChatFree отвечает"
+        };
+      } else if (data.message || data.response) {
+        // Формат ChatFree
+        return {
+          success: true,
+          response: data.message || data.response,
+          provider: 'ChatFree',
+          model: data.model || "ChatFree API",
+          backupInfo: "🔵 ChatFree отвечает"
         };
       }
     }
@@ -95,11 +119,16 @@ async function getChatFreeEnhancedResponse(message, options = {}) {
     try {
       console.log(`FreeChat Enhanced: Отправка запроса к резервному URL ${backupUrl}...`);
       
+      // Используем разные форматы запросов в зависимости от URL
+      const isMainFormat = backupUrl.includes('chatfree.top') || backupUrl.includes('chat-free.top') || backupUrl.includes('api.chatfree.chat');
+      const requestBody = isMainFormat ? requestBodyMain : requestBodyBackup;
+      
       const response = await fetch(backupUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'User-Agent': getRandomUserAgent()
+          'User-Agent': getRandomUserAgent(),
+          'Accept': 'application/json'
         },
         body: JSON.stringify(requestBody),
         timeout: 15000 // 15 секунд таймаут
@@ -108,13 +137,35 @@ async function getChatFreeEnhancedResponse(message, options = {}) {
       if (response.ok) {
         const data = await response.json();
         
+        console.log(`✅ Успешно получен ответ от резервного URL ${backupUrl}`);
+        
+        // Обрабатываем разные форматы ответов
         if (data.choices && data.choices.length && data.choices[0].message) {
-          console.log(`✅ Успешно получен ответ от резервного URL ${backupUrl}`);
+          // OpenAI-подобный формат
           return {
             success: true,
             response: data.choices[0].message.content,
             provider: 'ChatFree',
-            model: model
+            model: data.model || "ChatFree Backup",
+            backupInfo: "🔵 ChatFree (резервный сервер) отвечает"
+          };
+        } else if (data.message || data.response) {
+          // Формат ChatFree
+          return {
+            success: true,
+            response: data.message || data.response,
+            provider: 'ChatFree',
+            model: data.model || "ChatFree Backup",
+            backupInfo: "🔵 ChatFree (резервный сервер) отвечает"
+          };
+        } else if (data.content) {
+          // Еще один возможный формат
+          return {
+            success: true, 
+            response: data.content,
+            provider: 'ChatFree',
+            model: data.model || "ChatFree Backup",
+            backupInfo: "🔵 ChatFree (резервный сервер) отвечает"
           };
         }
       }
@@ -139,8 +190,9 @@ async function getChatFreeEnhancedResponse(message, options = {}) {
       return {
         success: true,
         response: phindResponse,
-        provider: 'Phind',
-        model: 'Phind AI'
+        provider: 'ChatFree',
+        model: 'Phind AI',
+        backupInfo: "🔍 ChatFree недоступен. Используется резервный провайдер Phind AI."
       };
     }
   } catch (phindError) {
@@ -158,8 +210,9 @@ async function getChatFreeEnhancedResponse(message, options = {}) {
       return {
         success: true,
         response: qwenResponse,
-        provider: 'Qwen',
-        model: 'Qwen-2.5-Max'
+        provider: 'ChatFree',
+        model: 'Qwen 2.5 Max',
+        backupInfo: "🚀 ChatFree и Phind недоступны. Используется резервный провайдер Qwen 2.5 Max."
       };
     }
   } catch (qwenError) {
@@ -177,8 +230,9 @@ async function getChatFreeEnhancedResponse(message, options = {}) {
       return {
         success: true,
         response: g4fResponse.response,
-        provider: g4fResponse.provider || 'G4F',
-        model: g4fResponse.model || 'Unknown'
+        provider: 'ChatFree',
+        model: g4fResponse.provider ? `${g4fResponse.provider}` : 'AI Assistant',
+        backupInfo: "⚠️ Основные провайдеры недоступны. Используется резервный провайдер G4F."
       };
     }
   } catch (g4fError) {
