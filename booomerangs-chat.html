@@ -21,19 +21,59 @@
     .app-container {
       max-width: 1200px;
       margin: 0 auto;
-      padding: 20px;
-      height: 100vh;
+      padding: 8px;
       display: flex;
       flex-direction: column;
+    }
+    
+    /* Адаптивные отступы контейнера */
+    @media (min-width: 640px) {
+      .app-container {
+        padding: 12px;
+      }
+    }
+    
+    @media (min-width: 768px) {
+      .app-container {
+        padding: 16px;
+      }
+    }
+    
+    @media (min-width: 1024px) {
+      .app-container {
+        padding: 20px;
+      }
     }
     
     .header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 20px;
-      padding-bottom: 20px;
-      border-bottom: 1px solid #e5e7eb;
+      margin-bottom: 4px;
+      padding-bottom: 4px;
+      border-bottom: 1px solid #40405c;
+    }
+    
+    /* Адаптивные отступы заголовка */
+    @media (min-width: 640px) {
+      .header {
+        margin-bottom: 6px;
+        padding-bottom: 6px;
+      }
+    }
+    
+    @media (min-width: 768px) {
+      .header {
+        margin-bottom: 8px;
+        padding-bottom: 8px;
+      }
+    }
+    
+    @media (min-width: 1024px) {
+      .header {
+        margin-bottom: 12px;
+        padding-bottom: 12px;
+      }
     }
     
     .logo-container {
@@ -104,10 +144,10 @@
       background: #1a1a2e;
       border-radius: 12px;
       box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
-      flex-grow: 1;
       overflow: hidden;
       border: 1px solid #40405c;
       height: 120px;
+      flex-shrink: 0;
     }
     
     /* Адаптивные размеры чата */
