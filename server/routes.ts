@@ -11,10 +11,26 @@ import { authSchema, messageSchema } from "@shared/schema";
 import * as path from 'path';
 import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
+import multer from 'multer';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const require = createRequire(__filename);
+
+// Настройка multer для загрузки изображений
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB лимит
+  },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Только изображения разрешены'), false);
+    }
+  }
+});
 const svgGenerator = require('./svg-generator');
 const g4fHandlers = require('./g4f-handlers');
 const directAiRoutes = require('./direct-ai-routes');
@@ -412,15 +428,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }
   
   // API для работы с BOOOMERANGS AI интеграцией (с поддержкой Qwen и других провайдеров)
-  app.post('/api/ai/chat', async (req, res) => {
+  app.post('/api/ai/chat', upload.single('image'), async (req, res) => {
     try {
       const { message, provider } = req.body;
+      const uploadedImage = req.file;
       
-      if (!message) {
+      if (!message && !uploadedImage) {
         return res.status(400).json({ 
           success: false, 
-          error: 'Сообщение не может быть пустым' 
+          error: 'Сообщение или изображение должны быть предоставлены' 
         });
+      }
+
+      // Если есть изображение, но нет сообщения, установим стандартный запрос
+      let finalMessage = message || 'Анализируй это изображение и опиши что на нем видно';
+      
+      // Добавляем информацию об изображении к сообщению
+      if (uploadedImage) {
+        finalMessage += `\n[Загружено изображение: ${uploadedImage.originalname}, размер: ${Math.round(uploadedImage.size / 1024)}KB]`;
       }
       
       // Импортируем провайдер напрямую
