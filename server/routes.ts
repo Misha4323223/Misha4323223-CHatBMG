@@ -456,7 +456,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const pythonProviderRoutes = require('./python_provider_routes');
       
       // Сначала создаем демо-ответ для запасного варианта
-      const demoResponse = generateDemoResponse(message);
+      const demoResponse = generateDemoResponse(finalMessage);
       
       // Определяем, какой провайдер использовать
       let selectedProvider = provider || 'AItianhu';
@@ -471,7 +471,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       ];
       
       // Проверяем, является ли вопрос техническим
-      const isTechnicalQuestion = techKeywords.some(keyword => message.toLowerCase().includes(keyword));
+      const isTechnicalQuestion = techKeywords.some(keyword => finalMessage.toLowerCase().includes(keyword));
       
       // Для DeepSpeek используем оптимизированный подход с локальным ответом при необходимости
       if (provider === 'deepspeek') {
