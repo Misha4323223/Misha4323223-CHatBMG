@@ -443,11 +443,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Если есть изображение, но нет сообщения, установим стандартный запрос
       let finalMessage = message || 'Анализируй это изображение и опиши что на нем видно';
       
-      // Добавляем информацию об изображении к сообщению
-      if (uploadedImage) {
-        finalMessage += `\n[Загружено изображение: ${uploadedImage.originalname}, размер: ${Math.round(uploadedImage.size / 1024)}KB]`;
-      }
-      
       // Импортируем провайдер напрямую
       const directAiProvider = require('./direct-ai-provider');
       const { AI_PROVIDERS } = directAiProvider;
@@ -460,6 +455,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Определяем, какой провайдер использовать
       let selectedProvider = provider || 'AItianhu';
+      let base64Image = null;
+      
+      // Специальная обработка для изображений - используем мультимодальные провайдеры
+      if (uploadedImage) {
+        // Конвертируем изображение в base64 для передачи AI провайдерам
+        base64Image = uploadedImage.buffer.toString('base64');
+        const imageDataUrl = `data:${uploadedImage.mimetype};base64,${base64Image}`;
+        
+        // Для изображений используем специализированные провайдеры с поддержкой vision
+        selectedProvider = 'multimodal'; // Принудительно используем мультимодальный провайдер
+        
+        finalMessage = `${finalMessage}\n\nИзображение для анализа: ${imageDataUrl}`;
+        console.log(`🖼️ Обрабатываем изображение: ${uploadedImage.originalname} (${Math.round(uploadedImage.size / 1024)}KB)`);
+      }
       
       // Автоматическое определение технических вопросов для перенаправления на DeepSpeek/Phind
       const techKeywords = [
@@ -473,6 +482,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Проверяем, является ли вопрос техническим
       const isTechnicalQuestion = techKeywords.some(keyword => finalMessage.toLowerCase().includes(keyword));
       
+      // Специальная обработка для мультимодальных запросов с изображениями
+      if (selectedProvider === 'multimodal' && uploadedImage) {
+        console.log(`🖼️ Используем мультимодальный провайдер для анализа изображения`);
+        
+        // Импортируем мультимодальный провайдер
+        const multimodalProvider = require('./multimodal-provider');
+        
+        try {
+          const result = await multimodalProvider.analyzeImage(base64Image, finalMessage);
+          
+          if (result && result.success) {
+            return res.json({
+              success: true,
+              response: result.response,
+              provider: 'Multimodal Vision',
+              model: result.model || 'Vision Model'
+            });
+          } else {
+            console.log('⚠️ Мультимодальный провайдер недоступен, используем резервный метод');
+            // Падаем на резервный метод анализа
+          }
+        } catch (error) {
+          console.error('❌ Ошибка мультимодального провайдера:', error);
+          // Продолжаем с обычными провайдерами
+        }
+      }
+
       // Для DeepSpeek используем оптимизированный подход с локальным ответом при необходимости
       if (provider === 'deepspeek') {
         console.log(`📊 Для DeepSpeek используем быстрый режим`);
