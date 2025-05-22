@@ -84,7 +84,47 @@ async function getChatFreeEnhancedResponse(message, options = {}) {
   
   // Используем подтвержденно работающие провайдеры через Python G4F
   
-  // 1. Пробуем Free2GPT - обычно стабильный провайдер
+  // 1. Сначала пробуем AIChatFree - новый стабильный провайдер
+  try {
+    console.log(`FreeChat Enhanced: Использование Python G4F с провайдером AIChatFree...`);
+    
+    const response = await fetch("http://localhost:5004/python/chat?provider=AIChatFree", {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ 
+        message: message, 
+        system_prompt: systemPrompt 
+      }),
+      timeout: 25000 // Увеличиваем таймаут для более надежного ответа
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      
+      console.log(`✅ Успешно получен ответ от Python G4F с провайдером AIChatFree`);
+      console.log(`Реальный провайдер: ${data.provider || 'неизвестно'}`);
+      
+      if (data && data.response) {
+        return {
+          success: true,
+          response: data.response,
+          provider: 'ChatFree',
+          model: data.provider || "AIChatFree",
+          backupInfo: data.provider === 'AIChatFree' ? 
+            "🔵 FreeChat использует провайдер AIChatFree" : 
+            `🔄 FreeChat автоматически использует провайдер ${data.provider || "не указан"}`
+        };
+      }
+    }
+    
+    console.log(`⚠️ AIChatFree вернул статус ${response.status}, пробуем Free2GPT...`);
+  } catch (error) {
+    console.log(`⚠️ Ошибка при использовании AIChatFree: ${error.message}`);
+  }
+  
+  // 2. Пробуем Free2GPT - обычно стабильный провайдер
   try {
     console.log(`FreeChat Enhanced: Использование Python G4F с провайдером Free2GPT...`);
     
