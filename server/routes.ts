@@ -186,7 +186,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Перенаправляем запрос умного чата в React-приложение
   app.get('/smart-chat', (req, res) => {
-    res.sendFile('index.html', { root: '.' });
+    res.sendFile('smart-chat.html', { root: '.' });
   });
   
   // API для работы с G4F провайдерами
