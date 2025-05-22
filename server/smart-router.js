@@ -171,14 +171,42 @@ function analyzeMessage(message) {
  * @returns {Promise<Object>} - Результат от провайдера
  */
 async function routeMessage(message, options = {}) {
-  // Если изображение, сразу используем мультимодальный провайдер
+  // Если изображение, используем наш собственный детектор объектов
   if (options.imageUrl) {
-    const analysis = { 
-      category: "multimodal", 
-      providers: PROVIDER_SPECIALTIES.multimodal.providers 
-    };
-    console.log(`Обнаружено изображение! Используем мультимодальный провайдер`);
-    return await getResponseFromProviders(message, analysis, options);
+    console.log(`🖼️ Обнаружено изображение! Используем собственный детектор объектов`);
+    
+    try {
+      const imageDetector = require('./image-object-detector');
+      const result = await imageDetector.analyzeLocalImage(options.imageUrl, message);
+      
+      if (result.success) {
+        return {
+          success: true,
+          response: result.response,
+          provider: result.provider,
+          model: result.model,
+          category: "multimodal",
+          bestProvider: "Advanced Object Detection"
+        };
+      } else {
+        console.log('⚠️ Собственный детектор не сработал, пробуем внешние провайдеры...');
+        // Если наш детектор не сработал, переходим к внешним провайдерам
+        const analysis = { 
+          category: "multimodal", 
+          providers: PROVIDER_SPECIALTIES.multimodal.providers 
+        };
+        return await getResponseFromProviders(message, analysis, options);
+      }
+    } catch (error) {
+      console.error(`❌ Ошибка собственного детектора: ${error.message}`);
+      // В случае ошибки переходим к внешним провайдерам
+      const analysis = { 
+        category: "multimodal", 
+        providers: PROVIDER_SPECIALTIES.multimodal.providers 
+      };
+      console.log(`Переходим к внешним мультимодальным провайдерам...`);
+      return await getResponseFromProviders(message, analysis, options);
+    }
   }
 
   // Анализируем сообщение
