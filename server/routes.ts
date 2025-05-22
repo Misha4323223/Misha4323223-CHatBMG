@@ -184,9 +184,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.sendFile('booomerangs-flask-stream.html', { root: '.' });
   });
   
-  // Перенаправляем запрос умного чата в React-приложение
+  // Перенаправляем запрос умного чата на HTML-страницу
   app.get('/smart-chat', (req, res) => {
-    res.sendFile('smart-chat.html', { root: '.' });
+    res.sendFile('booomerangs-smart-chat.html', { root: '.' });
   });
   
   // API для работы с G4F провайдерами

@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BOOOMERANGS - Умный AI Чат</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #ff4b2b;
+      --primary-light: #ff6347;
+      --primary-dark: #e03011;
+      --secondary: #6c63ff;
+      --secondary-light: #7e76ff;
+      --secondary-dark: #5a51de;
+      --accent: #27ae60;
+      --background: #f9f9f9;
+      --card-bg: #ffffff;
+      --text: #333;
+      --text-light: #666;
+      --border: #ddd;
+      --shadow: rgba(0, 0, 0, 0.1);
+      --gradient: linear-gradient(135deg, #ff4b2b, #ff416c);
+    }
+    
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --background: #1a1a2e;
+        --card-bg: #252538;
+        --text: #e6e6e6;
+        --text-light: #aaa;
+        --border: #40405c;
+        --shadow: rgba(0, 0, 0, 0.3);
+      }
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Montserrat', sans-serif;
+    }
+    
+    body {
+      background-color: var(--background);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+    
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    .header {
+      text-align: center;
+      padding: 20px 0;
+      position: relative;
+    }
+    
+    .logo {
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: transparent;
+      background: var(--gradient);
+      -webkit-background-clip: text;
+      background-clip: text;
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+      position: relative;
+      display: inline-block;
+    }
+    
+    .logo::after {
+      content: "";
+      position: absolute;
+      bottom: -2px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 50%;
+      height: 3px;
+      background: var(--gradient);
+      border-radius: 2px;
+    }
+    
+    .tagline {
+      font-size: 1.1rem;
+      color: var(--text-light);
+      margin-bottom: 10px;
+    }
+    
+    .navigation {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin: 20px 0;
+      flex-wrap: wrap;
+    }
+    
+    .nav-button {
+      padding: 8px 16px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .nav-button:hover {
+      background: var(--primary-light);
+      color: white;
+      border-color: var(--primary-light);
+    }
+    
+    .nav-button.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+    
+    .chat-container {
+      background-color: var(--card-bg);
+      border-radius: 15px;
+      box-shadow: 0 5px 15px var(--shadow);
+      padding: 20px;
+      margin-bottom: 30px;
+      height: 70vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .chat-header {
+      padding-bottom: 15px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 15px;
+    }
+    
+    .chat-title {
+      font-size: 1.3rem;
+      margin-bottom: 5px;
+      font-weight: 600;
+    }
+    
+    .chat-subtitle {
+      font-size: 0.9rem;
+      color: var(--text-light);
+    }
+    
+    .chat-messages {
+      flex-grow: 1;
+      overflow-y: auto;
+      padding: 10px;
+      margin-bottom: 15px;
+    }
+    
+    .message {
+      max-width: 80%;
+      margin-bottom: 15px;
+      padding: 12px 15px;
+      border-radius: 8px;
+      position: relative;
+      line-height: 1.5;
+    }
+    
+    .message.user {
+      background-color: var(--primary);
+      color: white;
+      align-self: flex-end;
+      margin-left: auto;
+      border-bottom-right-radius: 0;
+    }
+    
+    .message.ai {
+      background-color: var(--secondary-light);
+      color: white;
+      align-self: flex-start;
+      margin-right: auto;
+      border-bottom-left-radius: 0;
+    }
+    
+    .message.thinking {
+      background-color: var(--border);
+      color: var(--text);
+      align-self: flex-start;
+      margin-right: auto;
+      border-bottom-left-radius: 0;
+    }
+    
+    .message-metadata {
+      font-size: 0.7rem;
+      margin-top: 5px;
+      opacity: 0.8;
+    }
+    
+    .chat-input-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-top: 1px solid var(--border);
+      padding-top: 15px;
+    }
+    
+    .file-input-container {
+      position: relative;
+    }
+    
+    .file-input {
+      display: none;
+    }
+    
+    .file-button {
+      width: 40px;
+      height: 40px;
+      background-color: var(--secondary-light);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s;
+    }
+    
+    .file-button:hover {
+      background-color: var(--secondary-dark);
+      transform: translateY(-2px);
+    }
+    
+    .chat-input {
+      flex-grow: 1;
+      padding: 12px 15px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background-color: var(--card-bg);
+      color: var(--text);
+      font-size: 1rem;
+      resize: none;
+    }
+    
+    .chat-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+    
+    .send-button {
+      padding: 12px 20px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .send-button:hover {
+      background-color: var(--primary-light);
+      transform: translateY(-2px);
+    }
+    
+    .image-preview {
+      margin-bottom: 15px;
+      position: relative;
+    }
+    
+    .preview-image {
+      max-width: 100px;
+      max-height: 100px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    
+    .remove-image {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      width: 20px;
+      height: 20px;
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+    }
+    
+    .category-badge {
+      display: inline-block;
+      padding: 3px 8px;
+      background-color: rgba(108, 99, 255, 0.2);
+      color: var(--secondary);
+      border-radius: 50px;
+      font-size: 0.75rem;
+      margin-right: 5px;
+      margin-top: 5px;
+    }
+    
+    .provider-badge {
+      display: inline-block;
+      padding: 3px 8px;
+      background-color: rgba(255, 75, 43, 0.2);
+      color: var(--primary);
+      border-radius: 50px;
+      font-size: 0.75rem;
+      margin-right: 5px;
+      margin-top: 5px;
+    }
+    
+    .info-box {
+      background-color: rgba(108, 99, 255, 0.1);
+      border-left: 4px solid var(--secondary);
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    
+    .info-title {
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+    
+    .info-content {
+      font-size: 0.9rem;
+      color: var(--text-light);
+    }
+    
+    .footer {
+      text-align: center;
+      padding: 20px 0;
+      margin-top: 30px;
+      color: var(--text-light);
+      font-size: 0.9rem;
+      border-top: 1px solid var(--border);
+    }
+    
+    @media (max-width: 768px) {
+      .container {
+        padding: 10px;
+      }
+      
+      .chat-container {
+        height: 80vh;
+        padding: 15px;
+      }
+      
+      .logo {
+        font-size: 2rem;
+      }
+      
+      .message {
+        max-width: 90%;
+      }
+      
+      .nav-button {
+        padding: 6px 12px;
+        font-size: 0.9rem;
+      }
+    }
+    
+    /* Анимация загрузки */
+    .thinking-indicator {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    
+    .thinking-dot {
+      width: 8px;
+      height: 8px;
+      background-color: var(--text);
+      border-radius: 50%;
+      opacity: 0.6;
+      animation: pulse 1.5s infinite ease-in-out;
+    }
+    
+    .thinking-dot:nth-child(2) {
+      animation-delay: 0.3s;
+    }
+    
+    .thinking-dot:nth-child(3) {
+      animation-delay: 0.6s;
+    }
+    
+    @keyframes pulse {
+      0%, 100% {
+        transform: scale(0.8);
+        opacity: 0.6;
+      }
+      50% {
+        transform: scale(1.2);
+        opacity: 1;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <header class="header">
+      <h1 class="logo">BOOOMERANGS</h1>
+      <p class="tagline">Умный AI чат с интеллектуальной маршрутизацией</p>
+    </header>
+    
+    <nav class="navigation">
+      <a href="/" class="nav-button">Главная</a>
+      <a href="/ai" class="nav-button">AI Чат</a>
+      <a href="/smart-chat" class="nav-button active">Умный Чат</a>
+      <a href="/image-generator" class="nav-button">Генератор Изображений</a>
+    </nav>
+    
+    <div class="info-box">
+      <h3 class="info-title">🧠 Об умном чате</h3>
+      <p class="info-content">
+        Новая версия AI-чата с интеллектуальным выбором провайдера. Система автоматически направляет
+        ваши вопросы к наиболее подходящим AI-моделям в зависимости от темы запроса.
+        Поддерживается загрузка изображений для анализа мультимодальными моделями.
+      </p>
+    </div>
+    
+    <div class="chat-container">
+      <div class="chat-header">
+        <h2 class="chat-title">Умный AI чат</h2>
+        <p class="chat-subtitle">Система автоматически выбирает наиболее подходящую AI-модель для вашего запроса</p>
+      </div>
+      
+      <div class="chat-messages" id="chat-messages">
+        <div class="message ai">
+          <p>Привет! Я ваш AI-ассистент с интеллектуальной маршрутизацией. Я автоматически направляю ваши вопросы наиболее подходящим AI-провайдерам в зависимости от темы. Задайте любой вопрос, и я постараюсь дать наилучший ответ!</p>
+          <div class="message-metadata">
+            <span class="category-badge">general</span>
+            <span class="provider-badge">BOOOMERANGS AI</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="image-preview" id="image-preview" style="display: none;">
+        <img src="" alt="Выбранное изображение" class="preview-image" id="preview-image">
+        <button class="remove-image" id="remove-image">✕</button>
+      </div>
+      
+      <div class="chat-input-container">
+        <div class="file-input-container">
+          <input type="file" class="file-input" id="file-input" accept="image/*">
+          <button class="file-button" id="file-button">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              <circle cx="8.5" cy="8.5" r="1.5"></circle>
+              <polyline points="21 15 16 10 5 21"></polyline>
+            </svg>
+          </button>
+        </div>
+        <textarea class="chat-input" id="chat-input" placeholder="Напишите сообщение..." rows="1"></textarea>
+        <button class="send-button" id="send-button">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+          </svg>
+        </button>
+      </div>
+    </div>
+    
+    <footer class="footer">
+      &copy; 2025 BOOOMERANGS - Умный AI чат с интеллектуальной маршрутизацией
+    </footer>
+  </div>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Получаем элементы интерфейса
+      const chatMessages = document.getElementById('chat-messages');
+      const chatInput = document.getElementById('chat-input');
+      const sendButton = document.getElementById('send-button');
+      const fileButton = document.getElementById('file-button');
+      const fileInput = document.getElementById('file-input');
+      const imagePreview = document.getElementById('image-preview');
+      const previewImage = document.getElementById('preview-image');
+      const removeImageButton = document.getElementById('remove-image');
+      
+      // Переменная для хранения URL загруженного изображения
+      let uploadedImageUrl = null;
+      
+      // Обработчик отправки сообщения
+      async function sendMessage() {
+        const messageText = chatInput.value.trim();
+        
+        // Проверяем, есть ли текст или изображение для отправки
+        if (!messageText && !uploadedImageUrl) return;
+        
+        // Добавляем сообщение пользователя
+        addMessage(messageText, true);
+        
+        // Очищаем поле ввода
+        chatInput.value = '';
+        
+        // Создаем временное сообщение "Думаю..."
+        const thinkingDiv = document.createElement('div');
+        thinkingDiv.className = 'message thinking';
+        const thinkingIndicator = document.createElement('div');
+        thinkingIndicator.className = 'thinking-indicator';
+        for (let i = 0; i < 3; i++) {
+          const dot = document.createElement('div');
+          dot.className = 'thinking-dot';
+          thinkingIndicator.appendChild(dot);
+        }
+        thinkingDiv.appendChild(thinkingIndicator);
+        chatMessages.appendChild(thinkingDiv);
+        
+        // Скролл к последнему сообщению
+        scrollToBottom();
+        
+        try {
+          // Отправляем запрос к серверу
+          const response = await fetch('/api/smart/message', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              message: messageText,
+              imageUrl: uploadedImageUrl
+            }),
+          });
+          
+          if (!response.ok) {
+            throw new Error(`Ошибка сервера: ${response.status}`);
+          }
+          
+          const data = await response.json();
+          
+          // Если есть изображение, сбрасываем его после отправки
+          if (uploadedImageUrl) {
+            resetImageUpload();
+          }
+          
+          let aiResponse = '';
+          let provider = '';
+          let category = '';
+          
+          if (data.success) {
+            aiResponse = data.response || 'Ошибка получения ответа';
+            provider = data.provider || 'Неизвестно';
+            category = data.category || 'general';
+          } else {
+            aiResponse = data.error || 'Произошла ошибка при обработке запроса';
+            provider = 'Ошибка';
+          }
+          
+          // Удаляем "думающее" сообщение
+          chatMessages.removeChild(thinkingDiv);
+          
+          // Показываем полученный ответ
+          addMessage(aiResponse, false, { provider, category });
+        } catch (error) {
+          console.error('Ошибка при отправке сообщения:', error);
+          
+          // Удаляем "думающее" сообщение
+          chatMessages.removeChild(thinkingDiv);
+          
+          // Показываем сообщение об ошибке
+          addMessage('Произошла ошибка при отправке сообщения. Пожалуйста, попробуйте еще раз.', false, { provider: 'Ошибка', category: 'error' });
+        }
+      }
+      
+      // Функция для добавления сообщения в чат
+      function addMessage(text, isUser, metadata = {}) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${isUser ? 'user' : 'ai'}`;
+        
+        const messageText = document.createElement('p');
+        messageText.textContent = text;
+        messageDiv.appendChild(messageText);
+        
+        // Если есть метаданные и это сообщение от AI, добавляем их
+        if (!isUser && (metadata.provider || metadata.category)) {
+          const metadataDiv = document.createElement('div');
+          metadataDiv.className = 'message-metadata';
+          
+          if (metadata.category) {
+            const categoryBadge = document.createElement('span');
+            categoryBadge.className = 'category-badge';
+            categoryBadge.textContent = metadata.category;
+            metadataDiv.appendChild(categoryBadge);
+          }
+          
+          if (metadata.provider) {
+            const providerBadge = document.createElement('span');
+            providerBadge.className = 'provider-badge';
+            providerBadge.textContent = metadata.provider;
+            metadataDiv.appendChild(providerBadge);
+          }
+          
+          messageDiv.appendChild(metadataDiv);
+        }
+        
+        chatMessages.appendChild(messageDiv);
+        
+        // Скролл к последнему сообщению
+        scrollToBottom();
+      }
+      
+      // Функция для скролла к последнему сообщению
+      function scrollToBottom() {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+      
+      // Обработка загрузки изображений
+      fileButton.addEventListener('click', () => {
+        fileInput.click();
+      });
+      
+      fileInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        // Проверяем размер файла (не более 5 МБ)
+        if (file.size > 5 * 1024 * 1024) {
+          alert('Размер файла не должен превышать 5 МБ');
+          return;
+        }
+        
+        // Показываем превью
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          previewImage.src = event.target.result;
+          imagePreview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+        
+        // Загружаем изображение на сервер
+        try {
+          const formData = new FormData();
+          formData.append('image', file);
+          
+          const response = await fetch('/api/upload/file', {
+            method: 'POST',
+            body: formData
+          });
+          
+          if (!response.ok) {
+            throw new Error('Ошибка при загрузке изображения');
+          }
+          
+          const data = await response.json();
+          
+          if (data.success) {
+            uploadedImageUrl = data.imageUrl;
+          } else {
+            throw new Error(data.error || 'Ошибка при загрузке');
+          }
+        } catch (error) {
+          console.error('Ошибка загрузки изображения:', error);
+          alert('Не удалось загрузить изображение. Пожалуйста, попробуйте еще раз.');
+          resetImageUpload();
+        }
+      });
+      
+      // Функция сброса загруженного изображения
+      function resetImageUpload() {
+        uploadedImageUrl = null;
+        imagePreview.style.display = 'none';
+        previewImage.src = '';
+        fileInput.value = '';
+      }
+      
+      // Обработчик удаления изображения
+      removeImageButton.addEventListener('click', resetImageUpload);
+      
+      // Обработчик нажатия кнопки отправки
+      sendButton.addEventListener('click', sendMessage);
+      
+      // Обработчик нажатия Enter в поле ввода
+      chatInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          sendMessage();
+        }
+      });
+      
+      // Автоматическая подстройка высоты текстового поля
+      chatInput.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight) + 'px';
+      });
+    });
+  </script>
+</body>
+</html>
