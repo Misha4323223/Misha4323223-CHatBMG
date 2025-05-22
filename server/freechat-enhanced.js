@@ -12,13 +12,14 @@ const g4fProvider = require('./g4f-provider');
 const pythonProviderRoutes = require('./python_provider_routes');
 
 // Настройки API для ChatFree
-const CHATFREE_API_URL = 'https://chatfree.top/api/chat';
+const CHATFREE_API_URL = 'https://chatfree.online/api/chat';
 const BACKUP_URLS = [
-  'https://chatfree.org/api/chat/completions',
-  'https://chat-free.top/api/chat',
-  'https://chat-app-free.org/api/chat/completions',
-  'https://free-api.cgs.dev/api/completions',
-  'https://api.chatfree.chat/api/chat'
+  'https://chat-gpt.org/api/text-completion',
+  'https://ai-chatbot.online/api/chat',
+  'https://chat-gpt-ai.org/api/text-generation',
+  'https://chat-gpt.co/api/chat/send',
+  'https://chatgpt4online.org/api/chat',
+  'https://gpt4online.net/api/chat'
 ];
 
 // Получение случайного пользовательского агента
@@ -38,6 +39,35 @@ function delay(ms) {
 }
 
 /**
+ * Рекурсивный поиск текстового ответа в объекте неизвестной структуры
+ * @param {Object} obj - Объект для поиска
+ * @returns {string|null} - Найденный текстовый ответ или null
+ */
+function findResponseInObject(obj) {
+  // Массив полей, которые могут содержать ответ
+  const possibleFields = ['text', 'content', 'message', 'response', 
+                          'answer', 'reply', 'generated_text', 'completion',
+                          'output', 'result', 'generated_content'];
+  
+  // Перебираем возможные поля
+  for (const field of possibleFields) {
+    if (obj[field] && typeof obj[field] === 'string' && obj[field].length > 20) {
+      return obj[field];
+    }
+  }
+  
+  // Если это объект, рекурсивно ищем в его полях
+  for (const key in obj) {
+    if (obj[key] && typeof obj[key] === 'object') {
+      const found = findResponseInObject(obj[key]);
+      if (found) return found;
+    }
+  }
+  
+  return null;
+}
+
+/**
  * Получение ответа от ChatFree с улучшенной обработкой ошибок
  * @param {string} message - Текст запроса пользователя
  * @param {Object} options - Дополнительные опции
@@ -48,16 +78,18 @@ async function getChatFreeEnhancedResponse(message, options = {}) {
   const systemPrompt = options.systemPrompt || 'Вы полезный ассистент. Отвечайте точно и по существу.';
   const temperature = options.temperature || 0.7;
   
-  // Создаем запрос в формате ChatFree (для основного URL)
-  const requestBodyMain = {
+  // Создаем разные форматы запросов для поддержки различных API
+  
+  // 1. Формат ChatFree
+  const requestBodyChatFree = {
     message: message,
     system_prompt: systemPrompt,
     temperature: temperature,
     include_source: false
   };
   
-  // Создаем запрос для резервных URL (в формате OpenAI API)
-  const requestBodyBackup = {
+  // 2. Формат OpenAI API
+  const requestBodyOpenAI = {
     model: model,
     messages: [
       { role: "system", content: systemPrompt },
@@ -68,6 +100,19 @@ async function getChatFreeEnhancedResponse(message, options = {}) {
     stream: false
   };
   
+  // 3. Формат Text Completion
+  const requestBodyTextCompletion = {
+    prompt: `${systemPrompt}\n\nUser: ${message}\nAssistant:`,
+    temperature: temperature,
+    max_tokens: 2000
+  };
+  
+  // 4. Простой формат
+  const requestBodySimple = {
+    message: message,
+    prompt: systemPrompt
+  };
+  
   // 1. Пробуем использовать основной ChatFree API
   try {
     console.log(`FreeChat Enhanced: Отправка запроса к основному API...`);
@@ -76,9 +121,12 @@ async function getChatFreeEnhancedResponse(message, options = {}) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'User-Agent': getRandomUserAgent()
+        'User-Agent': getRandomUserAgent(),
+        'Accept': 'application/json',
+        'Origin': 'https://chatfree.online',
+        'Referer': 'https://chatfree.online/'
       },
-      body: JSON.stringify(requestBodyMain),
+      body: JSON.stringify(requestBodyChatFree),
       timeout: 15000 // 15 секунд таймаут
     });
     
@@ -119,17 +167,34 @@ async function getChatFreeEnhancedResponse(message, options = {}) {
     try {
       console.log(`FreeChat Enhanced: Отправка запроса к резервному URL ${backupUrl}...`);
       
-      // Используем разные форматы запросов в зависимости от URL
-      const isMainFormat = backupUrl.includes('chatfree.top') || backupUrl.includes('chat-free.top') || backupUrl.includes('api.chatfree.chat');
-      const requestBody = isMainFormat ? requestBodyMain : requestBodyBackup;
+      // Определяем, какой формат запроса использовать для конкретного URL
+      let requestBody;
+      let headers = {
+        'Content-Type': 'application/json',
+        'User-Agent': getRandomUserAgent(),
+        'Accept': 'application/json'
+      };
+      
+      if (backupUrl.includes('chat-gpt.org') || backupUrl.includes('chat-gpt-ai.org')) {
+        // Формат text-completion
+        requestBody = requestBodyTextCompletion;
+        // Добавим рефереры для сайтов
+        headers['Origin'] = backupUrl.includes('chat-gpt.org') ? 'https://chat-gpt.org' : 'https://chat-gpt-ai.org';
+        headers['Referer'] = backupUrl.includes('chat-gpt.org') ? 'https://chat-gpt.org/' : 'https://chat-gpt-ai.org/';
+      } else if (backupUrl.includes('chatgpt4online') || backupUrl.includes('gpt4online')) {
+        // OpenAI формат
+        requestBody = requestBodyOpenAI;
+        // Добавим рефереры для сайтов
+        headers['Origin'] = backupUrl.includes('chatgpt4online') ? 'https://chatgpt4online.org' : 'https://gpt4online.net';
+        headers['Referer'] = backupUrl.includes('chatgpt4online') ? 'https://chatgpt4online.org/' : 'https://gpt4online.net/';
+      } else {
+        // Для остальных используем простой формат
+        requestBody = requestBodySimple;
+      }
       
       const response = await fetch(backupUrl, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'User-Agent': getRandomUserAgent(),
-          'Accept': 'application/json'
-        },
+        headers: headers,
         body: JSON.stringify(requestBody),
         timeout: 15000 // 15 секунд таймаут
       });
@@ -138,6 +203,7 @@ async function getChatFreeEnhancedResponse(message, options = {}) {
         const data = await response.json();
         
         console.log(`✅ Успешно получен ответ от резервного URL ${backupUrl}`);
+        console.log(`Формат ответа для отладки:`, JSON.stringify(data).slice(0, 100));
         
         // Обрабатываем разные форматы ответов
         if (data.choices && data.choices.length && data.choices[0].message) {
@@ -146,8 +212,8 @@ async function getChatFreeEnhancedResponse(message, options = {}) {
             success: true,
             response: data.choices[0].message.content,
             provider: 'ChatFree',
-            model: data.model || "ChatFree Backup",
-            backupInfo: "🔵 ChatFree (резервный сервер) отвечает"
+            model: data.model || "ChatFree Advanced",
+            backupInfo: "🔵 ChatFree отвечает через GPT-подобную модель"
           };
         } else if (data.message || data.response) {
           // Формат ChatFree
@@ -155,8 +221,8 @@ async function getChatFreeEnhancedResponse(message, options = {}) {
             success: true,
             response: data.message || data.response,
             provider: 'ChatFree',
-            model: data.model || "ChatFree Backup",
-            backupInfo: "🔵 ChatFree (резервный сервер) отвечает"
+            model: data.model || "ChatFree API",
+            backupInfo: "🔵 ChatFree отвечает"
           };
         } else if (data.content) {
           // Еще один возможный формат
@@ -164,9 +230,49 @@ async function getChatFreeEnhancedResponse(message, options = {}) {
             success: true, 
             response: data.content,
             provider: 'ChatFree',
-            model: data.model || "ChatFree Backup",
-            backupInfo: "🔵 ChatFree (резервный сервер) отвечает"
+            model: data.model || "ChatFree API",
+            backupInfo: "🔵 ChatFree отвечает"
           };
+        } else if (data.text || data.generated_text || data.completion) {
+          // Формат text-completion
+          const responseText = data.text || data.generated_text || data.completion;
+          return {
+            success: true,
+            response: responseText,
+            provider: 'ChatFree',
+            model: data.model || "ChatFree Text",
+            backupInfo: "🔵 ChatFree отвечает через резервную модель"
+          };
+        } else if (data.answer || data.reply) {
+          // Еще один альтернативный формат
+          return {
+            success: true, 
+            response: data.answer || data.reply,
+            provider: 'ChatFree',
+            model: "ChatFree AI",
+            backupInfo: "🔵 ChatFree отвечает через резервную систему"
+          };
+        } else if (typeof data === 'string') {
+          // Просто текстовый ответ
+          return {
+            success: true,
+            response: data,
+            provider: 'ChatFree',
+            model: "ChatFree Text",
+            backupInfo: "🔵 ChatFree отвечает"
+          };
+        } else {
+          // Неизвестный формат, пробуем найти текст в ответе
+          const possibleResponse = findResponseInObject(data);
+          if (possibleResponse) {
+            return {
+              success: true,
+              response: possibleResponse,
+              provider: 'ChatFree',
+              model: "ChatFree AI",
+              backupInfo: "🔵 ChatFree отвечает через альтернативную модель"
+            };
+          }
         }
       }
       
