@@ -1,53 +1,58 @@
 /**
  * Модуль для загрузки и хранения изображений
- * Поддерживает загрузку из URL, base64 и файлов
+ * Поддерживает загрузку из файлов, URL и base64
  */
 const express = require('express');
 const router = express.Router();
+const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const fetch = require('node-fetch');
-const multer = require('multer');
-const crypto = require('crypto');
 
-// Настраиваем хранилище для загруженных файлов
-const storage = multer.diskStorage({
-  destination: function(req, file, cb) {
-    const uploadDir = path.join(process.cwd(), 'uploads');
-    
-    // Создаем директорию, если её нет
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
+// Создаем каталоги для хранения загруженных изображений
+const ensureDirectories = () => {
+  const dirs = [
+    path.join(process.cwd(), 'uploads'),
+    path.join(process.cwd(), 'uploads', 'images')
+  ];
+  
+  dirs.forEach(dir => {
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
     }
-    
-    cb(null, uploadDir);
+  });
+};
+
+// Вызываем функцию для создания каталогов при инициализации
+ensureDirectories();
+
+// Настройка multer для загрузки файлов
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, path.join(process.cwd(), 'uploads', 'images'));
   },
-  filename: function(req, file, cb) {
-    // Создаем уникальное имя файла
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    const extension = path.extname(file.originalname);
-    cb(null, 'image-' + uniqueSuffix + extension);
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const ext = path.extname(file.originalname);
+    cb(null, uniqueSuffix + ext);
   }
 });
 
-// Настраиваем multer для загрузки файлов
-const upload = multer({ 
-  storage: storage,
-  limits: {
-    fileSize: 5 * 1024 * 1024, // Ограничение размера файла (5 МБ)
-  },
-  fileFilter: function(req, file, cb) {
-    // Проверяем тип файла
-    const allowedTypes = /jpeg|jpg|png|gif|webp/;
-    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = allowedTypes.test(file.mimetype);
-    
-    if (extname && mimetype) {
-      return cb(null, true);
-    } else {
-      cb(new Error('Поддерживаются только изображения форматов JPEG, PNG, GIF и WebP'));
-    }
+// Фильтр для проверки типа файла
+const fileFilter = (req, file, cb) => {
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+  if (allowedTypes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error('Неподдерживаемый формат изображения. Поддерживаются только JPEG, PNG, GIF и WebP'), false);
   }
+};
+
+// Инициализация загрузчика файлов
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // Максимальный размер файла: 5MB
+  fileFilter: fileFilter
 });
 
 /**
@@ -56,35 +61,33 @@ const upload = multer({
  * @returns {Promise<string>} - Путь к сохраненному файлу
  */
 async function saveBase64Image(base64String) {
-  try {
-    // Удаляем префикс data:image/...;base64,
-    let data = base64String;
-    if (base64String.includes('base64,')) {
-      data = base64String.split('base64,')[1];
-    }
-    
-    // Декодируем base64 строку
-    const buffer = Buffer.from(data, 'base64');
-    
-    // Создаем уникальное имя файла
-    const filename = 'image-' + Date.now() + '-' + crypto.randomBytes(8).toString('hex') + '.jpg';
-    
-    // Путь для сохранения
-    const uploadDir = path.join(process.cwd(), 'uploads');
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    
-    const filepath = path.join(uploadDir, filename);
-    
-    // Записываем файл
-    await fs.promises.writeFile(filepath, buffer);
-    
-    return '/uploads/' + filename;
-  } catch (error) {
-    console.error('Ошибка при сохранении base64 изображения:', error);
-    throw error;
+  ensureDirectories();
+  
+  // Получаем данные и тип из строки base64
+  const matches = base64String.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+  
+  if (!matches || matches.length !== 3) {
+    throw new Error('Некорректный формат base64 изображения');
   }
+  
+  const mimeType = matches[1];
+  const data = Buffer.from(matches[2], 'base64');
+  
+  // Определяем расширение файла
+  let extension = '.png';
+  if (mimeType === 'image/jpeg') extension = '.jpg';
+  if (mimeType === 'image/gif') extension = '.gif';
+  if (mimeType === 'image/webp') extension = '.webp';
+  
+  // Создаем имя файла и путь для сохранения
+  const fileName = `${Date.now()}-${Math.round(Math.random() * 1E9)}${extension}`;
+  const filePath = path.join(process.cwd(), 'uploads', 'images', fileName);
+  
+  // Записываем файл
+  await fs.promises.writeFile(filePath, data);
+  
+  // Возвращаем URL к файлу
+  return `/uploads/images/${fileName}`;
 }
 
 /**
@@ -93,67 +96,62 @@ async function saveBase64Image(base64String) {
  * @returns {Promise<string>} - Путь к сохраненному файлу
  */
 async function downloadAndSaveImage(url) {
+  ensureDirectories();
+  
   try {
-    // Проверяем, если URL начинается с /uploads, значит изображение уже загружено
-    if (url.startsWith('/uploads/')) {
-      return url;
-    }
-    
+    // Получаем изображение
     const response = await fetch(url);
     
     if (!response.ok) {
-      throw new Error(`Не удалось загрузить изображение, статус: ${response.status}`);
+      throw new Error(`Не удалось скачать изображение: ${response.statusText}`);
     }
     
-    // Получаем буфер изображения
+    // Определяем тип файла и расширение
+    const contentType = response.headers.get('content-type');
+    let extension = '.png';
+    
+    if (contentType) {
+      if (contentType.includes('jpeg')) extension = '.jpg';
+      if (contentType.includes('gif')) extension = '.gif';
+      if (contentType.includes('webp')) extension = '.webp';
+    }
+    
+    // Создаем имя файла и путь для сохранения
+    const fileName = `${Date.now()}-${Math.round(Math.random() * 1E9)}${extension}`;
+    const filePath = path.join(process.cwd(), 'uploads', 'images', fileName);
+    
+    // Получаем данные и записываем в файл
     const buffer = await response.buffer();
+    await fs.promises.writeFile(filePath, buffer);
     
-    // Создаем уникальное имя файла
-    const filename = 'image-' + Date.now() + '-' + crypto.randomBytes(8).toString('hex') + '.jpg';
-    
-    // Путь для сохранения
-    const uploadDir = path.join(process.cwd(), 'uploads');
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    
-    const filepath = path.join(uploadDir, filename);
-    
-    // Записываем файл
-    await fs.promises.writeFile(filepath, buffer);
-    
-    return '/uploads/' + filename;
+    // Возвращаем URL к файлу
+    return `/uploads/images/${fileName}`;
   } catch (error) {
-    console.error('Ошибка при загрузке изображения по URL:', error);
+    console.error('Ошибка при скачивании изображения:', error);
     throw error;
   }
 }
 
-// Маршрут для загрузки файла
-router.post('/file', upload.single('image'), async (req, res) => {
+// Маршрут для загрузки файла изображения
+router.post('/file', upload.single('image'), (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({
-        success: false,
-        error: 'Файл не был загружен'
-      });
+      return res.status(400).json({ success: false, error: 'Изображение не было загружено' });
     }
     
-    // Возвращаем путь к загруженному файлу
-    const filePath = '/uploads/' + req.file.filename;
+    // Формируем URL к сохраненному изображению
+    const imageUrl = `/uploads/images/${req.file.filename}`;
     
-    res.json({
+    return res.json({
       success: true,
-      imageUrl: filePath,
-      originalName: req.file.originalname,
-      size: req.file.size
+      imageUrl,
+      message: 'Изображение успешно загружено'
     });
   } catch (error) {
     console.error('Ошибка при загрузке файла:', error);
-    
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      error: error.message || 'Ошибка при загрузке файла'
+      error: error.message || 'Ошибка при загрузке изображения'
     });
   }
 });
@@ -161,26 +159,23 @@ router.post('/file', upload.single('image'), async (req, res) => {
 // Маршрут для загрузки изображения из base64
 router.post('/base64', async (req, res) => {
   try {
-    const { image } = req.body;
+    const { base64Image } = req.body;
     
-    if (!image) {
-      return res.status(400).json({
-        success: false,
-        error: 'Изображение не предоставлено'
-      });
+    if (!base64Image) {
+      return res.status(400).json({ success: false, error: 'Base64 изображение не предоставлено' });
     }
     
     // Сохраняем изображение
-    const filePath = await saveBase64Image(image);
+    const imageUrl = await saveBase64Image(base64Image);
     
-    res.json({
+    return res.json({
       success: true,
-      imageUrl: filePath
+      imageUrl,
+      message: 'Изображение успешно загружено'
     });
   } catch (error) {
     console.error('Ошибка при загрузке base64 изображения:', error);
-    
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: error.message || 'Ошибка при загрузке изображения'
     });
@@ -190,27 +185,23 @@ router.post('/base64', async (req, res) => {
 // Маршрут для загрузки изображения по URL
 router.post('/url', async (req, res) => {
   try {
-    const { url } = req.body;
+    const { imageUrl } = req.body;
     
-    if (!url) {
-      return res.status(400).json({
-        success: false,
-        error: 'URL изображения не предоставлен'
-      });
+    if (!imageUrl) {
+      return res.status(400).json({ success: false, error: 'URL изображения не предоставлен' });
     }
     
-    // Загружаем и сохраняем изображение
-    const filePath = await downloadAndSaveImage(url);
+    // Скачиваем и сохраняем изображение
+    const savedImageUrl = await downloadAndSaveImage(imageUrl);
     
-    res.json({
+    return res.json({
       success: true,
-      imageUrl: filePath,
-      sourceUrl: url
+      imageUrl: savedImageUrl,
+      message: 'Изображение успешно загружено'
     });
   } catch (error) {
     console.error('Ошибка при загрузке изображения по URL:', error);
-    
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: error.message || 'Ошибка при загрузке изображения'
     });
@@ -218,5 +209,3 @@ router.post('/url', async (req, res) => {
 });
 
 module.exports = router;
-module.exports.saveBase64Image = saveBase64Image;
-module.exports.downloadAndSaveImage = downloadAndSaveImage;
