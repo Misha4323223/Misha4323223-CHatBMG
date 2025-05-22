@@ -212,32 +212,32 @@ const SmartChat: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col w-full max-w-4xl mx-auto h-[300px] sm:h-[400px] md:h-[500px] lg:h-[600px] xl:h-[700px] bg-gray-900 text-white rounded-lg shadow-lg border border-gray-700 overflow-hidden">
+    <div className="flex flex-col w-full max-w-4xl mx-auto h-[400px] bg-gray-900 text-white rounded-lg shadow-lg border border-gray-700 overflow-hidden">
       {/* Убрали заголовок для большей компактности */}
       
-      <ScrollArea className="flex-grow p-2 sm:p-3 md:p-4">
-        <div className="space-y-2 sm:space-y-3 md:space-y-4">
+      <ScrollArea className="flex-grow p-3">
+        <div className="space-y-3">
           {messages.map((message) => (
             <div
               key={message.id}
               className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
             >
-              <div className={`flex gap-2 sm:gap-3 max-w-[80%] ${message.sender === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                <Avatar className={`h-6 w-6 sm:h-8 sm:w-8 md:h-10 md:w-10 ${message.sender === 'user' ? 'bg-blue-600' : 'bg-gray-700'}`}>
-                  <AvatarFallback className="text-xs sm:text-sm text-white">
+              <div className={`flex gap-3 max-w-[80%] ${message.sender === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+                <Avatar className={`h-8 w-8 ${message.sender === 'user' ? 'bg-blue-600' : 'bg-gray-700'}`}>
+                  <AvatarFallback className="text-sm text-white">
                     {message.sender === 'user' ? 'U' : 'AI'}
                   </AvatarFallback>
                 </Avatar>
                 
                 <div className="flex flex-col">
-                  <div className={`rounded-lg p-2 sm:p-3 md:p-4 text-xs sm:text-sm md:text-base ${
+                  <div className={`rounded-lg p-3 text-sm ${
                     message.loading ? 'bg-gray-700 text-gray-300' :
                     message.error ? 'bg-red-900/50 text-red-300' :
                     message.sender === 'user' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-100'
                   }`}>
                     {message.loading ? (
                       <div className="flex items-center space-x-2">
-                        <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
+                        <Loader2 className="h-4 w-4 animate-spin" />
                         <span>AI думает...</span>
                       </div>
                     ) : (
@@ -253,14 +253,14 @@ const SmartChat: React.FC = () => {
                   </div>
                   
                   {message.sender === 'ai' && !message.loading && !message.error && message.provider && (
-                    <div className="flex flex-wrap gap-1 mt-1 sm:mt-2">
-                      <Badge variant="secondary" className="text-xs sm:text-sm px-2 py-1 bg-gray-700 text-gray-300 border-gray-600">
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      <Badge variant="secondary" className="text-xs px-2 py-1 bg-gray-700 text-gray-300 border-gray-600">
                         {message.provider}
                       </Badge>
                     </div>
                   )}
                   
-                  <div className="text-xs sm:text-sm text-gray-400 mt-1">
+                  <div className="text-xs text-gray-400 mt-1">
                     {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </div>
                 </div>
@@ -288,16 +288,16 @@ const SmartChat: React.FC = () => {
         </div>
       )}
       
-      <div className="p-2 sm:p-3 md:p-4 border-t border-gray-700">
-        <div className="flex gap-2 sm:gap-3">
+      <div className="p-3 border-t border-gray-700">
+        <div className="flex gap-2">
           <Button
             variant="outline"
             size="sm"
             onClick={handleImageButtonClick}
             disabled={isLoading}
-            className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 p-0 border-gray-600 bg-gray-800 text-gray-300 hover:bg-gray-700"
+            className="h-10 w-10 p-0 border-gray-600 bg-gray-800 text-gray-300 hover:bg-gray-700"
           >
-            <Image className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6" />
+            <Image className="h-5 w-5" />
           </Button>
           <input
             ref={fileInputRef}
@@ -312,18 +312,18 @@ const SmartChat: React.FC = () => {
             onKeyDown={handleKeyDown}
             placeholder="Введите сообщение..."
             disabled={isLoading}
-            className="flex-grow h-8 sm:h-10 md:h-12 text-sm sm:text-base bg-gray-800 border-gray-600 text-white placeholder-gray-400"
+            className="flex-grow h-10 text-sm bg-gray-800 border-gray-600 text-white placeholder-gray-400"
           />
           <Button
             onClick={handleSend}
             disabled={isLoading || (!inputText.trim() && !imageUrl)}
             size="sm"
-            className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 p-0 bg-blue-600 hover:bg-blue-700 text-white"
+            className="h-10 w-10 p-0 bg-blue-600 hover:bg-blue-700 text-white"
           >
             {isLoading ? (
-              <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
+              <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              <Send className="h-4 w-4 sm:h-5 sm:w-5" />
+              <Send className="h-4 w-4" />
             )}
           </Button>
         </div>
