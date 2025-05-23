@@ -1608,24 +1608,24 @@
       </nav>
     </div>
     
-    <div class="main-layout">
-      <!-- Контейнер для AI чата -->
-      <div class="tab-content" id="chat-content" style="display: flex;">
+    <!-- Контейнер для AI чата (по умолчанию активен) -->
+    <div class="tab-content" id="chat-content" style="display: block;">
+      <div class="main-layout">
         <!-- Боковая панель с историей чатов -->
         <div class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-          <h3 class="sidebar-title">История чатов</h3>
-          <button class="new-chat-btn" onclick="createNewChat()">+ Новый</button>
-        </div>
-        <div class="chat-sessions-list">
-          <div class="chat-sessions" id="chat-sessions">
-            <!-- Сессии будут загружены динамически -->
+          <div class="sidebar-header">
+            <h3 class="sidebar-title">История чатов</h3>
+            <button class="new-chat-btn" onclick="createNewChat()">+ Новый</button>
+          </div>
+          <div class="chat-sessions-list">
+            <div class="chat-sessions" id="chat-sessions">
+              <!-- Сессии будут загружены динамически -->
+            </div>
           </div>
         </div>
-      </div>
-      
-      <!-- Основная область чата -->
-      <div class="chat-container">
+        
+        <!-- Основная область чата -->
+        <div class="chat-container">
       <div class="chat-header">
         <h2 class="chat-title">BOOOMERANGS AI</h2>
       </div>
@@ -1656,11 +1656,12 @@
             <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
           </svg>
         </button>
+        </div>
       </div>
-      </div>
+    </div>
       
-      <!-- Контейнер для генератора изображений -->
-      <div class="tab-content" id="generator-content" style="display: none;">
+    <!-- Контейнер для генератора изображений -->
+    <div class="tab-content" id="generator-content" style="display: none;">
         <div class="generator-container">
           <div class="generator-header">
             <h2>🎨 Генератор изображений</h2>
