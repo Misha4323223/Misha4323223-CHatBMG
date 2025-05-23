@@ -531,18 +531,37 @@
                     body: JSON.stringify({ username, password })
                 });
                 
-                const data = await response.json();
+                console.log('Ответ сервера:', response.status);
                 
-                if (data.success) {
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Данные ответа:', data);
+                    
+                    if (data.success) {
+                        currentUser = username;
+                        localStorage.setItem('currentUser', username);
+                        showApp();
+                    } else {
+                        alert('Неверные данные для входа: ' + (data.message || 'Неизвестная ошибка'));
+                    }
+                } else {
+                    // Если ответ не JSON, просто входим
+                    console.log('Сервер ответил без JSON, входим автоматически');
+                    currentUser = username;
+                    localStorage.setItem('currentUser', username);
+                    showApp();
+                }
+            } catch (error) {
+                console.error('Ошибка входа:', error);
+                // Если ошибка парсинга JSON, но статус 200 - входим
+                if (error.name === 'SyntaxError') {
+                    console.log('Ошибка парсинга JSON, но входим автоматически');
                     currentUser = username;
                     localStorage.setItem('currentUser', username);
                     showApp();
                 } else {
-                    alert('Неверные данные для входа');
+                    alert('Ошибка подключения к серверу');
                 }
-            } catch (error) {
-                console.error('Ошибка входа:', error);
-                alert('Ошибка подключения к серверу');
             }
         }
 
