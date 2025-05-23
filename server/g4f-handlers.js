@@ -134,16 +134,20 @@ router.post('/chat', async (req, res) => {
         console.log('📞 Вызываем FreeChat Enhanced...');
         const freeChatModule = require('./freechat-enhanced');
         const freeChatResponse = await freeChatModule.getChatFreeEnhancedResponse(message);
+        console.log('FreeChat Enhanced результат:', freeChatResponse);
+        
         if (freeChatResponse && freeChatResponse.success && freeChatResponse.response) {
           console.log('✅ FreeChat Enhanced ответил успешно!');
+          console.log('Отправляем ответ в браузер:', freeChatResponse.response.substring(0, 100));
+          
           return res.json({
             response: freeChatResponse.response,
             provider: 'FreeChat-Enhanced',
-            model: freeChatResponse.model || 'freechat',
+            model: freeChatResponse.model || 'Qwen_Qwen_2_5_Max',
             cached: false
           });
         }
-        console.log('⚠️ FreeChat Enhanced не вернул успешный ответ');
+        console.log('⚠️ FreeChat Enhanced не вернул успешный ответ, данные:', freeChatResponse);
       } catch (freeChatError) {
         console.log(`⚠️ FreeChat Enhanced ошибка: ${freeChatError.message}`);
       }
