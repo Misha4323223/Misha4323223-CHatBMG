@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BOOOMERANGS Smart Chat - Современный Интерфейс</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0a0a0a;
+            color: #ffffff;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Главный контейнер */
+        .app-container {
+            display: flex;
+            height: 100vh;
+            background: #0a0a0a;
+        }
+
+        /* Боковая панель */
+        .sidebar {
+            width: 300px;
+            background: #1a1a1a;
+            border-right: 1px solid #2a2a2a;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease;
+            position: relative;
+            z-index: 100;
+        }
+
+        .sidebar.hidden {
+            transform: translateX(-100%);
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid #2a2a2a;
+        }
+
+        .new-chat-button {
+            width: 100%;
+            padding: 16px;
+            background: #dc2626;
+            border: none;
+            border-radius: 12px;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.2s;
+        }
+
+        .new-chat-button:hover {
+            background: #b91c1c;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+        }
+
+        .chat-history {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+        }
+
+        .chat-item {
+            padding: 14px 16px;
+            margin: 8px 0;
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 12px;
+            color: #d1d5db;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .chat-item:hover {
+            background: #2a2a2a;
+            border-color: #3f3f3f;
+            transform: translateX(4px);
+        }
+
+        .chat-item.active {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            color: white;
+            border-color: #dc2626;
+        }
+
+        /* Кнопка переключения боковой панели */
+        .sidebar-toggle {
+            position: absolute;
+            top: 20px;
+            right: -20px;
+            width: 40px;
+            height: 40px;
+            background: #dc2626;
+            border: none;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            z-index: 1000;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+        }
+
+        .sidebar-toggle:hover {
+            background: #b91c1c;
+            transform: scale(1.1);
+        }
+
+        /* Основная область чата */
+        .main-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #0a0a0a;
+            position: relative;
+        }
+
+        /* Область сообщений */
+        .messages-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            max-width: 900px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Приветственный экран */
+        .welcome-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+        }
+
+        .welcome-logo {
+            font-size: 6rem;
+            margin-bottom: 2rem;
+            background: linear-gradient(135deg, #dc2626, #f59e0b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .welcome-title {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            letter-spacing: -0.025em;
+        }
+
+        .welcome-subtitle {
+            font-size: 1.3rem;
+            color: #9ca3af;
+            max-width: 600px;
+            line-height: 1.6;
+        }
+
+        /* Поле ввода */
+        .input-area {
+            padding: 24px;
+            background: linear-gradient(to top, #0a0a0a, transparent);
+        }
+
+        .input-container {
+            max-width: 900px;
+            margin: 0 auto;
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+            background: #1f1f1f;
+            border: 2px solid #2a2a2a;
+            border-radius: 20px;
+            padding: 16px;
+            transition: all 0.2s;
+        }
+
+        .input-container:focus-within {
+            border-color: #dc2626;
+            box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.1);
+        }
+
+        .message-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #ffffff;
+            font-size: 16px;
+            outline: none;
+            resize: none;
+            max-height: 120px;
+            min-height: 24px;
+            line-height: 1.5;
+            font-family: inherit;
+        }
+
+        .message-input::placeholder {
+            color: #6b7280;
+        }
+
+        .send-button {
+            width: 44px;
+            height: 44px;
+            background: #dc2626;
+            border: none;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            transition: all 0.2s;
+        }
+
+        .send-button:hover {
+            background: #b91c1c;
+            transform: scale(1.05);
+        }
+
+        .send-button:disabled {
+            background: #374151;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Сообщения */
+        .message {
+            margin-bottom: 24px;
+            max-width: 80%;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            align-self: flex-end;
+            background: #dc2626;
+            color: white;
+            padding: 16px 20px;
+            border-radius: 24px 24px 4px 24px;
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
+        }
+
+        .message.ai {
+            align-self: flex-start;
+            background: #1f2937;
+            color: #f9fafb;
+            padding: 16px 20px;
+            border-radius: 24px 24px 24px 4px;
+            border: 1px solid #374151;
+        }
+
+        .message-content {
+            line-height: 1.6;
+            font-size: 15px;
+        }
+
+        /* Адаптивность для мобильных устройств */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                height: 100%;
+                z-index: 1000;
+                box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
+            }
+            
+            .app-container {
+                overflow: hidden;
+            }
+            
+            .welcome-logo {
+                font-size: 4rem;
+            }
+            
+            .welcome-title {
+                font-size: 2rem;
+            }
+            
+            .welcome-subtitle {
+                font-size: 1.1rem;
+            }
+        }
+
+        /* Скроллбар */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1a1a1a;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #4a4a4a;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6a6a6a;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Боковая панель -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <button class="new-chat-button" onclick="startNewChat()">
+                    <span>➕</span>
+                    Новый чат
+                </button>
+            </div>
+            
+            <div class="chat-history" id="chatHistory">
+                <!-- История чатов будет загружена здесь -->
+            </div>
+            
+            <!-- Кнопка переключения -->
+            <button class="sidebar-toggle" onclick="toggleSidebar()" id="sidebarToggle">
+                <span>◀</span>
+            </button>
+        </div>
+        
+        <!-- Основная область -->
+        <div class="main-area">
+            <!-- Область сообщений -->
+            <div class="messages-area" id="messagesArea">
+                <div class="welcome-screen">
+                    <div class="welcome-logo">🪃</div>
+                    <h1 class="welcome-title">BOOOMERANGS AI</h1>
+                    <p class="welcome-subtitle">Современный AI чат для команды. Как дела? Чем могу помочь?</p>
+                </div>
+            </div>
+            
+            <!-- Поле ввода -->
+            <div class="input-area">
+                <div class="input-container">
+                    <textarea 
+                        class="message-input" 
+                        id="messageInput" 
+                        placeholder="Напишите сообщение..." 
+                        rows="1"
+                    ></textarea>
+                    <button class="send-button" id="sendButton" onclick="sendMessage()">
+                        <span>➤</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Переменные для состояния
+        let currentUser = 'anna';
+        let currentSessionId = null;
+        let isSidebarVisible = true;
+
+        // Инициализация при загрузке
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🪃 BOOOMERANGS Modern Chat инициализирован');
+            loadChatHistory();
+            setupMessageInput();
+        });
+
+        // Переключение боковой панели
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const toggle = document.getElementById('sidebarToggle');
+            
+            if (isSidebarVisible) {
+                sidebar.classList.add('hidden');
+                toggle.innerHTML = '<span>▶</span>';
+            } else {
+                sidebar.classList.remove('hidden');
+                toggle.innerHTML = '<span>◀</span>';
+            }
+            
+            isSidebarVisible = !isSidebarVisible;
+        }
+
+        // Загрузка истории чатов
+        async function loadChatHistory() {
+            try {
+                const response = await fetch(`/api/chat/sessions?username=${currentUser}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayChatHistory(data.sessions);
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки истории:', error);
+            }
+        }
+
+        // Отображение истории чатов
+        function displayChatHistory(sessions) {
+            const historyContainer = document.getElementById('chatHistory');
+            historyContainer.innerHTML = '';
+            
+            sessions.forEach(session => {
+                const chatItem = document.createElement('div');
+                chatItem.className = 'chat-item';
+                chatItem.onclick = () => selectChat(session.id);
+                
+                chatItem.innerHTML = `
+                    <div style="font-weight: 500; margin-bottom: 4px;">${session.title}</div>
+                    <div style="font-size: 12px; color: #9ca3af;">${new Date(session.created_at).toLocaleDateString()}</div>
+                `;
+                
+                historyContainer.appendChild(chatItem);
+            });
+        }
+
+        // Выбор чата
+        async function selectChat(sessionId) {
+            currentSessionId = sessionId;
+            
+            // Убираем активный класс со всех элементов
+            document.querySelectorAll('.chat-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Добавляем активный класс к выбранному
+            event.target.closest('.chat-item').classList.add('active');
+            
+            // Загружаем сообщения
+            await loadMessages(sessionId);
+        }
+
+        // Загрузка сообщений
+        async function loadMessages(sessionId) {
+            try {
+                const response = await fetch(`/api/chat/messages/${sessionId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayMessages(data.messages);
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки сообщений:', error);
+            }
+        }
+
+        // Отображение сообщений
+        function displayMessages(messages) {
+            const messagesArea = document.getElementById('messagesArea');
+            messagesArea.innerHTML = '';
+            
+            messages.forEach(msg => {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${msg.sender}`;
+                messageDiv.innerHTML = `<div class="message-content">${msg.content}</div>`;
+                messagesArea.appendChild(messageDiv);
+            });
+            
+            messagesArea.scrollTop = messagesArea.scrollHeight;
+        }
+
+        // Создание нового чата
+        async function startNewChat() {
+            try {
+                const response = await fetch('/api/chat/sessions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: currentUser,
+                        title: 'Новый чат'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentSessionId = data.sessionId;
+                    loadChatHistory();
+                    
+                    // Очищаем область сообщений
+                    document.getElementById('messagesArea').innerHTML = `
+                        <div class="welcome-screen">
+                            <div class="welcome-logo">🪃</div>
+                            <h1 class="welcome-title">Новый чат</h1>
+                            <p class="welcome-subtitle">Готов к новому разговору!</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Ошибка создания чата:', error);
+            }
+        }
+
+        // Настройка поля ввода
+        function setupMessageInput() {
+            const input = document.getElementById('messageInput');
+            
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+            
+            // Автоматическое изменение высоты
+            input.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = this.scrollHeight + 'px';
+            });
+        }
+
+        // Отправка сообщения
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            // Очищаем поле ввода
+            input.value = '';
+            input.style.height = 'auto';
+            
+            // Если нет активного чата, создаем новый
+            if (!currentSessionId) {
+                await startNewChat();
+            }
+            
+            // Добавляем сообщение пользователя
+            addMessage(message, 'user');
+            
+            try {
+                // Отправляем на сервер
+                const response = await fetch('/api/smart-chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        username: currentUser,
+                        sessionId: currentSessionId
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    addMessage(data.response, 'ai');
+                } else {
+                    addMessage('Извините, произошла ошибка при обработке запроса.', 'ai');
+                }
+            } catch (error) {
+                console.error('Ошибка отправки сообщения:', error);
+                addMessage('Ошибка подключения к серверу.', 'ai');
+            }
+        }
+
+        // Добавление сообщения в интерфейс
+        function addMessage(content, sender) {
+            const messagesArea = document.getElementById('messagesArea');
+            
+            // Убираем приветственный экран при первом сообщении
+            if (messagesArea.querySelector('.welcome-screen')) {
+                messagesArea.innerHTML = '';
+            }
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            messageDiv.innerHTML = `<div class="message-content">${content}</div>`;
+            
+            messagesArea.appendChild(messageDiv);
+            messagesArea.scrollTop = messagesArea.scrollHeight;
+        }
+    </script>
+</body>
+</html>
