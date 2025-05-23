@@ -50,11 +50,43 @@ async function saveMessage(messageData) {
  * Получение сообщений из сессии
  */
 async function getSessionMessages(sessionId) {
-  return await db
+  // Получаем AI сообщения из базы данных
+  const aiMessagesData = await db
     .select()
     .from(aiMessages)
     .where(eq(aiMessages.sessionId, sessionId))
     .orderBy(aiMessages.createdAt);
+    
+  // Преобразуем в формат для отображения в чате
+  const formattedMessages = aiMessagesData.flatMap(msg => {
+    const messages = [];
+    
+    // Добавляем сообщение пользователя
+    if (msg.userMessage) {
+      messages.push({
+        id: `user_${msg.id}`,
+        text: msg.userMessage,
+        sender: 'user',
+        timestamp: msg.createdAt,
+        provider: null
+      });
+    }
+    
+    // Добавляем ответ AI
+    if (msg.aiResponse) {
+      messages.push({
+        id: `ai_${msg.id}`,
+        text: msg.aiResponse,
+        sender: 'ai',
+        timestamp: msg.createdAt,
+        provider: msg.provider
+      });
+    }
+    
+    return messages;
+  });
+    
+  return formattedMessages;
 }
 
 /**
