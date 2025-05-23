@@ -2934,7 +2934,16 @@
           } else {
             selectedTab.style.display = 'block';
           }
-          console.log('Отображена вкладка:', selectedTab.id);
+          console.log('Отображена вкладка:', selectedTab.id, 'стиль display:', selectedTab.style.display);
+          
+          // Дополнительная проверка для командного чата
+          if (tabName === 'team') {
+            const teamContainer = selectedTab.querySelector('.team-chat-container');
+            console.log('Контейнер командного чата найден:', teamContainer);
+            if (teamContainer) {
+              console.log('Стили контейнера:', teamContainer.style.cssText);
+            }
+          }
         } else {
           console.error('Элемент не найден:', `${tabName}-content`);
         }
@@ -2965,9 +2974,24 @@
         
         console.log('Элементы навигации:', { tabChat, tabGenerator, tabTeam });
         
-        if (tabChat) tabChat.addEventListener('click', () => switchTab('chat'));
-        if (tabGenerator) tabGenerator.addEventListener('click', () => switchTab('generator'));
-        if (tabTeam) tabTeam.addEventListener('click', () => switchTab('team'));
+        if (tabChat) {
+          tabChat.addEventListener('click', () => {
+            console.log('Клик по вкладке чата');
+            switchTab('chat');
+          });
+        }
+        if (tabGenerator) {
+          tabGenerator.addEventListener('click', () => {
+            console.log('Клик по вкладке генератора');
+            switchTab('generator');
+          });
+        }
+        if (tabTeam) {
+          tabTeam.addEventListener('click', () => {
+            console.log('Клик по вкладке команды');
+            switchTab('team');
+          });
+        }
         
         // Показываем чат по умолчанию
         switchTab('chat');
