@@ -434,6 +434,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Создание новой сессии чата
+  app.post('/api/chat/sessions', async (req, res) => {
+    try {
+      // Получаем имя пользователя из заголовка
+      const username = req.headers['x-username'] as string;
+      if (!username) {
+        return res.status(401).json({ success: false, error: 'Пользователь не указан' });
+      }
+
+      const { title } = req.body;
+      
+      console.log(`📝 Создание новой сессии для пользователя: ${username}`);
+      const session = await chatHistory.createChatSession(username, title || 'Новый чат');
+      res.json({ success: true, session });
+    } catch (error) {
+      console.error('Ошибка создания сессии:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Не удалось создать сессию' 
+      });
+    }
+  });
+
   // Получение всех сессий конкретного пользователя
   app.get('/api/chat/sessions/:userId', async (req, res) => {
     try {
