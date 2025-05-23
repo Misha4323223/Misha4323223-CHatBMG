@@ -996,16 +996,27 @@
                 
                 if (response.ok) {
                     const text = await response.text();
+                    console.log('Ответ сервера:', text);
+                    
                     try {
                         const data = JSON.parse(text);
-                        if (data.success) {
+                        console.log('Parsed data:', data);
+                        
+                        if (data.success && data.response) {
+                            addMessage(data.response, 'ai');
+                        } else if (data.response) {
                             addMessage(data.response, 'ai');
                         } else {
-                            addMessage(data.response || 'Получен ответ от AI', 'ai');
+                            addMessage('Извините, получен некорректный ответ от сервера.', 'ai');
                         }
                     } catch (parseError) {
-                        // Если ответ не JSON, показываем как есть
-                        addMessage(text || 'Получен ответ от AI', 'ai');
+                        console.log('Ошибка парсинга JSON:', parseError);
+                        // Если ответ содержит HTML или другой контент, не показываем его
+                        if (text.includes('<') || text.includes('input') || text.includes('button')) {
+                            addMessage('Извините, получен некорректный ответ от сервера. Попробуйте еще раз.', 'ai');
+                        } else {
+                            addMessage(text, 'ai');
+                        }
                     }
                 } else {
                     addMessage('Извините, произошла ошибка при обработке запроса.', 'ai');
