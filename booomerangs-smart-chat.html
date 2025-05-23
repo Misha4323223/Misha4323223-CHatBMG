@@ -633,7 +633,7 @@
             try {
                 const response = await fetch('/api/chat/sessions', {
                     headers: {
-                        'Authorization': `Bearer ${authToken}`
+                        'X-Username': currentUser
                     }
                 });
                 const result = await response.json();
@@ -766,10 +766,12 @@
                     isCreatingSession = true;
                     const sessionResponse = await fetch('/api/chat/sessions', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'X-Username': currentUser
+                        },
                         body: JSON.stringify({ 
-                            title: message.substring(0, 50) + '...',
-                            userId: 1 
+                            title: message.substring(0, 50) + '...'
                         })
                     });
                     const sessionData = await sessionResponse.json();
@@ -789,11 +791,14 @@
                 // Отправляем запрос к AI
                 const response = await fetch('/api/chat/messages', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-Username': currentUser
+                    },
                     body: JSON.stringify({
                         message: message,
                         sessionId: currentSessionId,
-                        userId: 1
+                        userId: currentUser
                     })
                 });
 
@@ -954,14 +959,11 @@
                 return false;
             }
             
-            // Устанавливаем данные пользователя
+            // Устанавливаем данные пользователя - просто используем имя
             currentUser = username;
-            // Правильно парсим ID из токена формата token_ID_timestamp
-            const tokenParts = token.split('_');
-            currentUserId = parseInt(tokenParts[1]) || 1;
-            authToken = token;
+            currentUserId = username; // Теперь используем имя как ID
             
-            console.log(`🔐 Пользователь ${username} (ID: ${currentUserId}) авторизован с токеном: ${token}`);
+            console.log(`🔐 Пользователь ${username} авторизован`);
             
             return true;
         }
