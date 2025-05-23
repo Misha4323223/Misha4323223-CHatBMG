@@ -948,7 +948,9 @@
             
             messages.forEach(msg => {
                 console.log('Добавляем сообщение:', msg);
-                addMessage(msg.content, msg.sender);
+                // Используем msg.text вместо msg.content (согласно структуре базы данных)
+                const messageText = msg.text || msg.content || 'Пустое сообщение';
+                addMessage(messageText, msg.sender);
             });
             
             messagesArea.scrollTop = messagesArea.scrollHeight;
