@@ -4,6 +4,9 @@ const router = express.Router();
 const { spawn } = require('child_process');
 const { getDemoResponse } = require('./direct-ai-provider');
 
+// Импортируем функции для работы с чатом
+const chatHistory = require('./chat-history');
+
 // Провайдеры, которые поддерживают стриминг
 const STREAMING_PROVIDERS = [
   'Qwen_Max',
@@ -15,12 +18,13 @@ const STREAMING_PROVIDERS = [
 ];
 
 // API endpoint для стриминга через SSE (Server-Sent Events)
-router.post('/chat', (req, res) => {
+router.post('/chat', async (req, res) => {
   try {
     const { 
       message, 
       provider = 'Qwen_Max', // По умолчанию используем Qwen_Max, который хорошо поддерживает стриминг
-      timeout = 30000 // 30 секунд таймаут по умолчанию
+      timeout = 30000, // 30 секунд таймаут по умолчанию
+      sessionId
     } = req.body;
     
     // Проверяем, что сообщение присутствует
@@ -33,6 +37,27 @@ router.post('/chat', (req, res) => {
     
     console.log(`Запрос к стриминг API: ${message.substring(0, 50)}${message.length > 50 ? '...' : ''}`);
     
+    // Создаем сессию, если её нет
+    let currentSessionId = sessionId;
+    if (!currentSessionId && message) {
+      console.log('💬 Создаем новую сессию для стриминга...');
+      const newSession = await chatHistory.createChatSession(1, message.substring(0, 50));
+      currentSessionId = newSession.id;
+      console.log(`✅ Создана новая стриминговая сессия: ${currentSessionId}`);
+    }
+    
+    // Сохраняем сообщение пользователя
+    if (currentSessionId && message) {
+      console.log('💾 Сохраняем сообщение пользователя в стриминге...');
+      await chatHistory.saveMessage({
+        sessionId: currentSessionId,
+        sender: 'user',
+        content: message,
+        provider: null
+      });
+      console.log('✅ Сообщение пользователя сохранено в стриминге');
+    }
+    
     // Настраиваем заголовки для SSE
     res.writeHead(200, {
       'Content-Type': 'text/event-stream',
@@ -42,6 +67,10 @@ router.post('/chat', (req, res) => {
     
     // Получаем демо-ответ на случай ошибки
     const demoResponse = getDemoResponse(message);
+    
+    // Переменная для сбора полного ответа AI
+    let fullAiResponse = '';
+    let usedProvider = 'BOOOMERANGS';
     
     // Функция для отправки SSE событий
     const sendEvent = (event, data) => {
@@ -98,6 +127,10 @@ router.post('/chat', (req, res) => {
                   model: jsonData.model
                 });
               } else if (jsonData.chunk) {
+                // Собираем полный ответ
+                fullAiResponse += jsonData.chunk;
+                usedProvider = jsonData.provider || 'BOOOMERANGS';
+                
                 // Отправляем чанк текста
                 sendEvent('update', {
                   chunk: jsonData.chunk,
