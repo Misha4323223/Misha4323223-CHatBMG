@@ -208,6 +208,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.sendFile('booomerangs-smart-chat.html', { root: '.' });
   });
   
+  // Командный чат для переписки участников
+  app.get('/team-chat', (req, res) => {
+    res.sendFile('team-chat.html', { root: '.' });
+  });
+  
   // API для работы с G4F провайдерами
   app.use('/api/g4f', g4fHandlers);
   
@@ -334,6 +339,97 @@ export async function registerRoutes(app: Express): Promise<Server> {
         success: false, 
         error: 'Не удалось получить сообщения' 
       });
+    }
+  });
+
+  // API для переписки между пользователями
+  const { messages } = require('@shared/schema');
+  
+  // Отправка сообщения пользователю
+  app.post('/api/messages', async (req, res) => {
+    try {
+      const { senderId, receiverId, text } = req.body;
+      
+      if (!senderId || !receiverId || !text) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'senderId, receiverId и text обязательны' 
+        });
+      }
+
+      const { db } = require('./db');
+      const [message] = await db
+        .insert(messages)
+        .values({ senderId, receiverId, text })
+        .returning();
+        
+      res.json({ success: true, message });
+    } catch (error) {
+      console.error('Ошибка отправки сообщения:', error);
+      res.status(500).json({ success: false, error: 'Ошибка отправки сообщения' });
+    }
+  });
+  
+  // Получение переписки между пользователями
+  app.get('/api/messages/:userId1/:userId2', async (req, res) => {
+    try {
+      const { userId1, userId2 } = req.params;
+      const { db } = require('./db');
+      const { or, and, eq, desc } = require('drizzle-orm');
+      
+      const conversation = await db
+        .select()
+        .from(messages)
+        .where(
+          or(
+            and(eq(messages.senderId, parseInt(userId1)), eq(messages.receiverId, parseInt(userId2))),
+            and(eq(messages.senderId, parseInt(userId2)), eq(messages.receiverId, parseInt(userId1)))
+          )
+        )
+        .orderBy(desc(messages.timestamp));
+        
+      res.json({ success: true, messages: conversation });
+    } catch (error) {
+      console.error('Ошибка получения переписки:', error);
+      res.status(500).json({ success: false, error: 'Ошибка получения переписки' });
+    }
+  });
+  
+  // Получение списка всех диалогов пользователя
+  app.get('/api/conversations/:userId', async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const { db } = require('./db');
+      const { or, eq, desc } = require('drizzle-orm');
+      
+      const conversations = await db
+        .select()
+        .from(messages)
+        .where(
+          or(
+            eq(messages.senderId, parseInt(userId)),
+            eq(messages.receiverId, parseInt(userId))
+          )
+        )
+        .orderBy(desc(messages.timestamp));
+        
+      // Группируем по собеседникам для показа последних сообщений
+      const conversationMap = new Map();
+      conversations.forEach(msg => {
+        const partnerId = msg.senderId === parseInt(userId) ? msg.receiverId : msg.senderId;
+        if (!conversationMap.has(partnerId)) {
+          conversationMap.set(partnerId, {
+            partnerId,
+            lastMessage: msg,
+            timestamp: msg.timestamp
+          });
+        }
+      });
+      
+      res.json({ success: true, conversations: Array.from(conversationMap.values()) });
+    } catch (error) {
+      console.error('Ошибка получения диалогов:', error);
+      res.status(500).json({ success: false, error: 'Ошибка получения диалогов' });
     }
   });
   
