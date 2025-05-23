@@ -51,8 +51,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup proxy middleware
   setupProxyMiddleware(app);
   
-  // Статические файлы из корневой директории
-  app.use(express.static(path.join(process.cwd())));
+  // Статические файлы из корневой директории - исключаем HTML файлы чтобы React мог их обработать
+  app.use(express.static(path.join(process.cwd()), {
+    setHeaders: (res, filePath) => {
+      // Блокируем статические HTML файлы чтобы React мог обработать маршруты
+      if (filePath.endsWith('.html') && (filePath.includes('smart-chat') || filePath.includes('booomerangs'))) {
+        res.status(404);
+        return false;
+      }
+    }
+  }));
   
   // Подключаем генератор изображений
   app.use('/image-generator', (req, res) => {
@@ -106,9 +114,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.sendFile('demo.html', { root: '.' });
   });
   
-  // Главная страница - перенаправляем на новый React дизайн
-  app.get('/', (req, res) => {
-    res.redirect('/smart-chat');
+  // Принудительно обслуживаем новый React компонент для /smart-chat
+  app.get('/smart-chat', (req, res, next) => {
+    // Перенаправляем на главную страницу Vite которая обработает React маршрут
+    res.redirect('/');
+  });
+
+  // Главная страница - позволяем Vite обработать React маршруты
+  app.get('/', (req, res, next) => {
+    // Позволяем Vite middleware обработать этот запрос
+    next();
   });
 
   // Оптимизированная версия (в разработке)
