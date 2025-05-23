@@ -1529,15 +1529,34 @@
         }, 3000);
         
         try {
-          // Отправляем запрос к серверу
+          // Создаем div для потокового ответа
+          const streamingDiv = document.createElement('div');
+          streamingDiv.className = 'message ai-message';
+          streamingDiv.innerHTML = `
+            <div class="message-content">
+              <div class="message-text"></div>
+              <div class="message-meta">
+                <span class="provider-badge">⚡ Печатает...</span>
+              </div>
+            </div>
+          `;
+          chatMessages.appendChild(streamingDiv);
+          scrollToBottom();
+          
+          const messageTextDiv = streamingDiv.querySelector('.message-text');
+          const providerBadge = streamingDiv.querySelector('.provider-badge');
+          
+          // Отправляем запрос с поддержкой стриминга
           const response = await fetch('/api/smart/message', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
+              'Accept': 'text/event-stream',
             },
             body: JSON.stringify({
               message: messageText,
-              imageUrl: uploadedImageUrl
+              imageUrl: uploadedImageUrl,
+              stream: true
             }),
           });
           
@@ -1545,7 +1564,54 @@
             throw new Error(`Ошибка сервера: ${response.status}`);
           }
           
-          const data = await response.json();
+          // Проверяем, поддерживает ли сервер стриминг
+          const contentType = response.headers.get('content-type');
+          
+          if (contentType && contentType.includes('text/event-stream')) {
+            // Обрабатываем потоковые данные
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let fullResponse = '';
+            let currentProvider = 'AI';
+            
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              
+              const chunk = decoder.decode(value);
+              const lines = chunk.split('\n');
+              
+              for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                  try {
+                    const data = JSON.parse(line.slice(6));
+                    
+                    if (data.chunk) {
+                      fullResponse += data.chunk;
+                      messageTextDiv.textContent = fullResponse;
+                      scrollToBottom();
+                    }
+                    
+                    if (data.provider) {
+                      currentProvider = data.provider;
+                      providerBadge.innerHTML = `🪃 ${currentProvider}`;
+                    }
+                    
+                    if (data.done) {
+                      providerBadge.innerHTML = `🪃 ${currentProvider}`;
+                      // Сохраняем в историю
+                      await saveMessageToHistory(fullResponse, 'ai', currentProvider, 'general');
+                      console.log(`✅ Стриминговый ответ сохранен (${currentProvider})`);
+                    }
+                  } catch (e) {
+                    // Игнорируем ошибки парсинга
+                  }
+                }
+              }
+            }
+          } else {
+            // Fallback на обычный JSON если стриминг не поддерживается
+            const data = await response.json();
           
           // Если есть изображение, сбрасываем его после отправки
           if (uploadedImageUrl) {
