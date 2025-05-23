@@ -7,7 +7,7 @@ import { authMiddleware } from "./middleware/auth";
 import { z } from "zod";
 import { authSchema, messageSchema, teamMessages } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, gt, count } from "drizzle-orm";
+import { eq, and, desc, gt, count, sql } from "drizzle-orm";
 
 // Импортируем модули для работы с изображениями и AI провайдерами
 import * as path from 'path';
@@ -1769,7 +1769,11 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
         RETURNING *
       `;
       
-      const result = await pool.query(insertQuery, [content, username]);
+      const result = await db.execute(sql`
+        INSERT INTO team_messages (content, username, created_at) 
+        VALUES (${content}, ${username}, NOW()) 
+        RETURNING *
+      `);
       const savedMessage = result.rows[0];
 
       console.log(`✅ Сообщение сохранено в командный чат: ${username}: ${content}`);
