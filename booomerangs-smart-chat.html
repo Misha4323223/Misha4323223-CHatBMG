@@ -255,9 +255,9 @@
     .sidebar-toggle {
       position: fixed;
       top: 50%;
-      left: 0px;
+      left: 5px;
       transform: translateY(-50%);
-      background: #6c63ff;
+      background: linear-gradient(135deg, #6c63ff, #5a52d5);
       color: white;
       border: none;
       width: 50px;
@@ -267,17 +267,20 @@
       font-size: 2rem;
       font-weight: bold;
       transition: all 0.3s ease;
-      z-index: 1002;
-      box-shadow: 5px 0 20px rgba(0, 0, 0, 0.5);
+      z-index: 1003;
+      box-shadow: 0 0 30px rgba(108, 99, 255, 0.8), 5px 0 20px rgba(0, 0, 0, 0.5);
       display: flex;
       align-items: center;
       justify-content: center;
-      border: 2px solid #5a52d5;
+      border: 3px solid #ffffff;
+      opacity: 0.9;
     }
     
     .sidebar-toggle:hover {
-      background: #5a52d5;
-      transform: translateY(-50%) scale(1.05);
+      background: linear-gradient(135deg, #5a52d5, #4338ca);
+      transform: translateY(-50%) scale(1.1);
+      opacity: 1;
+      box-shadow: 0 0 40px rgba(108, 99, 255, 1), 5px 0 25px rgba(0, 0, 0, 0.7);
     }
     
     .chat-container {
