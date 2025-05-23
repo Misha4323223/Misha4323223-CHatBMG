@@ -91,7 +91,45 @@ router.post('/chat', async (req, res) => {
     try {
       console.log('🚀 Пробуем специальные бесплатные провайдеры...');
       
-      // 1. Сначала пробуем FreeChat Enhanced провайдер
+      // 1. Сначала пробуем Simple ChatFree провайдер (самый надежный)
+      try {
+        console.log('📞 Вызываем Simple ChatFree...');
+        const simpleChatFreeModule = require('./simple-chatfree');
+        const simpleChatResponse = await simpleChatFreeModule.getChatFreeResponse(message);
+        if (simpleChatResponse && simpleChatResponse.success && simpleChatResponse.response) {
+          console.log('✅ Simple ChatFree ответил успешно!');
+          return res.json({
+            response: simpleChatResponse.response,
+            provider: 'Simple-ChatFree',
+            model: simpleChatResponse.model || 'chatfree',
+            cached: false
+          });
+        }
+        console.log('⚠️ Simple ChatFree не вернул успешный ответ');
+      } catch (simpleChatError) {
+        console.log(`⚠️ Simple ChatFree ошибка: ${simpleChatError.message}`);
+      }
+
+      // 2. Пробуем ChatFree Improved провайдер
+      try {
+        console.log('📞 Вызываем ChatFree Improved...');
+        const chatFreeImprovedModule = require('./chatfree-improved');
+        const improvedResponse = await chatFreeImprovedModule.getChatFreeResponse(message);
+        if (improvedResponse && improvedResponse.success && improvedResponse.response) {
+          console.log('✅ ChatFree Improved ответил успешно!');
+          return res.json({
+            response: improvedResponse.response,
+            provider: 'ChatFree-Improved',
+            model: improvedResponse.model || 'improved',
+            cached: false
+          });
+        }
+        console.log('⚠️ ChatFree Improved не вернул успешный ответ');
+      } catch (improvedError) {
+        console.log(`⚠️ ChatFree Improved ошибка: ${improvedError.message}`);
+      }
+
+      // 3. Пробуем FreeChat Enhanced провайдер
       try {
         console.log('📞 Вызываем FreeChat Enhanced...');
         const freeChatModule = require('./freechat-enhanced');
