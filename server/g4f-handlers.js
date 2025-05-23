@@ -93,7 +93,7 @@ router.post('/chat', async (req, res) => {
       
       // Сначала пробуем Python G4F провайдер
       try {
-        const pythonResponse = await fetch('http://localhost:5000/chat', {
+        const pythonResponse = await fetch('http://localhost:5004/chat', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
