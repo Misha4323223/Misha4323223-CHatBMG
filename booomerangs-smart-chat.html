@@ -941,9 +941,78 @@
       const imagePreview = document.getElementById('image-preview');
       const previewImage = document.getElementById('preview-image');
       const removeImageButton = document.getElementById('remove-image');
+      const statusIndicator = document.getElementById('status-indicator');
+      const statusTitle = document.getElementById('status-title');
+      const statusMessage = document.getElementById('status-message');
       
       // Переменная для хранения URL загруженного изображения
       let uploadedImageUrl = null;
+      
+      // Функции управления статусом процесса
+      function showStatus(title, message) {
+        statusTitle.textContent = title;
+        statusMessage.textContent = message;
+        statusIndicator.classList.add('show');
+      }
+      
+      function hideStatus() {
+        statusIndicator.classList.remove('show');
+      }
+      
+      function updateStatus(title, message) {
+        if (statusIndicator.classList.contains('show')) {
+          statusTitle.textContent = title;
+          statusMessage.textContent = message;
+        }
+      }
+      
+      // Функция для определения типа операции и показа соответствующего статуса
+      function detectOperationType(message) {
+        const lowerMessage = message.toLowerCase();
+        
+        if (lowerMessage.includes('генерир') || lowerMessage.includes('создай') || 
+            lowerMessage.includes('нарисуй') || lowerMessage.includes('изображение')) {
+          return {
+            title: '🎨 Генерация изображения',
+            message: 'AI создает изображение по вашему запросу...'
+          };
+        }
+        
+        if (lowerMessage.includes('анализ') || lowerMessage.includes('распознай') ||
+            lowerMessage.includes('что на') || uploadedImageUrl) {
+          return {
+            title: '🔍 Анализ изображения',
+            message: 'AI анализирует загруженное изображение...'
+          };
+        }
+        
+        if (lowerMessage.includes('код') || lowerMessage.includes('программ') ||
+            lowerMessage.includes('скрипт') || lowerMessage.includes('функция')) {
+          return {
+            title: '💻 Генерация кода',
+            message: 'AI пишет код по вашему запросу...'
+          };
+        }
+        
+        if (lowerMessage.includes('переведи') || lowerMessage.includes('translate')) {
+          return {
+            title: '🌐 Перевод текста',
+            message: 'AI переводит ваш текст...'
+          };
+        }
+        
+        if (lowerMessage.length > 100) {
+          return {
+            title: '📝 Анализ документа',
+            message: 'AI обрабатывает большой текст...'
+          };
+        }
+        
+        return {
+          title: '🤖 Обработка запроса',
+          message: 'AI анализирует ваш запрос...'
+        };
+      }
       
       // Обработчик отправки сообщения
       async function sendMessage() {
@@ -951,6 +1020,10 @@
         
         // Проверяем, есть ли текст или изображение для отправки
         if (!messageText && !uploadedImageUrl) return;
+        
+        // Определяем тип операции и показываем соответствующий статус
+        const operationType = detectOperationType(messageText);
+        showStatus(operationType.title, operationType.message);
         
         // Добавляем сообщение пользователя
         addMessage(messageText, true);
@@ -973,6 +1046,17 @@
         
         // Скролл к последнему сообщению
         scrollToBottom();
+        
+        // Обновляем статус через несколько секунд
+        setTimeout(() => {
+          if (operationType.title.includes('Генерация изображения')) {
+            updateStatus('🎨 Генерация изображения', 'Финализация деталей изображения...');
+          } else if (operationType.title.includes('Анализ изображения')) {
+            updateStatus('🔍 Анализ изображения', 'Распознавание объектов и деталей...');
+          } else {
+            updateStatus(operationType.title, 'Завершение обработки запроса...');
+          }
+        }, 3000);
         
         try {
           // Отправляем запрос к серверу
@@ -1014,6 +1098,9 @@
           // Удаляем "думающее" сообщение
           chatMessages.removeChild(thinkingDiv);
           
+          // Скрываем индикатор статуса
+          hideStatus();
+          
           // Показываем полученный ответ
           addMessage(aiResponse, false, { provider, category });
         } catch (error) {
@@ -1021,6 +1108,9 @@
           
           // Удаляем "думающее" сообщение
           chatMessages.removeChild(thinkingDiv);
+          
+          // Скрываем индикатор статуса
+          hideStatus();
           
           // Показываем сообщение об ошибке
           addMessage('Произошла ошибка при отправке сообщения. Пожалуйста, попробуйте еще раз.', false, { provider: 'Ошибка', category: 'error' });
