@@ -216,73 +216,82 @@
             display: flex;
         }
 
-        /* ChatGPT-стиль интерфейса */
+        /* Новый минималистичный дизайн чата */
         .gpt-chat-layout {
             display: flex;
             height: calc(100vh - 120px);
-            background: #212121;
+            background: #0f0f0f;
+            position: relative;
+            font-family: 'Inter', -apple-system, sans-serif;
+        }
+
+        /* Боковая панель - минималистичная */
+        .gpt-sidebar {
+            width: 280px;
+            background: #1a1a1a;
+            border-right: 1px solid #2a2a2a;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease;
             position: relative;
         }
 
-        /* Боковая панель */
-        .gpt-sidebar {
-            width: 260px;
-            background: #171717;
-            border-right: 1px solid #333;
-            display: flex;
-            flex-direction: column;
-            transition: margin-left 0.3s ease;
-        }
-
         .gpt-sidebar.hidden {
-            margin-left: -260px;
+            transform: translateX(-100%);
         }
 
         .sidebar-top {
-            padding: 12px;
-            border-bottom: 1px solid #333;
+            padding: 16px;
+            border-bottom: 1px solid #2a2a2a;
         }
 
         .new-chat-btn {
             width: 100%;
-            padding: 12px;
-            background: transparent;
-            border: 1px solid #333;
-            border-radius: 6px;
-            color: #fff;
+            padding: 14px 16px;
+            background: #dc2626;
+            border: none;
+            border-radius: 8px;
+            color: white;
             cursor: pointer;
             font-size: 14px;
+            font-weight: 500;
             transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .new-chat-btn:hover {
-            background: #2a2a2a;
+            background: #b91c1c;
+            transform: translateY(-1px);
         }
 
         .chat-history {
             flex: 1;
-            padding: 8px;
+            padding: 8px 16px;
             overflow-y: auto;
         }
 
-        /* Кнопка переключения */
+        /* Кнопка переключения - красивая */
         .sidebar-toggle-btn {
             position: absolute;
-            top: 12px;
-            left: 12px;
+            top: 16px;
+            right: -18px;
             width: 36px;
             height: 36px;
-            background: #2a2a2a;
+            background: #dc2626;
             border: none;
-            border-radius: 6px;
-            color: #fff;
+            border-radius: 50%;
+            color: white;
             cursor: pointer;
-            z-index: 100;
+            z-index: 1000;
             transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
         }
 
         .sidebar-toggle-btn:hover {
-            background: #333;
+            background: #b91c1c;
+            transform: scale(1.1);
         }
 
         /* Адаптивность для планшетов */
@@ -415,167 +424,221 @@
             overflow: hidden;
         }
 
-        /* Основная область чата */
+        /* Основная область - современный дизайн */
         .gpt-main-area {
             flex: 1;
             display: flex;
             flex-direction: column;
-            background: #212121;
+            background: #0f0f0f;
+            position: relative;
         }
 
         .messages-container {
             flex: 1;
             overflow-y: auto;
-            padding: 20px;
-            max-width: 800px;
+            padding: 24px;
+            max-width: 900px;
             margin: 0 auto;
             width: 100%;
         }
 
-        /* Приветственный экран */
+        /* Приветственный экран - элегантный */
         .welcome-screen {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 60vh;
+            height: 70vh;
             text-align: center;
         }
 
         .welcome-logo {
-            font-size: 4rem;
-            margin-bottom: 1rem;
+            font-size: 5rem;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, #dc2626, #f59e0b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .welcome-screen h1 {
-            color: #fff;
-            font-size: 2rem;
-            margin-bottom: 0.5rem;
-            font-weight: 600;
+            color: #ffffff;
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+            letter-spacing: -0.025em;
         }
 
         .welcome-screen p {
-            color: #888;
-            font-size: 1.1rem;
+            color: #9ca3af;
+            font-size: 1.25rem;
+            max-width: 600px;
+            line-height: 1.6;
         }
 
-        /* Поле ввода */
+        /* Поле ввода - супер современное */
         .input-section {
-            padding: 20px;
-            border-top: 1px solid #333;
+            padding: 24px;
+            background: linear-gradient(to top, #0f0f0f, transparent);
         }
 
         .input-wrapper {
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
             display: flex;
-            gap: 8px;
+            gap: 12px;
             align-items: flex-end;
-            background: #2a2a2a;
-            border-radius: 12px;
-            padding: 12px;
+            background: #1f1f1f;
+            border: 1px solid #2a2a2a;
+            border-radius: 16px;
+            padding: 16px;
+            transition: all 0.2s;
+        }
+
+        .input-wrapper:focus-within {
+            border-color: #dc2626;
+            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
         }
 
         .message-input {
             flex: 1;
             background: transparent;
             border: none;
-            color: #fff;
+            color: #ffffff;
             font-size: 16px;
             outline: none;
             resize: none;
-            max-height: 120px;
+            max-height: 150px;
             min-height: 24px;
             line-height: 1.5;
+            font-family: inherit;
         }
 
         .message-input::placeholder {
-            color: #888;
+            color: #6b7280;
         }
 
         .send-btn {
-            width: 32px;
-            height: 32px;
+            width: 40px;
+            height: 40px;
             background: #dc2626;
             border: none;
-            border-radius: 6px;
+            border-radius: 12px;
             color: white;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             transition: all 0.2s;
+            font-size: 18px;
         }
 
         .send-btn:hover {
             background: #b91c1c;
+            transform: scale(1.05);
         }
 
         .send-btn:disabled {
-            background: #444;
+            background: #374151;
             cursor: not-allowed;
+            transform: none;
         }
 
-        /* Стили сообщений */
+        /* Сообщения - красивые пузыри */
         .message {
-            margin-bottom: 20px;
-            padding: 16px;
-            border-radius: 8px;
-            max-width: 100%;
+            margin-bottom: 24px;
+            max-width: 85%;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .message.user {
-            background: #2a2a2a;
-            margin-left: 25%;
+            margin-left: auto;
+            background: #dc2626;
+            color: white;
+            padding: 16px 20px;
+            border-radius: 20px 20px 4px 20px;
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
         }
 
         .message.ai {
-            background: #1a1a1a;
-            margin-right: 25%;
+            margin-right: auto;
+            background: #1f2937;
+            color: #f9fafb;
+            padding: 16px 20px;
+            border-radius: 20px 20px 20px 4px;
+            border: 1px solid #374151;
         }
 
         .message-content {
-            color: #fff;
             line-height: 1.6;
+            font-size: 15px;
         }
 
-        /* Стили для истории чатов */
+        /* Стили для истории чатов - элегантные */
         .chat-item {
-            padding: 12px;
-            margin: 4px 0;
+            padding: 12px 16px;
+            margin: 6px 0;
             background: transparent;
             border: 1px solid transparent;
-            border-radius: 6px;
-            color: #ccc;
+            border-radius: 10px;
+            color: #d1d5db;
             cursor: pointer;
             font-size: 14px;
             transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
         }
 
         .chat-item:hover {
             background: #2a2a2a;
-            border-color: #333;
+            border-color: #3f3f3f;
+            transform: translateX(4px);
         }
 
         .chat-item.active {
-            background: #333;
-            color: #fff;
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            color: white;
+            border-color: #dc2626;
         }
 
-        /* Адаптивность */
+        .chat-item-title {
+            font-weight: 500;
+            margin-bottom: 4px;
+            font-size: 14px;
+        }
+
+        .chat-item-preview {
+            color: #9ca3af;
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        /* Адаптивность - улучшенная */
         @media (max-width: 768px) {
             .gpt-sidebar {
-                position: absolute;
-                z-index: 200;
+                position: fixed;
+                z-index: 1000;
                 height: 100%;
+                box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
             }
             
             .sidebar-toggle-btn {
-                left: 268px;
+                right: -18px;
             }
             
-            .gpt-sidebar.hidden .sidebar-toggle-btn {
-                left: 12px;
+            .gpt-chat-layout {
+                overflow: hidden;
             }
         }
 
