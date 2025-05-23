@@ -3,19 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Вход в BMGBRAND AI</title>
+  <title>Вход в BOOOMERANGS Team Chat</title>
   <style>
-    :root {
-      --bg: #2a2a2a;
-      --card-bg: #3a3a3a;
-      --accent: #6c6c6c;
-      --text: #ffffff;
-      --text-secondary: #cccccc;
-      --border: #4a4a4a;
-      --success: #10b981;
-      --error: #ef4444;
-    }
-
     * {
       margin: 0;
       padding: 0;
@@ -23,172 +12,131 @@
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #2c3e50;
+      height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 20px;
+      overflow: hidden;
     }
 
     .login-container {
-      background: var(--card-bg);
+      background: rgba(255, 255, 255, 0.95);
       border-radius: 20px;
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.2);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
       padding: 40px;
       width: 100%;
-      max-width: 400px;
-      box-shadow: 
-        0 15px 35px rgba(0, 0, 0, 0.3),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      position: relative;
-      backdrop-filter: blur(10px);
-    }
-    
-    .login-container::before {
-      content: '';
-      position: absolute;
-      top: -1px;
-      left: -1px;
-      right: -1px;
-      bottom: -1px;
-      background: linear-gradient(135deg, 
-        rgba(255, 255, 255, 0.3) 0%,
-        rgba(255, 255, 255, 0.1) 25%,
-        rgba(255, 255, 255, 0.05) 50%,
-        rgba(255, 255, 255, 0.1) 75%,
-        rgba(255, 255, 255, 0.3) 100%);
-      border-radius: 20px;
-      z-index: -1;
-      filter: blur(0.5px);
-    }
-
-    .logo-section {
+      max-width: 420px;
       text-align: center;
-      margin-bottom: 30px;
-    }
-
-    .logo {
-      width: 120px;
-      height: 120px;
-      border-radius: 50%;
-      margin-bottom: 24px;
-      border: 3px solid rgba(255, 255, 255, 0.3);
-      box-shadow: 
-        0 12px 35px rgba(0, 0, 0, 0.25),
-        0 0 0 1px rgba(255, 255, 255, 0.1),
-        inset 0 1px 0 rgba(255, 255, 255, 0.2);
-      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-      backdrop-filter: blur(5px);
       position: relative;
       overflow: hidden;
     }
-    
-    .logo::before {
+
+    .login-container::before {
       content: '';
       position: absolute;
-      top: -50%;
-      left: -50%;
-      width: 200%;
-      height: 200%;
-      background: linear-gradient(45deg, 
-        transparent 30%, 
-        rgba(255, 255, 255, 0.1) 50%, 
-        transparent 70%);
-      animation: logoShine 3s ease-in-out infinite;
-      opacity: 0;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #667eea, #764ba2, #667eea);
+      background-size: 200% 100%;
+      animation: gradientShift 3s ease-in-out infinite;
     }
-    
-    .logo:hover {
-      transform: scale(1.08) rotate(5deg);
-      border-color: rgba(255, 255, 255, 0.5);
-      box-shadow: 
-        0 15px 40px rgba(0, 0, 0, 0.3),
-        0 0 0 3px rgba(255, 255, 255, 0.2),
-        inset 0 2px 0 rgba(255, 255, 255, 0.3);
+
+    @keyframes gradientShift {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
     }
-    
-    .logo:hover::before {
-      opacity: 1;
+
+    .logo {
+      font-size: 3rem;
+      margin-bottom: 10px;
+      animation: bounce 2s ease-in-out infinite;
     }
-    
-    @keyframes logoShine {
-      0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
-      50% { transform: translateX(100%) translateY(100%) rotate(45deg); }
-      100% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
     }
 
     .title {
       font-size: 1.8rem;
-      font-weight: 600;
-      color: var(--accent);
+      font-weight: 700;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
       margin-bottom: 8px;
     }
 
     .subtitle {
-      color: var(--text-secondary);
-      font-size: 0.9rem;
+      color: #64748b;
+      font-size: 0.95rem;
+      margin-bottom: 32px;
+      opacity: 0.8;
     }
 
     .form-group {
       margin-bottom: 20px;
+      text-align: left;
     }
 
     .form-label {
       display: block;
+      font-weight: 600;
+      color: #374151;
       margin-bottom: 8px;
-      font-weight: 500;
-      color: var(--text);
+      font-size: 0.9rem;
     }
 
     .form-input {
       width: 100%;
-      background: var(--bg);
-      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 14px 16px;
+      border: 2px solid #e5e7eb;
       border-radius: 12px;
-      padding: 14px 18px;
-      color: var(--text);
-      font-size: 1rem;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: 
-        0 4px 8px rgba(0, 0, 0, 0.1),
-        inset 0 1px 0 rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(5px);
+      font-size: 16px;
+      transition: all 0.3s ease;
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(10px);
     }
 
     .form-input:focus {
       outline: none;
-      border-color: rgba(255, 255, 255, 0.4);
-      box-shadow: 
-        0 8px 25px rgba(0, 0, 0, 0.15),
-        0 0 0 3px rgba(255, 255, 255, 0.1),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
-      transform: translateY(-1px);
+      border-color: #667eea;
+      box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+      background: rgba(255, 255, 255, 0.95);
     }
 
     .login-button {
       width: 100%;
-      background: linear-gradient(135deg, 
-        rgba(108, 108, 108, 0.9) 0%,
-        rgba(138, 138, 138, 0.9) 50%,
-        rgba(108, 108, 108, 0.9) 100%);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 14px;
-      padding: 16px;
+      padding: 14px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
-      font-size: 1rem;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-      margin-bottom: 20px;
+      transition: all 0.3s ease;
+      margin-top: 8px;
       position: relative;
       overflow: hidden;
-      box-shadow: 
-        0 6px 20px rgba(0, 0, 0, 0.15),
-        inset 0 1px 0 rgba(255, 255, 255, 0.2);
-      backdrop-filter: blur(10px);
+    }
+
+    .login-button:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+    }
+
+    .login-button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
     }
 
     .login-button::before {
@@ -198,191 +146,207 @@
       left: -100%;
       width: 100%;
       height: 100%;
-      background: linear-gradient(90deg, 
-        transparent,
-        rgba(255, 255, 255, 0.2),
-        transparent);
-      transition: left 0.5s ease;
-    }
-
-    .login-button:hover {
-      transform: translateY(-2px);
-      background: linear-gradient(135deg, 
-        rgba(122, 122, 122, 0.95) 0%,
-        rgba(154, 154, 154, 0.95) 50%,
-        rgba(122, 122, 122, 0.95) 100%);
-      border-color: rgba(255, 255, 255, 0.4);
-      box-shadow: 
-        0 12px 30px rgba(0, 0, 0, 0.2),
-        0 0 0 2px rgba(255, 255, 255, 0.1),
-        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.5s;
     }
 
     .login-button:hover::before {
       left: 100%;
     }
 
-    .login-button:disabled {
-      background: var(--border);
-      cursor: not-allowed;
-      transform: none;
-      box-shadow: none;
-    }
-
-    .message {
-      padding: 12px 16px;
+    .error-message {
+      background: #fee2e2;
+      border: 1px solid #fecaca;
+      color: #dc2626;
+      padding: 12px;
       border-radius: 8px;
-      margin-bottom: 20px;
+      margin-top: 16px;
       font-size: 0.9rem;
-      text-align: center;
+      display: none;
     }
 
-    .message.success {
-      background: rgba(16, 185, 129, 0.1);
-      border: 1px solid var(--success);
-      color: var(--success);
-    }
-
-    .message.error {
-      background: rgba(239, 68, 68, 0.1);
-      border: 1px solid var(--error);
-      color: var(--error);
-    }
-
-    .demo-credentials {
-      background: rgba(108, 99, 255, 0.1);
-      border: 1px solid var(--accent);
-      border-radius: 8px;
-      padding: 16px;
-      margin-bottom: 20px;
+    .demo-users {
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid #e5e7eb;
     }
 
     .demo-title {
+      font-size: 0.85rem;
       font-weight: 600;
+      color: #6b7280;
+      margin-bottom: 12px;
+    }
+
+    .demo-user {
+      background: rgba(102, 126, 234, 0.05);
+      border: 1px solid rgba(102, 126, 234, 0.1);
+      border-radius: 8px;
+      padding: 8px 12px;
       margin-bottom: 8px;
-      color: var(--accent);
+      font-size: 0.8rem;
+      color: #4b5563;
+      cursor: pointer;
+      transition: all 0.2s ease;
     }
 
-    .demo-item {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 4px;
-      font-size: 0.9rem;
+    .demo-user:hover {
+      background: rgba(102, 126, 234, 0.1);
+      border-color: rgba(102, 126, 234, 0.2);
     }
 
-    .demo-item strong {
-      color: var(--text);
+    .footer {
+      margin-top: 24px;
+      font-size: 0.75rem;
+      color: #9ca3af;
+      opacity: 0.8;
     }
 
-    .demo-item span {
-      color: var(--text-secondary);
-      font-family: monospace;
-    }
-
-    .loading {
-      display: inline-block;
-      width: 20px;
-      height: 20px;
-      border: 2px solid transparent;
-      border-top: 2px solid white;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-
+    /* Responsive design */
     @media (max-width: 480px) {
       .login-container {
-        padding: 30px 20px;
+        margin: 20px;
+        padding: 32px 24px;
       }
-      
+
       .title {
         font-size: 1.5rem;
       }
+
+      .logo {
+        font-size: 2.5rem;
+      }
+    }
+
+    /* Loading animation */
+    .loading {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s linear infinite;
+      margin-right: 8px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
     }
   </style>
 </head>
-
 <body>
   <div class="login-container">
-    <div class="logo-section">
-      <img src="bmgbrand-logo.jpg" alt="BMGBRAND" class="logo">
-      <p class="subtitle">Войти в AI CHAT BMGBRAND</p>
-    </div>
+    <div class="logo">🪃</div>
+    <h1 class="title">BOOOMERANGS</h1>
+    <p class="subtitle">Войдите в командный чат</p>
 
-    <div id="message-container"></div>
-
-    <div class="demo-credentials">
-      <div class="demo-title">Данные для входа:</div>
-      <div class="demo-item">
-        <strong>Логин:</strong>
-        <span>mikhail</span>
-      </div>
-      <div class="demo-item">
-        <strong>Пароль:</strong>
-        <span>mikhail123</span>
-      </div>
-    </div>
-
-    <form id="login-form">
+    <form id="loginForm">
       <div class="form-group">
-        <label for="username" class="form-label">Логин</label>
+        <label class="form-label" for="username">Логин</label>
         <input 
           type="text" 
           id="username" 
           class="form-input" 
           placeholder="Введите ваш логин"
-          value="mikhail"
           required
-        >
+        />
       </div>
 
       <div class="form-group">
-        <label for="password" class="form-label">Пароль</label>
+        <label class="form-label" for="password">Пароль</label>
         <input 
           type="password" 
           id="password" 
           class="form-input" 
           placeholder="Введите ваш пароль"
-          value="mikhail123"
           required
-        >
+        />
       </div>
 
-      <button type="submit" class="login-button" id="login-button">
-        Войти в систему
+      <button type="submit" id="loginButton" class="login-button">
+        Войти в чат
       </button>
+
+      <div id="errorMessage" class="error-message"></div>
     </form>
+
+    <div class="demo-users">
+      <div class="demo-title">Тестовые аккаунты:</div>
+      <div class="demo-user" onclick="fillCredentials('mikhail', 'mikhail123')">
+        👨‍💻 Mikhail Dev (mikhail / mikhail123)
+      </div>
+      <div class="demo-user" onclick="fillCredentials('anna', 'anna123')">
+        👩‍💼 Anna Smith (anna / anna123)
+      </div>
+    </div>
+
+    <div class="footer">
+      © 2025 BOOOMERANGS Team Chat
+    </div>
   </div>
 
   <script>
-    // Проверяем, авторизован ли пользователь
-    const token = localStorage.getItem('auth_token');
-    if (token) {
-      // Проверяем валидность токена
-      checkAuthAndRedirect();
+    const loginForm = document.getElementById('loginForm');
+    const loginButton = document.getElementById('loginButton');
+    const errorMessage = document.getElementById('errorMessage');
+    const usernameInput = document.getElementById('username');
+    const passwordInput = document.getElementById('password');
+
+    // Получаем параметр redirect из URL для перенаправления после входа
+    const urlParams = new URLSearchParams(window.location.search);
+    const redirectTo = urlParams.get('redirect') || '/booomerangs-smart-chat.html';
+
+    // Проверяем, авторизован ли пользователь уже
+    checkAuth();
+
+    function checkAuth() {
+      const token = localStorage.getItem('authToken');
+      const username = localStorage.getItem('username');
+      
+      if (token && username) {
+        // Пользователь уже авторизован, перенаправляем
+        window.location.href = redirectTo;
+      }
     }
 
-    // Обработка формы входа
-    document.getElementById('login-form').addEventListener('submit', async (e) => {
+    function fillCredentials(username, password) {
+      usernameInput.value = username;
+      passwordInput.value = password;
+      usernameInput.focus();
+    }
+
+    function showError(message) {
+      errorMessage.textContent = message;
+      errorMessage.style.display = 'block';
+      setTimeout(() => {
+        errorMessage.style.display = 'none';
+      }, 5000);
+    }
+
+    function setLoading(loading) {
+      if (loading) {
+        loginButton.disabled = true;
+        loginButton.innerHTML = '<span class="loading"></span>Вход...';
+      } else {
+        loginButton.disabled = false;
+        loginButton.innerHTML = 'Войти в чат';
+      }
+    }
+
+    loginForm.addEventListener('submit', async function(e) {
       e.preventDefault();
       
-      const username = document.getElementById('username').value.trim();
-      const password = document.getElementById('password').value.trim();
-      const button = document.getElementById('login-button');
-      
+      const username = usernameInput.value.trim();
+      const password = passwordInput.value;
+
       if (!username || !password) {
-        showMessage('Заполните все поля', 'error');
+        showError('Пожалуйста, заполните все поля');
         return;
       }
 
-      // Показываем состояние загрузки
-      button.disabled = true;
-      button.innerHTML = '<div class="loading"></div> Вход...';
-      
+      setLoading(true);
+
       try {
         const response = await fetch('/api/auth/login', {
           method: 'POST',
@@ -393,71 +357,33 @@
         });
 
         const data = await response.json();
-        
+
         if (data.success) {
-          // Сохраняем токен и данные пользователя
-          localStorage.setItem('auth_token', data.user.token);
-          localStorage.setItem('user_data', JSON.stringify({
-            id: data.user.id,
-            username: data.user.username,
-            displayName: data.user.displayName
-          }));
+          // Сохраняем токен и информацию о пользователе
+          localStorage.setItem('authToken', data.token);
+          localStorage.setItem('username', data.user.username);
+          localStorage.setItem('displayName', data.user.display_name);
           
-          showMessage(`Добро пожаловать, ${data.user.displayName}!`, 'success');
-          
-          // Перенаправляем на главную страницу через 1 секунду
-          setTimeout(() => {
-            window.location.href = '/booomerangs-smart-chat.html';
-          }, 1000);
+          // Перенаправляем пользователя
+          window.location.href = redirectTo;
         } else {
-          showMessage(data.error || 'Ошибка авторизации', 'error');
+          showError(data.message || 'Неверный логин или пароль');
         }
       } catch (error) {
         console.error('Ошибка входа:', error);
-        showMessage('Ошибка соединения с сервером', 'error');
+        showError('Ошибка подключения к серверу');
       } finally {
-        button.disabled = false;
-        button.innerHTML = 'Войти в систему';
+        setLoading(false);
       }
     });
 
-    // Проверка авторизации и перенаправление
-    async function checkAuthAndRedirect() {
-      try {
-        const response = await fetch('/api/auth/user', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+    // Автофокус на поле логина
+    usernameInput.focus();
 
-        if (response.ok) {
-          const data = await response.json();
-          if (data.success) {
-            // Пользователь уже авторизован, перенаправляем
-            window.location.href = '/booomerangs-smart-chat.html';
-          }
-        }
-      } catch (error) {
-        console.error('Ошибка проверки авторизации:', error);
-      }
-    }
-
-    // Показ сообщений
-    function showMessage(text, type) {
-      const container = document.getElementById('message-container');
-      container.innerHTML = `<div class="message ${type}">${text}</div>`;
-      
-      // Автоматически скрываем сообщение через 5 секунд
-      setTimeout(() => {
-        container.innerHTML = '';
-      }, 5000);
-    }
-
-    // Автофокус на поле логина если оно пустое
-    window.addEventListener('load', () => {
-      const usernameField = document.getElementById('username');
-      if (!usernameField.value) {
-        usernameField.focus();
+    // Enter для быстрого входа
+    usernameInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        passwordInput.focus();
       }
     });
   </script>
