@@ -1705,9 +1705,37 @@
         </div>
       </div>
       
-      <!-- Контейнер для командного чата -->
-      <div class="tab-content" id="team-content" style="display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100%; padding: 20px; z-index: 999; background: rgba(249, 250, 251, 0.98);">
-        <div class="team-chat-container" style="
+      <!-- Контейнер для командного чата (по структуре основного чата) -->
+      <div class="tab-content" id="team-content" style="display: none;">
+        <div class="main-layout">
+          <!-- Основная область командного чата -->
+          <div class="chat-container">
+            <div class="chat-header">
+              <h2 class="chat-title">🪃 Командный чат BOOOMERANGS</h2>
+              <div style="color: #10b981; font-size: 0.9rem;">🟢 Подключено</div>
+            </div>
+            
+            <div class="chat-messages" id="team-chat-messages">
+              <div style="text-align: center; padding: 40px; color: #d4af37; font-size: 1.2rem;">
+                🪃 Командный чат готов к использованию!<br>
+                <small style="color: #666;">Напишите первое сообщение команде</small>
+              </div>
+            </div>
+            
+            <div class="chat-input-container">
+              <textarea 
+                class="chat-input" 
+                id="team-chat-input" 
+                placeholder="Напишите сообщение команде BOOOMERANGS..." 
+                rows="1"
+              ></textarea>
+              <button class="send-button" id="team-send-button">
+                🪃
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
           display: flex;
           flex-direction: column;
           height: 100%;
