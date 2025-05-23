@@ -1075,6 +1075,103 @@
       let currentSessionId = null;
       const userId = 1; // Временно используем фиксированный ID пользователя
       
+      // Функции для работы с боковой панелью
+      async function loadChatSessions() {
+        try {
+          const response = await fetch('/api/chat/sessions');
+          if (!response.ok) return;
+          
+          const data = await response.json();
+          if (data.success && data.sessions) {
+            renderChatSessions(data.sessions);
+          }
+        } catch (error) {
+          console.error('Ошибка загрузки сессий:', error);
+        }
+      }
+      
+      function renderChatSessions(sessions) {
+        const sessionsContainer = document.getElementById('chat-sessions');
+        if (!sessionsContainer) return;
+        
+        sessionsContainer.innerHTML = '';
+        
+        sessions.forEach(session => {
+          const sessionElement = document.createElement('div');
+          sessionElement.className = `chat-session ${session.id === currentSessionId ? 'active' : ''}`;
+          sessionElement.onclick = () => switchToSession(session.id);
+          
+          const date = new Date(session.createdAt).toLocaleDateString('ru-RU', {
+            day: '2-digit',
+            month: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+          
+          sessionElement.innerHTML = `
+            <div class="session-title">${session.title}</div>
+            <div class="session-date">${date}</div>
+            <button class="session-delete" onclick="deleteSession(${session.id}, event)">×</button>
+          `;
+          
+          sessionsContainer.appendChild(sessionElement);
+        });
+      }
+      
+      async function switchToSession(sessionId) {
+        currentSessionId = sessionId;
+        
+        // Очищаем текущий чат
+        chatMessages.innerHTML = '';
+        
+        // Загружаем сообщения новой сессии
+        try {
+          const response = await fetch(`/api/chat/sessions/${sessionId}/messages`);
+          if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.messages) {
+              data.messages.forEach(msg => {
+                displayMessage(msg.text, msg.sender === 'user' ? 'user' : 'ai', msg.provider);
+              });
+            }
+          }
+        } catch (error) {
+          console.error('Ошибка загрузки сообщений:', error);
+        }
+        
+        // Обновляем активную сессию в боковой панели
+        loadChatSessions();
+      }
+      
+      async function createNewChat() {
+        await createNewChatSession();
+        chatMessages.innerHTML = '';
+        loadChatSessions();
+      }
+      
+      async function deleteSession(sessionId, event) {
+        event.stopPropagation();
+        
+        if (!confirm('Удалить эту беседу?')) return;
+        
+        try {
+          const response = await fetch(`/api/chat/sessions/${sessionId}`, {
+            method: 'DELETE'
+          });
+          
+          if (response.ok) {
+            if (sessionId === currentSessionId) {
+              // Если удаляем текущую сессию, создаем новую
+              await createNewChat();
+            } else {
+              loadChatSessions();
+            }
+          }
+        } catch (error) {
+          console.error('Ошибка удаления сессии:', error);
+        }
+      }
+      
       // Функции для работы с историей чатов
       async function createNewChatSession() {
         try {
@@ -1526,6 +1623,14 @@
       
       // Инициализация приложения - загружаем историю чатов
       loadChatHistory();
+      
+      // Загружаем список сессий в боковую панель
+      loadChatSessions();
+      
+      // Делаем функции глобальными для HTML кнопок
+      window.createNewChat = createNewChat;
+      window.deleteSession = deleteSession;
+      window.switchToSession = switchToSession;
     });
   </script>
 </body>
