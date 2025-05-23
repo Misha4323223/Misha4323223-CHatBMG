@@ -216,39 +216,73 @@
             display: flex;
         }
 
-        /* Стили для чата */
-        .chat-container {
-            display: flex !important;
+        /* ChatGPT-стиль интерфейса */
+        .gpt-chat-layout {
+            display: flex;
             height: calc(100vh - 120px);
-            background: rgba(25, 25, 25, 0.95);
-            backdrop-filter: blur(10px);
-            width: 100%;
+            background: #212121;
             position: relative;
         }
 
-        .sidebar-toggle {
-            position: fixed;
-            top: 140px;
-            left: 15px;
-            width: 45px;
-            height: 45px;
-            background: var(--accent);
-            border: none;
-            border-radius: 8px;
-            color: white;
-            font-size: 20px;
-            cursor: pointer;
-            z-index: 1000;
-            transition: all 0.3s ease;
-            display: flex !important;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        /* Боковая панель */
+        .gpt-sidebar {
+            width: 260px;
+            background: #171717;
+            border-right: 1px solid #333;
+            display: flex;
+            flex-direction: column;
+            transition: margin-left 0.3s ease;
         }
 
-        .sidebar-toggle:hover {
-            background: rgba(220, 38, 38, 0.8);
-            transform: scale(1.05);
+        .gpt-sidebar.hidden {
+            margin-left: -260px;
+        }
+
+        .sidebar-top {
+            padding: 12px;
+            border-bottom: 1px solid #333;
+        }
+
+        .new-chat-btn {
+            width: 100%;
+            padding: 12px;
+            background: transparent;
+            border: 1px solid #333;
+            border-radius: 6px;
+            color: #fff;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .new-chat-btn:hover {
+            background: #2a2a2a;
+        }
+
+        .chat-history {
+            flex: 1;
+            padding: 8px;
+            overflow-y: auto;
+        }
+
+        /* Кнопка переключения */
+        .sidebar-toggle-btn {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            width: 36px;
+            height: 36px;
+            background: #2a2a2a;
+            border: none;
+            border-radius: 6px;
+            color: #fff;
+            cursor: pointer;
+            z-index: 100;
+            transition: all 0.2s;
+        }
+
+        .sidebar-toggle-btn:hover {
+            background: #333;
         }
 
         /* Адаптивность для планшетов */
@@ -381,118 +415,168 @@
             overflow: hidden;
         }
 
-        .chat-main {
+        /* Основная область чата */
+        .gpt-main-area {
             flex: 1;
             display: flex;
             flex-direction: column;
-            position: relative;
-            height: 100%;
-            background: rgba(17, 17, 17, 0.95);
+            background: #212121;
         }
 
-        .chat-header {
-            height: 60px;
-            padding: 15px 20px;
-            background: rgba(25, 25, 25, 0.9);
-            border-bottom: 1px solid var(--border);
-            flex-shrink: 0;
-            display: flex;
-            align-items: center;
-        }
-
-        .chat-header h3 {
-            margin: 0;
-            color: var(--gold);
-            font-size: 1.2rem;
-            font-weight: 600;
-        }
-
-        .chat-messages {
-            height: calc(100vh - 240px);
+        .messages-container {
+            flex: 1;
             overflow-y: auto;
             padding: 20px;
-            background: rgba(17, 17, 17, 0.8);
+            max-width: 800px;
+            margin: 0 auto;
+            width: 100%;
         }
 
-        .welcome-message {
-            text-align: center;
-            color: #888;
-            padding: 50px 20px;
-        }
-
-        .chat-input-container {
-            height: 90px;
-            flex-shrink: 0;
-            padding: 20px;
-            background: rgba(25, 25, 25, 0.9);
-            border-top: 1px solid var(--border);
+        /* Приветственный экран */
+        .welcome-screen {
             display: flex;
-            gap: 15px;
-            align-items: flex-end;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 60vh;
+            text-align: center;
         }
 
-        .chat-input {
+        .welcome-logo {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .welcome-screen h1 {
+            color: #fff;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .welcome-screen p {
+            color: #888;
+            font-size: 1.1rem;
+        }
+
+        /* Поле ввода */
+        .input-section {
+            padding: 20px;
+            border-top: 1px solid #333;
+        }
+
+        .input-wrapper {
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            gap: 8px;
+            align-items: flex-end;
+            background: #2a2a2a;
+            border-radius: 12px;
+            padding: 12px;
+        }
+
+        .message-input {
             flex: 1;
-            padding: 12px 16px;
-            border: 2px solid var(--border-light);
-            border-radius: 8px;
-            background: var(--primary);
-            color: var(--text);
-            font-size: 1rem;
+            background: transparent;
+            border: none;
+            color: #fff;
+            font-size: 16px;
             outline: none;
             resize: none;
-            height: 50px;
-            min-height: 50px;
             max-height: 120px;
-            font-family: 'Montserrat', sans-serif;
-            box-sizing: border-box;
+            min-height: 24px;
+            line-height: 1.5;
         }
 
-        .chat-send-button {
-            padding: 12px 24px;
-            background: var(--gradient-accent);
-            color: var(--text);
-            border: 2px solid var(--accent);
-            border-radius: 8px;
+        .message-input::placeholder {
+            color: #888;
+        }
+
+        .send-btn {
+            width: 32px;
+            height: 32px;
+            background: #dc2626;
+            border: none;
+            border-radius: 6px;
+            color: white;
             cursor: pointer;
-            font-weight: 600;
-            height: 50px;
-            white-space: nowrap;
-            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
         }
 
-        .chat-send-button:hover {
-            background: rgba(220, 38, 38, 0.8);
-            transform: translateY(-2px);
+        .send-btn:hover {
+            background: #b91c1c;
         }
 
-        .chat-input:focus {
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(255, 0, 0, 0.2);
+        .send-btn:disabled {
+            background: #444;
+            cursor: not-allowed;
         }
 
-        /* Классические стили сообщений */
+        /* Стили сообщений */
         .message {
-            margin-bottom: 15px;
-            max-width: 70%;
-            padding: 12px 16px;
-            border-radius: 12px;
-            font-size: 0.95rem;
-            line-height: 1.4;
+            margin-bottom: 20px;
+            padding: 16px;
+            border-radius: 8px;
+            max-width: 100%;
         }
 
         .message.user {
-            background: var(--accent);
-            color: white;
-            margin-left: auto;
-            border-bottom-right-radius: 4px;
+            background: #2a2a2a;
+            margin-left: 25%;
         }
 
         .message.ai {
-            background: rgba(60, 60, 60, 0.8);
-            color: var(--text);
-            margin-right: auto;
-            border-bottom-left-radius: 4px;
+            background: #1a1a1a;
+            margin-right: 25%;
+        }
+
+        .message-content {
+            color: #fff;
+            line-height: 1.6;
+        }
+
+        /* Стили для истории чатов */
+        .chat-item {
+            padding: 12px;
+            margin: 4px 0;
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 6px;
+            color: #ccc;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .chat-item:hover {
+            background: #2a2a2a;
+            border-color: #333;
+        }
+
+        .chat-item.active {
+            background: #333;
+            color: #fff;
+        }
+
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            .gpt-sidebar {
+                position: absolute;
+                z-index: 200;
+                height: 100%;
+            }
+            
+            .sidebar-toggle-btn {
+                left: 268px;
+            }
+            
+            .gpt-sidebar.hidden .sidebar-toggle-btn {
+                left: 12px;
+            }
         }
 
         /* Автоматическое растягивание поля ввода при скрытии панели */
@@ -1156,49 +1240,49 @@
         <div class="content">
             <!-- Вкладка чата -->
             <div id="chat-content" class="tab-content active">
-                <div class="chat-container">
-                    <!-- Боковая панель с историей -->
-                    <div class="chat-sidebar">
-                        <div class="sidebar-header">
-                            <div class="sidebar-title">💬 История чатов</div>
+                <div class="gpt-chat-layout">
+                    <!-- Боковая панель -->
+                    <div class="gpt-sidebar" id="gptSidebar">
+                        <div class="sidebar-top">
                             <button class="new-chat-btn" onclick="startNewChat()">
-                                ➕ Новый чат
+                                <span>➕</span> Новый чат
                             </button>
                         </div>
-                        <div class="sessions-list" id="sessionsList">
-                            <!-- Сессии будут загружены динамически -->
+                        
+                        <div class="chat-history" id="sessionsList">
+                            <!-- История чатов -->
                         </div>
                     </div>
                     
+                    <!-- Кнопка переключения боковой панели -->
+                    <button class="sidebar-toggle-btn" onclick="toggleSidebar()" id="sidebarToggle">
+                        <span>📋</span>
+                    </button>
+                    
                     <!-- Основная область чата -->
-                    <div class="chat-main">
-                        <!-- Кнопка переключения панели -->
-                        <button class="sidebar-toggle" onclick="toggleSidebar()" title="Скрыть/Показать панель истории">
-                            <span id="toggleIcon">📋</span>
-                        </button>
-                        
-                        <!-- Заголовок чата -->
-                        <div class="chat-header">
-                            <h3>🪃 BOOOMERANGS Smart Chat</h3>
-                        </div>
-                        
-                        <!-- Область сообщений -->
-                        <div class="chat-messages" id="messages">
-                            <div class="welcome-message">
-                                <h2 style="color: var(--gold); margin-bottom: 15px;">Добро пожаловать!</h2>
-                                <p>Выберите чат из истории или создайте новый</p>
+                    <div class="gpt-main-area">
+                        <!-- Сообщения -->
+                        <div class="messages-container" id="messages">
+                            <div class="welcome-screen">
+                                <div class="welcome-logo">🪃</div>
+                                <h1>BOOOMERANGS AI Chat</h1>
+                                <p>Как дела? Чем могу помочь?</p>
                             </div>
                         </div>
                         
                         <!-- Поле ввода -->
-                        <div class="chat-input-container">
-                            <textarea 
-                                id="messageInput" 
-                                class="chat-input" 
-                                placeholder="Введите ваше сообщение..." 
-                                rows="1"
-                            ></textarea>
-                            <button id="sendBtn" class="chat-send-button">🪃 Отправить</button>
+                        <div class="input-section">
+                            <div class="input-wrapper">
+                                <textarea 
+                                    id="messageInput" 
+                                    class="message-input" 
+                                    placeholder="Напишите сообщение..." 
+                                    rows="1"
+                                ></textarea>
+                                <button id="sendBtn" class="send-btn">
+                                    <span>➤</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
