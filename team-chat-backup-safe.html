@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🪃 Командный чат BOOOMERANGS</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Используем те же CSS стили, что и в основном чате */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            min-height: 100vh;
+            color: #1e293b;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header-compact {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 25px;
+            background: linear-gradient(135deg, rgba(108, 108, 108, 0.9) 0%, rgba(138, 138, 138, 0.9) 100%);
+            border-radius: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .left-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo-image {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .tagline {
+            background: linear-gradient(135deg, #ffd700, #ffed4e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 1.8rem;
+            font-weight: 800;
+        }
+
+        .navigation {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .nav-button {
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .nav-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .nav-button.active {
+            background: linear-gradient(135deg, #d4af37, #ffd700);
+            color: white;
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
+        }
+
+        .main-layout {
+            flex: 1;
+            display: flex;
+            gap: 20px;
+            min-height: 0;
+        }
+
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            overflow: hidden;
+        }
+
+        .chat-header {
+            padding: 25px 30px;
+            background: linear-gradient(135deg, rgba(108, 108, 108, 0.4) 0%, rgba(138, 138, 138, 0.4) 100%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-title {
+            background: linear-gradient(135deg, #ffd700, #ffb300);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin: 0;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            background: rgba(249, 250, 251, 0.5);
+        }
+
+        .message {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 16px 20px;
+            border-radius: 16px;
+            max-width: 80%;
+            word-wrap: break-word;
+            animation: messageSlideIn 0.4s ease-out;
+        }
+
+        .message.user {
+            margin-left: auto;
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            text-align: right;
+        }
+
+        .message.team {
+            margin-right: auto;
+            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+            color: #1e293b;
+        }
+
+        @keyframes messageSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .chat-input-container {
+            padding: 25px;
+            background: rgba(255, 255, 255, 0.8);
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            display: flex;
+            gap: 15px;
+            align-items: flex-end;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 16px 20px;
+            border: 2px solid rgba(209, 213, 219, 0.6);
+            border-radius: 16px;
+            font-size: 1rem;
+            background: rgba(255, 255, 255, 0.9);
+            transition: all 0.3s ease;
+            outline: none;
+            resize: none;
+            min-height: 52px;
+            max-height: 120px;
+            font-family: inherit;
+            line-height: 1.5;
+        }
+
+        .chat-input:focus {
+            border-color: #d4af37;
+            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+        }
+
+        .send-button {
+            padding: 16px 20px;
+            background: linear-gradient(135deg, #d4af37 0%, #ffd700 50%, #d4af37 100%);
+            color: white;
+            border: none;
+            border-radius: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 16px rgba(212, 175, 55, 0.4);
+            min-height: 52px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .send-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(212, 175, 55, 0.6);
+        }
+
+        .welcome-message {
+            text-align: center;
+            padding: 60px 30px;
+            color: #d4af37;
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #10b981;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #10b981;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-compact">
+            <div class="left-section">
+                <img src="booomerangs-logo.jpg" alt="BOOOMERANGS Logo" class="logo-image">
+                <h1 class="tagline">BOOOMERANGS AI</h1>
+            </div>
+            <nav class="navigation">
+                <a href="booomerangs-smart-chat.html" class="nav-button">← Назад к чату</a>
+                <button class="nav-button active">🪃 Команда</button>
+            </nav>
+        </div>
+
+        <div class="main-layout">
+            <div class="chat-container">
+                <div class="chat-header">
+                    <h2 class="chat-title">🪃 Командный чат BOOOMERANGS</h2>
+                    <div class="status-indicator">
+                        <div class="status-dot"></div>
+                        Подключено
+                    </div>
+                </div>
+
+                <div class="chat-messages" id="team-messages">
+                    <div class="welcome-message">
+                        🪃 Командный чат BOOOMERANGS готов!<br>
+                        <small style="color: #666; font-size: 0.9rem;">Напишите первое сообщение команде</small>
+                    </div>
+                </div>
+
+                <div class="chat-input-container">
+                    <textarea 
+                        class="chat-input" 
+                        id="team-input" 
+                        placeholder="Напишите сообщение команде BOOOMERANGS..." 
+                        rows="1"
+                    ></textarea>
+                    <button class="send-button" id="send-btn">
+                        🪃 Отправить
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = 'mikhail'; // Пользователь по умолчанию
+
+        // Автоматическое изменение размера текстового поля
+        const teamInput = document.getElementById('team-input');
+        teamInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+        });
+
+        // Отправка сообщения
+        async function sendMessage() {
+            const content = teamInput.value.trim();
+            if (!content) return;
+
+            const sendBtn = document.getElementById('send-btn');
+            sendBtn.disabled = true;
+            sendBtn.textContent = 'Отправка...';
+
+            try {
+                // Добавляем сообщение в интерфейс
+                addMessageToChat(content, currentUser, new Date());
+                teamInput.value = '';
+                teamInput.style.height = 'auto';
+
+                // Отправляем на сервер
+                const response = await fetch('/api/team-chat/send', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        content: content,
+                        username: currentUser
+                    })
+                });
+
+                const data = await response.json();
+                console.log('Сообщение отправлено:', data);
+
+            } catch (error) {
+                console.error('Ошибка отправки:', error);
+            } finally {
+                sendBtn.disabled = false;
+                sendBtn.innerHTML = '🪃 Отправить';
+            }
+        }
+
+        // Добавление сообщения в чат
+        function addMessageToChat(content, username, timestamp) {
+            const messagesContainer = document.getElementById('team-messages');
+            
+            // Удаляем приветственное сообщение при первом сообщении
+            const welcomeMsg = messagesContainer.querySelector('.welcome-message');
+            if (welcomeMsg) {
+                welcomeMsg.remove();
+            }
+
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${username === currentUser ? 'user' : 'team'}`;
+
+            const time = new Date(timestamp).toLocaleTimeString('ru-RU', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            messageDiv.innerHTML = `
+                <div>
+                    <div style="font-size: 12px; opacity: 0.7; margin-bottom: 4px;">
+                        ${username} • ${time}
+                    </div>
+                    <div>${content}</div>
+                </div>
+            `;
+
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Загрузка истории сообщений
+        async function loadMessages() {
+            try {
+                const response = await fetch('/api/team-chat/messages');
+                const data = await response.json();
+
+                if (data.success && data.messages.length > 0) {
+                    const messagesContainer = document.getElementById('team-messages');
+                    const welcomeMsg = messagesContainer.querySelector('.welcome-message');
+                    if (welcomeMsg) welcomeMsg.remove();
+
+                    data.messages.forEach(message => {
+                        addMessageToChat(message.content, message.username, message.created_at);
+                    });
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки сообщений:', error);
+            }
+        }
+
+        // Обработчики событий
+        document.getElementById('send-btn').addEventListener('click', sendMessage);
+
+        teamInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // Загрузка сообщений при запуске
+        loadMessages();
+
+        // Обновление каждые 3 секунды
+        setInterval(loadMessages, 3000);
+
+        console.log('🪃 Командный чат BOOOMERANGS запущен');
+    </script>
+</body>
+</html>
