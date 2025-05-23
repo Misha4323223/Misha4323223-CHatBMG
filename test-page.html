@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Тест - Командный чат</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 50px;
+      background: #f0f0f0;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #333;
+      text-align: center;
+    }
+    #messages {
+      height: 300px;
+      border: 1px solid #ddd;
+      padding: 10px;
+      overflow-y: auto;
+      margin: 20px 0;
+      background: #fafafa;
+    }
+    input[type="text"] {
+      width: 70%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    button {
+      width: 25%;
+      padding: 10px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🪃 Тест - Командный чат BOOOMERANGS</h1>
+    
+    <div id="messages">
+      <p>Добро пожаловать в тестовый командный чат!</p>
+      <p>Если вы видите это сообщение, значит страница загружается правильно.</p>
+    </div>
+    
+    <div>
+      <input type="text" id="messageInput" placeholder="Напишите сообщение...">
+      <button onclick="sendMessage()">Отправить</button>
+    </div>
+    
+    <div style="margin-top: 20px; padding: 10px; background: #e8f5e8; border-radius: 5px;">
+      <strong>Статус:</strong> <span id="status">Загружается...</span>
+    </div>
+  </div>
+
+  <script>
+    console.log('🪃 Тестовая страница загружена');
+    
+    document.getElementById('status').textContent = 'Готов к работе';
+    
+    function sendMessage() {
+      const input = document.getElementById('messageInput');
+      const messages = document.getElementById('messages');
+      const message = input.value.trim();
+      
+      if (!message) return;
+      
+      // Добавляем сообщение в интерфейс
+      const messageDiv = document.createElement('div');
+      messageDiv.style.cssText = 'margin: 5px 0; padding: 8px; background: #e3f2fd; border-radius: 4px;';
+      messageDiv.innerHTML = `<strong>mikhail:</strong> ${message}`;
+      messages.appendChild(messageDiv);
+      
+      // Очищаем поле ввода
+      input.value = '';
+      
+      // Прокручиваем вниз
+      messages.scrollTop = messages.scrollHeight;
+      
+      // Отправляем на сервер
+      fetch('/api/team-chat/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: message, username: 'mikhail' })
+      })
+      .then(response => response.json())
+      .then(data => {
+        console.log('✅ Сообщение отправлено:', data);
+        document.getElementById('status').textContent = 'Сообщение отправлено успешно';
+      })
+      .catch(error => {
+        console.error('❌ Ошибка:', error);
+        document.getElementById('status').textContent = 'Ошибка отправки сообщения';
+      });
+    }
+    
+    // Обработка Enter
+    document.getElementById('messageInput').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        sendMessage();
+      }
+    });
+    
+    // Загрузка сообщений
+    function loadMessages() {
+      fetch('/api/team-chat/messages')
+      .then(response => response.json())
+      .then(data => {
+        if (data.success && data.messages.length > 0) {
+          const messages = document.getElementById('messages');
+          // Добавляем только новые сообщения
+          data.messages.forEach(msg => {
+            const messageDiv = document.createElement('div');
+            messageDiv.style.cssText = 'margin: 5px 0; padding: 8px; background: #f0f8ff; border-radius: 4px;';
+            messageDiv.innerHTML = `<strong>${msg.username}:</strong> ${msg.content}`;
+            messages.appendChild(messageDiv);
+          });
+          messages.scrollTop = messages.scrollHeight;
+        }
+      })
+      .catch(error => {
+        console.error('❌ Ошибка загрузки:', error);
+      });
+    }
+    
+    // Загружаем сообщения при запуске
+    loadMessages();
+    
+    console.log('✅ Тестовая страница готова к работе');
+  </script>
+</body>
+</html>
