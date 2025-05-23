@@ -68,6 +68,7 @@
             display: flex;
             flex-direction: column;
             height: 100vh;
+            max-height: 100vh;
             max-width: 100%;
             overflow: hidden;
         }
@@ -218,7 +219,7 @@
         /* Стили для чата */
         .chat-container {
             display: flex;
-            height: 100%;
+            height: calc(100vh - 120px);
             background: rgba(25, 25, 25, 0.95);
             backdrop-filter: blur(10px);
         }
@@ -442,7 +443,7 @@
 
         .message-input {
             flex: 1;
-            padding: 16px 24px;
+            padding: 12px 18px;
             border: 2px solid var(--border-light);
             border-radius: 8px;
             background: var(--primary);
@@ -450,8 +451,7 @@
             font-size: 1rem;
             outline: none;
             resize: none;
-            min-height: 56px;
-            max-height: 120px;
+            height: 56px;
             font-family: 'Montserrat', sans-serif;
             font-weight: 500;
             transition: all 0.3s ease;
@@ -471,18 +471,18 @@
         }
 
         .send-button {
-            padding: 16px 32px;
+            padding: 12px 24px;
             background: var(--gradient-accent);
             color: var(--text);
             border: 2px solid var(--accent);
             border-radius: 8px;
             cursor: pointer;
             font-weight: 700;
-            font-size: 1rem;
+            font-size: 0.9rem;
             text-transform: uppercase;
             letter-spacing: 1px;
             transition: all 0.3s ease;
-            min-height: 56px;
+            height: 56px;
             display: flex;
             align-items: center;
             justify-content: center;
