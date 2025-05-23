@@ -228,21 +228,22 @@
 
         .sidebar-toggle {
             position: absolute;
-            top: 10px;
-            left: 10px;
-            width: 40px;
-            height: 40px;
+            top: 15px;
+            left: 15px;
+            width: 45px;
+            height: 45px;
             background: var(--accent);
             border: none;
             border-radius: 8px;
             color: white;
-            font-size: 18px;
+            font-size: 20px;
             cursor: pointer;
-            z-index: 100;
+            z-index: 1000;
             transition: all 0.3s ease;
             display: flex;
             align-items: center;
             justify-content: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         }
 
         .sidebar-toggle:hover {
@@ -1072,11 +1073,6 @@
             <!-- Вкладка чата -->
             <div id="chat-content" class="tab-content active">
                 <div class="chat-container">
-                    <!-- Кнопка переключения боковой панели -->
-                    <button class="sidebar-toggle" onclick="toggleSidebar()" title="Показать/скрыть историю чатов">
-                        📋
-                    </button>
-                    
                     <!-- Боковая панель с историей -->
                     <div class="chat-sidebar">
                         <div class="sidebar-header">
