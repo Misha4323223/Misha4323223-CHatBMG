@@ -2138,7 +2138,12 @@
         // Очищаем текущий чат
         chatMessages.innerHTML = '';
         
-        // Загружаем сообщения новой сессии
+        // Загружаем сообщения новой сессии только если не активна вкладка команды
+        if (currentTab === 'team') {
+          console.log('⚠️ Вкладка команды активна, пропускаем загрузку истории чата');
+          return;
+        }
+        
         try {
           const response = await fetch(`/api/chat/sessions/${sessionId}/messages`);
           if (response.ok) {
