@@ -266,14 +266,15 @@
             try {
                 console.log('Отправляем запрос напрямую в Python G4F...');
                 
-                // Прямой запрос к Python G4F
-                const response = await fetch('http://localhost:5004/python/chat?provider=AIChatFree', {
+                // Запрос к основному серверу с FreeChat Enhanced провайдером
+                const response = await fetch('/api/g4f/chat', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        message: message
+                        message: message,
+                        provider: 'freechat'
                     })
                 });
                 
