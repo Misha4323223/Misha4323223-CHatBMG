@@ -48,6 +48,8 @@
             display: flex;
             flex-direction: column;
             height: 100vh;
+            max-width: 100%;
+            overflow: hidden;
         }
 
         .header {
@@ -463,28 +465,278 @@
             animation: fadeIn 0.3s ease-out;
         }
 
-        /* Адаптивность */
-        @media (max-width: 768px) {
+        /* Полная адаптивность для всех устройств */
+        
+        /* Большие экраны (Desktop) */
+        @media (min-width: 1200px) {
+            .container {
+                max-width: 1400px;
+                margin: 0 auto;
+            }
+            
             .header {
-                padding: 12px 20px;
+                padding: 20px 40px;
+            }
+            
+            .chat-container {
+                padding: 30px;
+            }
+            
+            .message-input {
+                font-size: 1.1rem;
+                padding: 16px 20px;
+            }
+        }
+        
+        /* Планшеты (Tablet) */
+        @media (max-width: 1024px) and (min-width: 769px) {
+            .header {
+                padding: 16px 30px;
             }
             
             .logo {
-                font-size: 1.5rem;
+                font-size: 1.8rem;
             }
             
             .nav-tab {
-                padding: 10px 16px;
+                padding: 12px 20px;
+                font-size: 1rem;
+            }
+            
+            .chat-container {
+                padding: 25px;
+            }
+            
+            .message-input {
+                padding: 14px 18px;
+                font-size: 1rem;
+            }
+            
+            .send-button {
+                padding: 14px 24px;
+            }
+        }
+        
+        /* Мобильные устройства (Mobile) */
+        @media (max-width: 768px) {
+            .container {
+                height: 100vh;
+                height: 100dvh; /* Для новых браузеров */
+            }
+            
+            .header {
+                padding: 12px 16px;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+            
+            .logo {
+                font-size: 1.4rem;
+                flex: 1;
+                min-width: 200px;
+            }
+            
+            .navigation {
+                width: 100%;
+                order: 2;
+                justify-content: space-around;
+                background: rgba(60, 60, 60, 0.8);
+                padding: 8px;
+                border-radius: 12px;
+                margin-top: 8px;
+            }
+            
+            .nav-tab {
+                padding: 10px 12px;
+                font-size: 0.85rem;
+                flex: 1;
+                text-align: center;
+                margin: 0 2px;
+                min-height: 44px; /* Для лучшего касания */
+            }
+            
+            .nav-tab span {
+                font-size: 0.8rem;
+            }
+            
+            .chat-container {
+                padding: 15px;
+                padding-bottom: 20px;
+            }
+            
+            .messages-container {
+                padding: 10px;
+            }
+            
+            .message {
+                max-width: 85%;
+                padding: 12px 16px;
+                margin-bottom: 8px;
                 font-size: 0.9rem;
             }
             
             .input-container {
                 flex-direction: column;
                 gap: 12px;
+                padding: 15px;
+                background: rgba(40, 40, 40, 0.95);
+                border-radius: 15px 15px 0 0;
+            }
+            
+            .message-input {
+                min-height: 48px; /* Увеличиваем для мобильных */
+                font-size: 16px; /* Предотвращает зум в iOS */
+                padding: 12px 16px;
+                border-radius: 12px;
+            }
+            
+            .send-button {
+                width: 100%;
+                padding: 14px;
+                font-size: 1rem;
+                min-height: 48px;
+                border-radius: 12px;
+            }
+            
+            .sessions-sidebar {
+                width: 280px; /* Уменьшаем для мобильных */
+            }
+            
+            .session-item {
+                padding: 12px;
+                font-size: 0.9rem;
+            }
+            
+            /* Улучшения для генератора изображений */
+            .generator-form {
+                padding: 20px;
+                margin-bottom: 15px;
+            }
+            
+            .form-input {
+                padding: 12px 14px;
+                font-size: 16px; /* Предотвращает зум */
+                border-radius: 10px;
+            }
+            
+            .form-label {
+                font-size: 1rem;
+                margin-bottom: 6px;
+            }
+        }
+        
+        /* Очень маленькие экраны */
+        @media (max-width: 480px) {
+            .header {
+                padding: 10px 12px;
+            }
+            
+            .logo {
+                font-size: 1.2rem;
+            }
+            
+            .nav-tab {
+                padding: 8px 6px;
+                font-size: 0.75rem;
+            }
+            
+            .nav-tab span {
+                font-size: 0.7rem;
+            }
+            
+            .chat-container {
+                padding: 10px;
+            }
+            
+            .message {
+                max-width: 90%;
+                padding: 10px 12px;
+                font-size: 0.85rem;
+            }
+            
+            .input-container {
+                padding: 12px;
+                gap: 10px;
             }
             
             .message-input {
                 min-height: 44px;
+                padding: 10px 14px;
+            }
+            
+            .send-button {
+                padding: 12px;
+                min-height: 44px;
+            }
+            
+            .sessions-sidebar {
+                width: 260px;
+            }
+        }
+        
+        /* Ландшафтная ориентация на мобильных */
+        @media (max-width: 768px) and (orientation: landscape) {
+            .header {
+                padding: 8px 16px;
+            }
+            
+            .navigation {
+                margin-top: 4px;
+                padding: 6px;
+            }
+            
+            .nav-tab {
+                padding: 6px 10px;
+                min-height: 36px;
+            }
+            
+            .chat-container {
+                padding: 12px;
+            }
+            
+            .input-container {
+                padding: 10px;
+            }
+        }
+        
+        /* Hover эффекты только для устройств с мышью */
+        @media (hover: hover) {
+            .nav-tab:hover {
+                background: rgba(108, 108, 108, 0.8);
+                transform: translateY(-2px);
+            }
+            
+            .send-button:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 20px rgba(255, 215, 0, 0.4);
+            }
+            
+            .message:hover {
+                transform: translateY(-1px);
+            }
+        }
+        
+        /* Улучшения для сенсорных устройств */
+        @media (pointer: coarse) {
+            .nav-tab {
+                min-height: 44px;
+                min-width: 44px;
+            }
+            
+            .send-button {
+                min-height: 48px;
+                min-width: 48px;
+            }
+            
+            .session-item {
+                min-height: 44px;
+                padding: 12px;
+            }
+            
+            .delete-session {
+                min-height: 36px;
+                min-width: 36px;
+                padding: 8px;
             }
         }
     </style>

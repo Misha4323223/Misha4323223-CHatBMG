@@ -186,10 +186,223 @@
       background: rgba(255, 215, 0, 0.7);
     }
 
-    /* Адаптивность */
+    /* Полная адаптивность для всех устройств */
+    
+    /* Большие экраны (Desktop) */
+    @media (min-width: 1200px) {
+      .main-container {
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+      
+      .messages-container {
+        padding: 30px;
+      }
+      
+      .message {
+        font-size: 1.1rem;
+        padding: 16px 20px;
+      }
+      
+      .input-container {
+        padding: 25px 30px;
+      }
+      
+      .message-input {
+        font-size: 1.1rem;
+        padding: 16px 20px;
+      }
+    }
+    
+    /* Планшеты (Tablet) */
+    @media (max-width: 1024px) and (min-width: 769px) {
+      .messages-container {
+        padding: 25px;
+      }
+      
+      .message {
+        font-size: 1rem;
+        padding: 14px 18px;
+        max-width: 80%;
+      }
+      
+      .input-container {
+        padding: 20px 25px;
+      }
+      
+      .message-input {
+        padding: 14px 18px;
+        font-size: 1rem;
+      }
+      
+      .send-button {
+        padding: 14px 24px;
+      }
+    }
+    
+    /* Мобильные устройства (Mobile) */
     @media (max-width: 768px) {
+      .main-container {
+        height: 100vh;
+        height: 100dvh; /* Для новых браузеров */
+      }
+      
+      .chat-area {
+        height: 100vh;
+        height: 100dvh;
+      }
+      
+      .messages-container {
+        padding: 15px;
+        flex: 1;
+      }
+      
       .message {
         max-width: 85%;
+        font-size: 0.9rem;
+        padding: 12px 16px;
+        margin-bottom: 10px;
+      }
+      
+      .message.user {
+        margin-left: 10%;
+      }
+      
+      .message.ai {
+        margin-right: 10%;
+      }
+      
+      .input-container {
+        padding: 15px;
+        gap: 12px;
+        background: rgba(50, 50, 50, 0.95);
+        backdrop-filter: blur(10px);
+      }
+      
+      .message-input {
+        min-height: 48px; /* Увеличиваем для мобильных */
+        font-size: 16px; /* Предотвращает зум в iOS */
+        padding: 12px 16px;
+        border-radius: 12px;
+      }
+      
+      .send-button {
+        min-height: 48px;
+        padding: 12px 20px;
+        font-size: 1rem;
+        border-radius: 12px;
+      }
+      
+      .welcome-message {
+        padding: 30px 15px;
+        font-size: 1rem;
+        margin: 15px 0;
+      }
+      
+      /* Скрываем скроллбар на мобильных для экономии места */
+      .messages-container::-webkit-scrollbar {
+        width: 3px;
+      }
+    }
+    
+    /* Очень маленькие экраны */
+    @media (max-width: 480px) {
+      .messages-container {
+        padding: 12px;
+      }
+      
+      .message {
+        max-width: 90%;
+        font-size: 0.85rem;
+        padding: 10px 14px;
+        margin-bottom: 8px;
+      }
+      
+      .input-container {
+        padding: 12px;
+        gap: 10px;
+      }
+      
+      .message-input {
+        min-height: 44px;
+        padding: 10px 14px;
+        font-size: 16px;
+      }
+      
+      .send-button {
+        min-height: 44px;
+        padding: 10px 16px;
+        font-size: 0.9rem;
+      }
+      
+      .welcome-message {
+        padding: 20px 12px;
+        font-size: 0.9rem;
+        margin: 10px 0;
+      }
+    }
+    
+    /* Ландшафтная ориентация на мобильных */
+    @media (max-width: 768px) and (orientation: landscape) {
+      .messages-container {
+        padding: 10px 15px;
+      }
+      
+      .input-container {
+        padding: 10px 15px;
+        gap: 8px;
+      }
+      
+      .message-input {
+        min-height: 40px;
+        padding: 8px 14px;
+      }
+      
+      .send-button {
+        min-height: 40px;
+        padding: 8px 16px;
+      }
+      
+      .welcome-message {
+        padding: 15px;
+        margin: 10px 0;
+      }
+    }
+    
+    /* Hover эффекты только для устройств с мышью */
+    @media (hover: hover) {
+      .send-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(255, 215, 0, 0.4);
+      }
+      
+      .message:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(255, 215, 0, 0.2);
+      }
+    }
+    
+    /* Улучшения для сенсорных устройств */
+    @media (pointer: coarse) {
+      .send-button {
+        min-height: 48px;
+        min-width: 48px;
+        padding: 12px 20px;
+      }
+      
+      .message-input {
+        min-height: 48px;
+        padding: 12px 16px;
+      }
+      
+      /* Увеличиваем область касания для сообщений */
+      .message {
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      
+      .message:active {
+        transform: scale(0.98);
       }
     }
   </style>
