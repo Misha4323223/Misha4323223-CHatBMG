@@ -5,7 +5,9 @@ import { setupWebSocket } from "./ws";
 import { setupProxyMiddleware } from "./middleware/proxy";
 import { authMiddleware } from "./middleware/auth";
 import { z } from "zod";
-import { authSchema, messageSchema } from "@shared/schema";
+import { authSchema, messageSchema, teamMessages } from "@shared/schema";
+import { db } from "./db";
+import { eq, and, desc, gt, count } from "drizzle-orm";
 
 // Импортируем модули для работы с изображениями и AI провайдерами
 import * as path from 'path';
@@ -1359,6 +1361,115 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
     } catch (error) {
       console.error("Send message error:", error);
       return res.status(500).json({ message: "Server error while sending message" });
+    }
+  });
+
+  // ==================== КОМАНДНЫЙ ЧАТ BOOOMERANGS ====================
+  
+  // Получение сообщений командного чата
+  app.get("/api/team-chat/messages", async (req, res) => {
+    try {
+      const { after } = req.query;
+      const afterId = after ? parseInt(after as string) : 0;
+      
+      const query = db
+        .select()
+        .from(teamMessages)
+        .orderBy(desc(teamMessages.createdAt));
+      
+      // Если указан after, получаем только новые сообщения
+      if (afterId > 0) {
+        query.where(gt(teamMessages.id, afterId));
+      } else {
+        // Иначе получаем последние 50 сообщений
+        query.limit(50);
+      }
+      
+      const messages = await query;
+      
+      res.json({
+        success: true,
+        messages: messages.reverse() // Показываем в хронологическом порядке
+      });
+    } catch (error) {
+      console.error("❌ Ошибка получения сообщений командного чата:", error);
+      res.status(500).json({
+        success: false,
+        error: "Ошибка получения сообщений"
+      });
+    }
+  });
+
+  // Отправка сообщения в командный чат
+  app.post("/api/team-chat/messages", async (req, res) => {
+    try {
+      const { content, username, userId } = req.body;
+      
+      if (!content || !content.trim()) {
+        return res.status(400).json({
+          success: false,
+          error: "Сообщение не может быть пустым"
+        });
+      }
+
+      if (!username) {
+        return res.status(400).json({
+          success: false,
+          error: "Имя пользователя обязательно"
+        });
+      }
+
+      // Сохраняем сообщение в базу данных
+      const [newMessage] = await db
+        .insert(teamMessages)
+        .values({
+          content: content.trim(),
+          username: username,
+          userId: userId || 1
+        })
+        .returning();
+
+      console.log(`💬 Новое сообщение в командном чате от ${username}: ${content.substring(0, 50)}...`);
+
+      res.json({
+        success: true,
+        message: newMessage
+      });
+    } catch (error) {
+      console.error("❌ Ошибка отправки сообщения в командный чат:", error);
+      res.status(500).json({
+        success: false,
+        error: "Ошибка отправки сообщения"
+      });
+    }
+  });
+
+  // Получение статистики командного чата
+  app.get("/api/team-chat/stats", async (req, res) => {
+    try {
+      const totalMessages = await db
+        .select({ count: count() })
+        .from(teamMessages);
+      
+      const recentUsers = await db
+        .selectDistinct({ username: teamMessages.username })
+        .from(teamMessages)
+        .orderBy(desc(teamMessages.createdAt))
+        .limit(10);
+
+      res.json({
+        success: true,
+        stats: {
+          totalMessages: totalMessages[0]?.count || 0,
+          recentUsers: recentUsers.map(u => u.username)
+        }
+      });
+    } catch (error) {
+      console.error("❌ Ошибка получения статистики командного чата:", error);
+      res.status(500).json({
+        success: false,
+        error: "Ошибка получения статистики"
+      });
     }
   });
 
