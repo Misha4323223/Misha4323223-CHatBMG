@@ -366,6 +366,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // API для удаления сессии чата
+  app.delete('/api/chat/sessions/:sessionId', async (req, res) => {
+    try {
+      const sessionId = parseInt(req.params.sessionId);
+      console.log(`🗑️ Удаляем сессию ${sessionId}...`);
+      
+      await chatHistory.deleteSession(sessionId);
+      console.log(`✅ Сессия ${sessionId} успешно удалена`);
+      
+      res.json({ success: true, message: 'Сессия удалена' });
+    } catch (error) {
+      console.error('Ошибка удаления сессии:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Не удалось удалить сессию' 
+      });
+    }
+  });
+
   // API для простой авторизации
   const { users, messages } = require('@shared/schema');
   const { eq } = require('drizzle-orm');
