@@ -411,9 +411,43 @@ async function getResponseFromProviders(message, analysis, options = {}) {
   };
 }
 
+/**
+ * Стриминговая версия маршрутизации сообщений
+ */
+async function routeMessageStreaming(message, options = {}, res) {
+  try {
+    // Отправляем информацию о начале обработки
+    res.write(`data: ${JSON.stringify({ provider: 'Обработка...', chunk: '' })}\n\n`);
+    
+    // Используем обычную функцию маршрутизации для получения ответа
+    const result = await routeMessage(message, options);
+    
+    if (result.success && result.response) {
+      // Разбиваем ответ на части для имитации стриминга
+      const text = result.response;
+      const chunkSize = 3; // Размер части для отправки
+      
+      res.write(`data: ${JSON.stringify({ provider: result.provider })}\n\n`);
+      
+      for (let i = 0; i < text.length; i += chunkSize) {
+        const chunk = text.slice(i, i + chunkSize);
+        res.write(`data: ${JSON.stringify({ chunk })}\n\n`);
+        
+        // Небольшая задержка для эффекта печати
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+    }
+    
+    return result;
+  } catch (error) {
+    res.write(`data: ${JSON.stringify({ error: error.message })}\n\n`);
+    throw error;
+  }
+}
+
 // API маршрут для обработки сообщений
 router.post('/message', async (req, res) => {
-  const { message, imageUrl, userId = 'anonymous' } = req.body;
+  const { message, imageUrl, userId = 'anonymous', stream = false } = req.body;
   
   if (!message && !imageUrl) {
     return res.status(400).json({
@@ -432,15 +466,41 @@ router.post('/message', async (req, res) => {
     
     console.log(`💭 Пользователь ${userId}: ${contextData.shouldContinueWithProvider ? 'продолжаем с ' + contextData.currentProvider : 'выбираем нового провайдера'}`);
     
-    // Маршрутизируем сообщение к подходящему провайдеру с учетом контекста
-    const result = await routeMessage(messageText, { 
-      imageUrl, 
-      userId,
-      context: contextData.context,
-      preferredProvider: contextData.shouldContinueWithProvider ? contextData.currentProvider : null
-    });
-    
-    res.json(result);
+    // Проверяем, запрошен ли стриминг
+    if (stream && req.headers.accept && req.headers.accept.includes('text/event-stream')) {
+      // Устанавливаем заголовки для Server-Sent Events
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      
+      try {
+        // Маршрутизируем сообщение с поддержкой стриминга
+        const result = await routeMessageStreaming(messageText, { 
+          imageUrl, 
+          userId,
+          context: contextData.context,
+          preferredProvider: contextData.shouldContinueWithProvider ? contextData.currentProvider : null
+        }, res);
+        
+        // Отправляем финальный сигнал
+        res.write(`data: ${JSON.stringify({ done: true, provider: result.provider })}\n\n`);
+        res.end();
+      } catch (error) {
+        res.write(`data: ${JSON.stringify({ error: error.message })}\n\n`);
+        res.end();
+      }
+    } else {
+      // Обычный режим без стриминга
+      const result = await routeMessage(messageText, { 
+        imageUrl, 
+        userId,
+        context: contextData.context,
+        preferredProvider: contextData.shouldContinueWithProvider ? contextData.currentProvider : null
+      });
+      
+      res.json(result);
+    }
   } catch (error) {
     console.error(`Ошибка при маршрутизации сообщения: ${error.message}`);
     

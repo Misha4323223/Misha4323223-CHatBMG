@@ -1613,48 +1613,55 @@
             // Fallback на обычный JSON если стриминг не поддерживается
             const data = await response.json();
           
-          // Если есть изображение, сбрасываем его после отправки
-          if (uploadedImageUrl) {
-            resetImageUpload();
-          }
-          
-          let aiResponse = '';
-          let provider = '';
-          let category = '';
-          
-          if (data.success) {
-            aiResponse = data.response || 'Ошибка получения ответа';
-            provider = data.provider || 'Неизвестно';
-            category = data.category || 'general';
-          } else {
-            aiResponse = data.error || 'Произошла ошибка при обработке запроса';
-            provider = 'Ошибка';
-          }
-          
-          // Удаляем "думающее" сообщение
-          chatMessages.removeChild(thinkingDiv);
-          
-          // Скрываем индикатор статуса
-          hideStatus();
-          
-          // Показываем полученный ответ
-          addMessage(aiResponse, false, { provider, category });
-          
-          // Сохраняем ответ AI в истории
-          try {
-            await saveMessageToHistory(aiResponse, 'ai', provider, category);
-            console.log(`✅ Ответ AI сохранен (${provider})`);
+            // Если есть изображение, сбрасываем его после отправки
+            if (uploadedImageUrl) {
+              resetImageUpload();
+            }
             
-            // Показываем краткое уведомление об успешном сохранении
-            showTemporarySaveNotification();
-          } catch (error) {
-            console.error('❌ Ошибка сохранения ответа AI:', error);
+            let aiResponse = '';
+            let provider = '';
+            let category = '';
+            
+            if (data.success) {
+              aiResponse = data.response || 'Ошибка получения ответа';
+              provider = data.provider || 'Неизвестно';
+              category = data.category || 'general';
+            } else {
+              aiResponse = data.error || 'Произошла ошибка при обработке запроса';
+              provider = 'Ошибка';
+            }
+            
+            // Удаляем "думающее" сообщение
+            if (thinkingDiv.parentNode) {
+              chatMessages.removeChild(thinkingDiv);
+            }
+            
+            // Скрываем индикатор статуса
+            hideStatus();
+            
+            // Показываем полученный ответ
+            addMessage(aiResponse, false, { provider, category });
+            
+            // Сохраняем ответ AI в истории
+            try {
+              await saveMessageToHistory(aiResponse, 'ai', provider, category);
+              console.log(`✅ Ответ AI сохранен (${provider})`);
+              
+              // Показываем краткое уведомление об успешном сохранении
+              showTemporarySaveNotification();
+            } catch (error) {
+              console.error('❌ Ошибка сохранения ответа AI:', error);
+            }
           }
         } catch (error) {
           console.error('Ошибка при отправке сообщения:', error);
           
-          // Удаляем "думающее" сообщение
-          chatMessages.removeChild(thinkingDiv);
+          // Удаляем "думающее" сообщение если оно есть
+          if (streamingDiv && streamingDiv.parentNode) {
+            chatMessages.removeChild(streamingDiv);
+          } else if (thinkingDiv && thinkingDiv.parentNode) {
+            chatMessages.removeChild(thinkingDiv);
+          }
           
           // Скрываем индикатор статуса
           hideStatus();
