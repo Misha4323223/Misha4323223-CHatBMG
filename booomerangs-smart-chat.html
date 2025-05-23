@@ -948,6 +948,92 @@
       // Переменная для хранения URL загруженного изображения
       let uploadedImageUrl = null;
       
+      // Переменные для сохранения истории чатов
+      let currentSessionId = null;
+      const userId = 1; // Временно используем фиксированный ID пользователя
+      
+      // Функции для работы с историей чатов
+      async function createNewChatSession() {
+        try {
+          const response = await fetch('/api/chat/sessions', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              userId: userId,
+              title: `Чат ${new Date().toLocaleDateString()}`
+            })
+          });
+          
+          const data = await response.json();
+          if (data.success) {
+            currentSessionId = data.session.id;
+            console.log('Создана новая сессия чата:', currentSessionId);
+          }
+        } catch (error) {
+          console.error('Ошибка создания сессии:', error);
+        }
+      }
+      
+      async function saveMessageToHistory(content, sender, provider = null, category = null) {
+        if (!currentSessionId) {
+          await createNewChatSession();
+        }
+        
+        try {
+          await fetch(`/api/chat/sessions/${currentSessionId}/messages`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              content,
+              sender,
+              provider,
+              category
+            })
+          });
+        } catch (error) {
+          console.error('Ошибка сохранения сообщения:', error);
+        }
+      }
+      
+      async function loadChatHistory() {
+        try {
+          const response = await fetch('/api/chat/sessions');
+          const data = await response.json();
+          
+          if (data.success && data.sessions.length > 0) {
+            // Загружаем последнюю сессию
+            const lastSession = data.sessions[0];
+            currentSessionId = lastSession.id;
+            
+            // Загружаем сообщения из последней сессии
+            const messagesResponse = await fetch(`/api/chat/sessions/${currentSessionId}/messages`);
+            const messagesData = await messagesResponse.json();
+            
+            if (messagesData.success && messagesData.messages.length > 0) {
+              // Восстанавливаем сообщения в интерфейсе
+              messagesData.messages.forEach(msg => {
+                addMessage(msg.content, msg.sender === 'user', {
+                  provider: msg.provider,
+                  category: msg.category
+                });
+              });
+              
+              console.log(`Восстановлена история чата: ${messagesData.messages.length} сообщений`);
+            }
+          } else {
+            // Если нет сессий, создаем новую
+            await createNewChatSession();
+          }
+        } catch (error) {
+          console.error('Ошибка загрузки истории:', error);
+          await createNewChatSession();
+        }
+      }
+      
       // Функции управления статусом процесса
       function showStatus(title, message) {
         statusTitle.textContent = title;
@@ -1027,6 +1113,9 @@
         
         // Добавляем сообщение пользователя
         addMessage(messageText, true);
+        
+        // Сохраняем сообщение пользователя в истории
+        await saveMessageToHistory(messageText, 'user');
         
         // Очищаем поле ввода
         chatInput.value = '';
