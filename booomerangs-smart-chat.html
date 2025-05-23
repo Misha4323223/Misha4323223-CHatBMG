@@ -202,6 +202,7 @@
       display: flex;
       gap: 16px;
       margin-top: 8px;
+      position: relative;
     }
     
     .sidebar {
@@ -215,19 +216,18 @@
       flex-shrink: 0;
       transition: all 0.3s ease;
       position: relative;
+      margin-left: 0;
     }
     
     .sidebar.hidden {
-      width: 0;
-      padding: 0;
+      margin-left: -296px;
       opacity: 0;
-      overflow: visible;
     }
     
     .sidebar-toggle {
-      position: fixed;
+      position: absolute;
       top: 50%;
-      left: 280px;
+      right: -20px;
       transform: translateY(-50%);
       background: #6c63ff;
       color: white;
@@ -246,10 +246,6 @@
       justify-content: center;
     }
     
-    .sidebar.hidden .sidebar-toggle {
-      left: 8px;
-    }
-    
     .sidebar-toggle:hover {
       background: #5a52d5;
       transform: translateY(-50%) scale(1.05);
@@ -258,6 +254,7 @@
     .chat-container {
       flex: 1;
       transition: all 0.3s ease;
+      min-width: 0;
     }
     
     .sidebar-header {
@@ -1683,12 +1680,8 @@
         // Меняем стрелку в зависимости от состояния
         if (sidebar.classList.contains('hidden')) {
           toggleBtn.textContent = '›';
-          toggleBtn.style.left = '8px';
-          toggleBtn.style.right = 'auto';
         } else {
           toggleBtn.textContent = '‹';
-          toggleBtn.style.left = 'auto';
-          toggleBtn.style.right = '-15px';
         }
       }
       
