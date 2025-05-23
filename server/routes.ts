@@ -210,6 +210,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.sendFile('booomerangs-smart-chat.html', { root: '.' });
   });
   
+  // Рабочая версия чата с прямым подключением к Python G4F
+  app.get('/working-chat', (req, res) => {
+    res.sendFile('booomerangs-working-chat.html', { root: '.' });
+  });
+  
   // Командный чат для переписки участников
   app.get('/team-chat', (req, res) => {
     res.sendFile('team-chat.html', { root: '.' });
