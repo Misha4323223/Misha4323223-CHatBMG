@@ -11,6 +11,7 @@ import AIChat from "@/pages/AIChat";
 import AIProviderChat from "@/pages/AIProviderChat";
 import ImageGeneratorSimple from "@/pages/ImageGeneratorSimple";
 import SmartChatPage from "@/pages/SmartChatPage";
+import SimpleAIChat from "@/pages/SimpleAIChat";
 import { useEffect } from "react";
 
 // Импортируем компонент навигации
@@ -52,7 +53,7 @@ function Router() {
           <Route path="/ai-chat" component={AIChat} />
           <Route path="/provider" component={AIProviderChat} />
           <Route path="/image-generator" component={ImageGeneratorSimple} />
-          <Route path="/smart-chat" component={Chat} />
+          <Route path="/smart-chat" component={SimpleAIChat} />
           <Route component={NotFound} />
         </Switch>
       </main>
