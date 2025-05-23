@@ -408,6 +408,18 @@
       border-color: #2563eb;
     }
     
+    .logout-btn {
+      background: #dc2626 !important;
+      border-color: #dc2626 !important;
+      color: white !important;
+    }
+    
+    .logout-btn:hover {
+      background: #b91c1c !important;
+      border-color: #b91c1c !important;
+      transform: translateY(-1px);
+    }
+    
     .chat-container {
       background-color: #1a1a2e;
       border-radius: 10px;
@@ -1860,6 +1872,41 @@
       window.deleteSession = deleteSession;
       window.switchToSession = switchToSession;
       window.toggleSidebar = toggleSidebar;
+      
+      // Функция выхода из профиля
+      window.logout = function() {
+        if (confirm('Вы уверены, что хотите выйти из профиля?')) {
+          // Очищаем все данные пользователя
+          localStorage.clear();
+          sessionStorage.clear();
+          
+          // Показываем уведомление о выходе
+          const notification = document.createElement('div');
+          notification.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            color: white;
+            padding: 20px 24px;
+            border-radius: 12px;
+            font-size: 1rem;
+            box-shadow: 0 8px 24px rgba(220, 38, 38, 0.4);
+            z-index: 1001;
+            text-align: center;
+            font-weight: 500;
+          `;
+          notification.innerHTML = '🚪 Выход из профиля...';
+          
+          document.body.appendChild(notification);
+          
+          // Перенаправляем на страницу входа через 1.5 секунды
+          setTimeout(() => {
+            window.location.href = '/login.html';
+          }, 1500);
+        }
+      };
     });
   </script>
 </body>
