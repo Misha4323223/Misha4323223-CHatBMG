@@ -2098,6 +2098,12 @@
         
         console.log(`🔄 Рендерим ${sessions.length} сессий:`, sessions.map(s => s.id));
         
+        // Не загружаем историю чата если активна вкладка команды
+        if (currentTab === 'team') {
+          console.log('⚠️ Вкладка команды активна, пропускаем загрузку истории чата');
+          return;
+        }
+        
         sessions.forEach(session => {
           const sessionElement = document.createElement('div');
           sessionElement.className = `chat-session ${session.id === currentSessionId ? 'active' : ''}`;
