@@ -468,11 +468,12 @@
     .nav-button {
       padding: 8px 16px;
       background: linear-gradient(135deg, 
-        rgba(75, 75, 75, 0.8) 0%,
-        rgba(95, 95, 95, 0.8) 100%);
-      border: 1px solid rgba(255, 255, 255, 0.15);
+        rgba(108, 108, 108, 0.8) 0%,
+        rgba(138, 138, 138, 0.8) 50%,
+        rgba(108, 108, 108, 0.8) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.2);
       border-radius: 10px;
-      color: var(--text);
+      color: white;
       font-weight: 500;
       font-size: 0.9rem;
       cursor: pointer;
@@ -481,52 +482,87 @@
       backdrop-filter: blur(5px);
       box-shadow: 
         0 4px 12px rgba(0, 0, 0, 0.15),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
     }
     
     .nav-button:hover {
       background: linear-gradient(135deg, 
-        rgba(95, 95, 95, 0.9) 0%,
-        rgba(115, 115, 115, 0.9) 100%);
-      color: white;
-      border-color: rgba(255, 255, 255, 0.3);
+        rgba(122, 122, 122, 0.9) 0%,
+        rgba(154, 154, 154, 0.9) 50%,
+        rgba(122, 122, 122, 0.9) 100%);
+      border-color: rgba(255, 255, 255, 0.4);
       transform: translateY(-1px);
       box-shadow: 
         0 8px 20px rgba(0, 0, 0, 0.2),
         0 0 0 1px rgba(255, 255, 255, 0.1),
-        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
     }
     
     .nav-button.active {
       background: linear-gradient(135deg, 
-        rgba(108, 108, 108, 0.9) 0%,
+        rgba(138, 138, 138, 0.9) 0%,
+        rgba(158, 158, 158, 0.9) 50%,
         rgba(138, 138, 138, 0.9) 100%);
-      color: white;
-      border-color: rgba(255, 255, 255, 0.4);
+      border-color: rgba(255, 255, 255, 0.5);
       box-shadow: 
         0 8px 25px rgba(0, 0, 0, 0.3),
-        0 0 0 2px rgba(255, 255, 255, 0.2),
-        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        0 0 0 2px rgba(255, 255, 255, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.4);
     }
     
     .logout-btn {
       background: linear-gradient(135deg, 
-        rgba(180, 50, 50, 0.8) 0%,
-        rgba(200, 70, 70, 0.8) 100%) !important;
-      border-color: rgba(255, 255, 255, 0.2) !important;
-      color: white !important;
+        #ffd700 0%,
+        #ffed4e 25%,
+        #ffc107 50%,
+        #ffb300 75%,
+        #ff8f00 100%) !important;
+      border: 2px solid #ffd700 !important;
+      color: #8b4513 !important;
+      font-weight: 700 !important;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+      box-shadow: 
+        0 6px 20px rgba(255, 215, 0, 0.4),
+        0 0 30px rgba(255, 215, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6),
+        inset 0 -1px 0 rgba(255, 193, 7, 0.8) !important;
+      position: relative !important;
+      overflow: hidden !important;
+    }
+    
+    .logout-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, 
+        transparent,
+        rgba(255, 255, 255, 0.4),
+        transparent);
+      transition: left 0.6s ease;
     }
     
     .logout-btn:hover {
       background: linear-gradient(135deg, 
-        rgba(200, 60, 60, 0.9) 0%,
-        rgba(220, 80, 80, 0.9) 100%) !important;
-      border-color: rgba(255, 255, 255, 0.4) !important;
-      transform: translateY(-2px);
+        #ffed4e 0%,
+        #fff176 25%,
+        #ffd54f 50%,
+        #ffca28 75%,
+        #ffa000 100%) !important;
+      border-color: #ffed4e !important;
+      transform: translateY(-2px) scale(1.02);
       box-shadow: 
-        0 8px 20px rgba(180, 50, 50, 0.4),
-        0 0 0 2px rgba(255, 255, 255, 0.1),
-        inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+        0 12px 30px rgba(255, 215, 0, 0.6),
+        0 0 40px rgba(255, 215, 0, 0.5),
+        0 0 0 3px rgba(255, 215, 0, 0.3),
+        inset 0 2px 0 rgba(255, 255, 255, 0.8),
+        inset 0 -2px 0 rgba(255, 193, 7, 0.9) !important;
+    }
+    
+    .logout-btn:hover::before {
+      left: 100%;
     }
     
     .chat-container {
