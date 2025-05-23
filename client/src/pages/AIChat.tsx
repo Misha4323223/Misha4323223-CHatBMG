@@ -411,7 +411,7 @@ export default function AIChat() {
                         boxShadow: '0 4px 15px -3px rgba(59, 130, 246, 0.3)'
                       }}
                     >
-                      <p className="text-[15px] whitespace-pre-wrap">{message.text}</p>
+                      <p className="text-[15px] whitespace-pre-wrap">{message.text || `[ОТЛАДКА: text="${message.text}", content="${(message as any).content}"]`}</p>
                       <div 
                         className="absolute w-3 h-3 transform rotate-45 z-[-1]"
                         style={{
@@ -440,7 +440,7 @@ export default function AIChat() {
                           {message.backupInfo}
                         </div>
                       )}
-                      <p className="text-[15px] text-gray-800 whitespace-pre-wrap">{message.text}</p>
+                      <p className="text-[15px] text-gray-800 whitespace-pre-wrap">{message.text || `[ОТЛАДКА: text="${message.text}", content="${(message as any).content}"]`}</p>
                       <div 
                         className="absolute w-3 h-3 transform rotate-45 z-[-1]"
                         style={{
