@@ -1750,5 +1750,44 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
 </html>`);
   });
 
+  // API для отправки сообщений в командный чат
+  app.post('/api/team-chat/send', async (req, res) => {
+    try {
+      const { content, username } = req.body;
+      
+      if (!content || !username) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Отсутствует содержимое сообщения или имя пользователя' 
+        });
+      }
+
+      // Сохраняем сообщение в базе данных
+      const insertQuery = `
+        INSERT INTO team_messages (content, username, created_at) 
+        VALUES ($1, $2, NOW()) 
+        RETURNING *
+      `;
+      
+      const result = await pool.query(insertQuery, [content, username]);
+      const savedMessage = result.rows[0];
+
+      console.log(`✅ Сообщение сохранено в командный чат: ${username}: ${content}`);
+
+      res.json({
+        success: true,
+        message: savedMessage,
+        status: 'Сообщение отправлено в командный чат'
+      });
+
+    } catch (error) {
+      console.error('❌ Ошибка отправки сообщения в командный чат:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Ошибка сервера при отправке сообщения' 
+      });
+    }
+  });
+
   return httpServer;
 }
