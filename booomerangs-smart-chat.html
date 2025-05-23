@@ -1706,31 +1706,114 @@
       </div>
       
       <!-- Контейнер для командного чата -->
-      <div class="tab-content" id="team-content" style="display: none;">
-        <div class="team-chat-container">
-          <div class="team-header">
-            <h2>🪃 Командный чат BOOOMERANGS</h2>
-            <div class="team-status">
-              <span class="status-dot" id="team-status-dot"></span>
+      <div class="tab-content" id="team-content" style="display: none; width: 100%; height: 100%; padding: 20px;">
+        <div class="team-chat-container" style="
+          display: flex;
+          flex-direction: column;
+          height: 100%;
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(243, 244, 246, 0.95) 100%);
+          border-radius: 20px;
+          border: 1px solid rgba(209, 213, 219, 0.3);
+          overflow: hidden;
+        ">
+          <div class="team-header" style="
+            padding: 24px;
+            background: linear-gradient(135deg, rgba(108, 108, 108, 0.4) 0%, rgba(138, 138, 138, 0.4) 100%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+          ">
+            <h2 style="
+              background: linear-gradient(135deg, #ffd700, #ffb300);
+              -webkit-background-clip: text;
+              -webkit-text-fill-color: transparent;
+              margin: 0;
+              font-size: 1.8rem;
+              font-weight: 800;
+            ">🪃 Командный чат BOOOMERANGS</h2>
+            <div class="team-status" style="
+              display: flex;
+              align-items: center;
+              gap: 10px;
+              font-size: 1rem;
+              color: #374151;
+              font-weight: 600;
+            ">
+              <span class="status-dot" id="team-status-dot" style="
+                width: 12px;
+                height: 12px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, #10b981, #059669);
+                box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+              "></span>
               <span id="team-status-text">Подключено</span>
             </div>
           </div>
           
-          <div class="team-messages-container" id="team-messages">
-            <div class="loading-team" id="team-loading">
+          <div class="team-messages-container" id="team-messages" style="
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            background: rgba(249, 250, 251, 0.5);
+          ">
+            <div class="loading-team" id="team-loading" style="
+              text-align: center;
+              padding: 60px 20px;
+              color: #6b7280;
+              font-style: italic;
+              font-size: 1.1rem;
+            ">
               Загрузка истории командного чата...
             </div>
           </div>
           
-          <div class="team-input-container">
-            <form id="team-message-form" class="team-input-form">
+          <div class="team-input-container" style="
+            padding: 24px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(249, 250, 251, 0.95) 100%);
+            border-top: 1px solid rgba(209, 213, 219, 0.4);
+          ">
+            <form id="team-message-form" class="team-input-form" style="
+              display: flex;
+              gap: 16px;
+              align-items: flex-end;
+            ">
               <textarea 
                 id="team-message-input" 
                 class="team-message-input" 
                 placeholder="Напишите сообщение команде BOOOMERANGS..."
                 rows="1"
+                style="
+                  flex: 1;
+                  padding: 16px 20px;
+                  border: 2px solid rgba(209, 213, 219, 0.6);
+                  border-radius: 16px;
+                  font-size: 1rem;
+                  background: rgba(255, 255, 255, 0.9);
+                  transition: all 0.3s ease;
+                  resize: none;
+                  min-height: 56px;
+                  max-height: 140px;
+                  font-family: inherit;
+                  line-height: 1.5;
+                "
               ></textarea>
-              <button type="submit" class="team-send-button">
+              <button type="submit" class="team-send-button" style="
+                padding: 16px 24px;
+                background: linear-gradient(135deg, #ffd700 0%, #ffb300 50%, #ff8f00 100%);
+                color: #8b4513;
+                border: none;
+                border-radius: 16px;
+                font-weight: 800;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                font-size: 1rem;
+                box-shadow: 0 6px 16px rgba(255, 215, 0, 0.4);
+                white-space: nowrap;
+              ">
                 🪃 Отправить
               </button>
             </form>
