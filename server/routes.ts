@@ -329,17 +329,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Сохранение сообщения
+  // Сохранение сообщения и получение ответа от AI
   app.post('/api/chat/messages', async (req, res) => {
     try {
-      const messageData = req.body;
-      const message = await chatHistory.saveMessage(messageData);
-      res.json({ success: true, message });
+      const { message, sessionId, userId } = req.body;
+      
+      // Сохраняем сообщение пользователя
+      const userMessageData = {
+        sessionId: sessionId,
+        content: message,
+        sender: 'user',
+        userId: userId
+      };
+      
+      const userMessage = await chatHistory.saveMessage(userMessageData);
+      
+      // Получаем ответ от AI провайдера
+      const smartRouter = require('./smart-router.js');
+      const aiResponse = await smartRouter.getChatResponse(message);
+      
+      if (aiResponse.success) {
+        // Сохраняем ответ AI
+        const aiMessageData = {
+          sessionId: sessionId,
+          content: aiResponse.response,
+          sender: 'ai',
+          provider: aiResponse.provider,
+          userId: userId
+        };
+        
+        const aiMessage = await chatHistory.saveMessage(aiMessageData);
+        
+        res.json({ 
+          success: true, 
+          response: aiResponse.response,
+          provider: aiResponse.provider 
+        });
+      } else {
+        res.json({ 
+          success: false, 
+          error: aiResponse.error || 'Ошибка получения ответа от AI' 
+        });
+      }
+      
     } catch (error) {
-      console.error('Ошибка сохранения сообщения:', error);
+      console.error('Ошибка обработки сообщения:', error);
       res.status(500).json({ 
         success: false, 
-        error: 'Не удалось сохранить сообщение' 
+        error: 'Не удалось обработать сообщение' 
       });
     }
   });
