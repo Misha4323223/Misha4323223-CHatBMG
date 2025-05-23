@@ -226,6 +226,11 @@
 
         /* Адаптивность для планшетов */
         @media (max-width: 1024px) {
+            .chat-sidebar {
+                display: flex !important;
+                width: 250px;
+            }
+            
             .chat-main {
                 max-width: 100%;
                 padding: 0 15px;
@@ -359,6 +364,8 @@
             padding: 15px;
             border-bottom: 1px solid var(--border);
             background: rgba(108, 108, 108, 0.1);
+            display: block;
+            width: 100%;
         }
 
         .sidebar-title {
