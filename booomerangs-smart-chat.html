@@ -1252,9 +1252,13 @@
           if (response.ok) {
             const data = await response.json();
             if (data.success && data.messages) {
+              console.log('📥 Загружено сообщений:', data.messages.length, data.messages);
               data.messages.forEach(msg => {
-                displayMessage(msg.text, msg.sender === 'user' ? 'user' : 'ai', msg.provider);
+                const messageText = msg.text || msg.content;
+                console.log('📝 Отображаем сообщение:', messageText);
+                displayMessage(messageText, msg.sender === 'user' ? 'user' : 'ai', msg.provider);
               });
+              console.log(`✅ Восстановлена история чата: ${data.messages.length} сообщений`);
             }
           }
         } catch (error) {
