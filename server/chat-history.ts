@@ -3,9 +3,27 @@ const { chatSessions, aiMessages } = require("@shared/schema");
 const { eq, desc } = require("drizzle-orm");
 
 /**
+ * Получение числового ID из имени пользователя (хеш-функция)
+ */
+function getUserIdFromName(username: string): number {
+  // Простая хеш-функция: сумма кодов символов
+  let numericId = 0;
+  for (let i = 0; i < username.length; i++) {
+    numericId += username.charCodeAt(i);
+  }
+  // Добавляем базовое число, чтобы ID были более разнообразными
+  return numericId + 1000;
+}
+
+/**
  * Создание новой сессии чата
  */
-async function createChatSession(userId: number, title: string) {
+async function createChatSession(username: any, title: string) {
+  // Преобразуем имя пользователя в числовой ID
+  const userId = typeof username === 'number' ? username : getUserIdFromName(String(username));
+  
+  console.log(`📝 Создание чат-сессии для пользователя ${username} (ID: ${userId})`);
+  
   const [session] = await db
     .insert(chatSessions)
     .values({
@@ -20,7 +38,12 @@ async function createChatSession(userId: number, title: string) {
 /**
  * Получение всех сессий пользователя
  */
-async function getUserChatSessions(userId) {
+async function getUserChatSessions(username: any) {
+  // Преобразуем имя пользователя в числовой ID
+  const userId = typeof username === 'number' ? username : getUserIdFromName(String(username));
+  
+  console.log(`📋 Получение всех чатов для пользователя ${username} (ID: ${userId})`);
+  
   return await db
     .select()
     .from(chatSessions)

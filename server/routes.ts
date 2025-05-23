@@ -422,6 +422,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ success: false, error: 'Пользователь не указан' });
       }
 
+      console.log(`🔍 Запрос сессий для пользователя: ${username}`);
       const sessions = await chatHistory.getUserChatSessions(username);
       res.json({ success: true, sessions });
     } catch (error) {
