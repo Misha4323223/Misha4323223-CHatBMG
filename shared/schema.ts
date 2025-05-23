@@ -3,17 +3,21 @@ import { createInsertSchema } from "drizzle-zod";
 import { relations } from "drizzle-orm";
 import { z } from "zod";
 
-// Define User schema
+// Define User schema для простой авторизации
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
-  token: text("token").notNull().unique(),
+  password: text("password").notNull(),
+  displayName: text("display_name").notNull(),
+  token: text("token").unique(),
   isOnline: boolean("is_online").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
-  token: true,
+  password: true,
+  displayName: true,
 });
 
 // Define Message schema

@@ -357,8 +357,113 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // API для переписки между пользователями
-  const { messages } = require('@shared/schema');
+  // API для простой авторизации
+  const { users, messages } = require('@shared/schema');
+  const { eq } = require('drizzle-orm');
+  
+  // Вход в систему
+  app.post('/api/auth/login', async (req, res) => {
+    try {
+      const { username, password } = req.body;
+      
+      if (!username || !password) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Логин и пароль обязательны' 
+        });
+      }
+
+      const { db } = require('./db');
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.username, username));
+        
+      if (!user || user.password !== password) {
+        return res.status(401).json({ 
+          success: false, 
+          error: 'Неверный логин или пароль' 
+        });
+      }
+      
+      // Генерируем простой токен
+      const token = `${user.id}_${Date.now()}_${Math.random().toString(36)}`;
+      
+      // Обновляем токен в базе
+      await db
+        .update(users)
+        .set({ token, isOnline: true })
+        .where(eq(users.id, user.id));
+      
+      res.json({ 
+        success: true, 
+        user: {
+          id: user.id,
+          username: user.username,
+          displayName: user.displayName,
+          token
+        }
+      });
+    } catch (error) {
+      console.error('Ошибка авторизации:', error);
+      res.status(500).json({ success: false, error: 'Ошибка сервера' });
+    }
+  });
+  
+  // Выход из системы
+  app.post('/api/auth/logout', async (req, res) => {
+    try {
+      const { token } = req.body;
+      
+      if (token) {
+        const { db } = require('./db');
+        await db
+          .update(users)
+          .set({ token: null, isOnline: false })
+          .where(eq(users.token, token));
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Ошибка выхода:', error);
+      res.status(500).json({ success: false, error: 'Ошибка сервера' });
+    }
+  });
+  
+  // Проверка токена
+  app.get('/api/auth/user', async (req, res) => {
+    try {
+      const token = req.headers.authorization?.replace('Bearer ', '');
+      
+      if (!token) {
+        return res.status(401).json({ success: false, error: 'Токен не предоставлен' });
+      }
+
+      const { db } = require('./db');
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.token, token));
+        
+      if (!user) {
+        return res.status(401).json({ success: false, error: 'Недействительный токен' });
+      }
+      
+      res.json({ 
+        success: true, 
+        user: {
+          id: user.id,
+          username: user.username,
+          displayName: user.displayName
+        }
+      });
+    } catch (error) {
+      console.error('Ошибка проверки токена:', error);
+      res.status(500).json({ success: false, error: 'Ошибка сервера' });
+    }
+  });
+
+  // API для переписки между пользователями (импорт уже выше)
   
   // Отправка сообщения пользователю
   app.post('/api/messages', async (req, res) => {
