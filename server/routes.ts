@@ -114,10 +114,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.sendFile('demo.html', { root: '.' });
   });
   
-  // Разрешаем React обработать /smart-chat маршрут
-  app.get('/smart-chat', (req, res, next) => {
-    // Позволяем Vite middleware обработать React маршрут
-    next();
+  // Напрямую отображаем чат для /smart-chat
+  app.get('/smart-chat', (req, res) => {
+    res.sendFile('team-chat-anna.html', { root: '.' });
   });
 
   // Главная страница - позволяем Vite обработать React маршруты
