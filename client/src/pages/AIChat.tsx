@@ -98,39 +98,42 @@ export default function AIChat() {
   const [currentSessionId, setCurrentSessionId] = useState<number | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Функция загрузки истории чата
+  const loadChatHistory = async () => {
+    try {
+      // Получаем последнюю сессию
+      const sessionsResponse = await fetch('/api/chat/sessions');
+      const sessionsData = await sessionsResponse.json();
+      
+      if (sessionsData.success && sessionsData.sessions.length > 0) {
+        const lastSession = sessionsData.sessions[0];
+        setCurrentSessionId(lastSession.id);
+        
+        // Загружаем сообщения из последней сессии
+        const messagesResponse = await fetch(`/api/chat/sessions/${lastSession.id}/messages`);
+        const messagesData = await messagesResponse.json();
+        
+        if (messagesData.success && messagesData.messages.length > 0) {
+          const formattedMessages: Message[] = messagesData.messages.map((msg: any) => ({
+            id: msg.id,
+            text: msg.text,
+            sender: msg.sender,
+            provider: msg.provider,
+            time: new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          }));
+          setMessages(formattedMessages);
+          console.log(`🔄 Обновлена история чата: ${formattedMessages.length} сообщений`);
+        } else {
+          setMessages([]);
+        }
+      }
+    } catch (error) {
+      console.error('Ошибка загрузки истории чата:', error);
+    }
+  };
+
   // Загрузка истории чата при запуске
   useEffect(() => {
-    const loadChatHistory = async () => {
-      try {
-        // Получаем последнюю сессию
-        const sessionsResponse = await fetch('/api/chat/sessions');
-        const sessionsData = await sessionsResponse.json();
-        
-        if (sessionsData.success && sessionsData.sessions.length > 0) {
-          const lastSession = sessionsData.sessions[0];
-          setCurrentSessionId(lastSession.id);
-          
-          // Загружаем сообщения из последней сессии
-          const messagesResponse = await fetch(`/api/chat/sessions/${lastSession.id}/messages`);
-          const messagesData = await messagesResponse.json();
-          
-          if (messagesData.success && messagesData.messages.length > 0) {
-            const formattedMessages: Message[] = messagesData.messages.map((msg: any) => ({
-              id: msg.id,
-              text: msg.text,
-              sender: msg.sender,
-              provider: msg.provider,
-              time: new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-            }));
-            setMessages(formattedMessages);
-            console.log(`Восстановлена история чата: ${formattedMessages.length} сообщений`);
-          }
-        }
-      } catch (error) {
-        console.error('Ошибка загрузки истории чата:', error);
-      }
-    };
-    
     loadChatHistory();
   }, []);
   
