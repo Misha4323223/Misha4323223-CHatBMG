@@ -87,39 +87,39 @@ router.post('/chat', async (req, res) => {
     
     console.log(`Запрос к G4F: провайдер=${provider || 'auto'}, сообщение="${userMessageText.substring(0, 50)}..."`);
     
-    // Используем Python G4F напрямую - самый надежный вариант
+    // Используем Python G4F через проверенный AIChatFree провайдер
     try {
-      console.log('🐍 Используем Python G4F напрямую...');
+      console.log('🐍 Используем Python G4F с AIChatFree провайдером...');
       
-      const pythonResponse = await fetch('http://localhost:5004/chat', {
+      const pythonResponse = await fetch('http://localhost:5004/python/chat?provider=AIChatFree', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          message: message,
-          provider: 'auto'
+          message: message
         }),
         timeout: 30000
       });
 
       if (pythonResponse.ok) {
         const pythonData = await pythonResponse.json();
-        console.log('✅ Python G4F ответил успешно!');
+        console.log('✅ Python G4F AIChatFree ответил успешно!');
         console.log('Данные от Python G4F:', pythonData);
         
         if (pythonData && pythonData.response) {
+          console.log('Отправляем ответ в браузер:', pythonData.response.substring(0, 100));
           return res.json({
             response: pythonData.response,
-            provider: pythonData.provider || 'Python-G4F',
-            model: pythonData.model || 'auto',
+            provider: 'Python-G4F',
+            model: pythonData.provider || 'Qwen_Qwen_2_5_Max',
             cached: false
           });
         }
       }
-      console.log('⚠️ Python G4F не ответил');
+      console.log('⚠️ Python G4F AIChatFree не ответил');
     } catch (pythonError) {
-      console.log(`⚠️ Python G4F ошибка: ${pythonError.message}`);
+      console.log(`⚠️ Python G4F AIChatFree ошибка: ${pythonError.message}`);
     }
       
       // Пробуем другие Python G4F провайдеры
