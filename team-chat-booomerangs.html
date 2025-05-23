@@ -28,117 +28,16 @@
     }
 
     .main-container {
-      display: flex;
       height: 100vh;
       background: var(--primary-bg);
     }
 
-    .sidebar {
-      width: 280px;
-      background: var(--card-bg);
-      border-right: 1px solid var(--border);
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      backdrop-filter: blur(10px);
-    }
-
-    .logo {
-      text-align: center;
-      margin-bottom: 30px;
-      padding: 20px 0;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .logo h1 {
-      font-size: 1.8rem;
-      font-weight: 800;
-      background: var(--accent-gold);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin-bottom: 5px;
-    }
-
-    .logo p {
-      font-size: 0.9rem;
-      opacity: 0.8;
-    }
-
-    .team-info {
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 12px;
-      padding: 15px;
-      margin-bottom: 20px;
-      border: 1px solid var(--border);
-    }
-
-    .team-info h3 {
-      color: #ffd700;
-      margin-bottom: 10px;
-      font-size: 1.1rem;
-    }
-
-    .online-users {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .user-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 8px;
-      border-radius: 8px;
-      background: rgba(255, 255, 255, 0.03);
-    }
-
-    .user-status {
-      width: 8px;
-      height: 8px;
-      background: #68d391;
-      border-radius: 50%;
-      animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-      0% { box-shadow: 0 0 0 0 rgba(104, 211, 145, 0.7); }
-      70% { box-shadow: 0 0 0 10px rgba(104, 211, 145, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(104, 211, 145, 0); }
-    }
-
     .chat-area {
-      flex: 1;
+      height: 100vh;
       display: flex;
       flex-direction: column;
       background: var(--card-bg);
       backdrop-filter: blur(10px);
-    }
-
-    .chat-header {
-      background: rgba(45, 45, 45, 0.8);
-      padding: 20px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .chat-title {
-      font-size: 1.5rem;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .chat-status {
-      font-size: 0.9rem;
-      color: #68d391;
-      display: flex;
-      align-items: center;
-      gap: 8px;
     }
 
     .messages-container {
@@ -281,72 +180,19 @@
 
     /* Адаптивность */
     @media (max-width: 768px) {
-      .sidebar {
-        width: 250px;
-      }
-      
       .message {
         max-width: 85%;
-      }
-    }
-
-    @media (max-width: 640px) {
-      .main-container {
-        flex-direction: column;
-      }
-      
-      .sidebar {
-        width: 100%;
-        height: auto;
-        max-height: 30vh;
-      }
-      
-      .chat-area {
-        height: 70vh;
       }
     }
   </style>
 </head>
 <body>
   <div class="main-container">
-    <!-- Боковая панель -->
-    <div class="sidebar">
-      <div class="logo">
-        <h1>🪃 BOOOMERANGS</h1>
-        <p>Командный чат</p>
-      </div>
-      
-      <div class="team-info">
-        <h3>Команда онлайн</h3>
-        <div class="online-users">
-          <div class="user-item">
-            <div class="user-status"></div>
-            <span>mikhail (Вы)</span>
-          </div>
-          <div class="user-item">
-            <div class="user-status"></div>
-            <span>Команда BOOOMERANGS</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Область чата -->
+    <!-- Область чата (упрощенная) -->
     <div class="chat-area">
-      <div class="chat-header">
-        <div class="chat-title">
-          💬 Общий чат команды
-        </div>
-        <div class="chat-status">
-          <div class="user-status"></div>
-          Онлайн
-        </div>
-      </div>
-
       <div class="messages-container" id="messagesContainer">
         <div class="welcome-message" id="welcomeMessage">
-          🪃 Добро пожаловать в командный чат BOOOMERANGS!<br>
-          Здесь вы можете общаться с коллегами в реальном времени.
+          🪃 Командный чат BOOOMERANGS
         </div>
       </div>
 
