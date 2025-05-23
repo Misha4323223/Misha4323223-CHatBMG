@@ -1207,7 +1207,10 @@
         const sessionsContainer = document.getElementById('chat-sessions');
         if (!sessionsContainer) return;
         
+        // Принудительно очищаем все содержимое и события
         sessionsContainer.innerHTML = '';
+        
+        console.log(`🔄 Рендерим ${sessions.length} сессий:`, sessions.map(s => s.id));
         
         sessions.forEach(session => {
           const sessionElement = document.createElement('div');
@@ -1224,8 +1227,14 @@
           sessionElement.innerHTML = `
             <div class="session-title">${session.title}</div>
             <div class="session-date">${date}</div>
-            <button class="session-delete" onclick="deleteSession(${session.id}, event)">×</button>
           `;
+          
+          // Создаем кнопку удаления отдельно для лучшего контроля
+          const deleteButton = document.createElement('button');
+          deleteButton.className = 'session-delete';
+          deleteButton.textContent = '×';
+          deleteButton.onclick = (event) => deleteSession(session.id, event);
+          sessionElement.appendChild(deleteButton);
           
           sessionsContainer.appendChild(sessionElement);
         });
