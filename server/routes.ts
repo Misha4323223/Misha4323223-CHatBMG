@@ -346,7 +346,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Получаем ответ от AI провайдера
       const smartRouter = require('./smart-router.js');
-      const aiResponse = await smartRouter.getChatResponse(message);
+      const aiResponse = await smartRouter.routeMessage(message);
       
       if (aiResponse.success) {
         // Сохраняем ответ AI
