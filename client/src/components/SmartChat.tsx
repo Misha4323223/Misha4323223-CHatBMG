@@ -217,36 +217,39 @@ const SmartChat: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col w-full max-w-4xl mx-auto h-[250px] bg-gray-900 text-white rounded-lg shadow-lg border border-gray-700 overflow-hidden">
-      {/* Убрали заголовок для большей компактности */}
+    <div className="flex flex-col w-full mx-auto bg-[#1a1a2e] text-white rounded-lg shadow-lg border border-gray-700 overflow-hidden
+                    h-[300px] sm:h-[400px] md:h-[500px] lg:h-[600px] xl:h-[650px]
+                    max-w-sm sm:max-w-md md:max-w-2xl lg:max-w-4xl xl:max-w-5xl">
       
-      <ScrollArea className="flex-grow p-2">
-        <div className="space-y-2">
+      <ScrollArea className="flex-grow p-2 sm:p-3 md:p-4">
+        <div className="space-y-2 sm:space-y-3">
           {messages.map((message) => (
             <div
               key={message.id}
               className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
             >
-              <div className={`flex gap-2 max-w-[80%] ${message.sender === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                <Avatar className={`h-6 w-6 ${message.sender === 'user' ? 'bg-blue-600' : 'bg-gray-700'}`}>
-                  <AvatarFallback className="text-xs text-white">
+              <div className={`flex gap-2 sm:gap-3 max-w-[85%] sm:max-w-[80%] md:max-w-[75%] 
+                               ${message.sender === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+                <Avatar className={`h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 flex-shrink-0
+                                    ${message.sender === 'user' ? 'bg-blue-600' : 'bg-gray-700'}`}>
+                  <AvatarFallback className="text-xs sm:text-sm text-white">
                     {message.sender === 'user' ? 'U' : 'AI'}
                   </AvatarFallback>
                 </Avatar>
                 
-                <div className="flex flex-col">
-                  <div className={`rounded-lg p-2 text-sm ${
+                <div className="flex flex-col min-w-0 flex-1">
+                  <div className={`rounded-lg p-2 sm:p-3 text-sm sm:text-base break-words ${
                     message.loading ? 'bg-gray-700 text-gray-300' :
                     message.error ? 'bg-red-900/50 text-red-300' :
                     message.sender === 'user' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-100'
                   }`}>
                     {message.loading ? (
                       <div className="flex items-center space-x-2">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        <span>AI думает...</span>
+                        <Loader2 className="h-4 w-4 animate-spin flex-shrink-0" />
+                        <span className="text-sm">AI думает...</span>
                       </div>
                     ) : (
-                      <div>
+                      <div className="whitespace-pre-wrap word-break">
                         {message.text.split('\n').map((line, i) => (
                           <React.Fragment key={i}>
                             {line}
@@ -279,30 +282,30 @@ const SmartChat: React.FC = () => {
       <div className="border-t border-gray-700"></div>
       
       {imageUrl && (
-        <div className="p-1 flex items-center gap-1 border-t border-gray-700">
+        <div className="p-2 sm:p-3 flex items-center gap-2 border-t border-gray-700 bg-gray-800/50">
           <div className="relative">
-            <img src={imageUrl} alt="Selected" className="h-8 w-8 object-cover rounded" />
+            <img src={imageUrl} alt="Selected" className="h-10 w-10 sm:h-12 sm:w-12 object-cover rounded-lg" />
             <button
               onClick={handleRemoveImage}
-              className="absolute -top-1 -right-1 bg-red-600 text-white rounded-full p-0.5 w-3 h-3 flex items-center justify-center text-xs"
+              className="absolute -top-1 -right-1 bg-red-600 text-white rounded-full p-1 w-5 h-5 flex items-center justify-center text-xs hover:bg-red-700 transition-colors"
             >
-              ✕
+              <X className="h-3 w-3" />
             </button>
           </div>
-          <span className="text-xs text-gray-400">Изображение</span>
+          <span className="text-sm text-gray-400">Изображение загружено</span>
         </div>
       )}
       
-      <div className="p-2 border-t border-gray-700">
-        <div className="flex gap-2">
+      <div className="p-2 sm:p-3 md:p-4 border-t border-gray-700 bg-gray-800/30">
+        <div className="flex gap-2 sm:gap-3">
           <Button
             variant="outline"
             size="sm"
             onClick={handleImageButtonClick}
             disabled={isLoading}
-            className="h-8 w-8 p-0 border-gray-600 bg-gray-800 text-gray-300 hover:bg-gray-700"
+            className="h-9 w-9 sm:h-10 sm:w-10 p-0 border-gray-600 bg-gray-800 text-gray-300 hover:bg-gray-700 transition-colors flex-shrink-0"
           >
-            <Image className="h-4 w-4" />
+            <Image className="h-4 w-4 sm:h-5 sm:w-5" />
           </Button>
           <input
             ref={fileInputRef}
@@ -317,18 +320,19 @@ const SmartChat: React.FC = () => {
             onKeyDown={handleKeyDown}
             placeholder="Введите сообщение..."
             disabled={isLoading}
-            className="flex-grow h-8 text-sm bg-gray-800 border-gray-600 text-white placeholder-gray-400"
+            className="flex-grow h-9 sm:h-10 text-sm sm:text-base bg-gray-800 border-gray-600 text-white placeholder-gray-400 
+                       focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
           />
           <Button
             onClick={handleSend}
             disabled={isLoading || (!inputText.trim() && !imageUrl)}
             size="sm"
-            className="h-8 w-8 p-0 bg-blue-600 hover:bg-blue-700 text-white"
+            className="h-9 w-9 sm:h-10 sm:w-10 p-0 bg-blue-600 hover:bg-blue-700 text-white transition-colors flex-shrink-0 disabled:opacity-50"
           >
             {isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
             ) : (
-              <Send className="h-4 w-4" />
+              <Send className="h-4 w-4 sm:h-5 sm:w-5" />
             )}
           </Button>
         </div>

@@ -2,6 +2,45 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Дополнительные адаптивные стили */
+@layer utilities {
+  .word-break {
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+  
+  /* Улучшенная прокрутка на мобильных устройствах */
+  .mobile-scroll {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+  
+  /* Адаптивные размеры текста */
+  .responsive-text {
+    font-size: clamp(0.875rem, 2.5vw, 1rem);
+  }
+}
+
+/* Оптимизация для touch устройств */
+@media (hover: none) and (pointer: coarse) {
+  .touch-optimized {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Скрытие скроллбара на мобильных */
+@media (max-width: 768px) {
+  .hide-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 /* BOOOMERANGS Styles */
 .booomerangs-gradient-bg {
   background: linear-gradient(to right, #3b82f6, #4f46e5);
