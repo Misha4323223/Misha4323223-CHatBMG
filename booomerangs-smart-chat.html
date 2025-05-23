@@ -907,11 +907,22 @@
         // Загрузка сообщений
         async function loadMessages(sessionId) {
             try {
-                const response = await fetch(`/api/chat/messages/${sessionId}`);
-                const data = await response.json();
+                console.log(`📋 Загружаем сообщения для сессии ${sessionId}...`);
+                const response = await fetch(`/api/chat/sessions/${sessionId}/messages`);
                 
-                if (data.success) {
-                    displayMessages(data.messages);
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Полученные данные:', data);
+                    
+                    if (data.success && data.messages) {
+                        console.log(`✅ Найдено ${data.messages.length} сообщений`);
+                        displayMessages(data.messages);
+                    } else {
+                        console.log('⚠️ Нет сообщений в ответе');
+                        displayMessages([]);
+                    }
+                } else {
+                    console.error('Ошибка HTTP:', response.status);
                 }
             } catch (error) {
                 console.error('Ошибка загрузки сообщений:', error);
@@ -920,17 +931,28 @@
 
         // Отображение сообщений
         function displayMessages(messages) {
+            console.log('📱 Отображаем сообщения:', messages);
             const messagesArea = document.getElementById('messagesArea');
             messagesArea.innerHTML = '';
             
+            if (!messages || messages.length === 0) {
+                messagesArea.innerHTML = `
+                    <div class="welcome-screen">
+                        <div class="welcome-logo">🪃</div>
+                        <h1 class="welcome-title">Пустой чат</h1>
+                        <p class="welcome-subtitle">В этом чате пока нет сообщений</p>
+                    </div>
+                `;
+                return;
+            }
+            
             messages.forEach(msg => {
-                const messageDiv = document.createElement('div');
-                messageDiv.className = `message ${msg.sender}`;
-                messageDiv.innerHTML = `<div class="message-content">${msg.content}</div>`;
-                messagesArea.appendChild(messageDiv);
+                console.log('Добавляем сообщение:', msg);
+                addMessage(msg.content, msg.sender);
             });
             
             messagesArea.scrollTop = messagesArea.scrollHeight;
+            console.log(`✅ Отображено ${messages.length} сообщений`);
         }
 
         // Создание нового чата
