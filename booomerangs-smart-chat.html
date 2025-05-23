@@ -198,6 +198,116 @@
       flex-wrap: wrap;
     }
     
+    .main-layout {
+      display: flex;
+      gap: 16px;
+      margin-top: 8px;
+    }
+    
+    .sidebar {
+      width: 280px;
+      background: #1a1a2e;
+      border-radius: 10px;
+      padding: 16px;
+      border: 1px solid #40405c;
+      overflow-y: auto;
+      max-height: calc(100vh - 140px);
+      flex-shrink: 0;
+    }
+    
+    .sidebar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #40405c;
+    }
+    
+    .sidebar-title {
+      color: #ffffff;
+      font-weight: 600;
+      font-size: 1rem;
+      margin: 0;
+    }
+    
+    .new-chat-btn {
+      background: #6c63ff;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-weight: 500;
+    }
+    
+    .new-chat-btn:hover {
+      background: #5a52d5;
+      transform: translateY(-1px);
+    }
+    
+    .chat-session {
+      background: #0f0f1a;
+      border: 1px solid #40405c;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+    
+    .chat-session:hover {
+      border-color: #6c63ff;
+      background: #16162a;
+    }
+    
+    .chat-session.active {
+      border-color: #6c63ff;
+      background: rgba(108, 99, 255, 0.1);
+    }
+    
+    .session-title {
+      color: #ffffff;
+      font-weight: 500;
+      font-size: 0.9rem;
+      margin-bottom: 4px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      padding-right: 40px;
+    }
+    
+    .session-date {
+      color: #b8b8b8;
+      font-size: 0.75rem;
+    }
+    
+    .session-delete {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: #ef4444;
+      color: white;
+      border: none;
+      padding: 4px 6px;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      cursor: pointer;
+      opacity: 0;
+      transition: all 0.2s;
+    }
+    
+    .chat-session:hover .session-delete {
+      opacity: 1;
+    }
+    
+    .session-delete:hover {
+      background: #dc2626;
+    }
+    
     .nav-button {
       padding: 5px 12px;
       background: #374151;
@@ -891,7 +1001,20 @@
       </nav>
     </div>
     
-    <div class="chat-container">
+    <div class="main-layout">
+      <!-- Боковая панель с историей чатов -->
+      <div class="sidebar">
+        <div class="sidebar-header">
+          <h3 class="sidebar-title">История чатов</h3>
+          <button class="new-chat-btn" onclick="createNewChat()">+ Новый</button>
+        </div>
+        <div class="chat-sessions" id="chat-sessions">
+          <!-- Сессии будут загружены динамически -->
+        </div>
+      </div>
+      
+      <!-- Основная область чата -->
+      <div class="chat-container">
       <div class="chat-header">
         <h2 class="chat-title">BOOOMERANGS AI</h2>
       </div>
