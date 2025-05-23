@@ -974,25 +974,25 @@
     /* Индикатор статуса процесса */
     .status-indicator {
       position: fixed;
-      top: 20px;
-      right: 20px;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.8);
       background: linear-gradient(135deg, #6c63ff, #5a52d5);
       color: white;
-      padding: 8px 12px;
-      border-radius: 8px;
-      box-shadow: 0 4px 15px rgba(108, 99, 255, 0.4);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      backdrop-filter: blur(10px);
+      padding: 16px 20px;
+      border-radius: 16px;
+      box-shadow: 0 8px 30px rgba(108, 99, 255, 0.5);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      backdrop-filter: blur(15px);
       z-index: 1000;
-      min-width: 120px;
-      max-width: 200px;
-      transform: translateX(100%);
+      min-width: 250px;
+      max-width: 350px;
       opacity: 0;
-      transition: all 0.3s ease;
+      transition: all 0.4s ease;
     }
     
     .status-indicator.show {
-      transform: translateX(0);
+      transform: translate(-50%, -50%) scale(1);
       opacity: 1;
     }
     
