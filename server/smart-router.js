@@ -447,7 +447,7 @@ async function routeMessageStreaming(message, options = {}, res) {
 
 // API маршрут для обработки сообщений
 router.post('/message', async (req, res) => {
-  const { message, imageUrl, userId = 'anonymous', stream = false } = req.body;
+  const { message, imageUrl, userId = 'anonymous', stream = false, sessionId } = req.body;
   
   if (!message && !imageUrl) {
     return res.status(400).json({
@@ -479,6 +479,7 @@ router.post('/message', async (req, res) => {
         const result = await routeMessageStreaming(messageText, { 
           imageUrl, 
           userId,
+          sessionId,
           context: contextData.context,
           preferredProvider: contextData.shouldContinueWithProvider ? contextData.currentProvider : null
         }, res);
