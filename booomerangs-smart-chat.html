@@ -237,16 +237,27 @@
             margin-left: -300px;
             overflow: hidden;
         }
+
+        .chat-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            transition: all 0.4s ease;
+        }
+
+        /* Автоматическое растягивание поля ввода при скрытии панели */
+        .chat-container.sidebar-hidden .input-container {
+            max-width: calc(100% - 40px);
+            margin: 0 20px;
+        }
+
+        .sessions-sidebar {
+            padding: 20px;
+            flex-direction: column;
             backdrop-filter: blur(15px);
             transition: all 0.3s ease;
             position: relative;
-        }
-
-        .chat-sidebar.hidden {
-            width: 0;
-            min-width: 0;
-            overflow: hidden;
-            border-right: none;
         }
 
         .sidebar-header {
@@ -1119,16 +1130,19 @@
         // Переключение панели истории чатов
         function toggleSidebar() {
             const sidebar = document.querySelector('.chat-sidebar');
+            const chatContainer = document.querySelector('.chat-container');
             const toggleIcon = document.getElementById('toggleIcon');
             
             if (sidebar.classList.contains('hidden')) {
                 // Показываем панель
                 sidebar.classList.remove('hidden');
+                chatContainer.classList.remove('sidebar-hidden');
                 toggleIcon.textContent = '📋';
                 localStorage.setItem('sidebarHidden', 'false');
             } else {
                 // Скрываем панель
                 sidebar.classList.add('hidden');
+                chatContainer.classList.add('sidebar-hidden');
                 toggleIcon.textContent = '📂';
                 localStorage.setItem('sidebarHidden', 'true');
             }
@@ -1138,13 +1152,16 @@
         function restoreSidebarState() {
             const isHidden = localStorage.getItem('sidebarHidden') === 'true';
             const sidebar = document.querySelector('.chat-sidebar');
+            const chatContainer = document.querySelector('.chat-container');
             const toggleIcon = document.getElementById('toggleIcon');
             
             if (isHidden) {
                 sidebar.classList.add('hidden');
+                chatContainer.classList.add('sidebar-hidden');
                 toggleIcon.textContent = '📂';
             } else {
                 sidebar.classList.remove('hidden');
+                chatContainer.classList.remove('sidebar-hidden');
                 toggleIcon.textContent = '📋';
             }
         }
