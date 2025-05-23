@@ -342,6 +342,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Сохранение сообщения в конкретную сессию
+  app.post('/api/chat/sessions/:sessionId/messages', async (req, res) => {
+    try {
+      const sessionId = parseInt(req.params.sessionId);
+      const messageData = {
+        ...req.body,
+        sessionId: sessionId
+      };
+      
+      console.log(`💾 Сохраняем сообщение в сессию ${sessionId}:`, messageData);
+      const message = await chatHistory.saveMessage(messageData);
+      console.log('✅ Сообщение пользователя сохранено');
+      
+      res.json({ success: true, message });
+    } catch (error) {
+      console.error('❌ ОШИБКА сохранения сообщения пользователя:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Не удалось сохранить сообщение' 
+      });
+    }
+  });
+
   // Получение сообщений сессии
   app.get('/api/chat/sessions/:sessionId/messages', async (req, res) => {
     try {
