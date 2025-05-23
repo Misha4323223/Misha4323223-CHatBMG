@@ -1744,9 +1744,13 @@
           const teamSendBtn = document.getElementById('team-send-button');
           const teamMessages = document.getElementById('team-chat-messages');
           
-          if (!teamInput || !teamSendBtn || !teamMessages) return;
+          if (!teamInput || !teamSendBtn || !teamMessages) {
+            console.log('❌ Элементы командного чата не найдены:', { teamInput, teamSendBtn, teamMessages });
+            return;
+          }
           
           console.log('🪃 Инициализация командного чата...');
+          console.log('✅ Все элементы найдены:', { teamInput, teamSendBtn, teamMessages });
           
           let currentUser = 'mikhail';
           
