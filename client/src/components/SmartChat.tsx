@@ -221,8 +221,8 @@ const SmartChat: React.FC = () => {
                     h-[300px] sm:h-[400px] md:h-[500px] lg:h-[600px] xl:h-[650px]
                     max-w-sm sm:max-w-md md:max-w-2xl lg:max-w-4xl xl:max-w-5xl
                     bg-gradient-to-br from-gray-900/95 via-black/98 to-gray-900/95
-                    backdrop-blur-xl border border-red-600/20 rounded-3xl
-                    shadow-[0_8px_25px_rgba(0,0,0,0.3),0_0_20px_rgba(220,38,38,0.2)]
+                    backdrop-blur-xl border border-orange-500/30 rounded-3xl
+                    shadow-[0_8px_25px_rgba(0,0,0,0.4),0_0_30px_rgba(255,165,0,0.3)]
                     relative"
          style={{
            background: 'linear-gradient(135deg, rgba(31, 41, 55, 0.95) 0%, rgba(17, 24, 39, 0.98) 100%)',
@@ -250,7 +250,7 @@ const SmartChat: React.FC = () => {
                     message.loading ? 'bg-gray-700/80 text-gray-300 backdrop-blur-sm' :
                     message.error ? 'bg-red-900/50 text-red-300 border border-red-500/30' :
                     message.sender === 'user' ? 
-                      'bg-gradient-to-br from-red-600 to-red-700 text-white shadow-lg hover:shadow-red-500/25 hover:scale-[1.02] border border-red-500/30' : 
+                      'bg-gradient-to-br from-orange-500 to-red-600 text-white shadow-lg hover:shadow-orange-500/30 hover:scale-[1.02] border border-orange-400/40' : 
                       'bg-gradient-to-br from-gray-800/90 to-gray-900/95 text-gray-100 backdrop-blur-sm border border-gray-600/30 hover:shadow-lg hover:scale-[1.02]'
                   }`}
                        style={message.sender === 'user' ? {
@@ -354,7 +354,7 @@ const SmartChat: React.FC = () => {
             onClick={handleSend}
             disabled={isLoading || (!inputText.trim() && !imageUrl)}
             size="sm"
-            className="h-11 w-11 sm:h-12 sm:w-12 p-0 bg-gradient-to-br from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white transition-all duration-300 flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl hover:scale-110 hover:rotate-3 active:scale-105"
+            className="h-11 w-11 sm:h-12 sm:w-12 p-0 bg-gradient-to-br from-orange-500 to-red-600 hover:from-orange-400 hover:to-red-500 text-white transition-all duration-300 flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl hover:scale-110 hover:rotate-3 active:scale-105 shadow-lg hover:shadow-orange-500/40"
             style={{
               boxShadow: '0 4px 20px rgba(220, 38, 38, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
             }}
