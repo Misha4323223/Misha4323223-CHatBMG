@@ -383,12 +383,13 @@
 
         .chat-main {
             flex: 1;
-            display: flex;
-            flex-direction: column;
+            display: flex !important;
+            flex-direction: column !important;
             position: relative;
             transition: all 0.4s ease;
             height: 100%;
             min-height: 0;
+            justify-content: space-between;
         }
 
         .messages-area {
@@ -885,11 +886,9 @@
             }
             
             .input-container {
-                flex-direction: column;
+                flex-direction: row;
                 gap: 12px;
-                padding: 15px;
-                background: rgba(40, 40, 40, 0.95);
-                border-radius: 15px 15px 0 0;
+                align-items: flex-end;
             }
             
             .message-input {
