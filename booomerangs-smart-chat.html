@@ -249,8 +249,8 @@
 
         /* Автоматическое растягивание поля ввода при скрытии панели */
         .chat-container.sidebar-hidden .input-container {
-            max-width: calc(100% - 40px);
-            margin: 0 20px;
+            max-width: 1000px;
+            margin: 0 auto;
             width: calc(100% - 40px);
         }
 
@@ -260,8 +260,13 @@
         }
 
         .chat-container.sidebar-hidden .input-area {
-            padding: 20px;
-            width: calc(100% - 40px);
+            padding: 15px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .chat-container.sidebar-hidden .messages-area {
+            max-width: 1000px;
             margin: 0 auto;
         }
 
@@ -424,6 +429,8 @@
             overflow-y: auto;
             padding: 15px;
             background: rgba(15, 15, 15, 0.8);
+            max-width: 800px;
+            margin: 0 auto;
         }
 
         .input-area {
@@ -431,14 +438,17 @@
             background: var(--card-bg);
             border-top: 3px solid var(--accent);
             backdrop-filter: blur(15px);
+            max-width: 800px;
+            margin: 0 auto;
         }
 
         .input-container {
             display: flex;
             gap: 12px;
             align-items: flex-end;
-            max-width: 1200px;
+            max-width: 800px;
             margin: 0 auto;
+            width: 100%;
         }
 
         .message-input {
