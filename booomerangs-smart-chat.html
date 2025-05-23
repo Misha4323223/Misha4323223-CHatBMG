@@ -704,6 +704,39 @@
                 console.error('Ошибка загрузки сессии:', error);
             }
         }
+
+        // Удаление сессии
+        async function deleteSession(sessionId) {
+            if (!confirm('Вы уверены, что хотите удалить этот чат? Это действие необратимо.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/chat/sessions/${sessionId}`, {
+                    method: 'DELETE'
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Если удаляем активную сессию, очищаем чат
+                    if (sessionId === currentSessionId) {
+                        currentSessionId = null;
+                        chatMessages.innerHTML = '<div class="welcome-message">Выберите чат из истории или создайте новый</div>';
+                    }
+                    
+                    // Перезагружаем список сессий
+                    await loadChatSessions();
+                    
+                    console.log('✅ Чат успешно удален');
+                } else {
+                    alert('Ошибка удаления чата: ' + (result.error || 'Неизвестная ошибка'));
+                }
+            } catch (error) {
+                console.error('Ошибка удаления чата:', error);
+                alert('Не удалось удалить чат. Попробуйте позже.');
+            }
+        }
         
         // Автоматическое изменение размера поля ввода
         const messageInput = document.getElementById('messageInput');
