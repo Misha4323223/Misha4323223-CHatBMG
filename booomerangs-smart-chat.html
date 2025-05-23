@@ -317,9 +317,11 @@
             width: 300px;
             background: var(--card-bg);
             border-right: 1px solid var(--border);
-            display: flex;
+            display: flex !important;
             flex-direction: column;
             transition: width 0.4s ease, margin-left 0.4s ease;
+            z-index: 10;
+            position: relative;
         }
 
         .chat-sidebar.hidden {
@@ -476,18 +478,18 @@
             width: 50px;
             height: 50px;
             background: var(--accent);
-            border: 2px solid var(--gold);
+            border: 3px solid var(--gold);
             border-radius: 12px;
             color: var(--text);
             cursor: pointer;
-            display: flex;
+            display: flex !important;
             align-items: center;
             justify-content: center;
-            font-size: 1.4rem;
+            font-size: 1.6rem;
             font-weight: bold;
             transition: all 0.3s ease;
             backdrop-filter: blur(15px);
-            box-shadow: 0 6px 20px rgba(255, 0, 0, 0.4);
+            box-shadow: 0 8px 25px rgba(255, 0, 0, 0.6);
         }
 
         .sidebar-toggle:hover {
@@ -1522,6 +1524,45 @@
                 generateBtn.textContent = '🎨 Генерировать изображение';
             }
         });
+
+        // Управление боковой панелью
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.chat-sidebar');
+            const container = document.querySelector('.chat-container');
+            const toggleIcon = document.getElementById('toggleIcon');
+            
+            if (sidebar && container && toggleIcon) {
+                sidebar.classList.toggle('hidden');
+                container.classList.toggle('sidebar-hidden');
+                
+                // Меняем иконку
+                if (sidebar.classList.contains('hidden')) {
+                    toggleIcon.textContent = '📂';
+                    localStorage.setItem('sidebarHidden', 'true');
+                } else {
+                    toggleIcon.textContent = '📋';
+                    localStorage.setItem('sidebarHidden', 'false');
+                }
+                
+                console.log('🔄 Панель истории переключена');
+            }
+        }
+        
+        // Восстановление состояния панели
+        function restoreSidebarState() {
+            const isHidden = localStorage.getItem('sidebarHidden') === 'true';
+            if (isHidden) {
+                const sidebar = document.querySelector('.chat-sidebar');
+                const container = document.querySelector('.chat-container');
+                const toggleIcon = document.getElementById('toggleIcon');
+                
+                if (sidebar && container && toggleIcon) {
+                    sidebar.classList.add('hidden');
+                    container.classList.add('sidebar-hidden');
+                    toggleIcon.textContent = '📂';
+                }
+            }
+        }
 
         // Настройка автосохранения черновиков
         function setupDraftAutoSave() {
