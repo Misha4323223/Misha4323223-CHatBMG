@@ -1266,12 +1266,17 @@
           });
           
           if (response.ok) {
+            console.log(`✅ Сессия ${sessionId} удалена успешно`);
+            
+            // Если удаляем текущую активную сессию
             if (sessionId === currentSessionId) {
-              // Если удаляем текущую сессию, создаем новую
-              await createNewChat();
-            } else {
-              loadChatSessions();
+              // Очищаем чат и сбрасываем текущую сессию
+              chatMessages.innerHTML = '';
+              currentSessionId = null;
             }
+            
+            // Перезагружаем список сессий
+            await loadChatSessions();
           }
         } catch (error) {
           console.error('Ошибка удаления сессии:', error);
