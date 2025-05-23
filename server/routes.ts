@@ -416,7 +416,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Получение всех сессий пользователя (без параметра - для текущего пользователя)
   app.get('/api/chat/sessions', async (req, res) => {
     try {
-      const userId = 1; // Временно используем фиксированный ID пользователя
+      // Получаем ID пользователя из токена
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ success: false, error: 'Токен не предоставлен' });
+      }
+
+      const token = authHeader.split(' ')[1];
+      if (!token.startsWith('token_')) {
+        return res.status(401).json({ success: false, error: 'Недействительный токен' });
+      }
+
+      const userId = parseInt(token.split('_')[1]);
       const sessions = await chatHistory.getUserChatSessions(userId);
       res.json({ success: true, sessions });
     } catch (error) {

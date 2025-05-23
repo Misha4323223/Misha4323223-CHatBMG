@@ -631,7 +631,11 @@
         // Загрузка списка сессий
         async function loadChatSessions() {
             try {
-                const response = await fetch('/api/chat/sessions');
+                const response = await fetch('/api/chat/sessions', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
                 const result = await response.json();
                 
                 if (result.success) {
@@ -954,6 +958,8 @@
             currentUser = username;
             currentUserId = parseInt(token.split('_')[1]) || 1;
             authToken = token;
+            
+            console.log(`🔐 Пользователь ${username} (ID: ${currentUserId}) авторизован`);
             
             return true;
         }
