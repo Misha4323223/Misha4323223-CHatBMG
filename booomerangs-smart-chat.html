@@ -608,6 +608,8 @@
         // Основные функции AI чата
         let currentSessionId = null;
         let allSessions = [];
+        let isCreatingSession = false;
+        let isSendingMessage = false;
 
         // Функция создания нового чата
         function startNewChat() {
@@ -745,8 +747,9 @@
         // Отправка сообщения
         async function sendMessage() {
             const message = messageInput.value.trim();
-            if (!message) return;
+            if (!message || isSendingMessage) return;
 
+            isSendingMessage = true;
             const sendBtn = document.getElementById('sendBtn');
             const sendBtnSpan = sendBtn.querySelector('span');
             sendBtn.disabled = true;
@@ -754,7 +757,8 @@
 
             try {
                 // Создаем новую сессию, если её нет
-                if (!currentSessionId) {
+                if (!currentSessionId && !isCreatingSession) {
+                    isCreatingSession = true;
                     const sessionResponse = await fetch('/api/chat/sessions', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -769,6 +773,7 @@
                     } else {
                         throw new Error(sessionData.error);
                     }
+                    isCreatingSession = false;
                 }
 
                 // Добавляем сообщение пользователя
@@ -804,6 +809,8 @@
             } finally {
                 sendBtn.disabled = false;
                 sendBtnSpan.textContent = '🪃 Отправить';
+                isSendingMessage = false;
+                isCreatingSession = false;
             }
         }
 
