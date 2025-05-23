@@ -2955,13 +2955,23 @@
         }
       };
 
-      // Инициализация навигации по вкладкам
-      document.getElementById('tab-chat').addEventListener('click', () => switchTab('chat'));
-      document.getElementById('tab-generator').addEventListener('click', () => switchTab('generator'));
-      document.getElementById('tab-team').addEventListener('click', () => switchTab('team'));
-
-      // Показываем чат по умолчанию
-      switchTab('chat');
+      // Инициализация навигации по вкладкам - перенесено в DOMContentLoaded
+      function initializeTabNavigation() {
+        console.log('Инициализация навигации по вкладкам...');
+        
+        const tabChat = document.getElementById('tab-chat');
+        const tabGenerator = document.getElementById('tab-generator'); 
+        const tabTeam = document.getElementById('tab-team');
+        
+        console.log('Элементы навигации:', { tabChat, tabGenerator, tabTeam });
+        
+        if (tabChat) tabChat.addEventListener('click', () => switchTab('chat'));
+        if (tabGenerator) tabGenerator.addEventListener('click', () => switchTab('generator'));
+        if (tabTeam) tabTeam.addEventListener('click', () => switchTab('team'));
+        
+        // Показываем чат по умолчанию
+        switchTab('chat');
+      }
       
       // Функция для переключения боковой панели
       function toggleSidebar() {
@@ -3245,6 +3255,9 @@
           window.location.href = '/login.html';
         }, 1500);
       }
+      
+      // Инициализируем навигацию по вкладкам
+      initializeTabNavigation();
     });
   </script>
 </body>
