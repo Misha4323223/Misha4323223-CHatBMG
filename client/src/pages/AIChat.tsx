@@ -114,6 +114,7 @@ export default function AIChat() {
         const messagesData = await messagesResponse.json();
         
         if (messagesData.success && messagesData.messages.length > 0) {
+          console.log('📥 Сырые данные сообщений:', messagesData.messages);
           const formattedMessages: Message[] = messagesData.messages.map((msg: any) => ({
             id: msg.id,
             text: msg.text,
@@ -121,9 +122,11 @@ export default function AIChat() {
             provider: msg.provider,
             time: new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
           }));
+          console.log('✨ Отформатированные сообщения:', formattedMessages);
           setMessages(formattedMessages);
           console.log(`🔄 Обновлена история чата: ${formattedMessages.length} сообщений`);
         } else {
+          console.log('❌ Сообщения не найдены или ошибка:', messagesData);
           setMessages([]);
         }
       }
