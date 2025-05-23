@@ -346,7 +346,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/chat/sessions/:sessionId/messages', async (req, res) => {
     try {
       const sessionId = parseInt(req.params.sessionId);
+      console.log(`📋 Загружаем сообщения для сессии ${sessionId}...`);
+      
       const messages = await chatHistory.getSessionMessages(sessionId);
+      console.log(`✅ Найдено ${messages.length} сообщений для сессии ${sessionId}`);
+      
+      // Отключаем кэширование для этого API
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      
       res.json({ success: true, messages });
     } catch (error) {
       console.error('Ошибка получения сообщений:', error);
