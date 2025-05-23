@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BOOOMERANGS Smart Chat - Оптимизированная Версия</title>
+    <meta name="description" content="Современный AI чат с интеграцией множественных провайдеров и интеллектуальными возможностями">
+    
+    <!-- Предзагрузка критических ресурсов -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Стили -->
+    <link rel="stylesheet" href="/client/src/components/chat-styles.css">
+    
+    <!-- Content Security Policy -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com;">
+</head>
+<body>
+    <!-- Главный контейнер приложения -->
+    <div class="app-container">
+        <!-- Боковая панель -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">🪃 BOOOMERANGS</div>
+                <div class="subtitle">Smart AI Chat</div>
+                
+                <!-- Навигация -->
+                <div class="nav-tabs">
+                    <button class="nav-tab active" data-tab="chat">AI Чат</button>
+                    <button class="nav-tab" data-tab="settings">Настройки</button>
+                </div>
+            </div>
+            
+            <!-- История чатов -->
+            <div class="chat-history-section">
+                <button class="new-chat-btn" id="newChatBtn">
+                    ➕ Новый чат
+                </button>
+                <div class="chat-history" id="chatHistory">
+                    <!-- Список чатов будет загружен динамически -->
+                </div>
+            </div>
+            
+            <!-- Кнопка переключения боковой панели -->
+            <button class="sidebar-toggle" id="sidebarToggle">
+                ◀
+            </button>
+        </aside>
+        
+        <!-- Основная область -->
+        <main class="main-area">
+            <!-- Область сообщений -->
+            <div class="messages-area" id="messagesArea">
+                <!-- Приветственный экран -->
+                <div class="welcome-screen">
+                    <div class="welcome-logo">🪃</div>
+                    <h1 class="welcome-title">BOOOMERANGS</h1>
+                    <p class="welcome-subtitle">
+                        Добро пожаловать в современный AI чат!<br>
+                        Начните диалог, отправив сообщение ниже.
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Поле ввода -->
+            <div class="input-area">
+                <div class="input-container">
+                    <textarea 
+                        class="message-input" 
+                        id="messageInput"
+                        placeholder="Введите ваше сообщение... (Ctrl+Enter для отправки)"
+                        rows="1"
+                        maxlength="4000">
+                    </textarea>
+                    <button class="send-button" id="sendButton">
+                        ➤
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Индикатор загрузки -->
+    <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+        <div class="loading-spinner">🪃</div>
+        <div class="loading-text">Обработка запроса...</div>
+    </div>
+
+    <!-- Toast уведомления -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Скрипты -->
+    <script src="/client/src/components/chat-core.js"></script>
+    <script src="/client/src/components/chat-ui.js"></script>
+    
+    <script>
+        // Инициализация приложения
+        let chatCore, chatUI;
+        
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                // Показываем индикатор загрузки
+                showLoading('Инициализация чата...');
+                
+                // Инициализируем ядро чата
+                chatCore = new ChatCore();
+                
+                // Ждем завершения инициализации
+                await new Promise(resolve => {
+                    const checkInit = () => {
+                        if (chatCore.getState().sessions !== undefined) {
+                            resolve();
+                        } else {
+                            setTimeout(checkInit, 100);
+                        }
+                    };
+                    checkInit();
+                });
+                
+                // Инициализируем UI
+                chatUI = new ChatUI(chatCore);
+                
+                // Загружаем интерфейс
+                await chatUI.updateSessionsList();
+                
+                // Автофокус на поле ввода
+                const messageInput = document.getElementById('messageInput');
+                if (messageInput) {
+                    messageInput.focus();
+                }
+                
+                hideLoading();
+                console.log('🎉 BOOOMERANGS Chat успешно инициализирован');
+                
+            } catch (error) {
+                console.error('Ошибка инициализации:', error);
+                hideLoading();
+                showToast('Ошибка инициализации чата', 'error');
+            }
+        });
+
+        // Утилиты для индикатора загрузки
+        function showLoading(text = 'Загрузка...') {
+            const overlay = document.getElementById('loadingOverlay');
+            const textEl = overlay.querySelector('.loading-text');
+            if (textEl) textEl.textContent = text;
+            overlay.style.display = 'flex';
+        }
+
+        function hideLoading() {
+            const overlay = document.getElementById('loadingOverlay');
+            overlay.style.display = 'none';
+        }
+
+        // Система toast уведомлений
+        function showToast(message, type = 'info', duration = 3000) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            
+            toast.className = `toast toast-${type}`;
+            toast.innerHTML = `
+                <span class="toast-message">${message}</span>
+                <button class="toast-close" onclick="this.parentElement.remove()">×</button>
+            `;
+            
+            container.appendChild(toast);
+            
+            // Автоматическое удаление
+            setTimeout(() => {
+                if (toast.parentElement) {
+                    toast.remove();
+                }
+            }, duration);
+        }
+
+        // Обработчик ошибок
+        window.addEventListener('error', (event) => {
+            console.error('Глобальная ошибка:', event.error);
+            showToast('Произошла ошибка', 'error');
+        });
+
+        // Обработчик необработанных промисов
+        window.addEventListener('unhandledrejection', (event) => {
+            console.error('Необработанный промис:', event.reason);
+            showToast('Ошибка сети или сервера', 'error');
+        });
+
+        // Регистрация Service Worker для кэширования
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js')
+                .then(registration => console.log('SW зарегистрирован'))
+                .catch(error => console.log('Ошибка регистрации SW:', error));
+        }
+
+        // Автоизменение размера textarea
+        function autoResize(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+        }
+
+        // Инициализация автоизменения размера
+        document.addEventListener('DOMContentLoaded', () => {
+            const messageInput = document.getElementById('messageInput');
+            if (messageInput) {
+                messageInput.addEventListener('input', () => autoResize(messageInput));
+            }
+        });
+    </script>
+
+    <!-- Дополнительные стили для новых компонентов -->
+    <style>
+        /* Индикатор загрузки */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 10, 10, 0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .loading-spinner {
+            font-size: 4rem;
+            animation: spin 2s linear infinite;
+        }
+
+        .loading-text {
+            margin-top: 1rem;
+            color: #9ca3af;
+            font-size: 1.1rem;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Toast уведомления */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            max-width: 400px;
+        }
+
+        .toast {
+            background: #1f1f1f;
+            border: 1px solid #2a2a2a;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            animation: slideIn 0.3s ease;
+        }
+
+        .toast-error {
+            border-color: #dc2626;
+            background: rgba(220, 38, 38, 0.1);
+        }
+
+        .toast-success {
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .toast-close {
+            background: none;
+            border: none;
+            color: #9ca3af;
+            cursor: pointer;
+            margin-left: 12px;
+            font-size: 1.2rem;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Улучшенная типографика */
+        .message-content {
+            line-height: 1.6;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .message-content code {
+            background: rgba(220, 38, 38, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Consolas', monospace;
+        }
+
+        .message-content pre {
+            background: #1a1a1a;
+            padding: 12px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 8px 0;
+        }
+    </style>
+</body>
+</html>
