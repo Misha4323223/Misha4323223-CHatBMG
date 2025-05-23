@@ -1916,21 +1916,49 @@
           console.log('✅ Прямой командный чат инициализирован');
         }
         
+        // ПРИНУДИТЕЛЬНАЯ ИНИЦИАЛИЗАЦИЯ СРАЗУ
+        console.log('🪃 Принудительная инициализация командного чата через 1 секунду...');
+        setTimeout(() => {
+          console.log('🪃 Проверяем элементы командного чата...');
+          const teamInput = document.getElementById('teamMessageInput');
+          const teamSendBtn = document.getElementById('teamSendBtn');
+          const teamMessages = document.getElementById('teamMessages');
+          
+          console.log('🔍 Найденные элементы:', {
+            teamInput: !!teamInput,
+            teamSendBtn: !!teamSendBtn, 
+            teamMessages: !!teamMessages
+          });
+          
+          if (teamInput && teamSendBtn && teamMessages) {
+            console.log('✅ Все элементы найдены, инициализируем чат...');
+            initializeDirectTeamChat();
+          } else {
+            console.log('❌ Некоторые элементы не найдены');
+          }
+        }, 1000);
+
         // Инициализация при переключении на вкладку команды
         const originalSwitchTab = window.switchTab;
         window.switchTab = function(tabName) {
+          console.log('🪃 Переключение на вкладку:', tabName);
           if (originalSwitchTab) originalSwitchTab(tabName);
           
           if (tabName === 'team') {
             console.log('🪃 Переключение на командный чат...');
-            setTimeout(initializeDirectTeamChat, 100);
+            setTimeout(() => {
+              console.log('🪃 Запуск initializeDirectTeamChat...');
+              initializeDirectTeamChat();
+            }, 200);
           }
         };
         
         // Также инициализируем при загрузке, если вкладка команды активна
         document.addEventListener('DOMContentLoaded', function() {
+          console.log('🪃 DOM загружен, проверяем вкладку команды...');
           const teamContent = document.getElementById('team-content');
           if (teamContent && teamContent.style.display !== 'none') {
+            console.log('🪃 Вкладка команды активна, инициализируем...');
             initializeDirectTeamChat();
           }
         });
