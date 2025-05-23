@@ -217,9 +217,17 @@ const SmartChat: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col w-full mx-auto bg-[#1a1a2e] text-white rounded-lg shadow-lg border border-gray-700 overflow-hidden
+    <div className="flex flex-col w-full mx-auto overflow-hidden
                     h-[300px] sm:h-[400px] md:h-[500px] lg:h-[600px] xl:h-[650px]
-                    max-w-sm sm:max-w-md md:max-w-2xl lg:max-w-4xl xl:max-w-5xl">
+                    max-w-sm sm:max-w-md md:max-w-2xl lg:max-w-4xl xl:max-w-5xl
+                    bg-gradient-to-br from-gray-900/95 via-black/98 to-gray-900/95
+                    backdrop-blur-xl border border-red-600/20 rounded-3xl
+                    shadow-[0_8px_25px_rgba(0,0,0,0.3),0_0_20px_rgba(220,38,38,0.2)]
+                    relative"
+         style={{
+           background: 'linear-gradient(135deg, rgba(31, 41, 55, 0.95) 0%, rgba(17, 24, 39, 0.98) 100%)',
+           boxShadow: '0 10px 40px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 0 30px rgba(220, 38, 38, 0.1)'
+         }}>
       
       <ScrollArea className="flex-grow p-2 sm:p-3 md:p-4">
         <div className="space-y-2 sm:space-y-3">
@@ -238,11 +246,18 @@ const SmartChat: React.FC = () => {
                 </Avatar>
                 
                 <div className="flex flex-col min-w-0 flex-1">
-                  <div className={`rounded-lg p-2 sm:p-3 text-sm sm:text-base break-words ${
-                    message.loading ? 'bg-gray-700 text-gray-300' :
-                    message.error ? 'bg-red-900/50 text-red-300' :
-                    message.sender === 'user' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-100'
-                  }`}>
+                  <div className={`rounded-2xl p-3 sm:p-4 text-sm sm:text-base break-words transition-all duration-300 ${
+                    message.loading ? 'bg-gray-700/80 text-gray-300 backdrop-blur-sm' :
+                    message.error ? 'bg-red-900/50 text-red-300 border border-red-500/30' :
+                    message.sender === 'user' ? 
+                      'bg-gradient-to-br from-red-600 to-red-700 text-white shadow-lg hover:shadow-red-500/25 hover:scale-[1.02] border border-red-500/30' : 
+                      'bg-gradient-to-br from-gray-800/90 to-gray-900/95 text-gray-100 backdrop-blur-sm border border-gray-600/30 hover:shadow-lg hover:scale-[1.02]'
+                  }`}
+                       style={message.sender === 'user' ? {
+                         boxShadow: '0 8px 25px rgba(220, 38, 38, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
+                       } : {
+                         boxShadow: '0 8px 25px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+                       }}>
                     {message.loading ? (
                       <div className="flex items-center space-x-2">
                         <Loader2 className="h-4 w-4 animate-spin flex-shrink-0" />
@@ -296,16 +311,24 @@ const SmartChat: React.FC = () => {
         </div>
       )}
       
-      <div className="p-2 sm:p-3 md:p-4 border-t border-gray-700 bg-gray-800/30">
-        <div className="flex gap-2 sm:gap-3">
+      <div className="p-3 sm:p-4 md:p-5 border-t border-red-600/20 relative overflow-hidden"
+           style={{
+             background: 'linear-gradient(to top, rgba(10, 10, 10, 0.98) 0%, rgba(10, 10, 10, 0.95) 70%, transparent 100%)',
+             backdropFilter: 'blur(25px)',
+             boxShadow: '0 -10px 30px rgba(0, 0, 0, 0.3), 0 0 50px rgba(220, 38, 38, 0.05)'
+           }}>
+        <div className="flex gap-3 sm:gap-4">
           <Button
             variant="outline"
             size="sm"
             onClick={handleImageButtonClick}
             disabled={isLoading}
-            className="h-9 w-9 sm:h-10 sm:w-10 p-0 border-gray-600 bg-gray-800 text-gray-300 hover:bg-gray-700 transition-colors flex-shrink-0"
+            className="h-11 w-11 sm:h-12 sm:w-12 p-0 border-gray-600/50 bg-gradient-to-br from-gray-800/90 to-gray-900/95 text-gray-300 hover:bg-gradient-to-br hover:from-gray-700/90 hover:to-gray-800/95 hover:border-red-500/30 transition-all duration-300 flex-shrink-0 rounded-xl backdrop-blur-sm hover:scale-105 hover:shadow-lg"
+            style={{
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+            }}
           >
-            <Image className="h-4 w-4 sm:h-5 sm:w-5" />
+            <Image className="h-5 w-5 sm:h-6 sm:w-6" />
           </Button>
           <input
             ref={fileInputRef}
@@ -320,19 +343,26 @@ const SmartChat: React.FC = () => {
             onKeyDown={handleKeyDown}
             placeholder="Введите сообщение..."
             disabled={isLoading}
-            className="flex-grow h-9 sm:h-10 text-sm sm:text-base bg-gray-800 border-gray-600 text-white placeholder-gray-400 
-                       focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+            className="flex-grow h-11 sm:h-12 text-sm sm:text-base bg-gradient-to-br from-gray-800/90 to-gray-900/95 border-gray-600/50 text-white placeholder-gray-400 
+                       focus:border-red-500/80 focus:ring-2 focus:ring-red-500/20 transition-all duration-300 rounded-xl backdrop-blur-sm
+                       hover:border-red-500/50 hover:shadow-lg"
+            style={{
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+            }}
           />
           <Button
             onClick={handleSend}
             disabled={isLoading || (!inputText.trim() && !imageUrl)}
             size="sm"
-            className="h-9 w-9 sm:h-10 sm:w-10 p-0 bg-blue-600 hover:bg-blue-700 text-white transition-colors flex-shrink-0 disabled:opacity-50"
+            className="h-11 w-11 sm:h-12 sm:w-12 p-0 bg-gradient-to-br from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white transition-all duration-300 flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl hover:scale-110 hover:rotate-3 active:scale-105"
+            style={{
+              boxShadow: '0 4px 20px rgba(220, 38, 38, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
+            }}
           >
             {isLoading ? (
-              <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
+              <Loader2 className="h-5 w-5 sm:h-6 sm:w-6 animate-spin" />
             ) : (
-              <Send className="h-4 w-4 sm:h-5 sm:w-5" />
+              <Send className="h-5 w-5 sm:h-6 sm:w-6" />
             )}
           </Button>
         </div>
