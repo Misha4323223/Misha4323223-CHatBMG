@@ -1707,36 +1707,233 @@
       
       <!-- Контейнер для командного чата -->
       <div class="tab-content" id="team-content" style="display: none;">
-        <div style="height: calc(100vh - 140px); padding: 20px; background: #f0f0f0;">
-          <div style="
-            background: red; 
-            color: white; 
-            padding: 10px; 
-            margin-bottom: 10px; 
-            text-align: center;
-            border-radius: 8px;
+        <div style="height: calc(100vh - 140px); padding: 20px;">
+          <div id="teamChatContainer" style="
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(249, 250, 251, 0.98) 100%);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(209, 213, 219, 0.3);
           ">
-            🪃 КОМАНДНЫЙ ЧАТ ЗАГРУЖАЕТСЯ ЗДЕСЬ
+            <div id="teamMessages" style="
+              flex: 1;
+              padding: 20px;
+              overflow-y: auto;
+              background: linear-gradient(135deg, rgba(249, 250, 251, 0.95) 0%, rgba(243, 244, 246, 0.95) 100%);
+            ">
+              <div id="teamWelcomeMessage" style="
+                text-align: center;
+                color: #666;
+                font-size: 0.9rem;
+                padding: 20px;
+                background: #f8fafc;
+                border-radius: 8px;
+                margin: 10px 0;
+              ">
+                🪃 Напишите первое сообщение команде BOOOMERANGS
+              </div>
+            </div>
+
+            <div style="
+              padding: 20px;
+              background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(249, 250, 251, 0.98) 100%);
+              border-top: 1px solid rgba(209, 213, 219, 0.3);
+              display: flex;
+              gap: 12px;
+              align-items: flex-end;
+            ">
+              <textarea 
+                id="teamMessageInput" 
+                placeholder="Напишите сообщение команде BOOOMERANGS..."
+                rows="1"
+                style="
+                  flex: 1;
+                  padding: 16px 20px;
+                  border: 2px solid rgba(209, 213, 219, 0.6);
+                  border-radius: 16px;
+                  font-size: 1rem;
+                  resize: none;
+                  min-height: 56px;
+                  max-height: 120px;
+                  font-family: inherit;
+                  background: rgba(255, 255, 255, 0.95);
+                  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                "
+              ></textarea>
+              <button id="teamSendBtn" style="
+                padding: 16px 24px;
+                background: linear-gradient(135deg, #ffd700 0%, #ffb300 50%, #ff8f00 100%);
+                color: #8b4513;
+                border: none;
+                border-radius: 16px;
+                font-weight: 800;
+                cursor: pointer;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                font-size: 1rem;
+                box-shadow: 0 6px 16px rgba(255, 215, 0, 0.4);
+                white-space: nowrap;
+              ">🪃 Отправить</button>
+            </div>
           </div>
-          <iframe 
-            src="/team-chat-embedded.html" 
-            style="
-              width: 100%; 
-              height: calc(100% - 60px); 
-              border: 3px solid #ffd700; 
-              border-radius: 16px;
-              box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-              background: white;
-            "
-            title="Командный чат BOOOMERANGS"
-            onload="console.log('✅ Iframe командного чата загружен успешно!')"
-            onerror="console.log('❌ Ошибка загрузки iframe командного чата')"
-          ></iframe>
         </div>
       </div>
       
       <script>
-        console.log('🪃 Командный чат загружается через iframe: /team-chat-embedded.html');
+        // Инициализация командного чата прямо во вкладке
+        function initializeDirectTeamChat() {
+          console.log('🪃 Инициализация прямого командного чата...');
+          
+          const teamInput = document.getElementById('teamMessageInput');
+          const teamSendBtn = document.getElementById('teamSendBtn');
+          const teamMessages = document.getElementById('teamMessages');
+          const teamWelcomeMessage = document.getElementById('teamWelcomeMessage');
+          
+          if (!teamInput || !teamSendBtn || !teamMessages) {
+            console.log('❌ Элементы командного чата не найдены');
+            return;
+          }
+          
+          let currentUser = 'mikhail';
+          let isInitialized = false;
+          
+          if (isInitialized) {
+            console.log('⚠️ Командный чат уже инициализирован');
+            return;
+          }
+          
+          // Автоматическое изменение размера поля ввода
+          teamInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+          });
+          
+          // Функция отправки сообщения
+          async function sendMessage() {
+            const content = teamInput.value.trim();
+            if (!content) return;
+            
+            teamSendBtn.disabled = true;
+            teamSendBtn.textContent = 'Отправка...';
+            
+            try {
+              // Добавляем сообщение в интерфейс
+              addMessage(content, currentUser, new Date());
+              teamInput.value = '';
+              teamInput.style.height = 'auto';
+              
+              // Отправляем на сервер
+              const response = await fetch('/api/team-chat/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: content, username: currentUser })
+              });
+              
+              const data = await response.json();
+              console.log('✅ Сообщение отправлено:', data);
+              
+            } catch (error) {
+              console.error('❌ Ошибка отправки:', error);
+            } finally {
+              teamSendBtn.disabled = false;
+              teamSendBtn.innerHTML = '🪃 Отправить';
+            }
+          }
+          
+          // Функция добавления сообщения в чат
+          function addMessage(content, username, timestamp) {
+            // Удаляем приветственное сообщение
+            if (teamWelcomeMessage) teamWelcomeMessage.remove();
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.style.cssText = `
+              margin-bottom: 16px;
+              padding: 16px 20px;
+              border-radius: 16px;
+              max-width: 75%;
+              word-wrap: break-word;
+              box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+              transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+              ${username === currentUser ? 
+                'margin-left: auto; background: linear-gradient(135deg, rgba(59, 130, 246, 0.9) 0%, rgba(29, 78, 216, 0.9) 50%, rgba(37, 99, 235, 0.9) 100%); color: white; border: 1px solid rgba(255, 255, 255, 0.2);' :
+                'margin-right: auto; background: linear-gradient(135deg, rgba(248, 250, 252, 0.95) 0%, rgba(241, 245, 249, 0.95) 50%, rgba(226, 232, 240, 0.95) 100%); color: #1e293b; border: 1px solid rgba(209, 213, 219, 0.3);'
+              }
+            `;
+            
+            const time = new Date(timestamp).toLocaleTimeString('ru-RU', {
+              hour: '2-digit', minute: '2-digit'
+            });
+            
+            messageDiv.innerHTML = `
+              <div style="font-size: 12px; opacity: 0.7; margin-bottom: 4px;">${username} • ${time}</div>
+              <div>${content}</div>
+            `;
+            
+            teamMessages.appendChild(messageDiv);
+            teamMessages.scrollTop = teamMessages.scrollHeight;
+          }
+          
+          // Загрузка истории сообщений
+          async function loadMessages() {
+            try {
+              const response = await fetch('/api/team-chat/messages');
+              const data = await response.json();
+              
+              if (data.success && data.messages.length > 0) {
+                if (teamWelcomeMessage) teamWelcomeMessage.remove();
+                
+                // Очищаем старые сообщения
+                const existingMessages = teamMessages.querySelectorAll('div:not(#teamWelcomeMessage)');
+                existingMessages.forEach(msg => msg.remove());
+                
+                data.messages.forEach(message => {
+                  addMessage(message.content, message.username, message.created_at);
+                });
+              }
+            } catch (error) {
+              console.error('❌ Ошибка загрузки сообщений:', error);
+            }
+          }
+          
+          // Обработчики событий
+          teamSendBtn.addEventListener('click', sendMessage);
+          teamInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              sendMessage();
+            }
+          });
+          
+          // Загрузка истории при инициализации
+          loadMessages();
+          
+          // Обновление каждые 3 секунды
+          setInterval(loadMessages, 3000);
+          
+          isInitialized = true;
+          console.log('✅ Прямой командный чат инициализирован');
+        }
+        
+        // Инициализация при переключении на вкладку команды
+        const originalSwitchTab = window.switchTab;
+        window.switchTab = function(tabName) {
+          if (originalSwitchTab) originalSwitchTab(tabName);
+          
+          if (tabName === 'team') {
+            console.log('🪃 Переключение на командный чат...');
+            setTimeout(initializeDirectTeamChat, 100);
+          }
+        };
+        
+        // Также инициализируем при загрузке, если вкладка команды активна
+        document.addEventListener('DOMContentLoaded', function() {
+          const teamContent = document.getElementById('team-content');
+          if (teamContent && teamContent.style.display !== 'none') {
+            initializeDirectTeamChat();
+          }
+        });
       </script>
           </div>
         </div>
