@@ -35,7 +35,7 @@ export const insertMessageSchema = createInsertSchema(messages).pick({
 // Chat Sessions для сохранения истории чатов с AI
 export const chatSessions = pgTable("chat_sessions", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id),
+  userId: integer("user_id").default(1), // Убираем внешний ключ для простоты
   title: text("title").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
