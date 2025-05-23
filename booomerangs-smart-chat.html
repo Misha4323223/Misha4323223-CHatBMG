@@ -213,6 +213,42 @@
       overflow-y: auto;
       max-height: calc(100vh - 140px);
       flex-shrink: 0;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+    
+    .sidebar.hidden {
+      width: 0;
+      padding: 0;
+      opacity: 0;
+      overflow: hidden;
+    }
+    
+    .sidebar-toggle {
+      position: absolute;
+      top: 50%;
+      right: -40px;
+      transform: translateY(-50%);
+      background: #6c63ff;
+      color: white;
+      border: none;
+      width: 32px;
+      height: 60px;
+      border-radius: 0 8px 8px 0;
+      cursor: pointer;
+      font-size: 1.2rem;
+      transition: all 0.2s;
+      z-index: 10;
+    }
+    
+    .sidebar-toggle:hover {
+      background: #5a52d5;
+      transform: translateY(-50%) scale(1.05);
+    }
+    
+    .chat-container {
+      flex: 1;
+      transition: all 0.3s ease;
     }
     
     .sidebar-header {
@@ -1003,7 +1039,8 @@
     
     <div class="main-layout">
       <!-- Боковая панель с историей чатов -->
-      <div class="sidebar">
+      <div class="sidebar" id="sidebar">
+        <button class="sidebar-toggle" onclick="toggleSidebar()">‹</button>
         <div class="sidebar-header">
           <h3 class="sidebar-title">История чатов</h3>
           <button class="new-chat-btn" onclick="createNewChat()">+ Новый</button>
@@ -1627,10 +1664,28 @@
       // Загружаем список сессий в боковую панель
       loadChatSessions();
       
+      // Функция для переключения боковой панели
+      function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const toggleBtn = sidebar.querySelector('.sidebar-toggle');
+        
+        sidebar.classList.toggle('hidden');
+        
+        // Меняем стрелку в зависимости от состояния
+        if (sidebar.classList.contains('hidden')) {
+          toggleBtn.textContent = '›';
+          toggleBtn.style.right = '-32px';
+        } else {
+          toggleBtn.textContent = '‹';
+          toggleBtn.style.right = '-40px';
+        }
+      }
+      
       // Делаем функции глобальными для HTML кнопок
       window.createNewChat = createNewChat;
       window.deleteSession = deleteSession;
       window.switchToSession = switchToSession;
+      window.toggleSidebar = toggleSidebar;
     });
   </script>
 </body>
