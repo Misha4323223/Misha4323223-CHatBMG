@@ -1425,46 +1425,55 @@
             }
         };
 
-        // Переопределяем функции с добавлением логирования
-        const originalLoadChatSessions = loadChatSessions;
-        loadChatSessions = async function() {
-            const startTime = performance.now();
-            Logger.interface('Загрузка списка чатов');
-            
-            try {
-                const result = await originalLoadChatSessions();
-                const loadTime = Math.round(performance.now() - startTime);
-                Logger.performance('Загрузка сессий чатов', loadTime, { sessionCount: document.querySelectorAll('.chat-item').length });
-                return result;
-            } catch (error) {
-                Logger.error('Ошибка загрузки сессий чатов', error);
-                throw error;
-            }
-        };
+        // Интеграция логирования с существующими функциями
+        // Оборачиваем loadChatSessions если она существует
+        if (typeof loadChatSessions !== 'undefined') {
+            const originalLoadChatSessions = loadChatSessions;
+            loadChatSessions = async function() {
+                const startTime = performance.now();
+                Logger.interface('Загрузка списка чатов');
+                
+                try {
+                    const result = await originalLoadChatSessions();
+                    const loadTime = Math.round(performance.now() - startTime);
+                    Logger.performance('Загрузка сессий чатов', loadTime, { sessionCount: document.querySelectorAll('.chat-item').length });
+                    return result;
+                } catch (error) {
+                    Logger.error('Ошибка загрузки сессий чатов', error);
+                    throw error;
+                }
+            };
+        }
 
-        const originalSendMessage = sendMessage;
-        sendMessage = async function() {
-            const messageText = messageInput.value.trim();
-            const startTime = performance.now();
-            
-            Logger.user('Отправка сообщения', { messageLength: messageText.length, sessionId: currentSessionId });
-            
-            try {
-                const result = await originalSendMessage();
-                const sendTime = Math.round(performance.now() - startTime);
-                Logger.performance('Полная отправка сообщения', sendTime);
-                return result;
-            } catch (error) {
-                Logger.error('Ошибка отправки сообщения', error, { messageText: messageText.substring(0, 50) + '...' });
-                throw error;
-            }
-        };
+        // Оборачиваем sendMessage если она существует
+        if (typeof sendMessage !== 'undefined') {
+            const originalSendMessage = sendMessage;
+            sendMessage = async function() {
+                const messageText = messageInput.value.trim();
+                const startTime = performance.now();
+                
+                Logger.user('Отправка сообщения', { messageLength: messageText.length, sessionId: currentSessionId });
+                
+                try {
+                    const result = await originalSendMessage();
+                    const sendTime = Math.round(performance.now() - startTime);
+                    Logger.performance('Полная отправка сообщения', sendTime);
+                    return result;
+                } catch (error) {
+                    Logger.error('Ошибка отправки сообщения', error, { messageText: messageText.substring(0, 50) + '...' });
+                    throw error;
+                }
+            };
+        }
 
-        const originalSwitchToChat = switchToChat;
-        switchToChat = function(sessionId) {
-            Logger.chat('Переключение на чат', sessionId);
-            return originalSwitchToChat(sessionId);
-        };
+        // Оборачиваем switchToChat если она существует
+        if (typeof switchToChat !== 'undefined') {
+            const originalSwitchToChat = switchToChat;
+            switchToChat = function(sessionId) {
+                Logger.chat('Переключение на чат', sessionId);
+                return originalSwitchToChat(sessionId);
+            };
+        }
 
         // Логирование AI ответов
         function logAIResponse(response, provider, model, responseTime) {

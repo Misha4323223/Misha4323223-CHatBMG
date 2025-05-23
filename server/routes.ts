@@ -105,14 +105,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.sendFile('demo.html', { root: '.' });
   });
   
-  // Главная страница - BOOOMERANGS Smart Chat (оптимизированная версия)
+  // Главная страница - BOOOMERANGS Smart Chat (рабочая версия)
   app.get('/', (req, res) => {
-    res.sendFile('booomerangs-optimized-chat.html', { root: '.' });
+    res.sendFile('booomerangs-smart-chat.html', { root: '.' });
   });
 
-  // Старая версия для сравнения
-  app.get('/legacy', (req, res) => {
-    res.sendFile('booomerangs-smart-chat.html', { root: '.' });
+  // Оптимизированная версия (в разработке)
+  app.get('/optimized', (req, res) => {
+    res.sendFile('booomerangs-optimized-chat.html', { root: '.' });
   });
   
   // Страница отладки
