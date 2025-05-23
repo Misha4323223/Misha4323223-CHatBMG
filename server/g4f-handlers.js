@@ -87,12 +87,51 @@ router.post('/chat', async (req, res) => {
     
     console.log(`Запрос к G4F: провайдер=${provider || 'auto'}, сообщение="${userMessageText.substring(0, 50)}..."`);
     
-    // Пробуем сначала Python G4F провайдер, затем JavaScript провайдеры
+    // Пробуем специальные бесплатные провайдеры БЕЗ API ключей
     try {
-      console.log('🐍 Пробуем Python G4F провайдер...');
+      console.log('🚀 Пробуем специальные бесплатные провайдеры...');
       
-      // Сначала пробуем Python G4F провайдер
+      // 1. Сначала пробуем FreeChat Enhanced провайдер
       try {
+        console.log('📞 Вызываем FreeChat Enhanced...');
+        const freeChatModule = require('./freechat-enhanced');
+        const freeChatResponse = await freeChatModule.getChatFreeEnhancedResponse(message);
+        if (freeChatResponse && freeChatResponse.success && freeChatResponse.response) {
+          console.log('✅ FreeChat Enhanced ответил успешно!');
+          return res.json({
+            response: freeChatResponse.response,
+            provider: 'FreeChat-Enhanced',
+            model: freeChatResponse.model || 'freechat',
+            cached: false
+          });
+        }
+        console.log('⚠️ FreeChat Enhanced не вернул успешный ответ');
+      } catch (freeChatError) {
+        console.log(`⚠️ FreeChat Enhanced ошибка: ${freeChatError.message}`);
+      }
+      
+      // 2. Пробуем DeepSpeek провайдер
+      try {
+        console.log('📞 Вызываем DeepSpeek...');
+        const deepSpeekModule = require('./deepspeek-fixed');
+        const deepSpeekResponse = await deepSpeekModule.getDeepSpeekResponse(message);
+        if (deepSpeekResponse && deepSpeekResponse.success && deepSpeekResponse.response) {
+          console.log('✅ DeepSpeek ответил успешно!');
+          return res.json({
+            response: deepSpeekResponse.response,
+            provider: 'DeepSpeek',
+            model: deepSpeekResponse.model || 'deepspeek',
+            cached: false
+          });
+        }
+        console.log('⚠️ DeepSpeek не вернул успешный ответ');
+      } catch (deepSpeekError) {
+        console.log(`⚠️ DeepSpeek ошибка: ${deepSpeekError.message}`);
+      }
+      
+      // 3. Если специальные провайдеры не работают, пробуем Python G4F
+      try {
+        console.log('🐍 Пробуем Python G4F провайдер...');
         const pythonResponse = await fetch('http://localhost:5004/chat', {
           method: 'POST',
           headers: {
@@ -120,49 +159,10 @@ router.post('/chat', async (req, res) => {
             });
           }
         }
+        console.log('⚠️ Python G4F не вернул успешный ответ');
       } catch (pythonError) {
-        console.log('⚠️ Python G4F недоступен, пробуем JavaScript провайдеры...');
+        console.log(`⚠️ Python G4F ошибка: ${pythonError.message}`);
       }
-      
-      // Если Python провайдер не работает, пробуем специальные провайдеры
-      console.log('🔧 Пробуем специальные провайдеры FreeChat и DeepSpeek...');
-      
-      // Пробуем FreeChat Enhanced провайдер
-      try {
-        const freeChatModule = require('./freechat-enhanced');
-        const freeChatResponse = await freeChatModule.getChatFreeEnhancedResponse(message);
-        if (freeChatResponse && freeChatResponse.success && freeChatResponse.response) {
-          console.log('✅ FreeChat Enhanced ответил успешно');
-          return res.json({
-            response: freeChatResponse.response,
-            provider: 'FreeChat-Enhanced',
-            model: freeChatResponse.model || 'freechat',
-            cached: false
-          });
-        }
-      } catch (freeChatError) {
-        console.log('⚠️ FreeChat Enhanced недоступен, пробуем DeepSpeek...');
-      }
-      
-      // Пробуем DeepSpeek провайдер
-      try {
-        const deepSpeekModule = require('./deepspeek-fixed');
-        const deepSpeekResponse = await deepSpeekModule.getDeepSpeekResponse(message);
-        if (deepSpeekResponse && deepSpeekResponse.success && deepSpeekResponse.response) {
-          console.log('✅ DeepSpeek ответил успешно');
-          return res.json({
-            response: deepSpeekResponse.response,
-            provider: 'DeepSpeek',
-            model: deepSpeekResponse.model || 'deepspeek',
-            cached: false
-          });
-        }
-      } catch (deepSpeekError) {
-        console.log('⚠️ DeepSpeek недоступен, пробуем основные JavaScript провайдеры...');
-      }
-      
-      // Если специальные провайдеры не работают, пробуем основные JavaScript провайдеры
-      console.log('🔧 Пробуем основные JavaScript G4F провайдеры...');
       
       // Подготовка формата сообщений для API
       let chatMessages;
