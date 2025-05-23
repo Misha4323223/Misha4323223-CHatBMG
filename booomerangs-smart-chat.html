@@ -234,6 +234,41 @@
             background: rgba(255, 215, 0, 0.1);
             border-left-color: var(--gold);
         }
+        
+        .session-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            width: 100%;
+        }
+        
+        .session-content {
+            flex: 1;
+        }
+        
+        .delete-session {
+            background: rgba(255, 69, 58, 0.8);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            opacity: 0.7;
+            margin-left: 10px;
+            flex-shrink: 0;
+        }
+        
+        .delete-session:hover {
+            background: rgba(255, 69, 58, 1);
+            opacity: 1;
+            transform: scale(1.1);
+        }
 
         .session-title {
             color: var(--text);
@@ -619,10 +654,16 @@
             }
 
             sessionsList.innerHTML = allSessions.map(session => `
-                <div class="session-item ${session.id === currentSessionId ? 'active' : ''}" 
-                     onclick="loadSession(${session.id})">
-                    <div class="session-title">${session.title}</div>
-                    <div class="session-date">${new Date(session.createdAt).toLocaleDateString('ru-RU')}</div>
+                <div class="session-item ${session.id === currentSessionId ? 'active' : ''}">
+                    <div class="session-header">
+                        <div class="session-content" onclick="loadSession(${session.id})">
+                            <div class="session-title">${session.title}</div>
+                            <div class="session-date">${new Date(session.createdAt).toLocaleDateString('ru-RU')}</div>
+                        </div>
+                        <button class="delete-session" onclick="deleteSession(${session.id})" title="Удалить чат">
+                            🗑️
+                        </button>
+                    </div>
                 </div>
             `).join('');
         }
