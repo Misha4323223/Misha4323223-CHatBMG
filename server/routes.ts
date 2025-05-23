@@ -62,12 +62,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   }));
   
-  // Подключаем генератор изображений только для точного пути
-  app.get('/image-generator', (req, res) => {
-    res.redirect('/api/svg');
-  });
-  
-  // API для генератора изображений
+  // API для генератора изображений только для /api/svg
   app.use('/api/svg', svgGenerator);
   
   // Импортируем модуль генерации изображений с AI
