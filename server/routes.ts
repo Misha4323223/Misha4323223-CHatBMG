@@ -299,6 +299,120 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ============================================
+  // AUTHENTICATION API ROUTES
+  // ============================================
+
+  // API для входа в систему
+  app.post('/api/auth/login', async (req, res) => {
+    try {
+      const { username, password } = req.body;
+
+      if (!username || !password) {
+        return res.status(400).json({
+          success: false,
+          message: 'Логин и пароль обязательны'
+        });
+      }
+
+      // Поиск пользователя в базе данных
+      const user = await db.select()
+        .from(users)
+        .where(eq(users.username, username))
+        .limit(1);
+
+      if (user.length === 0) {
+        return res.status(401).json({
+          success: false,
+          message: 'Неверный логин или пароль'
+        });
+      }
+
+      const foundUser = user[0];
+
+      // Проверка пароля (в реальном приложении должно быть хеширование)
+      if (foundUser.password !== password) {
+        return res.status(401).json({
+          success: false,
+          message: 'Неверный логин или пароль'
+        });
+      }
+
+      // Генерация простого токена (в реальном приложении используйте JWT)
+      const token = `token_${foundUser.id}_${Date.now()}`;
+
+      res.json({
+        success: true,
+        token: token,
+        user: {
+          id: foundUser.id,
+          username: foundUser.username,
+          display_name: foundUser.display_name
+        }
+      });
+
+    } catch (error) {
+      console.error('Ошибка входа:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Ошибка сервера'
+      });
+    }
+  });
+
+  // API для проверки токена
+  app.get('/api/auth/verify', async (req, res) => {
+    try {
+      const authHeader = req.headers.authorization;
+      
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({
+          success: false,
+          message: 'Токен не предоставлен'
+        });
+      }
+
+      const token = authHeader.split(' ')[1];
+      
+      // Простая проверка токена (в реальном приложении используйте JWT)
+      if (token.startsWith('token_')) {
+        const userId = token.split('_')[1];
+        
+        const user = await db.select()
+          .from(users)
+          .where(eq(users.id, parseInt(userId)))
+          .limit(1);
+
+        if (user.length > 0) {
+          return res.json({
+            success: true,
+            user: {
+              id: user[0].id,
+              username: user[0].username,
+              display_name: user[0].display_name
+            }
+          });
+        }
+      }
+
+      res.status(401).json({
+        success: false,
+        message: 'Недействительный токен'
+      });
+
+    } catch (error) {
+      console.error('Ошибка проверки токена:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Ошибка сервера'
+      });
+    }
+  });
+
+  // ============================================
+  // CHAT HISTORY API ROUTES
+  // ============================================
+
   // Получение всех сессий пользователя (без параметра - для текущего пользователя)
   app.get('/api/chat/sessions', async (req, res) => {
     try {

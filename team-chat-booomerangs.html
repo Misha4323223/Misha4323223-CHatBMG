@@ -221,7 +221,7 @@
   <script>
     console.log('🪃 Командный чат BOOOMERANGS загружен');
 
-    let currentUser = 'mikhail';
+    let currentUser = null;
     let lastMessageId = 0;
     let isSendingMessage = false;
 
@@ -347,10 +347,33 @@
     // Автоматическое обновление каждые 3 секунды
     setInterval(loadNewMessages, 3000);
 
-    // Загружаем сообщения при запуске
-    loadNewMessages();
+    // Проверка аутентификации
+    function checkAuthentication() {
+      const token = localStorage.getItem('authToken');
+      const username = localStorage.getItem('username');
+      
+      if (!token || !username) {
+        // Перенаправляем на страницу входа с параметром возврата
+        window.location.href = '/login.html?redirect=' + encodeURIComponent(window.location.pathname);
+        return false;
+      }
+      
+      // Устанавливаем данные пользователя
+      currentUser = username;
+      
+      // Обновляем отображаемое имя в заголовке
+      const displayName = localStorage.getItem('displayName') || username;
+      document.querySelector('.user-info span').textContent = `${displayName} подключен`;
+      
+      return true;
+    }
 
-    console.log('✅ Командный чат готов к работе');
+    // Проверяем аутентификацию перед загрузкой
+    if (checkAuthentication()) {
+      // Загружаем сообщения при запуске
+      loadNewMessages();
+      console.log('✅ Командный чат готов к работе');
+    }
   </script>
 </body>
 </html>

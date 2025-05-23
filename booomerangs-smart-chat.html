@@ -938,8 +938,30 @@
         // Инициализация
         console.log('🪃 BOOOMERANGS Smart Chat инициализирован');
         
-        // Загружаем историю чатов при инициализации
-        loadChatSessions();
+        // Проверка аутентификации
+        function checkAuthentication() {
+            const token = localStorage.getItem('authToken');
+            const username = localStorage.getItem('username');
+            
+            if (!token || !username) {
+                // Перенаправляем на страницу входа с параметром возврата
+                window.location.href = '/login.html?redirect=' + encodeURIComponent(window.location.pathname);
+                return false;
+            }
+            
+            // Устанавливаем данные пользователя
+            currentUser = username;
+            currentUserId = parseInt(token.split('_')[1]) || 1;
+            authToken = token;
+            
+            return true;
+        }
+
+        // Проверяем аутентификацию перед загрузкой
+        if (checkAuthentication()) {
+            // Загружаем историю чатов при инициализации
+            loadChatSessions();
+        }
     </script>
 </body>
 </html>
