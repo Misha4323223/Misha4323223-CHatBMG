@@ -1002,34 +1002,52 @@
       async function loadChatHistory() {
         try {
           const response = await fetch('/api/chat/sessions');
+          
+          // Проверяем, что ответ успешный
+          if (!response.ok) {
+            console.log('Сервер недоступен, создаем новую сессию');
+            await createNewChatSession();
+            return;
+          }
+          
           const data = await response.json();
           
-          if (data.success && data.sessions.length > 0) {
+          // Проверяем структуру ответа
+          if (data && data.success && data.sessions && Array.isArray(data.sessions) && data.sessions.length > 0) {
             // Загружаем последнюю сессию
             const lastSession = data.sessions[0];
             currentSessionId = lastSession.id;
             
+            console.log(`Найдена последняя сессия: ${currentSessionId}`);
+            
             // Загружаем сообщения из последней сессии
             const messagesResponse = await fetch(`/api/chat/sessions/${currentSessionId}/messages`);
-            const messagesData = await messagesResponse.json();
             
-            if (messagesData.success && messagesData.messages.length > 0) {
-              // Восстанавливаем сообщения в интерфейсе
-              messagesData.messages.forEach(msg => {
-                addMessage(msg.content, msg.sender === 'user', {
-                  provider: msg.provider,
-                  category: msg.category
-                });
-              });
+            if (messagesResponse.ok) {
+              const messagesData = await messagesResponse.json();
               
-              console.log(`Восстановлена история чата: ${messagesData.messages.length} сообщений`);
+              if (messagesData && messagesData.success && messagesData.messages && Array.isArray(messagesData.messages) && messagesData.messages.length > 0) {
+                // Восстанавливаем сообщения в интерфейсе
+                messagesData.messages.forEach(msg => {
+                  addMessage(msg.content, msg.sender === 'user', {
+                    provider: msg.provider,
+                    category: msg.category
+                  });
+                });
+                
+                console.log(`Восстановлена история чата: ${messagesData.messages.length} сообщений`);
+                return;
+              }
             }
+            
+            console.log('Нет сообщений в последней сессии');
           } else {
-            // Если нет сессий, создаем новую
+            console.log('Нет доступных сессий, создаем новую');
             await createNewChatSession();
           }
         } catch (error) {
           console.error('Ошибка загрузки истории:', error);
+          // Создаем новую сессию только в случае критической ошибки
           await createNewChatSession();
         }
       }
