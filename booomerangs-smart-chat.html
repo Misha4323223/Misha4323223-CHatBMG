@@ -398,8 +398,9 @@
             background: rgba(17, 17, 17, 0.8);
             border-radius: 12px;
             margin: 10px;
-            min-height: 0;
-            max-height: calc(100vh - 300px);
+            min-height: 200px;
+            max-height: calc(100vh - 250px);
+            order: 1;
         }
 
         .input-area {
@@ -407,6 +408,8 @@
             padding: 20px;
             background: rgba(25, 25, 25, 0.9);
             border-top: 1px solid var(--border);
+            order: 2;
+            min-height: 100px;
         }
 
         /* Автоматическое растягивание поля ввода при скрытии панели */
