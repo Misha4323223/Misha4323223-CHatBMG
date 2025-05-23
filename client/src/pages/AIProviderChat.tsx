@@ -50,7 +50,7 @@ const providers: ProviderInfo[] = [
     description: 'Модель Claude от Anthropic через Python G4F.',
     endpoint: '/api/claude/chat',
     models: ['claude'],
-    icon: '🤖',
+    icon: '🪃',
     specialization: 'general'
   },
   {

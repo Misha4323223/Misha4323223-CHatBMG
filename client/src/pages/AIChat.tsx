@@ -11,7 +11,7 @@ const getProviderIcon = (provider?: string) => {
       return <span className="mr-1">👨‍💻</span>;
     case 'claude':
     case 'anthropic':
-      return <span className="mr-1">🤖</span>;
+      return <span className="mr-1">🪃</span>;
     case 'chatfree':
       return <span className="mr-1">💬</span>;
     case 'deepinfra':
@@ -24,7 +24,7 @@ const getProviderIcon = (provider?: string) => {
     case 'phind':
       return <span className="mr-1">📚</span>;
     default:
-      return <span className="mr-1">🤖</span>;
+      return <span className="mr-1">🪃</span>;
   }
 }
 
