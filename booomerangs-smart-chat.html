@@ -1939,6 +1939,94 @@
             teamMessages: !!teamMessages
           });
           
+          // ДИАГНОСТИЧЕСКОЕ ЛОГИРОВАНИЕ СТИЛЕЙ
+          if (teamInput) {
+            const inputStyles = window.getComputedStyle(teamInput);
+            const inputRect = teamInput.getBoundingClientRect();
+            console.log('📝 ДИАГНОСТИКА ПОЛЯ ВВОДА:', {
+              display: inputStyles.display,
+              visibility: inputStyles.visibility,
+              opacity: inputStyles.opacity,
+              position: inputStyles.position,
+              top: inputStyles.top,
+              left: inputStyles.left,
+              width: inputStyles.width,
+              height: inputStyles.height,
+              backgroundColor: inputStyles.backgroundColor,
+              color: inputStyles.color,
+              border: inputStyles.border,
+              zIndex: inputStyles.zIndex,
+              transform: inputStyles.transform,
+              overflow: inputStyles.overflow,
+              // Позиция на экране
+              rect: {
+                top: inputRect.top,
+                left: inputRect.left,
+                width: inputRect.width,
+                height: inputRect.height,
+                bottom: inputRect.bottom,
+                right: inputRect.right
+              },
+              // Видимость
+              offsetParent: !!teamInput.offsetParent,
+              clientWidth: teamInput.clientWidth,
+              clientHeight: teamInput.clientHeight,
+              scrollWidth: teamInput.scrollWidth,
+              scrollHeight: teamInput.scrollHeight
+            });
+          }
+          
+          if (teamSendBtn) {
+            const btnStyles = window.getComputedStyle(teamSendBtn);
+            const btnRect = teamSendBtn.getBoundingClientRect();
+            console.log('🔘 ДИАГНОСТИКА КНОПКИ:', {
+              display: btnStyles.display,
+              visibility: btnStyles.visibility,
+              opacity: btnStyles.opacity,
+              position: btnStyles.position,
+              backgroundColor: btnStyles.backgroundColor,
+              color: btnStyles.color,
+              border: btnStyles.border,
+              zIndex: btnStyles.zIndex,
+              transform: btnStyles.transform,
+              // Позиция на экране
+              rect: {
+                top: btnRect.top,
+                left: btnRect.left,
+                width: btnRect.width,
+                height: btnRect.height
+              },
+              offsetParent: !!teamSendBtn.offsetParent,
+              clientWidth: teamSendBtn.clientWidth,
+              clientHeight: teamSendBtn.clientHeight
+            });
+          }
+          
+          if (teamMessages) {
+            const msgStyles = window.getComputedStyle(teamMessages);
+            const msgRect = teamMessages.getBoundingClientRect();
+            console.log('💬 ДИАГНОСТИКА ОБЛАСТИ СООБЩЕНИЙ:', {
+              display: msgStyles.display,
+              visibility: msgStyles.visibility,
+              opacity: msgStyles.opacity,
+              position: msgStyles.position,
+              width: msgStyles.width,
+              height: msgStyles.height,
+              overflow: msgStyles.overflow,
+              backgroundColor: msgStyles.backgroundColor,
+              // Позиция на экране
+              rect: {
+                top: msgRect.top,
+                left: msgRect.left,
+                width: msgRect.width,
+                height: msgRect.height
+              },
+              offsetParent: !!teamMessages.offsetParent,
+              scrollHeight: teamMessages.scrollHeight,
+              clientHeight: teamMessages.clientHeight
+            });
+          }
+          
           if (teamInput && teamSendBtn && teamMessages) {
             console.log('✅ Все элементы найдены, инициализируем чат...');
             initializeDirectTeamChat();
