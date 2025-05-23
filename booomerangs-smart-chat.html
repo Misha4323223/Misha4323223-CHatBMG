@@ -145,18 +145,21 @@
 
         .nav-tab {
             padding: 15px 28px;
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            color: var(--text-light);
+            background: var(--primary);
+            border: 2px solid var(--border-light);
+            color: var(--text);
             cursor: pointer;
             font-size: 1rem;
-            font-weight: 600;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            border-radius: 12px 12px 0 0;
-            margin-right: 4px;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            border-radius: 0;
+            margin-right: 2px;
             position: relative;
             overflow: hidden;
             backdrop-filter: blur(10px);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
         }
 
         .nav-tab::before {
