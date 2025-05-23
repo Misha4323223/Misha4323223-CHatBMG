@@ -39,11 +39,15 @@ router.post('/chat', async (req, res) => {
     
     // Создаем сессию, если её нет
     let currentSessionId = sessionId;
+    console.log(`🔍 Получен sessionId: ${sessionId}, currentSessionId: ${currentSessionId}`);
+    
     if (!currentSessionId && message) {
       console.log('💬 Создаем новую сессию для стриминга...');
       const newSession = await chatHistory.createChatSession(1, message.substring(0, 50));
       currentSessionId = newSession.id;
       console.log(`✅ Создана новая стриминговая сессия: ${currentSessionId}`);
+    } else {
+      console.log(`📌 Используем существующую сессию: ${currentSessionId}`);
     }
     
     // Сохраняем сообщение пользователя
