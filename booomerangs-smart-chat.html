@@ -1006,13 +1006,22 @@
     .status-icon {
       width: 16px;
       height: 16px;
-      animation: boomerang 1.5s ease-in-out infinite;
+      animation: boomerang-fly 1.2s ease-in-out infinite !important;
     }
     
-    @keyframes boomerang {
-      0% { transform: translateX(-5px) rotate(-10deg); }
-      50% { transform: translateX(5px) rotate(10deg); }
-      100% { transform: translateX(-5px) rotate(-10deg); }
+    @keyframes boomerang-fly {
+      0% { 
+        transform: translateX(-8px) rotate(-20deg) scale(0.9);
+        opacity: 0.8;
+      }
+      50% { 
+        transform: translateX(8px) rotate(20deg) scale(1.1);
+        opacity: 1;
+      }
+      100% { 
+        transform: translateX(-8px) rotate(-20deg) scale(0.9);
+        opacity: 0.8;
+      }
     }
     
     .status-title {
