@@ -1108,6 +1108,42 @@
         let allSessions = [];
         let isCreatingSession = false;
         let isSendingMessage = false;
+        
+        // Автосохранение черновиков
+        let draftSaveTimeout = null;
+        const DRAFT_SAVE_DELAY = 1000; // 1 секунда задержки
+        
+        // Загрузка черновика для текущей сессии
+        function loadDraft() {
+            const draftKey = `draft_${currentUser}_${currentSessionId || 'new'}`;
+            const savedDraft = localStorage.getItem(draftKey);
+            const messageInput = document.getElementById('messageInput');
+            
+            if (savedDraft && messageInput) {
+                messageInput.value = savedDraft;
+                console.log('📝 Загружен черновик:', savedDraft.substring(0, 50) + '...');
+            }
+        }
+        
+        // Сохранение черновика
+        function saveDraft(text) {
+            const draftKey = `draft_${currentUser}_${currentSessionId || 'new'}`;
+            
+            if (text.trim()) {
+                localStorage.setItem(draftKey, text);
+                console.log('💾 Черновик автосохранен');
+            } else {
+                localStorage.removeItem(draftKey);
+                console.log('🗑️ Пустой черновик удален');
+            }
+        }
+        
+        // Очистка черновика после отправки
+        function clearDraft() {
+            const draftKey = `draft_${currentUser}_${currentSessionId || 'new'}`;
+            localStorage.removeItem(draftKey);
+            console.log('✅ Черновик очищен после отправки');
+        }
 
         // Функция создания нового чата
         function startNewChat() {
@@ -1123,6 +1159,9 @@
             document.querySelectorAll('.session-item').forEach(item => {
                 item.classList.remove('active');
             });
+            
+            // Загружаем черновик для нового чата
+            loadDraft();
         }
 
         // Загрузка списка сессий
@@ -1323,6 +1362,9 @@
                 addMessage(message, 'user');
                 messageInput.value = '';
                 messageInput.style.height = 'auto';
+                
+                // Очищаем черновик после отправки
+                clearDraft();
 
                 // Отправляем запрос к AI
                 const response = await fetch('/api/chat/messages', {
