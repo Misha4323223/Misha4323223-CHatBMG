@@ -1491,8 +1491,8 @@
         // Проверяем, есть ли текст или изображение для отправки
         if (!messageText && !uploadedImageUrl) return;
         
-        // Определяем тип операции и показываем соответствующий статус
-        // const operationType = detectOperationType(messageText);
+        // Определяем тип операции (нужно для логики, но индикатор отключен)
+        const operationType = detectOperationType(messageText);
         // showStatus(operationType.title, operationType.message); // Отключен для минималистичного дизайна
         
         // Добавляем сообщение пользователя
