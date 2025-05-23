@@ -498,6 +498,7 @@
                 <button class="nav-tab active" onclick="switchTab('chat')"><span>💬 Чат</span></button>
                 <button class="nav-tab" onclick="switchTab('generator')"><span>🎨 Генератор</span></button>
                 <button class="nav-tab" onclick="switchTab('team')"><span>👥 Команда</span></button>
+                <button class="nav-tab" onclick="logout()" style="background: rgba(220, 38, 38, 0.1); border-color: rgba(220, 38, 38, 0.2);"><span>🚪 Выход</span></button>
             </div>
         </div>
 
@@ -955,6 +956,17 @@
             authToken = token;
             
             return true;
+        }
+
+        // Функция выхода из профиля
+        function logout() {
+            // Очищаем данные пользователя
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('username');
+            localStorage.removeItem('displayName');
+            
+            // Перенаправляем на страницу входа
+            window.location.href = '/login.html';
         }
 
         // Проверяем аутентификацию перед загрузкой

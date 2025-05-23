@@ -200,7 +200,22 @@
     <div class="chat-area">
       <div class="messages-container" id="messagesContainer">
         <div class="welcome-message" id="welcomeMessage">
-          🪃 Командный чат BOOOMERANGS
+          <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 10px;">
+            <span>🪃 Командный чат BOOOMERANGS</span>
+            <button onclick="logout()" style="
+              background: rgba(220, 38, 38, 0.8);
+              color: white;
+              border: none;
+              border-radius: 8px;
+              padding: 6px 12px;
+              cursor: pointer;
+              font-weight: 600;
+              transition: all 0.3s ease;
+              font-size: 0.8rem;
+            " onmouseover="this.style.background='rgba(220, 38, 38, 1)'" onmouseout="this.style.background='rgba(220, 38, 38, 0.8)'">
+              🚪 Выход
+            </button>
+          </div>
         </div>
       </div>
 
