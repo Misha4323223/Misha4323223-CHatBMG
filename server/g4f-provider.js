@@ -41,18 +41,17 @@ const KEY_REQUIRED_PROVIDERS = [
 ];
 
 // Порядок провайдеров от самых стабильных к менее стабильным
-// Обновлено по рекомендации пользователя - только бесплатные
+// Активируем бесплатные рабочие провайдеры
 const PROVIDER_PRIORITY = [
-  PROVIDERS.DEEPSPEEK,    // DeepSpeek (новый приоритетный провайдер)
-  PROVIDERS.YOU,          // You.com (стабильный, но медленный)
-  PROVIDERS.AICHAT,       // Быстрый, но нестабильный
-  // Провайдеры, требующие ключи (временно отключены):
+  PROVIDERS.PHIND,        // Phind - отличный для программирования
+  PROVIDERS.YOU,          // You.com (стабильный)
+  PROVIDERS.DEEPSPEEK,    // DeepSpeek (технические вопросы)
+  PROVIDERS.AICHAT,       // Быстрый AI Chat
+  PROVIDERS.LIAOBOTS,     // Liaobots - хорошая альтернатива
+  // Провайдеры, требующие ключи (отключены):
   // PROVIDERS.DEEPAI,    // DeepAI (требуется API-ключ)
   // PROVIDERS.CHATGPT,   // Требуется access_token
-  // Временно недоступные провайдеры:
-  // PROVIDERS.PHIND,     // Недоступен из Replit
-  // PROVIDERS.LIAOBOTS,  // Недоступен из Replit
-  // PROVIDERS.QWEN,      // Нестабильный
+  // PROVIDERS.QWEN,      // Требует Authorization
   // PROVIDERS.DIFY       // Нестабильный
 ];
 
