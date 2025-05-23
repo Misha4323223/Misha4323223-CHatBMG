@@ -1390,12 +1390,13 @@
               const messagesData = await messagesResponse.json();
               
               if (messagesData && messagesData.success && messagesData.messages && Array.isArray(messagesData.messages) && messagesData.messages.length > 0) {
+                console.log('📥 Загружено сообщений:', messagesData.messages.length, messagesData.messages);
+                
                 // Восстанавливаем сообщения в интерфейсе
                 messagesData.messages.forEach(msg => {
-                  addMessage(msg.content, msg.sender === 'user', {
-                    provider: msg.provider,
-                    category: msg.category
-                  });
+                  const messageText = msg.text || msg.content;
+                  console.log('📝 Отображаем сообщение:', messageText);
+                  displayMessage(messageText, msg.sender === 'user' ? 'user' : 'ai', msg.provider);
                 });
                 
                 console.log(`Восстановлена история чата: ${messagesData.messages.length} сообщений`);
