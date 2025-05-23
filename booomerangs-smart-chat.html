@@ -933,6 +933,7 @@
                                     class="message-input" 
                                     placeholder="Введите ваше сообщение..." 
                                     rows="1"
+                                    style="height: 56px !important; min-height: 56px !important; max-height: 56px !important; resize: none; overflow: hidden;"
                                 ></textarea>
                                 <button id="sendBtn" class="send-button"><span>🪃 Отправить</span></button>
                             </div>
@@ -1178,11 +1179,11 @@
             }
         }
         
-        // Автоматическое изменение размера поля ввода
+        // Фиксированная высота поля ввода (без автоматического растягивания)
         const messageInput = document.getElementById('messageInput');
         messageInput.addEventListener('input', function() {
-            this.style.height = 'auto';
-            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+            // Принудительно сохраняем фиксированную высоту 56px
+            this.style.height = '56px';
         });
 
         // Отправка сообщения
