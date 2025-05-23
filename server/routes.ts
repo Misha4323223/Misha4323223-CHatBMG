@@ -758,8 +758,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // API для работы с BOOOMERANGS AI интеграцией (с поддержкой Qwen и других провайдеров)
   app.post('/api/ai/chat', upload.single('image'), async (req, res) => {
     try {
-      const { message, provider } = req.body;
+      const { message, provider, sessionId } = req.body;
       const uploadedImage = req.file;
+      
+      // Импортируем функции для работы с чатом
+      const chatHistory = require('./chat-history');
       
       console.log(`🔍 Проверка загрузки: message="${message}", uploadedImage=${uploadedImage ? 'ЕСТЬ' : 'НЕТ'}`);
       
@@ -772,6 +775,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Если есть изображение, но нет сообщения, установим стандартный запрос
       let finalMessage = message || 'Анализируй это изображение и опиши что на нем видно';
+      
+      // Создаем сессию, если её нет
+      let currentSessionId = sessionId;
+      if (!currentSessionId && finalMessage) {
+        console.log('💬 Создаем новую сессию чата...');
+        const newSession = await chatHistory.createChatSession(1, finalMessage.substring(0, 50));
+        currentSessionId = newSession.id;
+        console.log(`✅ Создана новая сессия: ${currentSessionId}`);
+      }
+      
+      // Сохраняем сообщение пользователя
+      if (currentSessionId && finalMessage) {
+        console.log('💾 Сохраняем сообщение пользователя...');
+        await chatHistory.saveMessage({
+          sessionId: currentSessionId,
+          sender: 'user',
+          content: finalMessage,
+          provider: null
+        });
+        console.log('✅ Сообщение пользователя сохранено');
+      }
       
       // Импортируем провайдер напрямую
       const directAiProvider = require('./direct-ai-provider');
@@ -1030,12 +1054,25 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
                   
                   console.log(`✅ Успешно получен ответ от ${selectedProvider.name}`);
                   
+                  // Сохраняем ответ AI в базу данных
+                  if (currentSessionId && responseText) {
+                    console.log('💾 Сохраняем ответ AI...');
+                    await chatHistory.saveMessage({
+                      sessionId: currentSessionId,
+                      sender: 'ai',
+                      content: responseText,
+                      provider: selectedProvider.name
+                    });
+                    console.log('✅ Ответ AI сохранен');
+                  }
+                  
                   // Отправляем реальный ответ от провайдера
                   return res.json({
                     success: true,
                     response: responseText,
                     provider: selectedProvider.name,
-                    model: provider
+                    model: provider,
+                    sessionId: currentSessionId
                   });
                 } catch (extractError) {
                   console.log(`Ошибка при извлечении ответа от ${selectedProvider.name}:`, 
