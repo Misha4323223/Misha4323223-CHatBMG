@@ -422,6 +422,188 @@
             transform: translateY(-1px);
             box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
         }
+
+        /* Навигация по вкладкам */
+        .sidebar-nav {
+            padding: 16px;
+            border-bottom: 1px solid #2a2a2a;
+        }
+
+        .nav-tab {
+            width: 100%;
+            padding: 12px 16px;
+            margin: 4px 0;
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 8px;
+            color: #9ca3af;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .nav-tab:hover {
+            background: #2a2a2a;
+            color: #d1d5db;
+        }
+
+        .nav-tab.active {
+            background: #dc2626;
+            color: white;
+            border-color: #dc2626;
+        }
+
+        /* Стили для вкладок контента */
+        .tab-content {
+            display: none;
+            flex: 1;
+            flex-direction: column;
+        }
+
+        .tab-content.active {
+            display: flex;
+        }
+
+        /* Генератор изображений */
+        .generator-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 24px;
+            max-width: 900px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .generator-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .generator-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: #ffffff;
+        }
+
+        .generator-subtitle {
+            font-size: 1.1rem;
+            color: #9ca3af;
+        }
+
+        .prompt-section {
+            margin-bottom: 2rem;
+        }
+
+        .prompt-input {
+            width: 100%;
+            padding: 16px;
+            background: #1f1f1f;
+            border: 2px solid #2a2a2a;
+            border-radius: 12px;
+            color: #ffffff;
+            font-size: 16px;
+            outline: none;
+            resize: vertical;
+            min-height: 80px;
+            margin-bottom: 16px;
+            transition: all 0.2s;
+        }
+
+        .prompt-input:focus {
+            border-color: #dc2626;
+            box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.1);
+        }
+
+        .generate-button {
+            width: 100%;
+            padding: 16px;
+            background: #dc2626;
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .generate-button:hover {
+            background: #b91c1c;
+            transform: translateY(-1px);
+        }
+
+        .generated-images {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+            min-height: 200px;
+        }
+
+        .placeholder-image {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #1f1f1f;
+            border: 2px dashed #2a2a2a;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            color: #6b7280;
+        }
+
+        .placeholder-image span {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Командный чат */
+        .team-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .team-header {
+            padding: 24px;
+            text-align: center;
+            border-bottom: 1px solid #2a2a2a;
+        }
+
+        .team-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: #ffffff;
+        }
+
+        .team-subtitle {
+            font-size: 1rem;
+            color: #9ca3af;
+        }
+
+        .team-messages {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+            max-width: 900px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .team-input-area {
+            padding: 24px;
+            background: linear-gradient(to top, #0a0a0a, transparent);
+        }
     </style>
 </head>
 <body>
@@ -450,6 +632,19 @@
                 </button>
             </div>
             
+            <!-- Навигация по вкладкам -->
+            <div class="sidebar-nav">
+                <button class="nav-tab active" onclick="switchTab('chat')" data-tab="chat">
+                    <span>💬</span> Чат
+                </button>
+                <button class="nav-tab" onclick="switchTab('generator')" data-tab="generator">
+                    <span>🎨</span> Генератор
+                </button>
+                <button class="nav-tab" onclick="switchTab('team')" data-tab="team">
+                    <span>👥</span> Команда
+                </button>
+            </div>
+            
             <div class="chat-history" id="chatHistory">
                 <!-- История чатов будет загружена здесь -->
             </div>
@@ -462,27 +657,87 @@
         
         <!-- Основная область -->
         <div class="main-area">
-            <!-- Область сообщений -->
-            <div class="messages-area" id="messagesArea">
-                <div class="welcome-screen">
-                    <div class="welcome-logo">🪃</div>
-                    <h1 class="welcome-title">BOOOMERANGS AI</h1>
-                    <p class="welcome-subtitle">Современный AI чат для команды. Как дела? Чем могу помочь?</p>
+            <!-- Вкладка чата -->
+            <div class="tab-content active" id="chatTab">
+                <div class="messages-area" id="messagesArea">
+                    <div class="welcome-screen">
+                        <div class="welcome-logo">🪃</div>
+                        <h1 class="welcome-title">BOOOMERANGS AI</h1>
+                        <p class="welcome-subtitle">Современный AI чат для команды. Как дела? Чем могу помочь?</p>
+                    </div>
+                </div>
+                
+                <div class="input-area">
+                    <div class="input-container">
+                        <textarea 
+                            class="message-input" 
+                            id="messageInput" 
+                            placeholder="Напишите сообщение..." 
+                            rows="1"
+                        ></textarea>
+                        <button class="send-button" id="sendButton" onclick="sendMessage()">
+                            <span>➤</span>
+                        </button>
+                    </div>
                 </div>
             </div>
-            
-            <!-- Поле ввода -->
-            <div class="input-area">
-                <div class="input-container">
-                    <textarea 
-                        class="message-input" 
-                        id="messageInput" 
-                        placeholder="Напишите сообщение..." 
-                        rows="1"
-                    ></textarea>
-                    <button class="send-button" id="sendButton" onclick="sendMessage()">
-                        <span>➤</span>
-                    </button>
+
+            <!-- Вкладка генератора -->
+            <div class="tab-content" id="generatorTab">
+                <div class="generator-area">
+                    <div class="generator-header">
+                        <h1 class="generator-title">🎨 AI Генератор Изображений</h1>
+                        <p class="generator-subtitle">Создавайте уникальные изображения с помощью искусственного интеллекта</p>
+                    </div>
+                    
+                    <div class="generator-content">
+                        <div class="prompt-section">
+                            <textarea 
+                                id="promptInput" 
+                                class="prompt-input" 
+                                placeholder="Опишите изображение, которое хотите создать..."
+                                rows="3"
+                            ></textarea>
+                            <button onclick="generateImage()" class="generate-button">
+                                <span>🎨</span> Создать изображение
+                            </button>
+                        </div>
+                        
+                        <div class="generated-images" id="generatedImages">
+                            <div class="placeholder-image">
+                                <span>🖼️</span>
+                                <p>Сгенерированные изображения появятся здесь</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Вкладка команды -->
+            <div class="tab-content" id="teamTab">
+                <div class="team-area">
+                    <div class="team-header">
+                        <h1 class="team-title">👥 Командный Чат</h1>
+                        <p class="team-subtitle">Общение с коллегами в реальном времени</p>
+                    </div>
+                    
+                    <div class="team-messages" id="teamMessages">
+                        <!-- Сообщения команды -->
+                    </div>
+                    
+                    <div class="team-input-area">
+                        <div class="input-container">
+                            <textarea 
+                                id="teamMessageInput" 
+                                class="message-input" 
+                                placeholder="Напишите сообщение команде..." 
+                                rows="1"
+                            ></textarea>
+                            <button onclick="sendTeamMessage()" class="send-button">
+                                <span>➤</span>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -493,6 +748,7 @@
         let currentUser = null;
         let currentSessionId = null;
         let isSidebarVisible = true;
+        let currentTab = 'chat';
 
         // Инициализация при загрузке
         document.addEventListener('DOMContentLoaded', function() {
@@ -780,6 +1036,177 @@
             messagesArea.appendChild(messageDiv);
             messagesArea.scrollTop = messagesArea.scrollHeight;
         }
+
+        // Переключение вкладок
+        function switchTab(tabName) {
+            currentTab = tabName;
+            
+            // Убираем активный класс со всех вкладок навигации
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Скрываем все вкладки контента
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Активируем выбранную вкладку
+            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+            document.getElementById(`${tabName}Tab`).classList.add('active');
+            
+            // Загружаем данные для вкладки
+            if (tabName === 'team') {
+                loadTeamMessages();
+            }
+        }
+
+        // Генерация изображения
+        async function generateImage() {
+            const prompt = document.getElementById('promptInput').value.trim();
+            
+            if (!prompt) {
+                alert('Пожалуйста, введите описание изображения');
+                return;
+            }
+            
+            const button = document.querySelector('.generate-button');
+            const originalText = button.innerHTML;
+            button.innerHTML = '<span>⏳</span> Генерируем...';
+            button.disabled = true;
+            
+            try {
+                const response = await fetch('/api/generate-image', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        style: 'realistic'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayGeneratedImage(data.imageUrl, prompt);
+                } else {
+                    alert('Ошибка генерации: ' + (data.error || 'Неизвестная ошибка'));
+                }
+            } catch (error) {
+                console.error('Ошибка генерации:', error);
+                alert('Ошибка подключения к серверу');
+            } finally {
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }
+        }
+
+        // Отображение сгенерированного изображения
+        function displayGeneratedImage(imageUrl, prompt) {
+            const container = document.getElementById('generatedImages');
+            
+            // Убираем placeholder при первом изображении
+            if (container.querySelector('.placeholder-image')) {
+                container.innerHTML = '';
+            }
+            
+            const imageDiv = document.createElement('div');
+            imageDiv.className = 'generated-image';
+            imageDiv.innerHTML = `
+                <img src="${imageUrl}" alt="${prompt}" style="width: 100%; border-radius: 8px; margin-bottom: 8px;">
+                <p style="color: #9ca3af; font-size: 14px; text-align: center;">${prompt}</p>
+            `;
+            
+            container.appendChild(imageDiv);
+        }
+
+        // Загрузка сообщений команды
+        async function loadTeamMessages() {
+            try {
+                const response = await fetch('/api/team-chat/messages');
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayTeamMessages(data.messages);
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки сообщений команды:', error);
+            }
+        }
+
+        // Отображение сообщений команды
+        function displayTeamMessages(messages) {
+            const container = document.getElementById('teamMessages');
+            container.innerHTML = '';
+            
+            messages.forEach(msg => {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message';
+                messageDiv.innerHTML = `
+                    <div style="font-weight: 500; color: #dc2626; margin-bottom: 4px;">${msg.username}</div>
+                    <div class="message-content">${msg.content}</div>
+                    <div style="font-size: 12px; color: #6b7280; margin-top: 4px;">${new Date(msg.timestamp).toLocaleString()}</div>
+                `;
+                container.appendChild(messageDiv);
+            });
+            
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // Отправка сообщения в команду
+        async function sendTeamMessage() {
+            const input = document.getElementById('teamMessageInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            input.value = '';
+            input.style.height = 'auto';
+            
+            try {
+                const response = await fetch('/api/team-chat/send', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: currentUser,
+                        content: message
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    loadTeamMessages();
+                } else {
+                    alert('Ошибка отправки сообщения');
+                }
+            } catch (error) {
+                console.error('Ошибка отправки:', error);
+                alert('Ошибка подключения к серверу');
+            }
+        }
+
+        // Настройка поля ввода для команды
+        document.addEventListener('DOMContentLoaded', function() {
+            const teamInput = document.getElementById('teamMessageInput');
+            if (teamInput) {
+                teamInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        sendTeamMessage();
+                    }
+                });
+                
+                teamInput.addEventListener('input', function() {
+                    this.style.height = 'auto';
+                    this.style.height = this.scrollHeight + 'px';
+                });
+            }
+        });
     </script>
 </body>
 </html>
