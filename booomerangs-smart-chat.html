@@ -139,12 +139,34 @@
         .messages-area {
             flex: 1;
             overflow-y: auto;
+            overflow-x: hidden;
             padding: 24px 24px 120px 24px;
             display: flex;
             flex-direction: column;
             max-width: 900px;
             margin: 0 auto;
             width: 100%;
+            height: calc(100vh - 140px);
+            min-height: 0;
+        }
+
+        /* Стили для скроллбара */
+        .messages-area::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .messages-area::-webkit-scrollbar-track {
+            background: #1a1a1a;
+            border-radius: 4px;
+        }
+
+        .messages-area::-webkit-scrollbar-thumb {
+            background: #dc2626;
+            border-radius: 4px;
+        }
+
+        .messages-area::-webkit-scrollbar-thumb:hover {
+            background: #b91c1c;
         }
 
         /* Приветственный экран */
