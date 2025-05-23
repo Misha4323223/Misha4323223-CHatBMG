@@ -945,14 +945,14 @@
     
     .message-metadata {
       font-size: 0.75rem;
-      margin-top: 4px;
-      margin-bottom: 2px;
+      margin-top: 3px;
+      margin-bottom: 1px;
       opacity: 0.95;
       display: flex;
-      gap: 6px;
+      gap: 4px;
       align-items: center;
       justify-content: flex-start;
-      margin-left: -4px;
+      margin-left: 0px;
     }
     
     .provider-badge, .category-badge {
@@ -963,25 +963,27 @@
         #ffb300 75%,
         #ff8f00 100%);
       color: #8b4513;
-      padding: 1px 4px;
-      border-radius: 6px;
-      font-size: 0.45rem;
+      padding: 1px 3px;
+      border-radius: 4px;
+      font-size: 0.4rem;
       font-weight: 700;
       border: 0.5px solid #ffd700;
-      backdrop-filter: blur(2px);
+      backdrop-filter: blur(1px);
       box-shadow: 
-        0 1px 3px rgba(255, 215, 0, 0.4),
-        0 0 6px rgba(255, 215, 0, 0.2),
+        0 1px 2px rgba(255, 215, 0, 0.4),
+        0 0 4px rgba(255, 215, 0, 0.2),
         inset 0 1px 0 rgba(255, 255, 255, 0.5),
         inset 0 -1px 0 rgba(255, 193, 7, 0.3);
       text-shadow: 0 0.5px 1px rgba(0, 0, 0, 0.3);
       transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       position: relative;
       overflow: hidden;
-      transform: scale(0.8);
+      transform: scale(0.7);
       display: inline-block;
       white-space: nowrap;
-      line-height: 1.2;
+      line-height: 1.1;
+      max-width: 60px;
+      text-overflow: ellipsis;
     }
     
     .provider-badge::before, .category-badge::before {
