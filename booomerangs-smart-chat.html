@@ -982,15 +982,15 @@
             addMessage(message, 'user');
             
             try {
-                // Отправляем на сервер
-                const response = await fetch('/api/smart-chat', {
+                // Отправляем на сервер через правильный API endpoint
+                const response = await fetch('/api/g4f/chat', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
                         message: message,
-                        username: currentUser || 'guest'
+                        provider: 'auto'
                     })
                 });
                 
