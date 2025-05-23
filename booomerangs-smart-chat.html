@@ -848,13 +848,20 @@
         async function loadChatHistory() {
             try {
                 const response = await fetch(`/api/chat/sessions?username=${currentUser}`);
-                const data = await response.json();
                 
-                if (data.success) {
-                    displayChatHistory(data.sessions);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        displayChatHistory(data.sessions);
+                        return;
+                    }
                 }
+                
+                // Если история недоступна, показываем пустой список
+                displayChatHistory([]);
             } catch (error) {
                 console.error('Ошибка загрузки истории:', error);
+                displayChatHistory([]);
             }
         }
 
@@ -924,36 +931,22 @@
 
         // Создание нового чата
         async function startNewChat() {
-            try {
-                const response = await fetch('/api/chat/sessions', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        username: currentUser,
-                        title: 'Новый чат'
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    currentSessionId = data.sessionId;
-                    loadChatHistory();
-                    
-                    // Очищаем область сообщений
-                    document.getElementById('messagesArea').innerHTML = `
-                        <div class="welcome-screen">
-                            <div class="welcome-logo">🪃</div>
-                            <h1 class="welcome-title">Новый чат</h1>
-                            <p class="welcome-subtitle">Готов к новому разговору!</p>
-                        </div>
-                    `;
-                }
-            } catch (error) {
-                console.error('Ошибка создания чата:', error);
-            }
+            // Сбрасываем текущую сессию
+            currentSessionId = null;
+            
+            // Очищаем область сообщений
+            document.getElementById('messagesArea').innerHTML = `
+                <div class="welcome-screen">
+                    <div class="welcome-logo">🪃</div>
+                    <h1 class="welcome-title">Новый чат</h1>
+                    <p class="welcome-subtitle">Готов к новому разговору!</p>
+                </div>
+            `;
+            
+            // Убираем активные классы с истории чатов
+            document.querySelectorAll('.chat-item').forEach(item => {
+                item.classList.remove('active');
+            });
         }
 
         // Настройка поля ввода
@@ -985,11 +978,6 @@
             input.value = '';
             input.style.height = 'auto';
             
-            // Если нет активного чата, создаем новый
-            if (!currentSessionId) {
-                await startNewChat();
-            }
-            
             // Добавляем сообщение пользователя
             addMessage(message, 'user');
             
@@ -1002,15 +990,23 @@
                     },
                     body: JSON.stringify({
                         message: message,
-                        username: currentUser,
-                        sessionId: currentSessionId
+                        username: currentUser || 'guest'
                     })
                 });
                 
-                const data = await response.json();
-                
-                if (data.success) {
-                    addMessage(data.response, 'ai');
+                if (response.ok) {
+                    const text = await response.text();
+                    try {
+                        const data = JSON.parse(text);
+                        if (data.success) {
+                            addMessage(data.response, 'ai');
+                        } else {
+                            addMessage(data.response || 'Получен ответ от AI', 'ai');
+                        }
+                    } catch (parseError) {
+                        // Если ответ не JSON, показываем как есть
+                        addMessage(text || 'Получен ответ от AI', 'ai');
+                    }
                 } else {
                     addMessage('Извините, произошла ошибка при обработке запроса.', 'ai');
                 }
