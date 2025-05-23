@@ -218,10 +218,12 @@
 
         /* Стили для чата */
         .chat-container {
-            display: flex;
+            display: flex !important;
             height: calc(100vh - 120px);
             background: rgba(25, 25, 25, 0.95);
             backdrop-filter: blur(10px);
+            width: 100%;
+            position: relative;
         }
 
         /* Адаптивность для планшетов */
@@ -320,6 +322,7 @@
 
         .chat-sidebar {
             width: 300px;
+            min-width: 300px;
             background: var(--card-bg);
             border-right: 1px solid var(--border);
             display: flex !important;
@@ -327,6 +330,8 @@
             transition: width 0.4s ease, margin-left 0.4s ease;
             z-index: 10;
             position: relative;
+            flex-shrink: 0;
+            height: 100%;
         }
 
         .chat-sidebar.hidden {
@@ -1195,6 +1200,8 @@
         // Отображение списка сессий
         function renderSessionsList() {
             const sessionsList = document.getElementById('sessionsList');
+            console.log('📋 Отображение сессий, найден элемент:', !!sessionsList);
+            console.log('📋 Количество сессий:', allSessions.length);
             
             if (allSessions.length === 0) {
                 sessionsList.innerHTML = `
