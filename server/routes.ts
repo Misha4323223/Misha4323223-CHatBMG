@@ -36,7 +36,8 @@ const upload = multer({
 const svgGenerator = require('./svg-generator');
 const g4fHandlers = require('./g4f-handlers');
 const directAiRoutes = require('./direct-ai-routes');
-const pythonProviderRoutes = require('./python_provider_routes');
+// Отключаем внешние Python серверы - работаем только на порту 5000
+// const pythonProviderRoutes = require('./python_provider_routes');
 const deepspeekProvider = require('./deepspeek-fixed');
 const chatFreeProvider = require('./simple-chatfree');
 
@@ -232,7 +233,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/api/direct-ai', directAiRoutes);
   
   // API с Python-версией G4F
-  app.use('/api/python', pythonProviderRoutes.router);
+  // Отключен Python провайдер - работаем только на порту 5000
+  // app.use('/api/python', pythonProviderRoutes.router);
   
   // API для стриминга от провайдеров, поддерживающих stream=True
   const streamingRoutes = require('./streaming-routes');
@@ -863,7 +865,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Используем Ollama через Python G4F
         try {
           console.log(`Пробуем использовать Ollama через Python G4F...`);
-          const ollamaResponse = await pythonProviderRoutes.callPythonAI(message, 'Ollama');
+          // Python провайдер отключен - используем локальную заглушку
+          const ollamaResponse = null;
           
           if (ollamaResponse) {
             return {
@@ -995,7 +998,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { AI_PROVIDERS } = directAiProvider;
       
       // Импортируем Python провайдер
-      const pythonProviderRoutes = require('./python_provider_routes');
+      // Python провайдер отключен - работаем только на порту 5000
+      // const pythonProviderRoutes = require('./python_provider_routes');
       
       // Сначала создаем демо-ответ для запасного варианта
       const demoResponse = generateDemoResponse(finalMessage);
@@ -1141,7 +1145,8 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
         console.log(`Пробуем использовать Python провайдер ${selectedProvider}...`);
         
         // Используем нашу новую функцию callPythonAI
-        const aiResponse = await pythonProviderRoutes.callPythonAI(message, selectedProvider);
+        // Python провайдер отключен - используем встроенные провайдеры
+        const aiResponse = null;
         
         if (aiResponse) {
           console.log(`✅ Успешно получен ответ от Python провайдера ${selectedProvider}`);
