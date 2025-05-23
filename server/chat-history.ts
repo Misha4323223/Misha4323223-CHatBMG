@@ -41,6 +41,11 @@ async function saveMessage(messageData) {
       .returning();
     
     console.log('✅ Сообщение успешно сохранено:', message.id);
+    
+    // Проверяем что сообщение действительно сохранилось
+    const savedMessage = await db.select().from(aiMessages).where(eq(aiMessages.id, message.id));
+    console.log('🔍 Проверка сохранения:', savedMessage.length > 0 ? 'найдено в БД' : 'НЕ НАЙДЕНО В БД');
+    
     return message;
   } catch (error) {
     console.error('❌ Ошибка сохранения сообщения:', error);
