@@ -1914,15 +1914,45 @@
           console.log('✅ Прямой командный чат инициализирован');
         }
         
+        // Инициализация при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+          console.log('🪃 DOM загружен, проверяем вкладку команды...');
+          
+          // Проверяем, активна ли вкладка команды
+          const teamContent = document.getElementById('team-content');
+          if (teamContent && teamContent.style.display !== 'none') {
+            console.log('🪃 Вкладка команды активна, инициализируем чат...');
+            initializeTeamChatDirect();
+          }
+        });
+
         // Обновляем функцию переключения вкладок
         const originalSwitchTab = window.switchTab;
         window.switchTab = function(tabName) {
+          console.log('🪃 Переключение на вкладку:', tabName);
+          
           if (originalSwitchTab) originalSwitchTab(tabName);
           
           if (tabName === 'team') {
-            setTimeout(initializeTeamChatDirect, 100);
+            console.log('🪃 Инициализируем командный чат через 100мс...');
+            setTimeout(() => {
+              console.log('🪃 Запуск initializeTeamChatDirect...');
+              initializeTeamChatDirect();
+            }, 100);
           }
         };
+        
+        // Также добавляем обработчик клика по вкладке команды
+        setTimeout(() => {
+          const teamTab = document.getElementById('tabTeam');
+          if (teamTab) {
+            console.log('🪃 Добавляем обработчик для вкладки команды');
+            teamTab.addEventListener('click', function() {
+              console.log('🪃 Клик по вкладке команды, инициализируем чат...');
+              setTimeout(initializeTeamChatDirect, 200);
+            });
+          }
+        }, 1000);
       </script>
           </div>
         </div>
