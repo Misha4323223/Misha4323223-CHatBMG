@@ -302,6 +302,8 @@
 
       messagesContainer.appendChild(messageDiv);
       messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      
+      return messageDiv;
     }
 
     // Загрузка новых сообщений
@@ -310,10 +312,18 @@
       .then(response => response.json())
       .then(data => {
         if (data.success && data.messages) {
+          // Получаем список ID уже отображенных сообщений
+          const existingMessages = Array.from(messagesContainer.querySelectorAll('.message'))
+            .map(el => parseInt(el.dataset.messageId))
+            .filter(id => !isNaN(id));
+          
           data.messages.forEach(msg => {
-            if (msg.id > lastMessageId) {
+            // Проверяем, что сообщение новое и не отображено
+            if (msg.id > lastMessageId && !existingMessages.includes(msg.id)) {
               const isCurrentUser = msg.username === currentUser;
-              addMessageToUI(msg.content, msg.username, msg.created_at, isCurrentUser);
+              const messageDiv = addMessageToUI(msg.content, msg.username, msg.created_at, isCurrentUser);
+              // Сохраняем ID сообщения для проверки дублирования
+              messageDiv.dataset.messageId = msg.id;
               lastMessageId = msg.id;
             }
           });
