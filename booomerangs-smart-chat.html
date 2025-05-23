@@ -2640,6 +2640,225 @@
       // Загружаем список сессий в боковую панель
       loadChatSessions();
 
+      // Сначала определяем все вспомогательные функции
+      window.formatTime = function(timestamp) {
+        const date = new Date(timestamp);
+        return date.toLocaleTimeString('ru-RU', { 
+          hour: '2-digit', 
+          minute: '2-digit' 
+        });
+      };
+
+      window.escapeHtml = function(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      };
+
+      // Инициализация генератора изображений
+      window.initializeGenerator = function() {
+        const generateBtn = document.getElementById('generate-btn');
+        const promptInput = document.getElementById('prompt-input');
+        const styleSelect = document.getElementById('style-select');
+        
+        if (generateBtn && !generateBtn.hasAttribute('data-initialized')) {
+          generateBtn.setAttribute('data-initialized', 'true');
+          generateBtn.addEventListener('click', async () => {
+            const prompt = promptInput.value.trim();
+            if (!prompt) {
+              alert('Пожалуйста, введите описание изображения');
+              return;
+            }
+            
+            generateBtn.disabled = true;
+            generateBtn.textContent = '🎨 Генерируем...';
+            
+            try {
+              const response = await fetch('/api/generate-image', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  prompt: prompt,
+                  style: styleSelect.value
+                })
+              });
+              
+              const data = await response.json();
+              
+              if (data.success) {
+                const container = document.getElementById('generated-image-container');
+                const image = document.getElementById('generated-image');
+                image.src = data.imageUrl;
+                container.style.display = 'block';
+              } else {
+                alert('Ошибка генерации изображения: ' + (data.error || 'Неизвестная ошибка'));
+              }
+            } catch (error) {
+              console.error('Ошибка:', error);
+              alert('Произошла ошибка при генерации изображения');
+            } finally {
+              generateBtn.disabled = false;
+              generateBtn.textContent = '🎨 Генерировать изображение';
+            }
+          });
+        }
+      };
+
+      // Отображение сообщений командного чата
+      window.displayTeamMessages = function(messages) {
+        const container = document.getElementById('team-messages');
+        const loading = document.getElementById('team-loading');
+        
+        if (loading) {
+          loading.style.display = 'none';
+        }
+        
+        container.innerHTML = '';
+        
+        if (messages.length === 0) {
+          container.innerHTML = `
+            <div style="text-align: center; padding: 40px; color: #6b7280; font-style: italic;">
+              <div style="font-size: 3rem; margin-bottom: 16px;">🪃</div>
+              <div>Добро пожаловать в командный чат BOOOMERANGS!</div>
+            </div>
+          `;
+          return;
+        }
+        
+        messages.forEach(message => {
+          const messageDiv = document.createElement('div');
+          messageDiv.className = `team-message ${message.username === 'Михаил' ? 'own' : 'other'}`;
+          
+          messageDiv.innerHTML = `
+            <div class="message-avatar" style="
+              width: 36px;
+              height: 36px;
+              border-radius: 50%;
+              background: linear-gradient(135deg, #ffd700, #ffb300);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-weight: 700;
+              color: #8b4513;
+              font-size: 0.9rem;
+              flex-shrink: 0;
+            ">
+              ${(message.username || 'U').charAt(0).toUpperCase()}
+            </div>
+            <div class="message-content" style="flex: 1;">
+              <div style="display: flex; align-items: center; gap: 8px; font-size: 0.8rem; opacity: 0.7; margin-bottom: 4px;">
+                <span style="font-weight: 600; color: #4f46e5;">${message.username || 'Пользователь'}</span>
+                <span style="color: #6b7280;">${formatTime(message.createdAt)}</span>
+              </div>
+              <div style="color: #374151; line-height: 1.5;">${escapeHtml(message.content)}</div>
+            </div>
+          `;
+          
+          container.appendChild(messageDiv);
+        });
+        
+        // Прокрутка к последнему сообщению
+        container.scrollTop = container.scrollHeight;
+      };
+
+      // Загрузка истории командного чата
+      window.loadTeamChatHistory = async function() {
+        try {
+          const response = await fetch('/api/team-chat/messages');
+          const data = await response.json();
+          
+          if (data.success && data.messages) {
+            displayTeamMessages(data.messages);
+          }
+        } catch (error) {
+          console.error('Ошибка загрузки командного чата:', error);
+        }
+      };
+
+      // Инициализация командного чата
+      window.initializeTeamChat = function() {
+        const teamForm = document.getElementById('team-message-form');
+        const teamInput = document.getElementById('team-message-input');
+        
+        if (teamForm && !teamForm.hasAttribute('data-initialized')) {
+          teamForm.setAttribute('data-initialized', 'true');
+          
+          // Загрузка истории командного чата
+          loadTeamChatHistory();
+          
+          // Обработчик отправки сообщений
+          teamForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const content = teamInput.value.trim();
+            if (!content) return;
+            
+            try {
+              const response = await fetch('/api/team-chat/messages', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  content: content,
+                  username: 'Михаил',
+                  userId: 1
+                })
+              });
+              
+              if (response.ok) {
+                teamInput.value = '';
+                setTimeout(() => loadTeamChatHistory(), 500);
+              }
+            } catch (error) {
+              console.error('Ошибка отправки сообщения:', error);
+            }
+          });
+          
+          // Polling для новых сообщений
+          setInterval(() => {
+            if (currentTab === 'team') {
+              loadTeamChatHistory();
+            }
+          }, 3000);
+        }
+      };
+
+      // Функция переключения между вкладками
+      window.switchTab = function(tabName) {
+        // Скрываем все вкладки
+        document.querySelectorAll('.tab-content').forEach(tab => {
+          tab.style.display = 'none';
+        });
+        
+        // Убираем активный класс со всех кнопок
+        document.querySelectorAll('.nav-button').forEach(btn => {
+          btn.classList.remove('active');
+        });
+        
+        // Показываем выбранную вкладку
+        const selectedTab = document.getElementById(`${tabName}-content`);
+        if (selectedTab) {
+          selectedTab.style.display = 'block';
+        }
+        
+        // Добавляем активный класс к выбранной кнопке
+        const selectedButton = document.getElementById(`tab-${tabName}`);
+        if (selectedButton) {
+          selectedButton.classList.add('active');
+        }
+        
+        currentTab = tabName;
+        
+        // Инициализируем функционал для каждой вкладки
+        if (tabName === 'generator') {
+          initializeGenerator();
+        } else if (tabName === 'team') {
+          initializeTeamChat();
+        }
+      };
+
       // Инициализация навигации по вкладкам
       document.getElementById('tab-chat').addEventListener('click', () => switchTab('chat'));
       document.getElementById('tab-generator').addEventListener('click', () => switchTab('generator'));
