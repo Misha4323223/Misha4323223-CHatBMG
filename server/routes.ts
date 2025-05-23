@@ -51,10 +51,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup proxy middleware
   setupProxyMiddleware(app);
   
-  // Статические файлы из корневой директории - исключаем HTML файлы чтобы React мог их обработать
+  // ВАЖНО: Прямой доступ к чату ДОЛЖЕН быть ПЕРВЫМ маршрутом
+  app.get('/smart-chat', (req, res) => {
+    res.sendFile('team-chat-anna.html', { root: '.' });
+  });
+  
+  // Статические файлы из корневой директории - НЕ блокируем team-chat-anna.html
   app.use(express.static(path.join(process.cwd()), {
     setHeaders: (res, filePath) => {
-      // Блокируем статические HTML файлы чтобы React мог обработать маршруты
+      // Разрешаем доступ к team-chat-anna.html
+      if (filePath.includes('team-chat-anna.html')) {
+        return true;
+      }
+      // Блокируем другие HTML файлы чтобы React мог их обработать
       if (filePath.endsWith('.html') && (filePath.includes('smart-chat') || filePath.includes('booomerangs'))) {
         res.status(404);
         return false;
@@ -114,10 +123,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.sendFile('team-chat-anna.html', { root: '.' });
   });
   
-  // Прямой доступ к чату минуя Vite
-  app.get('/smart-chat', (req, res) => {
-    res.sendFile('team-chat-anna.html', { root: '.' });
-  });
+
 
   // Главная страница - позволяем Vite обработать React маршруты
   app.get('/', (req, res, next) => {
