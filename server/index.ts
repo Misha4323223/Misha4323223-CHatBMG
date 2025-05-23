@@ -11,6 +11,17 @@ app.use(cors()); // Разрешаем CORS для всех маршрутов
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// Обслуживание статических HTML файлов из корневой папки
+app.use(express.static('.', {
+  index: false,
+  extensions: ['html'],
+  setHeaders: (res, path) => {
+    if (path.endsWith('.html')) {
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    }
+  }
+}));
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
