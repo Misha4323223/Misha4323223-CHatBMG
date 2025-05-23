@@ -221,7 +221,7 @@
       width: 0;
       padding: 0;
       opacity: 0;
-      overflow: hidden;
+      overflow: visible;
     }
     
     .sidebar-toggle {
@@ -1675,14 +1675,12 @@
         // Меняем стрелку в зависимости от состояния
         if (sidebar.classList.contains('hidden')) {
           toggleBtn.textContent = '›';
-          toggleBtn.style.right = '-30px';
-          toggleBtn.style.position = 'fixed';
-          toggleBtn.style.left = '20px';
+          toggleBtn.style.left = '8px';
+          toggleBtn.style.right = 'auto';
         } else {
           toggleBtn.textContent = '‹';
-          toggleBtn.style.right = '-15px';
-          toggleBtn.style.position = 'absolute';
           toggleBtn.style.left = 'auto';
+          toggleBtn.style.right = '-15px';
         }
       }
       
