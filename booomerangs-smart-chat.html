@@ -395,10 +395,17 @@
                     const sessionResponse = await fetch('/api/chat/sessions', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ title: message.substring(0, 50) + '...' })
+                        body: JSON.stringify({ 
+                            title: message.substring(0, 50) + '...',
+                            userId: 1 
+                        })
                     });
                     const sessionData = await sessionResponse.json();
-                    currentSessionId = sessionData.session.id;
+                    if (sessionData.success) {
+                        currentSessionId = sessionData.session.id;
+                    } else {
+                        throw new Error(sessionData.error);
+                    }
                 }
 
                 // Добавляем сообщение пользователя
