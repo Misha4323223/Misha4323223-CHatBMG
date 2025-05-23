@@ -277,27 +277,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const { insertChatSessionSchema, insertAiMessageSchema } = require('@shared/schema');
 
   // Создание новой сессии чата
-  app.post('/api/chat/sessions', async (req, res) => {
-    try {
-      const { userId, title } = req.body;
-      
-      if (!userId || !title) {
-        return res.status(400).json({ 
-          success: false, 
-          error: 'userId и title обязательны' 
-        });
-      }
 
-      const session = await chatHistory.createChatSession(userId, title);
-      res.json({ success: true, session });
-    } catch (error) {
-      console.error('Ошибка создания сессии:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: 'Не удалось создать сессию' 
-      });
-    }
-  });
 
   // ============================================
   // AUTHENTICATION API ROUTES
