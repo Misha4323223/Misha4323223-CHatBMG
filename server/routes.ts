@@ -788,13 +788,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Сохраняем сообщение пользователя
       if (currentSessionId && finalMessage) {
         console.log('💾 Сохраняем сообщение пользователя...');
-        await chatHistory.saveMessage({
-          sessionId: currentSessionId,
-          sender: 'user',
-          content: finalMessage,
-          provider: null
-        });
-        console.log('✅ Сообщение пользователя сохранено');
+        try {
+          await chatHistory.saveMessage({
+            sessionId: currentSessionId,
+            sender: 'user',
+            content: finalMessage,
+            provider: null
+          });
+          console.log('✅ Сообщение пользователя сохранено');
+        } catch (error) {
+          console.error('❌ ОШИБКА сохранения сообщения пользователя:', error);
+        }
       }
       
       // Импортируем провайдер напрямую
