@@ -945,13 +945,14 @@
     
     .message-metadata {
       font-size: 0.75rem;
-      margin-top: 6px;
-      opacity: 0.9;
+      margin-top: 4px;
+      margin-bottom: 2px;
+      opacity: 0.95;
       display: flex;
-      gap: 4px;
-      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
       justify-content: flex-start;
-      margin-left: -6px;
+      margin-left: -4px;
     }
     
     .provider-badge, .category-badge {
@@ -962,22 +963,25 @@
         #ffb300 75%,
         #ff8f00 100%);
       color: #8b4513;
-      padding: 2px 6px;
-      border-radius: 8px;
-      font-size: 0.5rem;
-      font-weight: 600;
-      border: 1px solid #ffd700;
-      backdrop-filter: blur(3px);
+      padding: 1px 4px;
+      border-radius: 6px;
+      font-size: 0.45rem;
+      font-weight: 700;
+      border: 0.5px solid #ffd700;
+      backdrop-filter: blur(2px);
       box-shadow: 
-        0 2px 5px rgba(255, 215, 0, 0.3),
-        0 0 8px rgba(255, 215, 0, 0.15),
-        inset 0 1px 0 rgba(255, 255, 255, 0.3),
-        inset 0 -1px 0 rgba(255, 193, 7, 0.4);
-      text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        0 1px 3px rgba(255, 215, 0, 0.4),
+        0 0 6px rgba(255, 215, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5),
+        inset 0 -1px 0 rgba(255, 193, 7, 0.3);
+      text-shadow: 0 0.5px 1px rgba(0, 0, 0, 0.3);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       position: relative;
       overflow: hidden;
-      transform: scale(0.6);
+      transform: scale(0.8);
+      display: inline-block;
+      white-space: nowrap;
+      line-height: 1.2;
     }
     
     .provider-badge::before, .category-badge::before {
