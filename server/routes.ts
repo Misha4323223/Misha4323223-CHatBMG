@@ -372,6 +372,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const sessionId = parseInt(req.params.sessionId);
       console.log(`🗑️ Удаляем сессию ${sessionId}...`);
       
+      // Проверяем, существует ли сессия
+      const sessions = await chatHistory.getUserChatSessions(1); // Используем userId = 1
+      const sessionExists = sessions.some(session => session.id === sessionId);
+      
+      if (!sessionExists) {
+        console.log(`⚠️ Сессия ${sessionId} уже не существует`);
+        return res.status(404).json({ 
+          success: false, 
+          error: 'Сессия не найдена' 
+        });
+      }
+      
       await chatHistory.deleteSession(sessionId);
       console.log(`✅ Сессия ${sessionId} успешно удалена`);
       
