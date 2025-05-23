@@ -95,6 +95,7 @@ export default function AIChat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [currentSessionId, setCurrentSessionId] = useState<number | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   // Автоматическая прокрутка вниз при новых сообщениях
@@ -172,7 +173,10 @@ export default function AIChat() {
     
     try {
       let endpoint = "/api/ai/chat";
-      let requestData: any = { message: newMessage };
+      let requestData: any = { 
+        message: newMessage,
+        sessionId: currentSessionId 
+      };
       
       // Если провайдер не выбран вручную, используем автоматический выбор
       const effectiveProvider = selectedProvider || detectBestProvider(newMessage);
@@ -193,10 +197,10 @@ export default function AIChat() {
             endpoint = "/api/deepinfra/chat";
             break;
           case 'phind':
-            requestData = { message: newMessage, provider: 'phind' };
+            requestData = { message: newMessage, provider: 'phind', sessionId: currentSessionId };
             break;
           case 'qwen':
-            requestData = { message: newMessage, provider: 'qwen' };
+            requestData = { message: newMessage, provider: 'qwen', sessionId: currentSessionId };
             break;
           default:
             // Если что-то пошло не так, используем стандартный автоматический выбор
@@ -233,6 +237,11 @@ export default function AIChat() {
       const data = await response.json();
       
       if (data.success) {
+        // Обновляем sessionId если он был создан на сервере
+        if (data.sessionId && !currentSessionId) {
+          setCurrentSessionId(data.sessionId);
+        }
+        
         // Добавляем ответ от AI с информацией о провайдере
         const aiMessage: Message = {
           id: Date.now() + 1,
