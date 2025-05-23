@@ -282,6 +282,10 @@
             padding: 16px 20px;
             border-radius: 24px 24px 24px 4px;
             border: 1px solid #374151;
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            margin-bottom: 16px;
         }
 
         .message-content {
@@ -1056,6 +1060,20 @@
             
             messageDiv.appendChild(messageContent);
             messagesArea.appendChild(messageDiv);
+            
+            // Принудительно делаем сообщения AI видимыми
+            if (sender === 'ai') {
+                messageDiv.style.display = 'block';
+                messageDiv.style.visibility = 'visible';
+                messageDiv.style.opacity = '1';
+                messageDiv.style.background = '#1f2937';
+                messageDiv.style.color = '#f9fafb';
+                messageDiv.style.padding = '16px 20px';
+                messageDiv.style.borderRadius = '24px 24px 24px 4px';
+                messageDiv.style.border = '1px solid #374151';
+                messageDiv.style.marginBottom = '16px';
+                console.log('AI сообщение принудительно стилизовано');
+            }
             
             // Прокрутка к последнему сообщению
             messagesArea.scrollTop = messagesArea.scrollHeight;
