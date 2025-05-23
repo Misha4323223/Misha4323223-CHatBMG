@@ -1852,39 +1852,7 @@
       const userId = 1; // Временно используем фиксированный ID пользователя
       let currentTab = 'chat'; // Текущая активная вкладка
 
-      // Функция переключения между вкладками
-      function switchTab(tabName) {
-        // Скрываем все вкладки
-        document.querySelectorAll('.tab-content').forEach(tab => {
-          tab.style.display = 'none';
-        });
-        
-        // Убираем активный класс со всех кнопок
-        document.querySelectorAll('.nav-button').forEach(btn => {
-          btn.classList.remove('active');
-        });
-        
-        // Показываем выбранную вкладку
-        const selectedTab = document.getElementById(`${tabName}-content`);
-        if (selectedTab) {
-          selectedTab.style.display = 'block';
-        }
-        
-        // Добавляем активный класс к выбранной кнопке
-        const selectedButton = document.getElementById(`tab-${tabName}`);
-        if (selectedButton) {
-          selectedButton.classList.add('active');
-        }
-        
-        currentTab = tabName;
-        
-        // Инициализируем функционал для каждой вкладки
-        if (tabName === 'generator') {
-          initializeGenerator();
-        } else if (tabName === 'team') {
-          initializeTeamChat();
-        }
-      }
+      // Функция переключения между вкладками (удалена - используется версия ниже в window.switchTab)
 
       // Инициализация генератора изображений
       function initializeGenerator() {
@@ -2970,6 +2938,13 @@
         }
         
         currentTab = tabName;
+        
+        // Инициализируем функционал для каждой вкладки
+        if (tabName === 'generator') {
+          initializeGenerator();
+        } else if (tabName === 'team') {
+          initializeTeamChat();
+        }
         
         // Инициализируем функционал для каждой вкладки
         if (tabName === 'generator') {

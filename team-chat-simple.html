@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🪃 Командный чат BOOOMERANGS</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #d4af37 0%, #ffd700 50%, #d4af37 100%);
+            padding: 20px;
+            text-align: center;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            box-shadow: 0 4px 20px rgba(212, 175, 55, 0.3);
+        }
+        
+        .status {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            padding: 8px 16px;
+            border-radius: 20px;
+            color: #059669;
+            margin: 10px auto;
+            display: inline-block;
+            font-size: 14px;
+        }
+        
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            background: white;
+            margin: 20px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .messages-area {
+            flex: 1;
+            background: #f8fafc;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            overflow-y: auto;
+            min-height: 400px;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .message {
+            padding: 12px 16px;
+            margin: 8px 0;
+            border-radius: 15px;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+        
+        .message.user {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            margin-left: auto;
+            text-align: right;
+        }
+        
+        .message.other {
+            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+            color: #1e293b;
+            margin-right: auto;
+        }
+        
+        .input-container {
+            display: flex;
+            gap: 12px;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 15px;
+            border: 1px solid #e2e8f0;
+        }
+        
+        #messageInput {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 25px;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        
+        #messageInput:focus {
+            border-color: #d4af37;
+            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+        }
+        
+        #sendButton {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #d4af37 0%, #ffd700 50%, #d4af37 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+        }
+        
+        #sendButton:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(212, 175, 55, 0.4);
+        }
+        
+        .loading {
+            text-align: center;
+            color: #64748b;
+            font-style: italic;
+            margin: 20px 0;
+        }
+        
+        .back-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        .back-button:hover {
+            background: rgba(0, 0, 0, 0.9);
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <a href="booomerangs-smart-chat.html" class="back-button">← Назад к главному чату</a>
+    
+    <div class="header">
+        🪃 Командный чат BOOOMERANGS
+        <div class="status">
+            🟢 Подключено
+        </div>
+    </div>
+    
+    <div class="chat-container">
+        <div class="messages-area" id="messagesArea">
+            <div class="loading" id="loadingText">
+                Загрузка истории командного чата...
+            </div>
+        </div>
+        
+        <div class="input-container">
+            <input 
+                type="text" 
+                id="messageInput" 
+                placeholder="Напишите сообщение команде BOOOMERANGS..."
+                maxlength="500"
+            >
+            <button id="sendButton" type="button">
+                🪃 Отправить
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = 'mikhail'; // Пользователь по умолчанию
+        
+        // Загрузка сообщений
+        async function loadMessages() {
+            try {
+                const response = await fetch('/api/team-chat/messages');
+                const data = await response.json();
+                
+                const messagesArea = document.getElementById('messagesArea');
+                const loadingText = document.getElementById('loadingText');
+                
+                if (data.success && data.messages.length > 0) {
+                    loadingText.style.display = 'none';
+                    messagesArea.innerHTML = '';
+                    
+                    data.messages.forEach(message => {
+                        addMessageToUI(message.content, message.username, message.created_at);
+                    });
+                } else {
+                    loadingText.textContent = 'Пока сообщений нет. Напишите первое!';
+                }
+                
+                // Прокрутка вниз
+                messagesArea.scrollTop = messagesArea.scrollHeight;
+            } catch (error) {
+                console.error('Ошибка загрузки сообщений:', error);
+                document.getElementById('loadingText').textContent = 'Ошибка загрузки сообщений';
+            }
+        }
+        
+        // Добавление сообщения в интерфейс
+        function addMessageToUI(content, username, timestamp) {
+            const messagesArea = document.getElementById('messagesArea');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${username === currentUser ? 'user' : 'other'}`;
+            
+            const time = new Date(timestamp).toLocaleTimeString('ru-RU', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            messageDiv.innerHTML = `
+                <div style="font-size: 12px; opacity: 0.7; margin-bottom: 4px;">
+                    ${username} • ${time}
+                </div>
+                <div>${content}</div>
+            `;
+            
+            messagesArea.appendChild(messageDiv);
+            messagesArea.scrollTop = messagesArea.scrollHeight;
+        }
+        
+        // Отправка сообщения
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const content = input.value.trim();
+            
+            if (!content) return;
+            
+            const sendButton = document.getElementById('sendButton');
+            sendButton.disabled = true;
+            sendButton.textContent = 'Отправка...';
+            
+            try {
+                // Сначала добавляем сообщение в интерфейс
+                addMessageToUI(content, currentUser, new Date().toISOString());
+                input.value = '';
+                
+                // Отправляем на сервер
+                const response = await fetch('/api/team-chat/send', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        content: content,
+                        username: currentUser
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (!data.success) {
+                    console.error('Ошибка отправки:', data.error);
+                    // В случае ошибки можно показать уведомление
+                }
+                
+            } catch (error) {
+                console.error('Ошибка отправки сообщения:', error);
+            } finally {
+                sendButton.disabled = false;
+                sendButton.innerHTML = '🪃 Отправить';
+            }
+        }
+        
+        // Обработчики событий
+        document.getElementById('sendButton').addEventListener('click', sendMessage);
+        
+        document.getElementById('messageInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+        
+        // Загрузка сообщений при запуске
+        loadMessages();
+        
+        // Обновление сообщений каждые 3 секунды
+        setInterval(loadMessages, 3000);
+        
+        console.log('🪃 Командный чат BOOOMERANGS запущен');
+    </script>
+</body>
+</html>
