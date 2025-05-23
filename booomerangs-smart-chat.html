@@ -1256,7 +1256,7 @@
               data.messages.forEach(msg => {
                 const messageText = msg.text || msg.content;
                 console.log('📝 Отображаем сообщение:', messageText);
-                displayMessage(messageText, msg.sender === 'user' ? 'user' : 'ai', msg.provider);
+                addMessage(messageText, msg.sender === 'user', { provider: msg.provider });
               });
               console.log(`✅ Восстановлена история чата: ${data.messages.length} сообщений`);
             }
@@ -1396,7 +1396,7 @@
                 messagesData.messages.forEach(msg => {
                   const messageText = msg.text || msg.content;
                   console.log('📝 Отображаем сообщение:', messageText);
-                  displayMessage(messageText, msg.sender === 'user' ? 'user' : 'ai', msg.provider);
+                  addMessage(messageText, msg.sender === 'user', { provider: msg.provider });
                 });
                 
                 console.log(`Восстановлена история чата: ${messagesData.messages.length} сообщений`);
