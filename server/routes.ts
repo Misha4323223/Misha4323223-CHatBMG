@@ -106,9 +106,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.sendFile('demo.html', { root: '.' });
   });
   
-  // Главная страница - BOOOMERANGS Smart Chat (рабочая версия)
+  // Главная страница - перенаправляем на новый React дизайн
   app.get('/', (req, res) => {
-    res.sendFile('booomerangs-smart-chat.html', { root: '.' });
+    res.redirect('/smart-chat');
   });
 
   // Оптимизированная версия (в разработке)
@@ -212,9 +212,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Перенаправляем запрос умного чата на HTML-страницу
-  app.get('/smart-chat', (req, res) => {
-    res.sendFile('booomerangs-smart-chat.html', { root: '.' });
-  });
+  // Убираем старый статический маршрут - теперь /smart-chat обрабатывается React компонентом
   
   // Рабочая версия чата с прямым подключением к Python G4F
   app.get('/working-chat', (req, res) => {
