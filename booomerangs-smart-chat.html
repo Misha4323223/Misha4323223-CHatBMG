@@ -1184,7 +1184,14 @@
       // Функции для работы с боковой панелью
       async function loadChatSessions() {
         try {
-          const response = await fetch('/api/chat/sessions');
+          // Принудительно отключаем кэширование
+          const response = await fetch('/api/chat/sessions?' + new Date().getTime(), {
+            headers: {
+              'Cache-Control': 'no-cache, no-store, must-revalidate',
+              'Pragma': 'no-cache',
+              'Expires': '0'
+            }
+          });
           if (!response.ok) return;
           
           const data = await response.json();
@@ -1275,7 +1282,19 @@
               currentSessionId = null;
             }
             
-            // Перезагружаем список сессий
+            // Принудительно очищаем кэш браузера и перезагружаем список
+            const sessionsContainer = document.getElementById('chat-sessions');
+            if (sessionsContainer) {
+              sessionsContainer.innerHTML = '<div style="color: #6c63ff; text-align: center; padding: 10px;">Обновление...</div>';
+            }
+            
+            // Перезагружаем список сессий с принудительным обновлением
+            setTimeout(async () => {
+              await loadChatSessions();
+            }, 100);
+          } else {
+            console.log(`⚠️ Сессия ${sessionId} уже была удалена ранее`);
+            // Все равно обновляем список для синхронизации
             await loadChatSessions();
           }
         } catch (error) {
