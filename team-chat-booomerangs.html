@@ -383,6 +383,17 @@
       return true;
     }
 
+    // Функция выхода из профиля
+    function logout() {
+      // Очищаем данные пользователя
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('username');
+      localStorage.removeItem('displayName');
+      
+      // Перенаправляем на страницу входа
+      window.location.href = '/login.html';
+    }
+
     // Проверяем аутентификацию перед загрузкой
     if (checkAuthentication()) {
       // Загружаем сообщения при запуске
