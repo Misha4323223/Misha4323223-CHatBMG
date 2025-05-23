@@ -419,11 +419,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Создание новой сессии чата
   app.post('/api/chat/sessions', async (req, res) => {
     try {
-      // Получаем имя пользователя из заголовка
-      const username = req.headers['x-username'] as string;
-      if (!username) {
-        return res.status(401).json({ success: false, error: 'Пользователь не указан' });
-      }
+      // Получаем имя пользователя из заголовка или используем гостевого пользователя
+      const username = req.headers['x-username'] as string || req.body.username || 'guest';
 
       const { title } = req.body;
       

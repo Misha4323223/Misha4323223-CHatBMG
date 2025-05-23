@@ -985,6 +985,14 @@
             // Добавляем сообщение пользователя
             addMessage(message, 'user');
             
+            // Создаем новую сессию если её нет
+            if (!currentSessionId) {
+                await createNewChatSession();
+            }
+            
+            // Сохраняем сообщение пользователя
+            await saveMessageToHistory(message, 'user');
+            
             try {
                 // Отправляем на сервер через правильный API endpoint
                 const response = await fetch('/api/g4f/chat', {
@@ -1011,6 +1019,9 @@
                             console.log('Провайдер:', data.provider);
                             console.log('Модель:', data.model);
                             addMessage(data.response, 'ai');
+                            
+                            // Сохраняем ответ AI в историю
+                            await saveMessageToHistory(data.response, 'ai', data.provider, data.model);
                         } else {
                             console.log('Ответ AI не найден в данных:', data);
                             addMessage('Извините, получен некорректный ответ от сервера.', 'ai');
@@ -1096,6 +1107,66 @@
             messagesArea.scrollTop = messagesArea.scrollHeight;
             
             console.log(`Сообщение добавлено: ${sender}`);
+        }
+
+        // Создание новой сессии чата
+        async function createNewChatSession() {
+            try {
+                const response = await fetch('/api/chat/sessions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        title: 'Новый чат',
+                        username: currentUser || 'guest'
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        currentSessionId = data.session.id;
+                        console.log(`✅ Создана новая сессия: ${currentSessionId}`);
+                        loadChatHistory(); // Обновляем список чатов
+                    }
+                }
+            } catch (error) {
+                console.error('Ошибка создания сессии:', error);
+            }
+        }
+
+        // Сохранение сообщения в историю
+        async function saveMessageToHistory(content, sender, provider = null, model = null) {
+            if (!currentSessionId) return;
+            
+            try {
+                const messageData = {
+                    sessionId: currentSessionId,
+                    content: content,
+                    sender: sender,
+                    userId: currentUser || 'guest'
+                };
+                
+                if (provider) messageData.provider = provider;
+                if (model) messageData.model = model;
+                
+                const response = await fetch(`/api/chat/sessions/${currentSessionId}/messages`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(messageData)
+                });
+                
+                if (response.ok) {
+                    console.log(`💾 Сообщение ${sender} сохранено в историю`);
+                } else {
+                    console.log(`⚠️ Не удалось сохранить сообщение ${sender}`);
+                }
+            } catch (error) {
+                console.error('Ошибка сохранения сообщения:', error);
+            }
         }
 
         // Переключение вкладок
