@@ -139,6 +139,21 @@ router.post('/chat', async (req, res) => {
                   model: jsonData.model
                 });
               } else if (jsonData.complete) {
+                // Сохраняем полный ответ AI в базу данных
+                if (currentSessionId && fullAiResponse.trim()) {
+                  console.log('💾 Сохраняем стриминговый ответ AI...');
+                  chatHistory.saveMessage({
+                    sessionId: currentSessionId,
+                    sender: 'ai',
+                    content: fullAiResponse.trim(),
+                    provider: usedProvider
+                  }).then(() => {
+                    console.log(`✅ Стриминговый ответ сохранен (${usedProvider})`);
+                  }).catch(err => {
+                    console.error('Ошибка сохранения стримингового ответа:', err);
+                  });
+                }
+                
                 // Завершение стриминга
                 sendEvent('complete', {
                   message: 'Генерация текста завершена',
@@ -158,11 +173,15 @@ router.post('/chat', async (req, res) => {
             } else {
               // Обычный ответ (не от стриминга) - разбиваем на куски
               if (jsonData.response) {
+                // Сохраняем полный ответ сразу
+                fullAiResponse = jsonData.response;
+                usedProvider = jsonData.provider || 'BOOOMERANGS';
+                
                 const words = jsonData.response.split(' ');
                 let position = 0;
                 
                 // Отправляем слова порциями для имитации стриминга
-                const interval = setInterval(() => {
+                const interval = setInterval(async () => {
                   if (position < words.length) {
                     const chunk = words.slice(position, position + 3).join(' ');
                     position += 3;
@@ -176,6 +195,18 @@ router.post('/chat', async (req, res) => {
                     
                     if (position >= words.length) {
                       clearInterval(interval);
+                      
+                      // Сохраняем полный ответ AI в базу данных
+                      if (currentSessionId && fullAiResponse.trim()) {
+                        console.log('💾 Сохраняем ответ AI (обычный режим)...');
+                        await chatHistory.saveMessage({
+                          sessionId: currentSessionId,
+                          sender: 'ai',
+                          content: fullAiResponse.trim(),
+                          provider: usedProvider
+                        });
+                        console.log(`✅ Ответ AI сохранен (${usedProvider})`);
+                      }
                       
                       // Отправляем событие завершения
                       sendEvent('complete', {
