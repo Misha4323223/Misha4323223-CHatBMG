@@ -1875,38 +1875,161 @@
       
       // Функция выхода из профиля
       window.logout = function() {
-        if (confirm('Вы уверены, что хотите выйти из профиля?')) {
-          // Очищаем все данные пользователя
-          localStorage.clear();
-          sessionStorage.clear();
-          
-          // Показываем уведомление о выходе
-          const notification = document.createElement('div');
-          notification.style.cssText = `
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: linear-gradient(135deg, #dc2626, #b91c1c);
-            color: white;
-            padding: 20px 24px;
-            border-radius: 12px;
-            font-size: 1rem;
-            box-shadow: 0 8px 24px rgba(220, 38, 38, 0.4);
-            z-index: 1001;
-            text-align: center;
-            font-weight: 500;
-          `;
-          notification.innerHTML = '🚪 Выход из профиля...';
-          
-          document.body.appendChild(notification);
-          
-          // Перенаправляем на страницу входа через 1.5 секунды
-          setTimeout(() => {
-            window.location.href = '/login.html';
-          }, 1500);
-        }
+        showLogoutConfirmModal();
       };
+      
+      // Функция показа модального окна подтверждения выхода
+      function showLogoutConfirmModal() {
+        // Создаем подложку
+        const overlay = document.createElement('div');
+        overlay.style.cssText = `
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: rgba(0, 0, 0, 0.7);
+          backdrop-filter: blur(5px);
+          z-index: 1000;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          opacity: 0;
+          transition: opacity 0.3s ease;
+        `;
+        
+        // Создаем модальное окно
+        const modal = document.createElement('div');
+        modal.style.cssText = `
+          background: linear-gradient(135deg, #1a1a2e, #16213e);
+          border-radius: 16px;
+          padding: 32px;
+          max-width: 400px;
+          width: 90%;
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+          border: 1px solid rgba(108, 99, 255, 0.3);
+          text-align: center;
+          transform: scale(0.8);
+          transition: transform 0.3s ease;
+        `;
+        
+        modal.innerHTML = `
+          <div style="font-size: 3rem; margin-bottom: 16px;">🚪</div>
+          <h3 style="color: white; font-size: 1.4rem; margin: 0 0 12px 0; font-weight: 600;">
+            Выход из профиля
+          </h3>
+          <p style="color: #d1d5db; margin: 0 0 24px 0; font-size: 1rem; line-height: 1.5;">
+            Вы уверены, что хотите выйти из профиля?<br>
+            Все несохраненные данные будут потеряны.
+          </p>
+          <div style="display: flex; gap: 12px; justify-content: center;">
+            <button id="cancelLogout" style="
+              background: #374151;
+              color: white;
+              border: none;
+              padding: 12px 24px;
+              border-radius: 8px;
+              font-size: 1rem;
+              cursor: pointer;
+              transition: all 0.2s;
+              font-weight: 500;
+            ">
+              Отмена
+            </button>
+            <button id="confirmLogout" style="
+              background: linear-gradient(135deg, #dc2626, #b91c1c);
+              color: white;
+              border: none;
+              padding: 12px 24px;
+              border-radius: 8px;
+              font-size: 1rem;
+              cursor: pointer;
+              transition: all 0.2s;
+              font-weight: 500;
+            ">
+              Выйти
+            </button>
+          </div>
+        `;
+        
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+        
+        // Показываем модальное окно с анимацией
+        setTimeout(() => {
+          overlay.style.opacity = '1';
+          modal.style.transform = 'scale(1)';
+        }, 10);
+        
+        // Обработчики кнопок
+        document.getElementById('cancelLogout').onclick = function() {
+          closeModal(overlay);
+        };
+        
+        document.getElementById('confirmLogout').onclick = function() {
+          proceedWithLogout();
+          closeModal(overlay);
+        };
+        
+        // Закрытие по клику на подложку
+        overlay.onclick = function(e) {
+          if (e.target === overlay) {
+            closeModal(overlay);
+          }
+        };
+        
+        // Эффекты наведения для кнопок
+        const cancelBtn = document.getElementById('cancelLogout');
+        const confirmBtn = document.getElementById('confirmLogout');
+        
+        cancelBtn.onmouseenter = () => cancelBtn.style.background = '#4b5563';
+        cancelBtn.onmouseleave = () => cancelBtn.style.background = '#374151';
+        
+        confirmBtn.onmouseenter = () => confirmBtn.style.transform = 'translateY(-2px)';
+        confirmBtn.onmouseleave = () => confirmBtn.style.transform = 'translateY(0)';
+      }
+      
+      // Функция закрытия модального окна
+      function closeModal(overlay) {
+        overlay.style.opacity = '0';
+        overlay.querySelector('div').style.transform = 'scale(0.8)';
+        setTimeout(() => {
+          document.body.removeChild(overlay);
+        }, 300);
+      }
+      
+      // Функция выполнения выхода из профиля
+      function proceedWithLogout() {
+        // Очищаем все данные пользователя
+        localStorage.clear();
+        sessionStorage.clear();
+        
+        // Показываем уведомление о выходе
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+          position: fixed;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          background: linear-gradient(135deg, #dc2626, #b91c1c);
+          color: white;
+          padding: 20px 24px;
+          border-radius: 12px;
+          font-size: 1rem;
+          box-shadow: 0 8px 24px rgba(220, 38, 38, 0.4);
+          z-index: 1001;
+          text-align: center;
+          font-weight: 500;
+        `;
+        notification.innerHTML = '🚪 Выход из профиля...';
+        
+        document.body.appendChild(notification);
+        
+        // Перенаправляем на страницу входа через 1.5 секунды
+        setTimeout(() => {
+          window.location.href = '/login.html';
+        }, 1500);
+      }
     });
   </script>
 </body>
