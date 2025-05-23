@@ -2972,13 +2972,16 @@
           }
           console.log('Отображена вкладка:', selectedTab.id, 'стиль display:', selectedTab.style.display);
           
-          // Дополнительная проверка для командного чата
+          // Инициализация командного чата при переключении на вкладку
           if (tabName === 'team') {
-            const teamContainer = selectedTab.querySelector('.team-chat-container');
-            console.log('Контейнер командного чата найден:', teamContainer);
-            if (teamContainer) {
-              console.log('Стили контейнера:', teamContainer.style.cssText);
-            }
+            console.log('Клик по вкладке команды');
+            setTimeout(() => {
+              if (typeof initializeTeamChatNew === 'function') {
+                initializeTeamChatNew();
+              } else {
+                console.log('❌ Функция initializeTeamChatNew не найдена');
+              }
+            }, 100);
           }
         } else {
           console.error('Элемент не найден:', `${tabName}-content`);
