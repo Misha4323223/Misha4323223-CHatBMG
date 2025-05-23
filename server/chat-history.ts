@@ -32,18 +32,26 @@ async function getUserChatSessions(userId) {
  * Сохранение сообщения в чат
  */
 async function saveMessage(messageData) {
-  const [message] = await db
-    .insert(aiMessages)
-    .values(messageData)
-    .returning();
+  console.log('💾 Попытка сохранения сообщения:', JSON.stringify(messageData, null, 2));
+  
+  try {
+    const [message] = await db
+      .insert(aiMessages)
+      .values(messageData)
+      .returning();
+    
+    console.log('✅ Сообщение успешно сохранено:', message.id);
+    return message;
+  } catch (error) {
+    console.error('❌ Ошибка сохранения сообщения:', error);
+    throw error;
+  }
   
   // Обновляем время последнего сообщения в сессии
   await db
     .update(chatSessions)
     .set({ updatedAt: new Date() })
     .where(eq(chatSessions.id, messageData.sessionId));
-  
-  return message;
 }
 
 /**
