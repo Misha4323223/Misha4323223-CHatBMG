@@ -2911,9 +2911,12 @@
 
       // Функция переключения между вкладками
       window.switchTab = function(tabName) {
+        console.log('Переключение на вкладку:', tabName);
+        
         // Скрываем все вкладки
         document.querySelectorAll('.tab-content').forEach(tab => {
           tab.style.display = 'none';
+          console.log('Скрыта вкладка:', tab.id);
         });
         
         // Убираем активный класс со всех кнопок
@@ -2923,12 +2926,17 @@
         
         // Показываем выбранную вкладку с правильным стилем
         const selectedTab = document.getElementById(`${tabName}-content`);
+        console.log('Ищем элемент:', `${tabName}-content`, 'найден:', selectedTab);
+        
         if (selectedTab) {
           if (tabName === 'chat') {
-            selectedTab.style.display = 'flex'; // Для чата используем flex
+            selectedTab.style.display = 'block'; // Изменено на block для всех
           } else {
-            selectedTab.style.display = 'block'; // Для остальных - block
+            selectedTab.style.display = 'block';
           }
+          console.log('Отображена вкладка:', selectedTab.id);
+        } else {
+          console.error('Элемент не найден:', `${tabName}-content`);
         }
         
         // Добавляем активный класс к выбранной кнопке
