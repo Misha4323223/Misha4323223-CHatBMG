@@ -13,35 +13,99 @@
 
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-      color: #2c3e50;
+      background: radial-gradient(ellipse at top, #1a0a0a 0%, #0a0a0a 50%, #000000 100%);
+      color: #ffffff;
       height: 100vh;
       overflow: hidden;
       display: flex;
       align-items: center;
       justify-content: center;
+      position: relative;
+      animation: bodyPulse 8s ease-in-out infinite;
+    }
+
+    @keyframes bodyPulse {
+      0%, 100% { filter: brightness(1) contrast(1); }
+      50% { filter: brightness(1.05) contrast(1.1); }
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: 
+        radial-gradient(circle at 20% 80%, rgba(220, 38, 38, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(245, 158, 11, 0.1) 0%, transparent 50%);
+      animation: backgroundShift 20s ease-in-out infinite;
+      z-index: -1;
+    }
+
+    @keyframes backgroundShift {
+      0%, 100% { opacity: 0.3; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(1.1); }
     }
 
     .chat-container {
       width: 100%;
-      max-width: 800px;
+      max-width: 1000px;
       height: 90vh;
-      background: rgba(255, 255, 255, 0.95);
-      border-radius: 20px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: linear-gradient(135deg, rgba(31, 41, 55, 0.95) 0%, rgba(17, 24, 39, 0.98) 100%);
+      border-radius: 32px;
+      box-shadow: 
+        0 25px 80px rgba(0, 0, 0, 0.4),
+        0 0 60px rgba(220, 38, 38, 0.1),
+        inset 0 2px 0 rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(25px);
+      border: 2px solid rgba(220, 38, 38, 0.2);
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      position: relative;
+      animation: containerGlow 6s ease-in-out infinite alternate;
+    }
+
+    @keyframes containerGlow {
+      0% { 
+        box-shadow: 
+          0 25px 80px rgba(0, 0, 0, 0.4),
+          0 0 60px rgba(220, 38, 38, 0.1),
+          inset 0 2px 0 rgba(255, 255, 255, 0.1);
+      }
+      100% { 
+        box-shadow: 
+          0 30px 90px rgba(0, 0, 0, 0.5),
+          0 0 80px rgba(220, 38, 38, 0.2),
+          inset 0 2px 0 rgba(255, 255, 255, 0.15);
+      }
     }
 
     .chat-header {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%);
       color: white;
-      padding: 20px;
+      padding: 24px;
       text-align: center;
       position: relative;
+      overflow: hidden;
+    }
+
+    .chat-header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #dc2626, #f59e0b, #dc2626);
+      background-size: 200% 100%;
+      animation: borderGlow 3s ease-in-out infinite;
+    }
+
+    @keyframes borderGlow {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
     }
 
     .chat-header h1 {
