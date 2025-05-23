@@ -1002,11 +1002,13 @@
                         const data = JSON.parse(text);
                         console.log('Parsed data:', data);
                         
-                        if (data.success && data.response) {
-                            addMessage(data.response, 'ai');
-                        } else if (data.response) {
+                        if (data.response) {
+                            console.log('Найден ответ AI:', data.response);
+                            console.log('Провайдер:', data.provider);
+                            console.log('Модель:', data.model);
                             addMessage(data.response, 'ai');
                         } else {
+                            console.log('Ответ AI не найден в данных:', data);
                             addMessage('Извините, получен некорректный ответ от сервера.', 'ai');
                         }
                     } catch (parseError) {
@@ -1029,19 +1031,36 @@
 
         // Добавление сообщения в интерфейс
         function addMessage(content, sender) {
+            console.log(`Добавляем сообщение: ${sender} - ${content.substring(0, 50)}...`);
+            
             const messagesArea = document.getElementById('messagesArea');
             
+            if (!messagesArea) {
+                console.error('Элемент messagesArea не найден!');
+                return;
+            }
+            
             // Убираем приветственный экран при первом сообщении
-            if (messagesArea.querySelector('.welcome-screen')) {
-                messagesArea.innerHTML = '';
+            const welcomeScreen = messagesArea.querySelector('.welcome-screen');
+            if (welcomeScreen) {
+                welcomeScreen.remove();
             }
             
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${sender}`;
-            messageDiv.innerHTML = `<div class="message-content">${content}</div>`;
             
+            // Безопасное создание контента сообщения
+            const messageContent = document.createElement('div');
+            messageContent.className = 'message-content';
+            messageContent.textContent = content;
+            
+            messageDiv.appendChild(messageContent);
             messagesArea.appendChild(messageDiv);
+            
+            // Прокрутка к последнему сообщению
             messagesArea.scrollTop = messagesArea.scrollHeight;
+            
+            console.log(`Сообщение добавлено: ${sender}`);
         }
 
         // Переключение вкладок
