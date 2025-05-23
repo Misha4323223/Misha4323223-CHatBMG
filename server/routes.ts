@@ -401,11 +401,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Получение всех сессий пользователя (без параметра - для текущего пользователя)
   app.get('/api/chat/sessions', async (req, res) => {
     try {
-      // Получаем имя пользователя из заголовка
-      const username = req.headers['x-username'] as string;
-      if (!username) {
-        return res.status(401).json({ success: false, error: 'Пользователь не указан' });
-      }
+      // Получаем имя пользователя из заголовка или используем гостевого пользователя
+      const username = req.headers['x-username'] as string || req.query.username as string || 'guest';
 
       console.log(`🔍 Запрос сессий для пользователя: ${username}`);
       const sessions = await chatHistory.getUserChatSessions(username);
