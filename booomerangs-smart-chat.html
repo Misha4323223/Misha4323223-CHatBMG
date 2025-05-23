@@ -1707,17 +1707,19 @@
       
       <!-- Контейнер для командного чата -->
       <div class="tab-content" id="team-content" style="display: none;">
-        <iframe 
-          src="/team-chat-minimal.html" 
-          style="
-            width: 100%; 
-            height: 100vh; 
-            border: none; 
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-          "
-          title="Командный чат BOOOMERANGS"
-        ></iframe>
+        <div style="height: calc(100vh - 140px); padding: 20px;">
+          <iframe 
+            src="/team-chat-minimal.html" 
+            style="
+              width: 100%; 
+              height: 100%; 
+              border: none; 
+              border-radius: 16px;
+              box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            "
+            title="Командный чат BOOOMERANGS"
+          ></iframe>
+        </div>
       </div>
       
       <script>
