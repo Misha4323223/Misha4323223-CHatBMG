@@ -1597,11 +1597,11 @@
         <h1 class="tagline">BOOOMERANGS AI</h1>
       </div>
       <nav class="navigation">
-        <a href="/smart-chat" class="nav-button active">Чат</a>
-        <a href="/image-generator" class="nav-button">Генератор</a>
-        <a href="/team-chat-booomerangs.html" class="nav-button" title="Командный чат BOOOMERANGS">
+        <button onclick="switchTab('chat')" class="nav-button active" id="tab-chat">Чат</button>
+        <button onclick="switchTab('generator')" class="nav-button" id="tab-generator">Генератор</button>
+        <button onclick="switchTab('team')" class="nav-button" id="tab-team" title="Командный чат BOOOMERANGS">
           🪃 Команда
-        </a>
+        </button>
         <button onclick="logout()" class="nav-button logout-btn" title="Выйти из профиля">
           🚪 Выход
         </button>
@@ -1609,8 +1609,10 @@
     </div>
     
     <div class="main-layout">
-      <!-- Боковая панель с историей чатов -->
-      <div class="sidebar" id="sidebar">
+      <!-- Контейнер для AI чата -->
+      <div class="tab-content" id="chat-content">
+        <!-- Боковая панель с историей чатов -->
+        <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
           <h3 class="sidebar-title">История чатов</h3>
           <button class="new-chat-btn" onclick="createNewChat()">+ Новый</button>
@@ -1654,6 +1656,85 @@
             <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
           </svg>
         </button>
+      </div>
+      </div>
+      
+      <!-- Контейнер для генератора изображений -->
+      <div class="tab-content" id="generator-content" style="display: none;">
+        <div class="generator-container">
+          <div class="generator-header">
+            <h2>🎨 Генератор изображений</h2>
+            <p>Создавайте уникальные изображения с помощью AI</p>
+          </div>
+          
+          <div class="generator-form">
+            <div class="form-group">
+              <label for="prompt-input">Описание изображения:</label>
+              <textarea 
+                id="prompt-input" 
+                class="prompt-textarea" 
+                placeholder="Опишите, какое изображение вы хотите создать..."
+                rows="3"
+              ></textarea>
+            </div>
+            
+            <div class="form-group">
+              <label for="style-select">Стиль:</label>
+              <select id="style-select" class="style-selector">
+                <option value="realistic">Реалистичный</option>
+                <option value="artistic">Художественный</option>
+                <option value="cartoon">Мультяшный</option>
+                <option value="abstract">Абстрактный</option>
+              </select>
+            </div>
+            
+            <button id="generate-btn" class="generate-button">
+              🎨 Генерировать изображение
+            </button>
+          </div>
+          
+          <div class="generated-image-container" id="generated-image-container" style="display: none;">
+            <h3>Результат:</h3>
+            <img id="generated-image" alt="Сгенерированное изображение" />
+            <div class="image-actions">
+              <button class="download-btn">💾 Скачать</button>
+              <button class="share-btn">📤 Поделиться</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Контейнер для командного чата -->
+      <div class="tab-content" id="team-content" style="display: none;">
+        <div class="team-chat-container">
+          <div class="team-header">
+            <h2>🪃 Командный чат BOOOMERANGS</h2>
+            <div class="team-status">
+              <span class="status-dot" id="team-status-dot"></span>
+              <span id="team-status-text">Подключено</span>
+            </div>
+          </div>
+          
+          <div class="team-messages-container" id="team-messages">
+            <div class="loading-team" id="team-loading">
+              Загрузка истории командного чата...
+            </div>
+          </div>
+          
+          <div class="team-input-container">
+            <form id="team-message-form" class="team-input-form">
+              <textarea 
+                id="team-message-input" 
+                class="team-message-input" 
+                placeholder="Напишите сообщение команде BOOOMERANGS..."
+                rows="1"
+              ></textarea>
+              <button type="submit" class="team-send-button">
+                🪃 Отправить
+              </button>
+            </form>
+          </div>
+        </div>
       </div>
     </div>
     
