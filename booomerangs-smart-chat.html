@@ -1011,18 +1011,26 @@
       transform-origin: center !important;
     }
     
-    @keyframes boomerang-fly {
+    @keyframes fly-boomerang {
       0% { 
-        transform: translateX(-8px) rotate(-20deg) scale(0.9);
-        opacity: 0.8;
+        transform: translateX(-10px) rotate(-45deg) scale(0.8);
+        opacity: 0.7;
+      }
+      25% {
+        transform: translateX(0px) rotate(0deg) scale(1.0);
+        opacity: 1;
       }
       50% { 
-        transform: translateX(8px) rotate(20deg) scale(1.1);
+        transform: translateX(10px) rotate(45deg) scale(1.2);
+        opacity: 1;
+      }
+      75% {
+        transform: translateX(0px) rotate(0deg) scale(1.0);
         opacity: 1;
       }
       100% { 
-        transform: translateX(-8px) rotate(-20deg) scale(0.9);
-        opacity: 0.8;
+        transform: translateX(-10px) rotate(-45deg) scale(0.8);
+        opacity: 0.7;
       }
     }
     
@@ -1085,10 +1093,19 @@
   <!-- Индикатор статуса процесса -->
   <div class="status-indicator" id="status-indicator">
     <div class="status-header">
-      <svg class="status-icon boomerang-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation: boomerang-fly 1.2s ease-in-out infinite !important; transform-origin: center;">
-        <path d="M3 12c0 0 4-8 8-8s8 8 8 8-4 8-8 8-8-8-8-8z"/>
-        <path d="M19 12c0 0-4-4-8-4s-8 4-8 4"/>
-      </svg>
+      <div class="boomerang-container" style="width: 20px; height: 20px; position: relative;">
+        <div class="boomerang" style="
+          width: 16px; 
+          height: 4px; 
+          background: linear-gradient(45deg, #8b5cf6, #a855f7); 
+          border-radius: 2px;
+          position: absolute;
+          top: 8px;
+          left: 2px;
+          animation: fly-boomerang 1.5s ease-in-out infinite;
+          transform-origin: center;
+        ">🪃</div>
+      </div>
       <div class="status-title" id="status-title">Обработка запроса</div>
     </div>
     <div class="status-message" id="status-message">AI анализирует ваш запрос...</div>
