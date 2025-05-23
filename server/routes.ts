@@ -105,9 +105,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.sendFile('demo.html', { root: '.' });
   });
   
-  // Главная страница
+  // Главная страница - рабочий AI чат BOOOMERANGS
   app.get('/', (req, res) => {
-    res.sendFile('index.html', { root: '.' });
+    res.sendFile('booomerangs-working-chat.html', { root: '.' });
   });
   
   // Страница отладки
