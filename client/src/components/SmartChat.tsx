@@ -36,7 +36,15 @@ const categoryIcons: Record<string, React.ReactNode> = {
 };
 
 const SmartChat: React.FC = () => {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: 'welcome',
+      text: '🎉 Добро пожаловать в новый BOOOMERANGS дизайн! Напишите сообщение чтобы увидеть стильные эффекты.',
+      sender: 'ai',
+      timestamp: new Date(),
+      provider: 'BOOOMERANGS'
+    }
+  ]);
   const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
