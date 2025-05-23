@@ -105,18 +105,23 @@ async function getChatFreeEnhancedResponse(message, options = {}) {
       
       console.log(`✅ Успешно получен ответ от Python G4F с провайдером AIChatFree`);
       console.log(`Реальный провайдер: ${data.provider || 'неизвестно'}`);
+      console.log(`ПОЛНЫЕ ДАННЫЕ ОТ AI:`, JSON.stringify(data, null, 2));
       
       if (data && data.response) {
-        return {
+        const result = {
           success: true,
           response: data.response,
-          provider: 'ChatFree',
-          model: data.provider || "AIChatFree",
-          backupInfo: data.provider === 'AIChatFree' ? 
-            "🔵 FreeChat использует провайдер AIChatFree" : 
-            `🔄 FreeChat автоматически использует провайдер ${data.provider || "не указан"}`
+          provider: 'FreeChat-Enhanced',
+          model: data.provider || "Qwen_Qwen_2_5_Max",
+          cached: false
         };
+        console.log(`ВОЗВРАЩАЕМ РЕЗУЛЬТАТ:`, JSON.stringify(result, null, 2));
+        return result;
+      } else {
+        console.log(`❌ НЕТ ОТВЕТА В ДАННЫХ:`, data);
       }
+    } else {
+      console.log(`❌ ОШИБКА HTTP ОТВЕТА:`, response.status, response.statusText);
     }
     
     console.log(`⚠️ AIChatFree вернул статус ${response.status}, пробуем Free2GPT...`);
