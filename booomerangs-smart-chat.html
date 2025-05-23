@@ -1192,6 +1192,9 @@
           
           // Показываем полученный ответ
           addMessage(aiResponse, false, { provider, category });
+          
+          // Сохраняем ответ AI в истории
+          await saveMessageToHistory(aiResponse, 'ai', provider, category);
         } catch (error) {
           console.error('Ошибка при отправке сообщения:', error);
           
@@ -1326,6 +1329,9 @@
         this.style.height = 'auto';
         this.style.height = (this.scrollHeight) + 'px';
       });
+      
+      // Инициализация приложения - загружаем историю чатов
+      loadChatHistory();
     });
   </script>
 </body>
