@@ -1391,6 +1391,120 @@
                 });
             }
         });
+
+        // === СИСТЕМА ЛОГИРОВАНИЯ ИНТЕРФЕЙСА ===
+        const Logger = {
+            // Общие логи интерфейса
+            interface: (action, details = {}) => {
+                console.log(`🎨 [INTERFACE] ${action}:`, details);
+            },
+            
+            // Логи AI провайдеров
+            ai: (action, provider = '', model = '', details = {}) => {
+                console.log(`🤖 [AI-${provider}] ${action} (${model}):`, details);
+            },
+            
+            // Логи истории чатов
+            chat: (action, sessionId = '', details = {}) => {
+                console.log(`💬 [CHAT-${sessionId}] ${action}:`, details);
+            },
+            
+            // Логи пользовательских действий
+            user: (action, details = {}) => {
+                console.log(`👤 [USER] ${action}:`, details);
+            },
+            
+            // Логи производительности
+            performance: (action, time = 0, details = {}) => {
+                console.log(`⚡ [PERF] ${action} (${time}ms):`, details);
+            },
+            
+            // Логи ошибок
+            error: (action, error, details = {}) => {
+                console.error(`❌ [ERROR] ${action}:`, error, details);
+            }
+        };
+
+        // Переопределяем функции с добавлением логирования
+        const originalLoadChatSessions = loadChatSessions;
+        loadChatSessions = async function() {
+            const startTime = performance.now();
+            Logger.interface('Загрузка списка чатов');
+            
+            try {
+                const result = await originalLoadChatSessions();
+                const loadTime = Math.round(performance.now() - startTime);
+                Logger.performance('Загрузка сессий чатов', loadTime, { sessionCount: document.querySelectorAll('.chat-item').length });
+                return result;
+            } catch (error) {
+                Logger.error('Ошибка загрузки сессий чатов', error);
+                throw error;
+            }
+        };
+
+        const originalSendMessage = sendMessage;
+        sendMessage = async function() {
+            const messageText = messageInput.value.trim();
+            const startTime = performance.now();
+            
+            Logger.user('Отправка сообщения', { messageLength: messageText.length, sessionId: currentSessionId });
+            
+            try {
+                const result = await originalSendMessage();
+                const sendTime = Math.round(performance.now() - startTime);
+                Logger.performance('Полная отправка сообщения', sendTime);
+                return result;
+            } catch (error) {
+                Logger.error('Ошибка отправки сообщения', error, { messageText: messageText.substring(0, 50) + '...' });
+                throw error;
+            }
+        };
+
+        const originalSwitchToChat = switchToChat;
+        switchToChat = function(sessionId) {
+            Logger.chat('Переключение на чат', sessionId);
+            return originalSwitchToChat(sessionId);
+        };
+
+        // Логирование AI ответов
+        function logAIResponse(response, provider, model, responseTime) {
+            Logger.ai('Получен ответ', provider, model, {
+                responseLength: response.length,
+                responseTime: responseTime,
+                preview: response.substring(0, 100) + '...'
+            });
+        }
+
+        // Добавляем метрики производительности
+        let sessionMetrics = {
+            messagesCount: 0,
+            totalResponseTime: 0,
+            averageResponseTime: 0,
+            sessionStartTime: Date.now()
+        };
+
+        // Обновляем метрики при каждом ответе
+        function updateMetrics(responseTime) {
+            sessionMetrics.messagesCount++;
+            sessionMetrics.totalResponseTime += responseTime;
+            sessionMetrics.averageResponseTime = Math.round(sessionMetrics.totalResponseTime / sessionMetrics.messagesCount);
+            
+            Logger.performance('Метрики сессии', 0, {
+                messages: sessionMetrics.messagesCount,
+                avgResponseTime: sessionMetrics.averageResponseTime,
+                sessionDuration: Math.round((Date.now() - sessionMetrics.sessionStartTime) / 1000) + 's'
+            });
+        }
+
+        // Логирование при инициализации
+        Logger.interface('BOOOMERANGS Smart Chat инициализирован', {
+            timestamp: new Date().toISOString(),
+            userAgent: navigator.userAgent.substring(0, 50) + '...',
+            screenResolution: `${screen.width}x${screen.height}`,
+            colorDepth: screen.colorDepth
+        });
+
+        });
     </script>
 </body>
 </html>
