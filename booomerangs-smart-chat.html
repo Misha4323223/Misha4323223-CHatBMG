@@ -267,7 +267,7 @@
       font-size: 2rem;
       font-weight: bold;
       transition: all 0.3s ease;
-      z-index: 1003;
+      z-index: 9999;
       box-shadow: 0 0 30px rgba(108, 99, 255, 0.8), 5px 0 20px rgba(0, 0, 0, 0.5);
       display: flex;
       align-items: center;
@@ -1084,6 +1084,9 @@
     </div>
   </div>
 
+  <!-- Кнопка переключения боковой панели -->
+  <button class="sidebar-toggle" id="sidebar-toggle" onclick="toggleSidebar()">‹</button>
+
   <div class="container">
     <div class="header-compact">
       <div class="left-section">
@@ -1099,7 +1102,6 @@
     <div class="main-layout">
       <!-- Боковая панель с историей чатов -->
       <div class="sidebar" id="sidebar">
-        <button class="sidebar-toggle" onclick="toggleSidebar()">‹</button>
         <div class="sidebar-header">
           <h3 class="sidebar-title">История чатов</h3>
           <button class="new-chat-btn" onclick="createNewChat()">+ Новый</button>
@@ -1726,7 +1728,7 @@
       // Функция для переключения боковой панели
       function toggleSidebar() {
         const sidebar = document.getElementById('sidebar');
-        const toggleBtn = sidebar.querySelector('.sidebar-toggle');
+        const toggleBtn = document.getElementById('sidebar-toggle');
         
         sidebar.classList.toggle('hidden');
         
