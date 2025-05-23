@@ -706,7 +706,7 @@
                 messageInput.style.height = 'auto';
 
                 // Отправляем запрос к AI
-                const response = await fetch('/api/chat/message', {
+                const response = await fetch('/api/chat/messages', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
