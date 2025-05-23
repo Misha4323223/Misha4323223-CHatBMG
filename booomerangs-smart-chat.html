@@ -2837,10 +2837,14 @@
           btn.classList.remove('active');
         });
         
-        // Показываем выбранную вкладку
+        // Показываем выбранную вкладку с правильным стилем
         const selectedTab = document.getElementById(`${tabName}-content`);
         if (selectedTab) {
-          selectedTab.style.display = 'block';
+          if (tabName === 'chat') {
+            selectedTab.style.display = 'flex'; // Для чата используем flex
+          } else {
+            selectedTab.style.display = 'block'; // Для остальных - block
+          }
         }
         
         // Добавляем активный класс к выбранной кнопке
