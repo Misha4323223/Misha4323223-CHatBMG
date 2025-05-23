@@ -1920,7 +1920,7 @@
           </h3>
           <p style="color: #d1d5db; margin: 0 0 24px 0; font-size: 1rem; line-height: 1.5;">
             Вы уверены, что хотите выйти из профиля?<br>
-            Все несохраненные данные будут потеряны.
+            История переписки будет сохранена для команды.
           </p>
           <div style="display: flex; gap: 12px; justify-content: center;">
             <button id="cancelLogout" style="
@@ -2000,9 +2000,9 @@
       
       // Функция выполнения выхода из профиля
       function proceedWithLogout() {
-        // Очищаем все данные пользователя
-        localStorage.clear();
-        sessionStorage.clear();
+        // Очищаем только данные авторизации, переписка остается сохранена
+        // localStorage.clear(); // НЕ очищаем - переписка должна остаться!
+        sessionStorage.clear(); // Очищаем только временные данные сессии
         
         // Показываем уведомление о выходе
         const notification = document.createElement('div');
