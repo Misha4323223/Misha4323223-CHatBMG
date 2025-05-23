@@ -40,7 +40,21 @@
       width: 100%;
       max-width: 400px;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-      border: 1px solid var(--border);
+      border: 2px solid;
+      border-image: linear-gradient(45deg, #c0c0c0, #e8e8e8, #f0f0f0, #e8e8e8, #c0c0c0) 1;
+      position: relative;
+    }
+    
+    .login-container::before {
+      content: '';
+      position: absolute;
+      top: -2px;
+      left: -2px;
+      right: -2px;
+      bottom: -2px;
+      background: linear-gradient(45deg, #c0c0c0, #e8e8e8, #f0f0f0, #e8e8e8, #c0c0c0);
+      border-radius: 16px;
+      z-index: -1;
     }
 
     .logo-section {
