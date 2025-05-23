@@ -1721,6 +1721,357 @@
       </div>
       
       <script>
+        // Инициализация командного чата прямо во вкладке
+        function initializeDirectTeamChat() {
+          console.log('🪃 Инициализация прямого командного чата...');
+          
+          const teamInput = document.getElementById('teamMessageInput');
+          const teamSendBtn = document.getElementById('teamSendBtn');
+          const teamMessages = document.getElementById('teamMessages');
+          const teamWelcomeMessage = document.getElementById('teamWelcomeMessage');
+          
+          if (!teamInput || !teamSendBtn || !teamMessages) {
+            console.log('❌ Элементы командного чата не найдены');
+            return;
+          }
+          
+          let currentUser = 'mikhail';
+          let isInitialized = false;
+          
+          if (isInitialized) {
+            console.log('⚠️ Командный чат уже инициализирован');
+            return;
+          }
+          
+          // Автоматическое изменение размера поля ввода
+          teamInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+          });
+          
+          // Функция отправки сообщения
+          async function sendMessage() {
+            const content = teamInput.value.trim();
+            if (!content) return;
+            
+            teamSendBtn.disabled = true;
+            teamSendBtn.textContent = 'Отправка...';
+            
+            try {
+              // Добавляем сообщение в интерфейс
+              addMessage(content, currentUser, new Date());
+              teamInput.value = '';
+              teamInput.style.height = 'auto';
+              
+              // Отправляем на сервер
+              const response = await fetch('/api/team-chat/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: content, username: currentUser })
+              });
+              
+              const data = await response.json();
+              console.log('✅ Сообщение отправлено:', data);
+              
+            } catch (error) {
+              console.error('❌ Ошибка отправки:', error);
+            } finally {
+              teamSendBtn.disabled = false;
+              teamSendBtn.innerHTML = '🪃 Отправить';
+            }
+          }
+          
+          // Функция добавления сообщения в чат
+          function addMessage(content, username, timestamp) {
+            // Удаляем приветственное сообщение
+            if (teamWelcomeMessage) teamWelcomeMessage.remove();
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.style.cssText = `
+              margin-bottom: 16px;
+              padding: 16px 20px;
+              border-radius: 16px;
+              max-width: 75%;
+              word-wrap: break-word;
+              box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+              transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+              ${username === currentUser ? 
+                'margin-left: auto; background: linear-gradient(135deg, rgba(59, 130, 246, 0.9) 0%, rgba(29, 78, 216, 0.9) 50%, rgba(37, 99, 235, 0.9) 100%); color: white; border: 1px solid rgba(255, 255, 255, 0.2);' :
+                'margin-right: auto; background: linear-gradient(135deg, rgba(248, 250, 252, 0.95) 0%, rgba(241, 245, 249, 0.95) 50%, rgba(226, 232, 240, 0.95) 100%); color: #1e293b; border: 1px solid rgba(209, 213, 219, 0.3);'
+              }
+            `;
+            
+            const time = new Date(timestamp).toLocaleTimeString('ru-RU', {
+              hour: '2-digit', minute: '2-digit'
+            });
+            
+            messageDiv.innerHTML = `
+              <div style="font-size: 12px; opacity: 0.7; margin-bottom: 4px;">${username} • ${time}</div>
+              <div>${content}</div>
+            `;
+            
+            teamMessages.appendChild(messageDiv);
+            teamMessages.scrollTop = teamMessages.scrollHeight;
+          }
+          
+          // Загрузка истории сообщений
+          async function loadMessages() {
+            try {
+              const response = await fetch('/api/team-chat/messages');
+              const data = await response.json();
+              
+              if (data.success && data.messages.length > 0) {
+                if (teamWelcomeMessage) teamWelcomeMessage.remove();
+                
+                // Очищаем старые сообщения
+                const existingMessages = teamMessages.querySelectorAll('div:not(#teamWelcomeMessage)');
+                existingMessages.forEach(msg => msg.remove());
+                
+                data.messages.forEach(message => {
+                  addMessage(message.content, message.username, message.created_at);
+                });
+              }
+            } catch (error) {
+              console.error('❌ Ошибка загрузки сообщений:', error);
+            }
+          }
+          
+          // Обработчики событий
+          teamSendBtn.addEventListener('click', sendMessage);
+          teamInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              sendMessage();
+            }
+          });
+          
+          // Загрузка истории при инициализации
+          loadMessages();
+          
+          // Обновление каждые 3 секунды
+          setInterval(loadMessages, 3000);
+          
+          isInitialized = true;
+          console.log('✅ Прямой командный чат инициализирован');
+        }
+        
+        // ПРИНУДИТЕЛЬНАЯ ИНИЦИАЛИЗАЦИЯ СРАЗУ
+        console.log('🪃 Принудительная инициализация командного чата через 1 секунду...');
+        setTimeout(() => {
+          console.log('🪃 Проверяем элементы командного чата...');
+          const teamInput = document.getElementById('teamMessageInput');
+          const teamSendBtn = document.getElementById('teamSendBtn');
+          const teamMessages = document.getElementById('teamMessages');
+          
+          console.log('🔍 Найденные элементы:', {
+            teamInput: !!teamInput,
+            teamSendBtn: !!teamSendBtn, 
+            teamMessages: !!teamMessages
+          });
+          
+          // ДИАГНОСТИЧЕСКОЕ ЛОГИРОВАНИЕ СТИЛЕЙ
+          if (teamInput) {
+            const inputStyles = window.getComputedStyle(teamInput);
+            const inputRect = teamInput.getBoundingClientRect();
+            console.log('📝 ДИАГНОСТИКА ПОЛЯ ВВОДА:', {
+              display: inputStyles.display,
+              visibility: inputStyles.visibility,
+              opacity: inputStyles.opacity,
+              position: inputStyles.position,
+              top: inputStyles.top,
+              left: inputStyles.left,
+              width: inputStyles.width,
+              height: inputStyles.height,
+              backgroundColor: inputStyles.backgroundColor,
+              color: inputStyles.color,
+              border: inputStyles.border,
+              zIndex: inputStyles.zIndex,
+              transform: inputStyles.transform,
+              overflow: inputStyles.overflow,
+              // Позиция на экране
+              rect: {
+                top: inputRect.top,
+                left: inputRect.left,
+                width: inputRect.width,
+                height: inputRect.height,
+                bottom: inputRect.bottom,
+                right: inputRect.right
+              },
+              // Видимость
+              offsetParent: !!teamInput.offsetParent,
+              clientWidth: teamInput.clientWidth,
+              clientHeight: teamInput.clientHeight,
+              scrollWidth: teamInput.scrollWidth,
+              scrollHeight: teamInput.scrollHeight
+            });
+          }
+          
+          if (teamSendBtn) {
+            const btnStyles = window.getComputedStyle(teamSendBtn);
+            const btnRect = teamSendBtn.getBoundingClientRect();
+            console.log('🔘 ДИАГНОСТИКА КНОПКИ:', {
+              display: btnStyles.display,
+              visibility: btnStyles.visibility,
+              opacity: btnStyles.opacity,
+              position: btnStyles.position,
+              backgroundColor: btnStyles.backgroundColor,
+              color: btnStyles.color,
+              border: btnStyles.border,
+              zIndex: btnStyles.zIndex,
+              transform: btnStyles.transform,
+              // Позиция на экране
+              rect: {
+                top: btnRect.top,
+                left: btnRect.left,
+                width: btnRect.width,
+                height: btnRect.height
+              },
+              offsetParent: !!teamSendBtn.offsetParent,
+              clientWidth: teamSendBtn.clientWidth,
+              clientHeight: teamSendBtn.clientHeight
+            });
+          }
+          
+          if (teamMessages) {
+            const msgStyles = window.getComputedStyle(teamMessages);
+            const msgRect = teamMessages.getBoundingClientRect();
+            console.log('💬 ДИАГНОСТИКА ОБЛАСТИ СООБЩЕНИЙ:', {
+              display: msgStyles.display,
+              visibility: msgStyles.visibility,
+              opacity: msgStyles.opacity,
+              position: msgStyles.position,
+              width: msgStyles.width,
+              height: msgStyles.height,
+              overflow: msgStyles.overflow,
+              backgroundColor: msgStyles.backgroundColor,
+              // Позиция на экране
+              rect: {
+                top: msgRect.top,
+                left: msgRect.left,
+                width: msgRect.width,
+                height: msgRect.height
+              },
+              offsetParent: !!teamMessages.offsetParent,
+              scrollHeight: teamMessages.scrollHeight,
+              clientHeight: teamMessages.clientHeight
+            });
+          }
+          
+          if (teamInput && teamSendBtn && teamMessages) {
+            console.log('✅ Все элементы найдены, инициализируем чат...');
+            initializeDirectTeamChat();
+          } else {
+            console.log('❌ Некоторые элементы не найдены');
+          }
+        }, 1000);
+
+        // Инициализация при переключении на вкладку команды
+        const originalSwitchTab = window.switchTab;
+        window.switchTab = function(tabName) {
+          console.log('🪃 Переключение на вкладку:', tabName);
+          if (originalSwitchTab) originalSwitchTab(tabName);
+          
+          if (tabName === 'team') {
+            console.log('🪃 Переключение на командный чат...');
+            setTimeout(() => {
+              console.log('🪃 Запуск initializeDirectTeamChat...');
+              initializeDirectTeamChat();
+            }, 200);
+          }
+        };
+        
+        // Также инициализируем при загрузке, если вкладка команды активна
+        document.addEventListener('DOMContentLoaded', function() {
+          console.log('🪃 DOM загружен, проверяем вкладку команды...');
+          const teamContent = document.getElementById('team-content');
+          if (teamContent && teamContent.style.display !== 'none') {
+            console.log('🪃 Вкладка команды активна, инициализируем...');
+            initializeDirectTeamChat();
+          }
+        });
+      </script>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+
+  </div>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Получаем элементы интерфейса
+      const chatMessages = document.getElementById('chat-messages');
+      const chatInput = document.getElementById('chat-input');
+      const sendButton = document.getElementById('send-button');
+      const fileButton = document.getElementById('file-button');
+      const fileInput = document.getElementById('file-input');
+      const imagePreview = document.getElementById('image-preview');
+      const previewImage = document.getElementById('preview-image');
+      const removeImageButton = document.getElementById('remove-image');
+      const statusIndicator = document.getElementById('status-indicator');
+      const statusTitle = document.getElementById('status-title');
+      const statusMessage = document.getElementById('status-message');
+      
+      // Переменная для хранения URL загруженного изображения
+      let uploadedImageUrl = null;
+      
+      // Переменные для сохранения истории чатов
+      let currentSessionId = null;
+      const userId = 1; // Временно используем фиксированный ID пользователя
+      let currentTab = 'chat'; // Текущая активная вкладка
+
+      // Функция переключения между вкладками (удалена - используется версия ниже в window.switchTab)
+
+      // Инициализация генератора изображений
+      function initializeGenerator() {
+        const generateBtn = document.getElementById('generate-btn');
+        const promptInput = document.getElementById('prompt-input');
+        const styleSelect = document.getElementById('style-select');
+        
+        if (generateBtn && !generateBtn.hasAttribute('data-initialized')) {
+          generateBtn.setAttribute('data-initialized', 'true');
+          generateBtn.addEventListener('click', async () => {
+            const prompt = promptInput.value.trim();
+            if (!prompt) {
+              alert('Пожалуйста, введите описание изображения');
+              return;
+            }
+            
+            generateBtn.disabled = true;
+            generateBtn.textContent = '🎨 Генерируем...';
+            
+            try {
+              const response = await fetch('/api/generate-image', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  prompt: prompt,
+                  style: styleSelect.value
+                })
+              });
+              
+              const data = await response.json();
+              
+              if (data.success) {
+                const container = document.getElementById('generated-image-container');
+                const image = document.getElementById('generated-image');
+                image.src = data.imageUrl;
+                container.style.display = 'block';
+              } else {
+                alert('Ошибка генерации изображения: ' + (data.error || 'Неизвестная ошибка'));
+              }
+            } catch (error) {
+              console.error('Ошибка:', error);
+              alert('Произошла ошибка при генерации изображения');
+            } finally {
+              generateBtn.disabled = false;
+              generateBtn.textContent = '🎨 Генерировать изображение';
+            }
+          });
+        }
       }
 
       // Инициализация командного чата
