@@ -1509,48 +1509,9 @@
         // Очищаем поле ввода
         chatInput.value = '';
         
-        // Создаем временное сообщение с бумерангом
+        // Создаем пустой div для совместимости с существующим кодом
         const thinkingDiv = document.createElement('div');
-        thinkingDiv.className = 'message thinking';
-        
-        const boomerangContainer = document.createElement('div');
-        boomerangContainer.style.cssText = `
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          padding: 8px 12px;
-          background: linear-gradient(135deg, #6c63ff, #5a52d5);
-          border-radius: 12px;
-          color: white;
-          font-size: 14px;
-        `;
-        
-        const boomerangIcon = document.createElement('div');
-        boomerangIcon.style.cssText = `
-          width: 20px; 
-          height: 20px; 
-          position: relative;
-        `;
-        
-        const boomerang = document.createElement('div');
-        boomerang.innerHTML = '🪃';
-        boomerang.style.cssText = `
-          width: 16px; 
-          height: 16px; 
-          animation: fly-boomerang 1.2s ease-in-out infinite;
-          transform-origin: center;
-          font-size: 16px;
-        `;
-        
-        boomerangIcon.appendChild(boomerang);
-        
-        const thinkingText = document.createElement('span');
-        thinkingText.textContent = 'AI думает...';
-        
-        boomerangContainer.appendChild(boomerangIcon);
-        boomerangContainer.appendChild(thinkingText);
-        thinkingDiv.appendChild(boomerangContainer);
-        chatMessages.appendChild(thinkingDiv);
+        thinkingDiv.style.display = 'none'; // Скрываем полностью
         
         // Скролл к последнему сообщению
         scrollToBottom();
