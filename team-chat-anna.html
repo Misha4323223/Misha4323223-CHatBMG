@@ -145,7 +145,7 @@
 
     .welcome-message {
       text-align: center;
-      color: #64748b;
+      color: #f3f4f6;
       font-style: italic;
       padding: 40px 20px;
     }
@@ -185,17 +185,19 @@
     }
 
     .message.user .message-bubble {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
       color: white;
       border-bottom-right-radius: 6px;
+      box-shadow: 0 4px 20px rgba(220, 38, 38, 0.3);
     }
 
     .message.other .message-bubble {
-      background: white;
-      color: #2c3e50;
-      border: 1px solid #e2e8f0;
+      background: rgba(31, 41, 55, 0.8);
+      color: #f3f4f6;
+      border: 1px solid rgba(220, 38, 38, 0.3);
       border-bottom-left-radius: 6px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+      backdrop-filter: blur(10px);
     }
 
     .message-info {
@@ -250,7 +252,7 @@
 
     .send-button {
       padding: 12px 24px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
       color: white;
       border: none;
       border-radius: 25px;
@@ -259,11 +261,12 @@
       transition: all 0.3s ease;
       white-space: nowrap;
       font-size: 14px;
+      box-shadow: 0 4px 15px rgba(220, 38, 38, 0.3);
     }
 
     .send-button:hover:not(:disabled) {
       transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+      box-shadow: 0 8px 25px rgba(220, 38, 38, 0.5);
     }
 
     .send-button:disabled {
