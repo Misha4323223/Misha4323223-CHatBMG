@@ -1061,18 +1061,35 @@
             messageDiv.appendChild(messageContent);
             messagesArea.appendChild(messageDiv);
             
-            // Принудительно делаем сообщения AI видимыми
+            // Принудительно делаем сообщения AI видимыми - альтернативный метод
             if (sender === 'ai') {
-                messageDiv.style.display = 'block';
-                messageDiv.style.visibility = 'visible';
-                messageDiv.style.opacity = '1';
-                messageDiv.style.background = '#1f2937';
-                messageDiv.style.color = '#f9fafb';
-                messageDiv.style.padding = '16px 20px';
-                messageDiv.style.borderRadius = '24px 24px 24px 4px';
-                messageDiv.style.border = '1px solid #374151';
-                messageDiv.style.marginBottom = '16px';
-                console.log('AI сообщение принудительно стилизовано');
+                // Создаем новый элемент с абсолютной гарантией видимости
+                const aiBox = document.createElement('div');
+                aiBox.innerHTML = `
+                    <div style="
+                        display: block !important;
+                        visibility: visible !important;
+                        opacity: 1 !important;
+                        background: #1f2937 !important;
+                        color: #f9fafb !important;
+                        padding: 16px 20px !important;
+                        border-radius: 24px 24px 24px 4px !important;
+                        border: 1px solid #374151 !important;
+                        margin-bottom: 16px !important;
+                        width: 100% !important;
+                        max-width: 80% !important;
+                        word-wrap: break-word !important;
+                        font-size: 15px !important;
+                        line-height: 1.6 !important;
+                    ">
+                        🤖 AI: ${content}
+                    </div>
+                `;
+                
+                // Удаляем старое сообщение и добавляем новое
+                messageDiv.remove();
+                messagesArea.appendChild(aiBox);
+                console.log('AI сообщение создано альтернативным методом');
             }
             
             // Прокрутка к последнему сообщению
