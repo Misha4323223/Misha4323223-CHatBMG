@@ -1707,17 +1707,30 @@
       
       <!-- Контейнер для командного чата -->
       <div class="tab-content" id="team-content" style="display: none;">
-        <div style="height: calc(100vh - 140px); padding: 20px;">
+        <div style="height: calc(100vh - 140px); padding: 20px; background: #f0f0f0;">
+          <div style="
+            background: red; 
+            color: white; 
+            padding: 10px; 
+            margin-bottom: 10px; 
+            text-align: center;
+            border-radius: 8px;
+          ">
+            🪃 КОМАНДНЫЙ ЧАТ ЗАГРУЖАЕТСЯ ЗДЕСЬ
+          </div>
           <iframe 
             src="/team-chat-embedded.html" 
             style="
               width: 100%; 
-              height: 100%; 
-              border: none; 
+              height: calc(100% - 60px); 
+              border: 3px solid #ffd700; 
               border-radius: 16px;
               box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+              background: white;
             "
             title="Командный чат BOOOMERANGS"
+            onload="console.log('✅ Iframe командного чата загружен успешно!')"
+            onerror="console.log('❌ Ошибка загрузки iframe командного чата')"
           ></iframe>
         </div>
       </div>
