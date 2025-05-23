@@ -211,31 +211,39 @@
       border-radius: 10px;
       padding: 16px;
       border: 1px solid #40405c;
-      overflow-y: auto;
       max-height: calc(100vh - 140px);
       flex-shrink: 0;
       transition: all 0.3s ease;
       position: relative;
       margin-left: 0;
+      display: flex;
+      flex-direction: column;
     }
     
-    /* Стильная прокрутка как в приложениях */
-    .sidebar::-webkit-scrollbar {
+    .chat-sessions-list {
+      flex: 1;
+      overflow-y: auto;
+      margin: -4px;
+      padding: 4px;
+    }
+    
+    /* Стильная прокрутка только для списка чатов */
+    .chat-sessions-list::-webkit-scrollbar {
       width: 6px;
     }
     
-    .sidebar::-webkit-scrollbar-track {
+    .chat-sessions-list::-webkit-scrollbar-track {
       background: rgba(255, 255, 255, 0.1);
       border-radius: 10px;
     }
     
-    .sidebar::-webkit-scrollbar-thumb {
+    .chat-sessions-list::-webkit-scrollbar-thumb {
       background: rgba(108, 99, 255, 0.6);
       border-radius: 10px;
       transition: background 0.2s ease;
     }
     
-    .sidebar::-webkit-scrollbar-thumb:hover {
+    .chat-sessions-list::-webkit-scrollbar-thumb:hover {
       background: rgba(108, 99, 255, 0.9);
     }
     
@@ -1091,8 +1099,10 @@
           <h3 class="sidebar-title">История чатов</h3>
           <button class="new-chat-btn" onclick="createNewChat()">+ Новый</button>
         </div>
-        <div class="chat-sessions" id="chat-sessions">
-          <!-- Сессии будут загружены динамически -->
+        <div class="chat-sessions-list">
+          <div class="chat-sessions" id="chat-sessions">
+            <!-- Сессии будут загружены динамически -->
+          </div>
         </div>
       </div>
       
