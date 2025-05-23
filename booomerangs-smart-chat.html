@@ -466,40 +466,67 @@
     }
     
     .nav-button {
-      padding: 5px 12px;
-      background: #374151;
-      border: 1px solid #40405c;
-      border-radius: 6px;
-      color: #d1d5db;
+      padding: 8px 16px;
+      background: linear-gradient(135deg, 
+        rgba(75, 75, 75, 0.8) 0%,
+        rgba(95, 95, 95, 0.8) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 10px;
+      color: var(--text);
       font-weight: 500;
       font-size: 0.9rem;
       cursor: pointer;
-      transition: all 0.3s;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       text-decoration: none;
+      backdrop-filter: blur(5px);
+      box-shadow: 
+        0 4px 12px rgba(0, 0, 0, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
     }
     
     .nav-button:hover {
-      background: #4b5563;
+      background: linear-gradient(135deg, 
+        rgba(95, 95, 95, 0.9) 0%,
+        rgba(115, 115, 115, 0.9) 100%);
       color: white;
-      border-color: #6b7280;
+      border-color: rgba(255, 255, 255, 0.3);
+      transform: translateY(-1px);
+      box-shadow: 
+        0 8px 20px rgba(0, 0, 0, 0.2),
+        0 0 0 1px rgba(255, 255, 255, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
     }
     
     .nav-button.active {
-      background: #2563eb;
+      background: linear-gradient(135deg, 
+        rgba(108, 108, 108, 0.9) 0%,
+        rgba(138, 138, 138, 0.9) 100%);
       color: white;
-      border-color: #2563eb;
+      border-color: rgba(255, 255, 255, 0.4);
+      box-shadow: 
+        0 8px 25px rgba(0, 0, 0, 0.3),
+        0 0 0 2px rgba(255, 255, 255, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
     }
     
     .logout-btn {
-      background: #dc2626 !important;
-      border-color: #dc2626 !important;
+      background: linear-gradient(135deg, 
+        rgba(180, 50, 50, 0.8) 0%,
+        rgba(200, 70, 70, 0.8) 100%) !important;
+      border-color: rgba(255, 255, 255, 0.2) !important;
       color: white !important;
     }
     
     .logout-btn:hover {
-      background: #b91c1c !important;
-      border-color: #b91c1c !important;
-      transform: translateY(-1px);
+      background: linear-gradient(135deg, 
+        rgba(200, 60, 60, 0.9) 0%,
+        rgba(220, 80, 80, 0.9) 100%) !important;
+      border-color: rgba(255, 255, 255, 0.4) !important;
+      transform: translateY(-2px);
+      box-shadow: 
+        0 8px 20px rgba(180, 50, 50, 0.4),
+        0 0 0 2px rgba(255, 255, 255, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
     }
     
     .chat-container {
