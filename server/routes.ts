@@ -427,7 +427,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ success: false, error: 'Недействительный токен' });
       }
 
-      const userId = parseInt(token.split('_')[1]);
+      // Правильно парсим ID из токена формата token_ID_timestamp
+      const tokenParts = token.split('_');
+      const userId = parseInt(tokenParts[1]);
       const sessions = await chatHistory.getUserChatSessions(userId);
       res.json({ success: true, sessions });
     } catch (error) {

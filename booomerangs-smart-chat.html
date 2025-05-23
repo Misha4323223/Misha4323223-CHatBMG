@@ -956,10 +956,12 @@
             
             // Устанавливаем данные пользователя
             currentUser = username;
-            currentUserId = parseInt(token.split('_')[1]) || 1;
+            // Правильно парсим ID из токена формата token_ID_timestamp
+            const tokenParts = token.split('_');
+            currentUserId = parseInt(tokenParts[1]) || 1;
             authToken = token;
             
-            console.log(`🔐 Пользователь ${username} (ID: ${currentUserId}) авторизован`);
+            console.log(`🔐 Пользователь ${username} (ID: ${currentUserId}) авторизован с токеном: ${token}`);
             
             return true;
         }
