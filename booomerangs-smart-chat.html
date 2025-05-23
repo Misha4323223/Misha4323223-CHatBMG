@@ -177,6 +177,15 @@
             display: flex;
             flex-direction: column;
             backdrop-filter: blur(15px);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .chat-sidebar.hidden {
+            width: 0;
+            min-width: 0;
+            overflow: hidden;
+            border-right: none;
         }
 
         .sidebar-header {
@@ -291,6 +300,38 @@
             flex: 1;
             display: flex;
             flex-direction: column;
+            position: relative;
+        }
+
+        .sidebar-toggle {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 100;
+            width: 44px;
+            height: 44px;
+            background: var(--gradient);
+            border: 1px solid var(--gold);
+            border-radius: 12px;
+            color: var(--text);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .sidebar-toggle:hover {
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 8px 20px rgba(255, 215, 0, 0.4);
+            background: linear-gradient(135deg, var(--gold), var(--gold-light));
+        }
+
+        .sidebar-toggle:active {
+            transform: translateY(0) scale(0.95);
         }
 
         .messages-area {
@@ -598,13 +639,21 @@
                 border-radius: 12px;
             }
             
-            .sessions-sidebar {
+            .chat-sidebar {
                 width: 280px; /* Уменьшаем для мобильных */
             }
             
             .session-item {
                 padding: 12px;
                 font-size: 0.9rem;
+            }
+            
+            .sidebar-toggle {
+                top: 15px;
+                left: 15px;
+                width: 40px;
+                height: 40px;
+                font-size: 1rem;
             }
             
             /* Улучшения для генератора изображений */
@@ -774,6 +823,11 @@
                     
                     <!-- Основная область чата -->
                     <div class="chat-main">
+                        <!-- Кнопка переключения панели -->
+                        <button class="sidebar-toggle" onclick="toggleSidebar()" title="Скрыть/Показать панель истории">
+                            <span id="toggleIcon">📋</span>
+                        </button>
+                        
                         <div class="messages-area" id="messages">
                             <div style="text-align: center; color: #888; padding: 50px 20px;">
                                 <h2 style="color: var(--gold); margin-bottom: 15px;">🪃 Добро пожаловать в BOOOMERANGS Smart Chat!</h2>
