@@ -223,6 +223,7 @@
 
     let currentUser = 'mikhail';
     let lastMessageId = 0;
+    let isSendingMessage = false;
 
     // Элементы
     const messageInput = document.getElementById('messageInput');
@@ -239,8 +240,9 @@
     // Отправка сообщения
     function sendMessage() {
       const content = messageInput.value.trim();
-      if (!content) return;
+      if (!content || isSendingMessage) return;
 
+      isSendingMessage = true;
       sendButton.disabled = true;
       sendButton.textContent = 'Отправка...';
 
@@ -274,6 +276,7 @@
       .finally(() => {
         sendButton.disabled = false;
         sendButton.textContent = '🪃 Отправить';
+        isSendingMessage = false;
       });
     }
 
