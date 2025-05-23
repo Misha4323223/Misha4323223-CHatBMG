@@ -52,14 +52,13 @@ app.use((req, res, next) => {
   next();
 });
 
-// КРИТИЧЕСКИЙ МАРШРУТ: чат должен выполняться ДО Vite middleware
-app.get('/smart-chat', (req, res) => {
-  console.log('🎯 ПРЯМОЙ МАРШРУТ: /smart-chat перехвачен в index.ts');
-  // Отправляем React index.html вместо статического файла
-  res.sendFile('client/index.html', { root: '.' });
-});
-
 (async () => {
+  // КРИТИЧЕСКИ ВАЖНО: маршруты чата ДО setupVite
+  app.get('/smart-chat', (req, res) => {
+    console.log('🎯 КРИТИЧЕСКИЙ МАРШРУТ: /smart-chat обработан ДО Vite');
+    res.sendFile('client/index.html', { root: '.' });
+  });
+  
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
