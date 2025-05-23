@@ -287,7 +287,7 @@
   <script>
     console.log('🪃 Командный чат BOOOMERANGS загружен - Anna');
 
-    let currentUser = 'anna';
+    let currentUser = null;
     let lastMessageId = 0;
     let isSendingMessage = false;
 
@@ -405,12 +405,36 @@
       }
     });
 
-    // Первоначальная загрузка и периодическое обновление
-    loadMessages();
-    setInterval(loadMessages, 3000);
+    // Проверка аутентификации
+    function checkAuthentication() {
+      const token = localStorage.getItem('authToken');
+      const username = localStorage.getItem('username');
+      
+      if (!token || !username) {
+        // Перенаправляем на страницу входа с параметром возврата
+        window.location.href = '/login.html?redirect=' + encodeURIComponent(window.location.pathname);
+        return false;
+      }
+      
+      // Устанавливаем данные пользователя
+      currentUser = username;
+      
+      // Обновляем отображаемое имя в заголовке
+      const displayName = localStorage.getItem('displayName') || username;
+      document.querySelector('.user-info span').textContent = `${displayName} подключена`;
+      
+      return true;
+    }
 
-    // Фокус на поле ввода
-    messageInput.focus();
+    // Проверяем аутентификацию перед загрузкой
+    if (checkAuthentication()) {
+      // Первоначальная загрузка и периодическое обновление
+      loadMessages();
+      setInterval(loadMessages, 3000);
+
+      // Фокус на поле ввода
+      messageInput.focus();
+    }
   </script>
 </body>
 </html>
