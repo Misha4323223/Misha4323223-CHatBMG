@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BOOOMERANGS Team Chat - Командный чат</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        background: linear-gradient(135deg, 
+          rgba(243, 244, 246, 0.95) 0%,
+          rgba(229, 231, 235, 0.95) 50%,
+          rgba(209, 213, 219, 0.95) 100%);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        backdrop-filter: blur(10px);
+      }
+
+      /* Стильный заголовок */
+      .header {
+        background: linear-gradient(135deg, 
+          rgba(75, 85, 99, 0.95) 0%,
+          rgba(107, 114, 128, 0.95) 50%,
+          rgba(75, 85, 99, 0.95) 100%);
+        color: white;
+        padding: 16px 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        backdrop-filter: blur(15px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      }
+
+      .header h1 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, #ffd700, #ffed4e);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      }
+
+      .user-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 0.9rem;
+        opacity: 0.9;
+      }
+
+      .user-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #ffd700, #ffb300);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        color: #8b4513;
+        font-size: 0.8rem;
+      }
+
+      /* Контейнер чата */
+      .chat-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        max-width: 1200px;
+        margin: 0 auto;
+        width: 100%;
+        padding: 0 20px;
+      }
+
+      /* Область сообщений */
+      .messages-container {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px 0;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        max-height: calc(100vh - 200px);
+      }
+
+      /* Стили сообщений */
+      .message {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 12px 16px;
+        border-radius: 12px;
+        backdrop-filter: blur(10px);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        max-width: 85%;
+      }
+
+      .message.own {
+        align-self: flex-end;
+        flex-direction: row-reverse;
+        background: linear-gradient(135deg, 
+          rgba(99, 102, 241, 0.1) 0%,
+          rgba(139, 92, 246, 0.1) 100%);
+        border: 1px solid rgba(99, 102, 241, 0.2);
+      }
+
+      .message.other {
+        align-self: flex-start;
+        background: linear-gradient(135deg, 
+          rgba(255, 255, 255, 0.8) 0%,
+          rgba(243, 244, 246, 0.8) 100%);
+        border: 1px solid rgba(209, 213, 219, 0.3);
+      }
+
+      .message-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #ffd700, #ffb300);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        color: #8b4513;
+        font-size: 0.9rem;
+        flex-shrink: 0;
+      }
+
+      .message-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .message-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.8rem;
+        opacity: 0.7;
+      }
+
+      .message-username {
+        font-weight: 600;
+        color: #4f46e5;
+      }
+
+      .message-time {
+        color: #6b7280;
+      }
+
+      .message-text {
+        color: #374151;
+        line-height: 1.5;
+        font-size: 0.95rem;
+      }
+
+      /* Поле ввода */
+      .input-container {
+        padding: 20px 0;
+        background: linear-gradient(135deg, 
+          rgba(255, 255, 255, 0.9) 0%,
+          rgba(249, 250, 251, 0.9) 100%);
+        backdrop-filter: blur(15px);
+        border-top: 1px solid rgba(209, 213, 219, 0.3);
+      }
+
+      .input-form {
+        display: flex;
+        gap: 12px;
+        align-items: flex-end;
+      }
+
+      .message-input {
+        flex: 1;
+        padding: 12px 16px;
+        border: 2px solid rgba(209, 213, 219, 0.5);
+        border-radius: 12px;
+        font-size: 1rem;
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(10px);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        resize: none;
+        min-height: 48px;
+        max-height: 120px;
+        font-family: inherit;
+        line-height: 1.4;
+      }
+
+      .message-input:focus {
+        outline: none;
+        border-color: rgba(99, 102, 241, 0.5);
+        background: rgba(255, 255, 255, 0.95);
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+      }
+
+      .send-button {
+        padding: 12px 20px;
+        background: linear-gradient(135deg, 
+          #ffd700 0%,
+          #ffed4e 25%,
+          #ffc107 50%,
+          #ffb300 75%,
+          #ff8f00 100%);
+        color: #8b4513;
+        border: none;
+        border-radius: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        font-size: 1rem;
+        box-shadow: 
+          0 4px 12px rgba(255, 215, 0, 0.3),
+          0 0 20px rgba(255, 215, 0, 0.1);
+        backdrop-filter: blur(10px);
+      }
+
+      .send-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 
+          0 8px 25px rgba(255, 215, 0, 0.4),
+          0 0 30px rgba(255, 215, 0, 0.2);
+        filter: brightness(1.1);
+      }
+
+      .send-button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      /* Индикатор печати */
+      .typing-indicator {
+        display: none;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        margin: 8px 0;
+        background: rgba(107, 114, 128, 0.1);
+        border-radius: 8px;
+        font-size: 0.85rem;
+        color: #6b7280;
+        font-style: italic;
+      }
+
+      .typing-dots {
+        display: flex;
+        gap: 2px;
+      }
+
+      .typing-dot {
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background: #6b7280;
+        animation: typing 1.5s infinite;
+      }
+
+      .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+      .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+      @keyframes typing {
+        0%, 60%, 100% { opacity: 0.3; }
+        30% { opacity: 1; }
+      }
+
+      /* Навигация */
+      .nav-buttons {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+      }
+
+      .nav-button {
+        padding: 8px 16px;
+        background: linear-gradient(135deg, 
+          rgba(107, 114, 128, 0.8) 0%,
+          rgba(75, 85, 99, 0.8) 100%);
+        color: white;
+        text-decoration: none;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .nav-button:hover {
+        background: linear-gradient(135deg, 
+          rgba(129, 140, 248, 0.9) 0%,
+          rgba(99, 102, 241, 0.9) 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+      }
+
+      /* Адаптивность */
+      @media (max-width: 768px) {
+        .header {
+          padding: 12px 16px;
+        }
+        
+        .header h1 {
+          font-size: 1.3rem;
+        }
+        
+        .chat-container {
+          padding: 0 12px;
+        }
+        
+        .message {
+          max-width: 95%;
+          padding: 10px 12px;
+        }
+        
+        .nav-buttons {
+          flex-direction: column;
+          gap: 8px;
+        }
+        
+        .nav-button {
+          padding: 6px 12px;
+          font-size: 0.8rem;
+        }
+      }
+
+      /* Эффект загрузки */
+      .loading {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+        color: #6b7280;
+        font-style: italic;
+      }
+
+      /* Статус подключения */
+      .connection-status {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.8rem;
+        opacity: 0.8;
+      }
+
+      .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #10b981;
+        animation: pulse 2s infinite;
+      }
+
+      .status-dot.disconnected {
+        background: #ef4444;
+      }
+
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+      }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🪃 BOOOMERANGS Team Chat</h1>
+        <div class="nav-buttons">
+            <a href="/booomerangs-smart-chat.html" class="nav-button">🤖 AI Chat</a>
+            <a href="/login.html" class="nav-button">👤 Профиль</a>
+            <div class="user-info">
+                <div class="connection-status">
+                    <div class="status-dot" id="statusDot"></div>
+                    <span id="statusText">Подключено</span>
+                </div>
+                <div class="user-avatar" id="userAvatar">M</div>
+                <span id="currentUser">Михаил</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="chat-container">
+        <div class="messages-container" id="messagesContainer">
+            <div class="loading" id="loadingIndicator">
+                Загрузка истории чата...
+            </div>
+        </div>
+
+        <div class="typing-indicator" id="typingIndicator">
+            <span id="typingUser">Пользователь</span> печатает
+            <div class="typing-dots">
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+            </div>
+        </div>
+
+        <div class="input-container">
+            <form class="input-form" id="messageForm">
+                <textarea 
+                    id="messageInput" 
+                    class="message-input" 
+                    placeholder="Напишите сообщение команде BOOOMERANGS..."
+                    rows="1"
+                ></textarea>
+                <button type="submit" class="send-button" id="sendButton">
+                    🪃 Отправить
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Глобальные переменные
+        let currentUser = 'Михаил';
+        let userId = 1;
+        let isConnected = true;
+        let typingTimeout;
+        let lastMessageId = 0;
+
+        // DOM элементы
+        const messagesContainer = document.getElementById('messagesContainer');
+        const messageInput = document.getElementById('messageInput');
+        const messageForm = document.getElementById('messageForm');
+        const sendButton = document.getElementById('sendButton');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const typingIndicator = document.getElementById('typingIndicator');
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+        const userAvatar = document.getElementById('userAvatar');
+        const currentUserSpan = document.getElementById('currentUser');
+
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadUserInfo();
+            await loadChatHistory();
+            setupEventListeners();
+            startPolling();
+        });
+
+        // Загрузка информации о пользователе
+        async function loadUserInfo() {
+            try {
+                const response = await fetch('/api/auth/user');
+                if (response.ok) {
+                    const userData = await response.json();
+                    currentUser = userData.username || 'Пользователь';
+                    userId = userData.id || 1;
+                    
+                    // Обновляем UI
+                    currentUserSpan.textContent = currentUser;
+                    userAvatar.textContent = currentUser.charAt(0).toUpperCase();
+                }
+            } catch (error) {
+                console.log('Используем данные по умолчанию');
+            }
+        }
+
+        // Загрузка истории чата
+        async function loadChatHistory() {
+            try {
+                const response = await fetch('/api/team-chat/messages');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.messages) {
+                        displayMessages(data.messages);
+                        if (data.messages.length > 0) {
+                            lastMessageId = Math.max(...data.messages.map(m => m.id));
+                        }
+                    }
+                } else {
+                    showEmptyState();
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки истории:', error);
+                showEmptyState();
+            } finally {
+                loadingIndicator.style.display = 'none';
+            }
+        }
+
+        // Отображение сообщений
+        function displayMessages(messages) {
+            messagesContainer.innerHTML = '';
+            messages.forEach(message => {
+                addMessageToUI(message);
+            });
+            scrollToBottom();
+        }
+
+        // Добавление сообщения в UI
+        function addMessageToUI(message) {
+            const messageDiv = document.createElement('div');
+            const isOwn = message.username === currentUser || message.userId === userId;
+            
+            messageDiv.className = `message ${isOwn ? 'own' : 'other'}`;
+            
+            messageDiv.innerHTML = `
+                <div class="message-avatar">
+                    ${(message.username || 'U').charAt(0).toUpperCase()}
+                </div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="message-username">${message.username || 'Пользователь'}</span>
+                        <span class="message-time">${formatTime(message.timestamp || message.createdAt)}</span>
+                    </div>
+                    <div class="message-text">${escapeHtml(message.content || message.text)}</div>
+                </div>
+            `;
+            
+            messagesContainer.appendChild(messageDiv);
+        }
+
+        // Отправка сообщения
+        async function sendMessage(content) {
+            if (!content.trim()) return;
+
+            try {
+                const response = await fetch('/api/team-chat/messages', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        content: content.trim(),
+                        username: currentUser,
+                        userId: userId
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        // Сообщение будет добавлено через polling
+                        messageInput.value = '';
+                        adjustTextareaHeight();
+                    }
+                } else {
+                    throw new Error('Ошибка отправки сообщения');
+                }
+            } catch (error) {
+                console.error('Ошибка отправки:', error);
+                showError('Не удалось отправить сообщение');
+            }
+        }
+
+        // Polling для получения новых сообщений
+        function startPolling() {
+            setInterval(async () => {
+                try {
+                    const response = await fetch(`/api/team-chat/messages?after=${lastMessageId}`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.success && data.messages && data.messages.length > 0) {
+                            data.messages.forEach(message => {
+                                addMessageToUI(message);
+                                lastMessageId = Math.max(lastMessageId, message.id);
+                            });
+                            scrollToBottom();
+                        }
+                        updateConnectionStatus(true);
+                    }
+                } catch (error) {
+                    console.error('Ошибка polling:', error);
+                    updateConnectionStatus(false);
+                }
+            }, 2000); // Проверяем каждые 2 секунды
+        }
+
+        // Настройка обработчиков событий
+        function setupEventListeners() {
+            // Отправка формы
+            messageForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const content = messageInput.value.trim();
+                if (content) {
+                    sendButton.disabled = true;
+                    await sendMessage(content);
+                    sendButton.disabled = false;
+                }
+            });
+
+            // Автоизменение размера textarea
+            messageInput.addEventListener('input', () => {
+                adjustTextareaHeight();
+            });
+
+            // Отправка по Ctrl+Enter
+            messageInput.addEventListener('keydown', (e) => {
+                if (e.ctrlKey && e.key === 'Enter') {
+                    e.preventDefault();
+                    messageForm.dispatchEvent(new Event('submit'));
+                }
+            });
+        }
+
+        // Автоизменение высоты textarea
+        function adjustTextareaHeight() {
+            messageInput.style.height = 'auto';
+            messageInput.style.height = Math.min(messageInput.scrollHeight, 120) + 'px';
+        }
+
+        // Прокрутка к последнему сообщению
+        function scrollToBottom() {
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Форматирование времени
+        function formatTime(timestamp) {
+            const date = new Date(timestamp);
+            return date.toLocaleTimeString('ru-RU', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+        }
+
+        // Экранирование HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Показать пустое состояние
+        function showEmptyState() {
+            messagesContainer.innerHTML = `
+                <div style="text-align: center; padding: 40px; color: #6b7280; font-style: italic;">
+                    <div style="font-size: 3rem; margin-bottom: 16px;">🪃</div>
+                    <div>Добро пожаловать в командный чат BOOOMERANGS!</div>
+                    <div style="font-size: 0.9rem; margin-top: 8px;">Начните общение с командой</div>
+                </div>
+            `;
+        }
+
+        // Показать ошибку
+        function showError(message) {
+            const errorDiv = document.createElement('div');
+            errorDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: linear-gradient(135deg, #ef4444, #dc2626);
+                color: white;
+                padding: 12px 20px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+                z-index: 1000;
+                font-size: 0.9rem;
+            `;
+            errorDiv.textContent = message;
+            document.body.appendChild(errorDiv);
+
+            setTimeout(() => {
+                if (errorDiv.parentNode) {
+                    errorDiv.parentNode.removeChild(errorDiv);
+                }
+            }, 3000);
+        }
+
+        // Обновление статуса подключения
+        function updateConnectionStatus(connected) {
+            isConnected = connected;
+            statusDot.className = `status-dot ${connected ? '' : 'disconnected'}`;
+            statusText.textContent = connected ? 'Подключено' : 'Нет связи';
+        }
+    </script>
+</body>
+</html>

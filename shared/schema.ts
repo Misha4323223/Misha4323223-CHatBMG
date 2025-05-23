@@ -59,6 +59,15 @@ export const aiMessages = pgTable("ai_messages", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Team Messages для командного чата BOOOMERANGS
+export const teamMessages = pgTable("team_messages", {
+  id: serial("id").primaryKey(),
+  content: text("content").notNull(),
+  username: text("username").notNull(),
+  userId: integer("user_id").default(1),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const insertChatSessionSchema = createInsertSchema(chatSessions).omit({
   id: true,
   createdAt: true,
@@ -66,6 +75,11 @@ export const insertChatSessionSchema = createInsertSchema(chatSessions).omit({
 });
 
 export const insertAiMessageSchema = createInsertSchema(aiMessages).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertTeamMessageSchema = createInsertSchema(teamMessages).omit({
   id: true,
   createdAt: true,
 });
@@ -108,6 +122,8 @@ export type InsertChatSession = z.infer<typeof insertChatSessionSchema>;
 export type ChatSession = typeof chatSessions.$inferSelect;
 export type InsertAiMessage = z.infer<typeof insertAiMessageSchema>;
 export type AiMessage = typeof aiMessages.$inferSelect;
+export type InsertTeamMessage = z.infer<typeof insertTeamMessageSchema>;
+export type TeamMessage = typeof teamMessages.$inferSelect;
 
 // Define schemas for API validation
 export const authSchema = z.object({
