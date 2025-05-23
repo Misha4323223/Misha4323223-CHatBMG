@@ -707,9 +707,6 @@
 
         // Удаление сессии
         async function deleteSession(sessionId) {
-            if (!confirm('Вы уверены, что хотите удалить этот чат? Это действие необратимо.')) {
-                return;
-            }
 
             try {
                 const response = await fetch(`/api/chat/sessions/${sessionId}`, {
