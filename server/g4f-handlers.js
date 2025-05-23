@@ -87,88 +87,76 @@ router.post('/chat', async (req, res) => {
     
     console.log(`Запрос к G4F: провайдер=${provider || 'auto'}, сообщение="${userMessageText.substring(0, 50)}..."`);
     
-    // Пробуем специальные бесплатные провайдеры БЕЗ API ключей
+    // Используем Python G4F напрямую - самый надежный вариант
     try {
-      console.log('🚀 Пробуем специальные бесплатные провайдеры...');
+      console.log('🐍 Используем Python G4F напрямую...');
       
-      // 1. Сначала пробуем Simple ChatFree провайдер (самый надежный)
-      try {
-        console.log('📞 Вызываем Simple ChatFree...');
-        const simpleChatFreeModule = require('./simple-chatfree');
-        const simpleChatResponse = await simpleChatFreeModule.getChatFreeResponse(message);
-        if (simpleChatResponse && simpleChatResponse.success && simpleChatResponse.response) {
-          console.log('✅ Simple ChatFree ответил успешно!');
-          return res.json({
-            response: simpleChatResponse.response,
-            provider: 'Simple-ChatFree',
-            model: simpleChatResponse.model || 'chatfree',
-            cached: false
-          });
-        }
-        console.log('⚠️ Simple ChatFree не вернул успешный ответ');
-      } catch (simpleChatError) {
-        console.log(`⚠️ Simple ChatFree ошибка: ${simpleChatError.message}`);
-      }
+      const pythonResponse = await fetch('http://localhost:5004/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: message,
+          provider: 'auto'
+        }),
+        timeout: 30000
+      });
 
-      // 2. Пробуем ChatFree Improved провайдер
-      try {
-        console.log('📞 Вызываем ChatFree Improved...');
-        const chatFreeImprovedModule = require('./chatfree-improved');
-        const improvedResponse = await chatFreeImprovedModule.getChatFreeResponse(message);
-        if (improvedResponse && improvedResponse.success && improvedResponse.response) {
-          console.log('✅ ChatFree Improved ответил успешно!');
-          return res.json({
-            response: improvedResponse.response,
-            provider: 'ChatFree-Improved',
-            model: improvedResponse.model || 'improved',
-            cached: false
-          });
-        }
-        console.log('⚠️ ChatFree Improved не вернул успешный ответ');
-      } catch (improvedError) {
-        console.log(`⚠️ ChatFree Improved ошибка: ${improvedError.message}`);
-      }
-
-      // 3. Пробуем FreeChat Enhanced провайдер
-      try {
-        console.log('📞 Вызываем FreeChat Enhanced...');
-        const freeChatModule = require('./freechat-enhanced');
-        const freeChatResponse = await freeChatModule.getChatFreeEnhancedResponse(message);
-        console.log('FreeChat Enhanced результат:', freeChatResponse);
+      if (pythonResponse.ok) {
+        const pythonData = await pythonResponse.json();
+        console.log('✅ Python G4F ответил успешно!');
+        console.log('Данные от Python G4F:', pythonData);
         
-        if (freeChatResponse && freeChatResponse.success && freeChatResponse.response) {
-          console.log('✅ FreeChat Enhanced ответил успешно!');
-          console.log('Отправляем ответ в браузер:', freeChatResponse.response.substring(0, 100));
-          
+        if (pythonData && pythonData.response) {
           return res.json({
-            response: freeChatResponse.response,
-            provider: 'FreeChat-Enhanced',
-            model: freeChatResponse.model || 'Qwen_Qwen_2_5_Max',
+            response: pythonData.response,
+            provider: pythonData.provider || 'Python-G4F',
+            model: pythonData.model || 'auto',
             cached: false
           });
         }
-        console.log('⚠️ FreeChat Enhanced не вернул успешный ответ, данные:', freeChatResponse);
-      } catch (freeChatError) {
-        console.log(`⚠️ FreeChat Enhanced ошибка: ${freeChatError.message}`);
       }
+      console.log('⚠️ Python G4F не ответил');
+    } catch (pythonError) {
+      console.log(`⚠️ Python G4F ошибка: ${pythonError.message}`);
+    }
       
-      // 2. Пробуем DeepSpeek провайдер
-      try {
-        console.log('📞 Вызываем DeepSpeek...');
-        const deepSpeekModule = require('./deepspeek-fixed');
-        const deepSpeekResponse = await deepSpeekModule.getDeepSpeekResponse(message);
-        if (deepSpeekResponse && deepSpeekResponse.success && deepSpeekResponse.response) {
-          console.log('✅ DeepSpeek ответил успешно!');
-          return res.json({
-            response: deepSpeekResponse.response,
-            provider: 'DeepSpeek',
-            model: deepSpeekResponse.model || 'deepspeek',
-            cached: false
+      // Пробуем другие Python G4F провайдеры
+      const providers = ['Qwen', 'DeepSpeek', 'Phind', 'You', 'GeminiPro'];
+      
+      for (const prov of providers) {
+        try {
+          console.log(`📞 Пробуем Python G4F провайдер: ${prov}...`);
+          
+          const provResponse = await fetch(`http://localhost:5004/python/chat?provider=${prov}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              message: message
+            }),
+            timeout: 15000
           });
+
+          if (provResponse.ok) {
+            const provData = await provResponse.json();
+            console.log(`✅ ${prov} ответил успешно!`);
+            
+            if (provData && provData.response) {
+              return res.json({
+                response: provData.response,
+                provider: prov,
+                model: provData.provider || prov,
+                cached: false
+              });
+            }
+          }
+          console.log(`⚠️ ${prov} не ответил`);
+        } catch (error) {
+          console.log(`⚠️ ${prov} ошибка: ${error.message}`);
         }
-        console.log('⚠️ DeepSpeek не вернул успешный ответ');
-      } catch (deepSpeekError) {
-        console.log(`⚠️ DeepSpeek ошибка: ${deepSpeekError.message}`);
       }
       
       // 3. Если специальные провайдеры не работают, пробуем Python G4F
