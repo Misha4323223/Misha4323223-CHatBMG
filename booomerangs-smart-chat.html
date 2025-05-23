@@ -219,6 +219,26 @@
       margin-left: 0;
     }
     
+    /* Стильная прокрутка как в приложениях */
+    .sidebar::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    .sidebar::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+    }
+    
+    .sidebar::-webkit-scrollbar-thumb {
+      background: rgba(108, 99, 255, 0.6);
+      border-radius: 10px;
+      transition: background 0.2s ease;
+    }
+    
+    .sidebar::-webkit-scrollbar-thumb:hover {
+      background: rgba(108, 99, 255, 0.9);
+    }
+    
     .sidebar.hidden {
       margin-left: -296px;
       opacity: 0;
@@ -455,6 +475,26 @@
       background-color: #252538;
       border-radius: 8px;
       color: #e6e6e6;
+    }
+    
+    /* Стильная прокрутка для области сообщений */
+    .chat-messages::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    .chat-messages::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+    }
+    
+    .chat-messages::-webkit-scrollbar-thumb {
+      background: rgba(108, 99, 255, 0.6);
+      border-radius: 10px;
+      transition: background 0.2s ease;
+    }
+    
+    .chat-messages::-webkit-scrollbar-thumb:hover {
+      background: rgba(108, 99, 255, 0.9);
     }
     
     /* Адаптивные отступы для области сообщений (минимальные) */
