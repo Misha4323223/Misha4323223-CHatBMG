@@ -297,7 +297,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Получение всех сессий пользователя
+  // Получение всех сессий пользователя (без параметра - для текущего пользователя)
+  app.get('/api/chat/sessions', async (req, res) => {
+    try {
+      const userId = 1; // Временно используем фиксированный ID пользователя
+      const sessions = await chatHistory.getUserChatSessions(userId);
+      res.json({ success: true, sessions });
+    } catch (error) {
+      console.error('Ошибка получения сессий:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Не удалось получить сессии' 
+      });
+    }
+  });
+
+  // Получение всех сессий конкретного пользователя
   app.get('/api/chat/sessions/:userId', async (req, res) => {
     try {
       const userId = parseInt(req.params.userId);
