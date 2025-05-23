@@ -224,6 +224,95 @@
             backdrop-filter: blur(10px);
         }
 
+        /* Адаптивность для планшетов */
+        @media (max-width: 1024px) {
+            .chat-main {
+                max-width: 100%;
+                padding: 0 15px;
+            }
+            
+            .messages-area {
+                max-width: 100%;
+                margin: 0;
+                padding: 15px;
+            }
+            
+            .input-area {
+                max-width: 100%;
+                margin: 0;
+                padding: 15px;
+            }
+        }
+
+        /* Адаптивность для мобильных устройств */
+        @media (max-width: 768px) {
+            .chat-container {
+                height: calc(100vh - 80px);
+                flex-direction: column;
+            }
+            
+            .chat-sidebar {
+                width: 100%;
+                height: auto;
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+            }
+            
+            .chat-sidebar.hidden {
+                height: 0;
+                margin-top: -100%;
+                overflow: hidden;
+            }
+            
+            .chat-main {
+                padding: 0 10px;
+            }
+            
+            .messages-area {
+                padding: 10px;
+                border-radius: 8px;
+            }
+            
+            .input-area {
+                padding: 10px;
+                border-radius: 8px 8px 0 0;
+            }
+            
+            .sidebar-toggle {
+                position: fixed;
+                top: 80px;
+                right: 15px;
+                z-index: 1000;
+            }
+        }
+
+        /* Адаптивность для маленьких мобильных */
+        @media (max-width: 480px) {
+            .chat-container {
+                height: calc(100vh - 60px);
+            }
+            
+            .message-input {
+                font-size: 14px;
+                padding: 10px 15px;
+                height: 48px;
+            }
+            
+            .send-button {
+                height: 48px;
+                width: 48px;
+                font-size: 16px;
+            }
+            
+            .messages-area {
+                padding: 8px;
+            }
+            
+            .input-area {
+                padding: 8px;
+            }
+        }
+
         .chat-sidebar {
             width: 300px;
             background: var(--card-bg);
