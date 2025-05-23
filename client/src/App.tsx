@@ -52,7 +52,7 @@ function Router() {
           <Route path="/ai-chat" component={AIChat} />
           <Route path="/provider" component={AIProviderChat} />
           <Route path="/image-generator" component={ImageGeneratorSimple} />
-          <Route path="/smart-chat" component={SmartChatPage} />
+          <Route path="/smart-chat" component={AIProviderChat} />
           <Route component={NotFound} />
         </Switch>
       </main>
