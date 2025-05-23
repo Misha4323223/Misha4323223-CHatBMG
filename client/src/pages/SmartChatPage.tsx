@@ -35,7 +35,7 @@ const SmartChatPage: React.FC = () => {
         
         {/* Chat container with full responsive layout */}
         <div className="w-full">
-          <SmartChat />
+          <SmartChat key={Date.now()} />
         </div>
       </div>
     </div>
