@@ -770,6 +770,19 @@
             border-color: #dc2626;
         }
 
+        .nav-tab.logout-btn {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            border-color: #f59e0b;
+            font-weight: 600;
+        }
+
+        .nav-tab.logout-btn:hover {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+        }
+
         /* Стили для вкладок контента */
         .tab-content {
             display: none;
@@ -998,6 +1011,9 @@
                 </button>
                 <button class="nav-tab" onclick="switchTab('team')" data-tab="team">
                     <span>👥</span> Команда
+                </button>
+                <button class="nav-tab logout-btn" onclick="logout()" style="margin-top: 16px; border-top: 1px solid #2a2a2a; padding-top: 16px;">
+                    <span>🚪</span> Выход
                 </button>
             </div>
             
@@ -1558,6 +1574,21 @@
                 }
             } catch (error) {
                 console.error('Ошибка сохранения сообщения:', error);
+            }
+        }
+
+        // Функция выхода из системы
+        function logout() {
+            if (confirm('Вы уверены, что хотите выйти?')) {
+                localStorage.removeItem('currentUser');
+                currentUser = null;
+                currentSessionId = null;
+                
+                // Скрываем приложение и показываем экран входа
+                document.getElementById('appContainer').style.display = 'none';
+                document.getElementById('loginScreen').style.display = 'flex';
+                
+                console.log('👋 Пользователь вышел из системы');
             }
         }
 
