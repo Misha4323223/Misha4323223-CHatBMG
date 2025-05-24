@@ -100,53 +100,25 @@
         }
 
         .chat-item {
-            padding: 16px 20px;
-            margin: 10px 0;
-            background: rgba(26, 26, 26, 0.6);
-            border: 1px solid rgba(42, 42, 42, 0.5);
-            border-radius: 16px;
+            padding: 12px 16px;
+            margin: 8px 0;
+            background: transparent;
+            border: 1px solid #404040;
+            border-radius: 8px;
             color: #e5e7eb;
             cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            backdrop-filter: blur(10px);
-            overflow: hidden;
-        }
-
-        .chat-item::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 0;
-            height: 100%;
-            background: linear-gradient(90deg, rgba(220, 38, 38, 0.1), rgba(245, 158, 11, 0.1));
-            transition: width 0.3s ease;
-        }
-
-        .chat-item:hover::before {
-            width: 100%;
+            transition: all 0.2s ease;
         }
 
         .chat-item:hover {
-            background: rgba(34, 34, 34, 0.8);
-            border-color: rgba(220, 38, 38, 0.4);
-            transform: translateX(8px) scale(1.02);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            background: #333333;
+            border-color: #555555;
         }
 
         .chat-item.active {
-            background: linear-gradient(135deg, rgba(220, 38, 38, 0.9), rgba(185, 28, 28, 0.9));
+            background: #000000;
             color: white;
-            border-color: #dc2626;
-            box-shadow: 
-                0 0 20px rgba(220, 38, 38, 0.4),
-                inset 0 1px 0 rgba(255, 255, 255, 0.2);
-        }
-
-        .chat-item.active::before {
-            width: 100%;
-            background: linear-gradient(90deg, rgba(255, 255, 255, 0.1), rgba(245, 158, 11, 0.2));
+            border-color: #666666;
         }
 
         /* Кнопка переключения боковой панели */
