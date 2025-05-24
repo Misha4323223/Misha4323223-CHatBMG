@@ -313,7 +313,7 @@
         /* Область сообщений */
         .messages-area {
             flex: 1;
-            overflow-y: scroll;
+            overflow-y: auto;
             overflow-x: hidden;
             padding: 32px 32px 140px 32px;
             display: flex;
@@ -321,7 +321,7 @@
             max-width: 1000px;
             margin: 0 auto;
             width: 100%;
-            min-height: 0;
+            height: 100%;
             position: relative;
             z-index: 2;
             -webkit-overflow-scrolling: touch;
@@ -956,7 +956,7 @@
             .messages-area {
                 height: calc(100vh - 140px);
                 padding: 20px 16px 20px 16px;
-                overflow-y: scroll;
+                overflow-y: auto;
                 overflow-x: hidden;
                 -webkit-overflow-scrolling: touch;
                 touch-action: pan-y;
