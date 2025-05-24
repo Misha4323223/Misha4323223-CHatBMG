@@ -1086,19 +1086,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       console.log('📄 Получен PDF файл:', file.originalname);
+
+      // Читаем буфер файла
+      const dataBuffer = fs.readFileSync(file.path);
       
-      // Удаляем временный файл
-      if (file.path && fs.existsSync(file.path)) {
+      try {
+        // Динамически загружаем pdf-parse для извлечения текста
+        const pdfParse = require('pdf-parse');
+        const data = await pdfParse(dataBuffer);
+        
+        // Удаляем временный файл
         fs.unlinkSync(file.path);
+        
+        if (data.text && data.text.trim()) {
+          console.log('✅ Текст успешно извлечен, длина:', data.text.length);
+          
+          return res.json({
+            success: true,
+            text: data.text.trim(),
+            pages: data.numpages,
+            info: data.info
+          });
+        } else {
+          console.log('⚠️ PDF не содержит извлекаемого текста');
+          
+          return res.json({
+            success: false,
+            error: 'PDF не содержит извлекаемого текста или состоит из изображений'
+          });
+        }
+      } catch (pdfError) {
+        console.log('❌ Ошибка извлечения текста из PDF:', pdfError.message);
+        
+        // Удаляем временный файл
+        if (fs.existsSync(file.path)) {
+          fs.unlinkSync(file.path);
+        }
+        
+        return res.json({
+          success: false,
+          error: 'Не удалось извлечь текст из PDF. Возможно, файл поврежден или защищен паролем.'
+        });
       }
-      
-      // Временная заглушка - будем улучшать постепенно
-      return res.json({
-        success: true,
-        text: `📄 Документ "${file.originalname}" успешно загружен. Извлечение текста из PDF будет добавлено в следующем обновлении.`,
-        pages: 1,
-        info: { title: file.originalname }
-      });
       
     } catch (error) {
       console.error('❌ Ошибка обработки PDF:', error);
