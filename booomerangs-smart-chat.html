@@ -1817,15 +1817,11 @@
             
             // Принудительное обновление DOM для мгновенного отображения
             messageDiv.style.opacity = '1';
-            messageDiv.style.display = 'flex';
+            messageDiv.style.display = 'block';
             messageDiv.style.visibility = 'visible';
-            messageDiv.style.position = 'relative';
-            messageDiv.style.zIndex = '1';
-            
-            // Принудительно делаем все сообщения видимыми
-            messagesArea.style.display = 'flex';
-            messagesArea.style.flexDirection = 'column';
-            messagesArea.style.gap = '10px';
+            messageDiv.style.position = 'static';
+            messageDiv.style.width = '100%';
+            messageDiv.style.boxSizing = 'border-box';
             
             // Простая и надежная автопрокрутка
             setTimeout(() => {
@@ -1833,13 +1829,15 @@
                 messageDiv.style.transition = 'opacity 0.3s ease-in';
                 messageDiv.style.backgroundColor = '#f0f0f0'; // Временная подсветка
                 
-                // Принудительно показываем сообщение
-                messageDiv.style.height = 'auto';
-                messageDiv.style.minHeight = '40px';
-                messageDiv.style.padding = '10px';
-                messageDiv.style.margin = '5px 0';
-                messageDiv.style.border = '1px solid #ddd';
+                // Принудительно показываем сообщение без перекрытия
+                messageDiv.style.display = 'block';
+                messageDiv.style.width = '100%';
+                messageDiv.style.margin = '10px 0';
+                messageDiv.style.padding = '15px';
+                messageDiv.style.border = '2px solid #007bff';
                 messageDiv.style.borderRadius = '8px';
+                messageDiv.style.clear = 'both';
+                messageDiv.style.position = 'relative';
                 
                 const lastMessage = messagesArea.lastElementChild;
                 if (lastMessage) {
