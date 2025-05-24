@@ -1514,7 +1514,24 @@
                 console.log('Добавляем сообщение:', msg);
                 // Используем msg.text вместо msg.content (согласно структуре базы данных)
                 const messageText = msg.text || msg.content || 'Пустое сообщение';
-                addMessage(messageText, msg.sender);
+                
+                // Проверяем, есть ли изображение в сообщении
+                if (msg.imageUrl && msg.sender === 'ai') {
+                    // Если есть изображение, создаем специальное отображение
+                    const imageHtml = `
+                        <div class="generated-image-container" style="margin: 10px 0; border-radius: 8px; overflow: hidden; border: 1px solid #e5e5e5;">
+                            <img src="${msg.imageUrl}" alt="Сгенерированное изображение" style="width: 100%; max-width: 400px; height: auto; display: block;">
+                            <div style="background: #f9fafb; padding: 10px; color: #374151; font-size: 12px; border-top: 1px solid #e5e5e5;">
+                                <div style="font-weight: bold; color: #000000; margin-bottom: 5px;">🎨 Сгенерированное изображение</div>
+                                <div>${messageText}</div>
+                                ${msg.provider ? `<div><strong>Провайдер:</strong> ${msg.provider}</div>` : ''}
+                            </div>
+                        </div>
+                    `;
+                    addMessage(imageHtml, msg.sender);
+                } else {
+                    addMessage(messageText, msg.sender);
+                }
             });
             
             // Плавная прокрутка вниз после загрузки сообщений
@@ -2518,23 +2535,34 @@
         }
 
         // Добавление сгенерированного изображения в чат
-        function addGeneratedImageToChat(imageResult, originalPrompt) {
+        async function addGeneratedImageToChat(imageResult, originalPrompt) {
             if (imageResult.success) {
                 const imageHtml = `
-                    <div class="generated-image-container" style="margin: 10px 0; border-radius: 8px; overflow: hidden; border: 2px solid #dc2626;">
+                    <div class="generated-image-container" style="margin: 10px 0; border-radius: 8px; overflow: hidden; border: 1px solid #e5e5e5;">
                         <img src="${imageResult.imageUrl}" alt="Сгенерированное изображение" style="width: 100%; max-width: 400px; height: auto; display: block;">
-                        <div style="background: #1a1a1a; padding: 10px; color: #e5e7eb; font-size: 12px;">
-                            <div style="font-weight: bold; color: #dc2626; margin-bottom: 5px;">🎨 Сгенерированное изображение</div>
+                        <div style="background: #f9fafb; padding: 10px; color: #374151; font-size: 12px; border-top: 1px solid #e5e5e5;">
+                            <div style="font-weight: bold; color: #000000; margin-bottom: 5px;">🎨 Сгенерированное изображение</div>
                             <div><strong>Описание:</strong> ${originalPrompt}</div>
                             <div><strong>Провайдер:</strong> ${imageResult.provider}</div>
-                            ${imageResult.isPlaceholder ? '<div style="color: #f59e0b;">⚠️ Временная заглушка - улучшения скоро!</div>' : ''}
+                            ${imageResult.isPlaceholder ? '<div style="color: #6b7280;">⚠️ Временная заглушка - улучшения скоро!</div>' : ''}
                         </div>
                     </div>
                 `;
                 
                 addMessage(imageHtml, 'ai');
+                
+                // Сохраняем сообщение с изображением в базу данных
+                await saveMessageToHistory(
+                    `Сгенерированное изображение: ${originalPrompt}`, 
+                    'ai', 
+                    imageResult.provider || 'Image Generator', 
+                    'Image Generation', 
+                    imageResult.imageUrl
+                );
             } else {
-                addMessage(`❌ Не удалось сгенерировать изображение: ${imageResult.error}`, 'ai');
+                const errorMessage = `❌ Не удалось сгенерировать изображение: ${imageResult.error}`;
+                addMessage(errorMessage, 'ai');
+                await saveMessageToHistory(errorMessage, 'ai', 'Image Generator', 'Error');
             }
         }
 
