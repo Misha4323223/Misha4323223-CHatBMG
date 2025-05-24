@@ -306,10 +306,10 @@
         .send-button {
             width: 32px;
             height: 32px;
-            background: #000000;
-            border: none;
+            background: #f3f4f6;
+            border: 1px solid #d1d5db;
             border-radius: 8px;
-            color: white;
+            color: #374151;
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -320,17 +320,19 @@
         }
 
         .send-button:hover {
-            background: #333333;
+            background: #e5e7eb;
+            border-color: #9ca3af;
         }
 
         .send-button:active {
-            background: #555555;
+            background: #d1d5db;
         }
 
         .send-button:disabled {
-            background: #cccccc;
+            background: #f9fafb;
             cursor: not-allowed;
-            color: #666666;
+            color: #9ca3af;
+            border-color: #e5e7eb;
         }
 
         /* Сообщения */
