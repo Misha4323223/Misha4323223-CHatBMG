@@ -24,7 +24,6 @@ const require = createRequire(__filename);
 import * as freeImageGenerators from './free-image-generators.js';
 const imageAnalyzer = require('./image-analyzer.js');
 const { getFreeGPT4Response } = require('./gpt4-free-providers.js');
-const { chatgptScraper } = require('./chatgpt-web-scraper.js');
 // PDF обработка будет загружаться динамически
 
 // Настройка multer для загрузки файлов
@@ -42,12 +41,81 @@ const directAiRoutes = require('./direct-ai-routes');
 const deepspeekProvider = require('./deepspeek-fixed');
 const chatFreeProvider = require('./simple-chatfree');
 
+// Создаем экземпляр ChatGPT скрапера
+const { ChatGPTWebScraper, chatgptScraper } = require('./chatgpt-web-scraper.js');
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Create HTTP server
   const httpServer = createServer(app);
   
   // Setup WebSocket server
   setupWebSocket(httpServer, storage);
+  
+  // ============================================
+  // OFFICIAL CHATGPT API - Прямое подключение к настоящему GPT-4
+  // ============================================
+  
+  // Авторизация в официальном ChatGPT
+  app.post('/api/chatgpt/login', async (req, res) => {
+    try {
+      console.log('🔐 Авторизация в официальном ChatGPT...');
+      const email = process.env.CHATGPT_EMAIL;
+      const password = process.env.CHATGPT_PASSWORD;
+      
+      if (!email || !password) {
+        return res.json({
+          success: false,
+          error: 'Данные для авторизации не найдены'
+        });
+      }
+
+      const success = await chatgptScraper.login(email, password);
+      
+      res.json({
+        success,
+        message: success ? 'Успешная авторизация в ChatGPT!' : 'Ошибка авторизации'
+      });
+    } catch (error) {
+      console.error('❌ Ошибка авторизации:', error);
+      res.json({ success: false, error: error.message });
+    }
+  });
+
+  // Прямой чат с официальным ChatGPT
+  app.post('/api/chatgpt/chat', async (req, res) => {
+    try {
+      const { message } = req.body;
+      
+      if (!message) {
+        return res.json({ success: false, error: 'Сообщение не может быть пустым' });
+      }
+
+      // Авто-логин если не авторизован
+      if (!chatgptScraper.isAuthenticated()) {
+        const email = process.env.CHATGPT_EMAIL;
+        const password = process.env.CHATGPT_PASSWORD;
+        
+        if (email && password) {
+          console.log('🔐 Авто-логин в ChatGPT...');
+          await chatgptScraper.login(email, password);
+        }
+      }
+
+      console.log('💭 Отправка в официальный ChatGPT:', message.substring(0, 50) + '...');
+      
+      const result = await chatgptScraper.sendMessage(message);
+      
+      res.json({
+        success: result.success,
+        response: result.response || result.error,
+        provider: 'Official ChatGPT',
+        model: 'gpt-4'
+      });
+    } catch (error) {
+      console.error('❌ Ошибка ChatGPT чата:', error);
+      res.json({ success: false, error: error.message });
+    }
+  });
   
   // ПРИОРИТЕТНЫЙ маршрут для сгенерированных изображений - ПЕРВЫМ!
   app.get('/generated-images/:filename', (req, res) => {
