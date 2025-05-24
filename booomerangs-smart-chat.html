@@ -266,11 +266,15 @@
         /* Адаптивное позиционирование для мобильных */
         @media (max-width: 768px) {
             .sidebar-toggle {
-                top: 15px;
-                left: 15px;
-                width: 44px;
-                height: 44px;
-                font-size: 18px;
+                top: 15px !important;
+                left: 250px !important;
+                width: 44px !important;
+                height: 44px !important;
+                font-size: 18px !important;
+            }
+            
+            .sidebar.hidden + .main-area .sidebar-toggle {
+                left: 15px !important;
             }
         }
 
@@ -1226,17 +1230,30 @@
             const sidebar = document.getElementById('sidebar');
             const toggle = document.getElementById('sidebarToggle');
             const inputArea = document.querySelector('.input-area');
+            const isMobile = window.innerWidth <= 768;
             
             if (isSidebarVisible) {
                 sidebar.classList.add('hidden');
                 if (inputArea) inputArea.classList.add('sidebar-hidden');
                 toggle.innerHTML = '<span>☰</span>';
-                toggle.style.left = '20px';
+                
+                // Позиционирование для разных экранов
+                if (isMobile) {
+                    toggle.style.left = '15px';
+                } else {
+                    toggle.style.left = '20px';
+                }
             } else {
                 sidebar.classList.remove('hidden');
                 if (inputArea) inputArea.classList.remove('sidebar-hidden');
                 toggle.innerHTML = '<span>✕</span>';
-                toggle.style.left = '280px';
+                
+                // Позиционирование для разных экранов  
+                if (isMobile) {
+                    toggle.style.left = '250px';
+                } else {
+                    toggle.style.left = '280px';
+                }
             }
             
             isSidebarVisible = !isSidebarVisible;
