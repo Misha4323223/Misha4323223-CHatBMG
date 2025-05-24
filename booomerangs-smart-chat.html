@@ -959,7 +959,10 @@
             .messages-area {
                 height: calc(100vh - 140px);
                 padding: 20px 16px 20px 16px;
-                overflow-y: auto !important;
+                overflow-y: scroll !important;
+                overflow-x: hidden;
+                -webkit-overflow-scrolling: touch;
+                scroll-behavior: auto;
             }
             
             .input-area {
