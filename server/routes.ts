@@ -1010,7 +1010,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // API для анализа изображений (временно отключен)
+  // API для анализа изображений
   app.post('/api/analyze-image', upload.single('image'), async (req, res) => {
     try {
       if (!req.file) {
@@ -1022,16 +1022,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('🖼️ Получен запрос на анализ изображения:', req.file.originalname);
       
-      // Временная заглушка для анализа изображения
+      // Читаем файл изображения
+      const imageBuffer = fs.readFileSync(req.file.path);
+      
+      // Анализируем изображение с помощью AI
+      const analysisResult = await imageAnalyzer.analyzeImageWithAI(imageBuffer, req.file.originalname);
+      
+      // Удаляем временный файл
+      try {
+        fs.unlinkSync(req.file.path);
+      } catch (cleanupError) {
+        console.warn('Предупреждение: не удалось удалить временный файл:', cleanupError);
+      }
+      
+      // Формируем подробный результат анализа
       const result = {
         success: true,
-        description: `📸 Изображение "${req.file.originalname}" загружено успешно. Функция анализа будет добавлена в следующих обновлениях.`
+        filename: req.file.originalname,
+        analysis: analysisResult,
+        description: analysisResult.description || 'Анализ изображения завершен',
+        details: {
+          objects: analysisResult.objects || [],
+          colors: analysisResult.colors || [],
+          mood: analysisResult.mood || 'нейтральное',
+          contentType: analysisResult.contentType || 'общий контент',
+          dimensions: analysisResult.dimensions || 'неизвестно'
+        }
       };
       
+      console.log('✅ Анализ изображения завершен:', req.file.originalname);
       res.json(result);
       
     } catch (error) {
       console.error('❌ Ошибка анализа изображения:', error);
+      
+      // Попытка удалить временный файл в случае ошибки
+      if (req.file && req.file.path) {
+        try {
+          fs.unlinkSync(req.file.path);
+        } catch (cleanupError) {
+          console.warn('Предупреждение: не удалось удалить временный файл после ошибки:', cleanupError);
+        }
+      }
+      
       res.status(500).json({
         success: false,
         error: 'Внутренняя ошибка сервера при анализе изображения'
