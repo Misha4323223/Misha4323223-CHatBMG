@@ -47,7 +47,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup proxy middleware
   setupProxyMiddleware(app);
   
-  // Убираем дублирующий маршрут - теперь /smart-chat обрабатывается в index.ts
+  // Маршрут для сгенерированных изображений
+  app.use('/generated-images', express.static(path.join(process.cwd(), 'public/generated-images')));
   
   app.get('/booomerangs-chat', (req, res) => {
     console.log('📱 Запрос к /booomerangs-chat - отправляем team-chat-anna.html');
