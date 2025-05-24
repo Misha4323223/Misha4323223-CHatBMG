@@ -90,4 +90,4 @@ if __name__ == "__main__":
     print("🚀 Запуск EdgeGPT сервера...")
     print(f"📧 Email: {EMAIL}")
     print(f"🔑 Password: {'✓ Задан' if PASSWORD else '✗ Не задан'}")
-    app.run(host="0.0.0.0", port=3001, debug=True)
+    app.run(host="0.0.0.0", port=3000, debug=True)
