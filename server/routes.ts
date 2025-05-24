@@ -15,11 +15,12 @@ import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
 import multer from 'multer';
 // import { analyzeImage, cleanupTempFile } from './image-analyzer';
-const imageGenerator = require('./image-generator');
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const require = createRequire(__filename);
+
+const freeImageGenerators = require('./free-image-generators');
 
 // Настройка multer для загрузки файлов
 const upload = multer({
@@ -91,8 +92,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Вызываем функцию генерации изображения
-      const result = await aiImageGenerator.generateImage(prompt, style);
+      // Вызываем функцию генерации изображения через бесплатные сервисы
+      const result = await freeImageGenerators.generateFreeImage(prompt, style);
       
       res.json(result);
     } catch (error) {
