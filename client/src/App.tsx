@@ -11,7 +11,7 @@ import AIChat from "@/pages/AIChat";
 import AIProviderChat from "@/pages/AIProviderChat";
 
 import SmartChatPage from "@/pages/SmartChatPage";
-import SimpleAIChat from "@/pages/SimpleAIChat";
+
 import { useEffect } from "react";
 
 // Импортируем компонент навигации
@@ -53,7 +53,7 @@ function Router() {
           <Route path="/ai-chat" component={AIChat} />
           <Route path="/provider" component={AIProviderChat} />
 
-          <Route path="/smart-chat" component={SimpleAIChat} />
+          <Route path="/smart-chat" component={AIProviderChat} />
           <Route component={NotFound} />
         </Switch>
       </main>
