@@ -23,6 +23,7 @@ const require = createRequire(__filename);
 
 import * as freeImageGenerators from './free-image-generators.js';
 const imageAnalyzer = require('./image-analyzer.js');
+const { getFreeGPT4Response } = require('./gpt4-free-providers.js');
 // PDF обработка будет загружаться динамически
 
 // Настройка multer для загрузки файлов
