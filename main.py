@@ -14,9 +14,10 @@ async def init_chatgpt():
     global bot
     try:
         from EdgeGPT import Chatbot
+        import asyncio
         
-        # Создаем бота без дополнительных параметров для версии 0.3.9
-        bot = Chatbot()
+        # Создаем бота асинхронно для версии 0.3.9
+        bot = await Chatbot.create()
         print(f"✅ EdgeGPT 0.3.9 успешно инициализирован")
         return True
     except Exception as e:
@@ -42,8 +43,8 @@ def chatgpt_endpoint():
                 if not success:
                     return {"success": False, "error": "Не удалось подключиться к ChatGPT"}
             
-            # Отправляем сообщение
-            response = await bot.ask(prompt=message)
+            # Отправляем сообщение в EdgeGPT 0.3.9
+            response = await bot.ask(message)
             
             # Извлекаем текст ответа
             if response and 'item' in response:
