@@ -92,35 +92,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json({ success: false, error: 'Сообщение не может быть пустым' });
       }
 
-      console.log('🚀 Подключение к вашему аккаунту ChatGPT через EdgeGPT...');
+      console.log('🔑 Подключение к вашему аккаунту ChatGPT...');
       
-      // Подключаемся к EdgeGPT серверу на порту 3001
-      const fetch = require('node-fetch').default;
+      // Используем прямую интеграцию с EdgeGPT
+      const { getChatGPTResponse } = require('./edgegpt-direct.js');
+      const result = await getChatGPTResponse(message);
       
-      const response = await fetch('http://localhost:3001/api/chatgpt', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ message }),
-        timeout: 30000
-      });
-
-      const result = await response.json();
-      
-      if (result.success) {
-        console.log('✅ EdgeGPT успешно ответил:', result.provider);
-        res.json(result);
-      } else {
-        console.log('❌ EdgeGPT ошибка:', result.error);
-        res.json(result);
-      }
+      res.json(result);
 
     } catch (error: any) {
-      console.error('❌ Ошибка подключения к EdgeGPT серверу:', error);
+      console.error('❌ Ошибка EdgeGPT:', error);
       res.json({ 
         success: false, 
-        error: 'Не удалось подключиться к EdgeGPT серверу. Проверьте, что сервер запущен на порту 3001.' 
+        error: 'Ошибка подключения к вашему аккаунту ChatGPT' 
       });
     }
   });
