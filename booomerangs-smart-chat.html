@@ -2348,7 +2348,35 @@
                 if (response.ok) {
                     const result = await response.json();
                     console.log('✅ Анализ изображения завершен:', result);
-                    return result.description || 'Изображение было проанализировано, но описание недоступно.';
+                    
+                    // Формируем подробный ответ с результатами анализа
+                    let analysisText = `🖼️ **Анализ изображения "${result.filename}"**\n\n`;
+                    
+                    // Основное описание
+                    if (result.description) {
+                        analysisText += `📝 **Описание:** ${result.description}\n\n`;
+                    }
+                    
+                    // Детали анализа
+                    if (result.details) {
+                        if (result.details.objects && result.details.objects.length > 0) {
+                            analysisText += `🎯 **Обнаруженные объекты:** ${result.details.objects.join(', ')}\n\n`;
+                        }
+                        
+                        if (result.details.colors && result.details.colors.length > 0) {
+                            analysisText += `🎨 **Доминирующие цвета:** ${result.details.colors.join(', ')}\n\n`;
+                        }
+                        
+                        if (result.details.mood) {
+                            analysisText += `😊 **Настроение:** ${result.details.mood}\n\n`;
+                        }
+                        
+                        if (result.details.contentType) {
+                            analysisText += `📂 **Тип контента:** ${result.details.contentType}\n\n`;
+                        }
+                    }
+                    
+                    return analysisText.trim();
                 } else {
                     throw new Error('Ошибка сервера при анализе изображения');
                 }
