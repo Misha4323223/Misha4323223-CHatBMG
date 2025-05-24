@@ -958,8 +958,8 @@
                             <button class="action-button" id="voiceBtn" title="Голосовое сообщение" onclick="toggleVoiceRecording()">
                                 🎤
                             </button>
-                            <button class="action-button" id="mathBtn" title="Математические формулы" onclick="showMathHelper()">
-                                🧮
+                            <button class="action-button" id="creativeModeBtn" title="Переключить творческий режим" onclick="toggleCreativeMode()">
+                                💬
                             </button>
                         </div>
                         
@@ -3101,10 +3101,16 @@
             
             // Обновляем интерфейс
             const modeInfo = {
-                normal: { icon: '💬', name: 'Обычный режим' },
-                creative: { icon: '🎨', name: 'Творческий режим' },
-                coder: { icon: '👨‍💻', name: 'Режим программиста' }
+                normal: { icon: '💬', name: 'Обычный режим', placeholder: 'Напишите сообщение...' },
+                creative: { icon: '🎨', name: 'Творческий режим', placeholder: '🎨 Творческий режим: создайте историю, стих или идею...' },
+                coder: { icon: '👨‍💻', name: 'Режим программиста', placeholder: '👨‍💻 Режим программиста: вопросы по коду и разработке...' }
             };
+            
+            // Обновляем placeholder поля ввода
+            const messageInput = document.getElementById('messageInput');
+            if (messageInput) {
+                messageInput.placeholder = modeInfo[mode].placeholder;
+            }
             
             // Показываем уведомление о смене режима
             const notification = `${modeInfo[mode].icon} Активирован ${modeInfo[mode].name}`;
@@ -3129,6 +3135,25 @@
             }
             
             return false;
+        }
+
+        // Функция переключения творческого режима через кнопку
+        function toggleCreativeMode() {
+            const btn = document.getElementById('creativeModeBtn');
+            
+            if (aiMode === 'creative') {
+                // Переключаем на обычный режим
+                switchMode('normal');
+                btn.innerHTML = '💬';
+                btn.title = 'Переключить творческий режим';
+                btn.style.background = '';
+            } else {
+                // Переключаем на творческий режим
+                switchMode('creative');
+                btn.innerHTML = '🎨';
+                btn.title = 'Обычный режим (нажмите для выхода)';
+                btn.style.background = '#e3f2fd';
+            }
         }
 
         // Функция для запуска диалога загрузки файлов
