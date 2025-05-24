@@ -1620,15 +1620,15 @@
             });
             
             // Проверяем есть ли сообщение или файл для отправки
-            if (!message && !currentFile) {
+            if (!message && !selectedFile) {
                 console.log('⚠️ [USER] Пустое сообщение, отправка отменена');
                 return;
             }
             
-            // Если есть файл, но нет текста, обрабатываем файл
-            if (currentFile && !message) {
-                await processFileAndSend();
-                return;
+            // Если есть файл, обрабатываем его
+            if (selectedFile) {
+                await processSelectedFile();
+                if (!message) return; // Если нет текста, заканчиваем после обработки файла
             }
             
             // Очищаем поле ввода
@@ -2908,6 +2908,146 @@
             }
         }
 
+        // Переменная для хранения выбранного файла
+        let selectedFile = null;
+
+        // Функция для показа превью файла
+        function showFilePreview(file, fileType) {
+            selectedFile = file;
+            console.log('🔥 [DEBUG] Показываем превью файла:', file.name, fileType);
+            
+            const inputContainer = document.querySelector('.input-container');
+            
+            // Удаляем старое превью если есть
+            const existingPreview = inputContainer.querySelector('.file-preview');
+            if (existingPreview) {
+                existingPreview.remove();
+            }
+            
+            // Создаем контейнер превью
+            const previewDiv = document.createElement('div');
+            previewDiv.className = 'file-preview';
+            previewDiv.style.cssText = `
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding: 10px;
+                margin-bottom: 10px;
+                background: #f5f5f5;
+                border: 2px solid #007bff;
+                border-radius: 8px;
+                position: relative;
+            `;
+            
+            if (fileType === 'pdf') {
+                // Для PDF показываем иконку и информацию
+                previewDiv.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
+                        <div style="font-size: 24px;">📄</div>
+                        <div>
+                            <div style="font-weight: bold; color: #333;">${file.name}</div>
+                            <div style="font-size: 12px; color: #666;">${formatFileSize(file.size)} • PDF документ</div>
+                        </div>
+                    </div>
+                    <button onclick="removeFilePreview()" style="
+                        background: #ff4444;
+                        color: white;
+                        border: none;
+                        border-radius: 50%;
+                        width: 24px;
+                        height: 24px;
+                        cursor: pointer;
+                        font-size: 14px;
+                    ">×</button>
+                `;
+            } else if (fileType === 'image') {
+                // Для изображений показываем превью
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewDiv.innerHTML = `
+                        <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
+                            <img src="${e.target.result}" style="width: 40px; height: 40px; border-radius: 4px; object-fit: cover;">
+                            <div>
+                                <div style="font-weight: bold; color: #333;">${file.name}</div>
+                                <div style="font-size: 12px; color: #666;">${formatFileSize(file.size)} • Изображение</div>
+                            </div>
+                        </div>
+                        <button onclick="removeFilePreview()" style="
+                            background: #ff4444;
+                            color: white;
+                            border: none;
+                            border-radius: 50%;
+                            width: 24px;
+                            height: 24px;
+                            cursor: pointer;
+                            font-size: 14px;
+                        ">×</button>
+                    `;
+                };
+                reader.readAsDataURL(file);
+            } else {
+                // Для других документов
+                previewDiv.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
+                        <div style="font-size: 24px;">📋</div>
+                        <div>
+                            <div style="font-weight: bold; color: #333;">${file.name}</div>
+                            <div style="font-size: 12px; color: #666;">${formatFileSize(file.size)} • Документ</div>
+                        </div>
+                    </div>
+                    <button onclick="removeFilePreview()" style="
+                        background: #ff4444;
+                        color: white;
+                        border: none;
+                        border-radius: 50%;
+                        width: 24px;
+                        height: 24px;
+                        cursor: pointer;
+                        font-size: 14px;
+                    ">×</button>
+                `;
+            }
+            
+            // Добавляем превью перед полем ввода
+            const messageInput = document.getElementById('messageInput');
+            inputContainer.insertBefore(previewDiv, messageInput);
+        }
+
+        // Функция для удаления превью файла
+        function removeFilePreview() {
+            selectedFile = null;
+            const preview = document.querySelector('.file-preview');
+            if (preview) {
+                preview.remove();
+            }
+        }
+
+        // Функция для обработки выбранного файла при отправке
+        async function processSelectedFile() {
+            if (!selectedFile) return;
+            
+            console.log('🔥 [DEBUG] Обрабатываем выбранный файл:', selectedFile.name);
+            
+            try {
+                // Определяем тип файла и обрабатываем соответственно
+                if (selectedFile.type.includes('image/')) {
+                    await analyzeImage(selectedFile);
+                } else if (selectedFile.type.includes('pdf') || selectedFile.name.toLowerCase().endsWith('.pdf')) {
+                    await extractTextFromDocument(selectedFile);
+                } else {
+                    await extractTextFromDocument(selectedFile);
+                }
+                
+                // Убираем превью после обработки
+                removeFilePreview();
+                
+            } catch (error) {
+                console.error('❌ Ошибка обработки файла:', error);
+                addMessage('❌ Ошибка при обработке файла. Попробуйте еще раз.', 'ai');
+                removeFilePreview();
+            }
+        }
+
         // Функция для запуска диалога загрузки файлов
         function triggerFileUpload() {
             console.log('🔥 [DEBUG] triggerFileUpload вызвана');
@@ -2927,14 +3067,14 @@
                     
                     // Проверяем тип файла
                     if (file.type.includes('image/')) {
-                        console.log('🔥 [DEBUG] Это изображение, запускаем анализ изображения');
-                        await analyzeImage(file);
+                        console.log('🔥 [DEBUG] Это изображение, показываем превью');
+                        showFilePreview(file, 'image');
                     } else if (file.type.includes('pdf') || file.name.toLowerCase().endsWith('.pdf')) {
-                        console.log('🔥 [DEBUG] Это PDF, запускаем анализ документа');
-                        await extractTextFromDocument(file);
+                        console.log('🔥 [DEBUG] Это PDF, показываем превью');
+                        showFilePreview(file, 'pdf');
                     } else {
-                        console.log('🔥 [DEBUG] Это документ, запускаем анализ документа');
-                        await extractTextFromDocument(file);
+                        console.log('🔥 [DEBUG] Это документ, показываем превью');
+                        showFilePreview(file, 'document');
                     }
                 } else {
                     console.log('🔥 [DEBUG] Файл не выбран');
