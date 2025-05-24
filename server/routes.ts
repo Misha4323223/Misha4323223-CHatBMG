@@ -14,7 +14,7 @@ import * as path from 'path';
 import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
 import multer from 'multer';
-import { analyzeImage, cleanupTempFile } from './image-analyzer';
+// import { analyzeImage, cleanupTempFile } from './image-analyzer';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -23,14 +23,6 @@ const require = createRequire(__filename);
 // Настройка multer для загрузки файлов
 const upload = multer({
   dest: 'uploads/',
-  fileFilter: (req: any, file: any, cb: any) => {
-    // Разрешаем только изображения
-    if (file.mimetype.startsWith('image/')) {
-      cb(null, true);
-    } else {
-      cb(new Error('Разрешены только изображения'), false);
-    }
-  },
   limits: {
     fileSize: 10 * 1024 * 1024 // 10MB максимум
   }
@@ -966,7 +958,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   }
   
-  // API для анализа изображений
+  // API для анализа изображений (временно отключен)
   app.post('/api/analyze-image', upload.single('image'), async (req, res) => {
     try {
       if (!req.file) {
@@ -978,10 +970,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('🖼️ Получен запрос на анализ изображения:', req.file.originalname);
       
-      const result = await analyzeImage(req.file.path, req.file.originalname);
-      
-      // Очищаем временный файл
-      cleanupTempFile(req.file.path);
+      // Временная заглушка для анализа изображения
+      const result = {
+        success: true,
+        description: `📸 Изображение "${req.file.originalname}" загружено успешно. Функция анализа будет добавлена в следующих обновлениях.`
+      };
       
       res.json(result);
       
