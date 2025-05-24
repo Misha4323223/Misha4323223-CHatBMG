@@ -974,7 +974,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('🎨 Получен запрос на генерацию изображения:', prompt);
       
-      const result = await imageGenerator.generateImage(prompt, style);
+      const result = await freeImageGenerators.generateFreeImage(prompt, style);
       
       res.json(result);
       
