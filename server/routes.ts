@@ -575,6 +575,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const messages = await chatHistory.getSessionMessages(sessionId);
       console.log(`✅ Найдено ${messages.length} сообщений для сессии ${sessionId}`);
+      console.log('🔍 Проверяем первое сообщение с изображением:', JSON.stringify(messages.find(m => m.imageUrl), null, 2));
       
       // Отключаем кэширование для этого API
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
