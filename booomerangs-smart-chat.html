@@ -1823,6 +1823,13 @@
             }, 100);
             
             console.log(`Сообщение добавлено: ${sender}, scrollHeight: ${messagesArea.scrollHeight}`);
+            
+            // Принудительное обновление DOM для мгновенного отображения
+            messageDiv.style.opacity = '0';
+            setTimeout(() => {
+                messageDiv.style.opacity = '1';
+                messageDiv.style.transition = 'opacity 0.3s ease-in';
+            }, 10);
         }
 
         // Создание новой сессии чата
