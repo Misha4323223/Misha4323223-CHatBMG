@@ -93,6 +93,8 @@ async function getSessionMessages(sessionId) {
     .where(eq(aiMessages.sessionId, sessionId))
     .orderBy(aiMessages.createdAt);
     
+  console.log('🔍 Сырые данные из БД:', JSON.stringify(aiMessagesData, null, 2));
+    
   // Преобразуем в формат для отображения в чате
   const formattedMessages = aiMessagesData.map(msg => ({
     id: msg.id,
@@ -102,6 +104,8 @@ async function getSessionMessages(sessionId) {
     provider: msg.provider,
     imageUrl: msg.imageUrl // Добавляем поле imageUrl
   }));
+  
+  console.log('📋 Отформатированные сообщения:', JSON.stringify(formattedMessages, null, 2));
     
   return formattedMessages;
 }
