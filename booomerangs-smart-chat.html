@@ -1541,23 +1541,31 @@
             
             messagesArea.appendChild(messageDiv);
             
-            // Принудительная прокрутка с несколькими попытками
-            const scrollToBottom = () => {
-                messagesArea.scrollTop = messagesArea.scrollHeight;
+            // Улучшенная принудительная прокрутка
+            const forceScrollToBottom = () => {
+                try {
+                    // Используем requestAnimationFrame для синхронизации с отрисовкой
+                    requestAnimationFrame(() => {
+                        messagesArea.scrollTop = messagesArea.scrollHeight + 1000;
+                        // Также пробуем scrollIntoView для последнего сообщения
+                        const lastMessage = messagesArea.lastElementChild;
+                        if (lastMessage) {
+                            lastMessage.scrollIntoView({ behavior: 'instant', block: 'end' });
+                        }
+                    });
+                } catch (e) {
+                    console.log('Ошибка прокрутки:', e);
+                }
             };
             
-            // Немедленная прокрутка
-            scrollToBottom();
-            
-            // Дополнительные попытки прокрутки
-            setTimeout(scrollToBottom, 50);
-            setTimeout(scrollToBottom, 150);
+            // Множественные попытки прокрутки
+            forceScrollToBottom();
+            setTimeout(forceScrollToBottom, 10);
+            setTimeout(forceScrollToBottom, 50);
+            setTimeout(forceScrollToBottom, 100);
             setTimeout(() => {
-                messagesArea.scrollTo({
-                    top: messagesArea.scrollHeight,
-                    behavior: 'smooth'
-                });
-            }, 300);
+                messagesArea.scrollTop = messagesArea.scrollHeight + 1000;
+            }, 200);
             
             console.log(`Сообщение добавлено: ${sender}, scrollHeight: ${messagesArea.scrollHeight}`);
         }
