@@ -3,28 +3,24 @@ const fetch = require('node-fetch').default;
 
 // Набор рабочих AI-провайдеров - EdgeGPT как первый приоритет (настоящий ChatGPT)
 const AI_PROVIDERS = {
-  // ChatGPT-совместимый API (высший приоритет)
-  CHATGPT_API: {
-    name: 'ChatGPT-Compatible API',
-    url: 'https://chatgpt-api.shn.hk/v1/',
+  // EdgeGPT - ваш настоящий аккаунт ChatGPT (высший приоритет)
+  EDGEGPT: {
+    name: 'EdgeGPT (Ваш аккаунт ChatGPT)',
+    url: '/api/edgegpt/chat',
     needsKey: false,
+    isInternal: true,
     headers: {
-      'Content-Type': 'application/json',
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+      'Content-Type': 'application/json'
     },
     prepareRequest: (message, options = {}) => {
-      return {
-        model: "gpt-3.5-turbo",
-        messages: [{ role: "user", content: message }],
-        temperature: 0.7
-      };
+      return { message };
     },
     extractResponse: async (response) => {
       const jsonResponse = await response.json();
-      if (jsonResponse && jsonResponse.choices && jsonResponse.choices.length > 0) {
-        return jsonResponse.choices[0].message.content;
+      if (jsonResponse && jsonResponse.success && jsonResponse.response) {
+        return jsonResponse.response;
       }
-      throw new Error('Некорректный ответ от ChatGPT API');
+      throw new Error(jsonResponse.error || 'Ошибка подключения к вашему аккаунту ChatGPT');
     }
   },
   

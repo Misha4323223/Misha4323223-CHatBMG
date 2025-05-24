@@ -83,7 +83,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // EdgeGPT - прямое подключение к ChatGPT через Edge
+  // EdgeGPT - прямое подключение к вашему аккаунту ChatGPT
   app.post('/api/edgegpt/chat', async (req, res) => {
     try {
       const { message } = req.body;
@@ -92,86 +92,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json({ success: false, error: 'Сообщение не может быть пустым' });
       }
 
-      console.log('🚀 Подключение к ChatGPT через EdgeGPT...');
+      console.log('🚀 Подключение к вашему аккаунту ChatGPT через EdgeGPT...');
       
-      // Используем EdgeGPT через Python subprocess
-      const { spawn } = require('child_process');
+      // Подключаемся к EdgeGPT серверу на порту 3001
+      const fetch = require('node-fetch').default;
       
-      const pythonScript = `
-import requests
-import json
-import os
-
-def chat_with_openai():
-    try:
-        email = os.getenv("CHATGPT_EMAIL")
-        password = os.getenv("CHATGPT_PASSWORD")
-        
-        # Используем прямой API запрос
-        headers = {
-            'Content-Type': 'application/json',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        }
-        
-        # Пытаемся подключиться через открытый GPT API
-        payload = {
-            "model": "gpt-3.5-turbo",
-            "messages": [{"role": "user", "content": "${message.replace(/"/g, '\\"')}"}],
-            "temperature": 0.7
-        }
-        
-        # Используем бесплатный ChatGPT провайдер
-        response = requests.post(
-            "https://chatgpt-api.shn.hk/v1/",
-            headers=headers,
-            json=payload,
-            timeout=30
-        )
-        
-        if response.status_code == 200:
-            data = response.json()
-            if "choices" in data and len(data["choices"]) > 0:
-                result = data["choices"][0]["message"]["content"]
-                print(json.dumps({"success": True, "response": result, "provider": "OpenAI-Compatible", "model": "gpt-3.5-turbo"}))
-            else:
-                print(json.dumps({"success": False, "error": "Нет ответа от API"}))
-        else:
-            print(json.dumps({"success": False, "error": f"HTTP {response.status_code}"}))
-            
-    except Exception as e:
-        print(json.dumps({"success": False, "error": str(e)}))
-
-chat_with_openai()
-`;
-
-      const python = spawn('python3', ['-c', pythonScript]);
-      let output = '';
-      let error = '';
-
-      python.stdout.on('data', (data) => {
-        output += data.toString();
+      const response = await fetch('http://localhost:3001/api/chatgpt', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ message }),
+        timeout: 30000
       });
 
-      python.stderr.on('data', (data) => {
-        error += data.toString();
-      });
-
-      python.on('close', (code) => {
-        try {
-          if (output.trim()) {
-            const result = JSON.parse(output.trim());
-            res.json(result);
-          } else {
-            res.json({ success: false, error: error || 'Нет ответа от EdgeGPT' });
-          }
-        } catch (e) {
-          res.json({ success: false, error: 'Ошибка парсинга ответа EdgeGPT' });
-        }
-      });
+      const result = await response.json();
+      
+      if (result.success) {
+        console.log('✅ EdgeGPT успешно ответил:', result.provider);
+        res.json(result);
+      } else {
+        console.log('❌ EdgeGPT ошибка:', result.error);
+        res.json(result);
+      }
 
     } catch (error: any) {
-      console.error('❌ Ошибка EdgeGPT:', error);
-      res.json({ success: false, error: error.message });
+      console.error('❌ Ошибка подключения к EdgeGPT серверу:', error);
+      res.json({ 
+        success: false, 
+        error: 'Не удалось подключиться к EdgeGPT серверу. Проверьте, что сервер запущен на порту 3001.' 
+      });
     }
   });
 
