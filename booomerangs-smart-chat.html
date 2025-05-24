@@ -315,7 +315,7 @@
         /* Область сообщений */
         .messages-area {
             flex: 1;
-            overflow-y: auto !important;
+            overflow-y: scroll;
             overflow-x: hidden;
             padding: 32px 32px 140px 32px;
             display: flex;
@@ -326,8 +326,8 @@
             min-height: 0;
             position: relative;
             z-index: 2;
-            scroll-behavior: smooth;
             -webkit-overflow-scrolling: touch;
+            touch-action: pan-y;
         }
 
         /* Стили для скроллбара */
@@ -959,10 +959,10 @@
             .messages-area {
                 height: calc(100vh - 140px);
                 padding: 20px 16px 20px 16px;
-                overflow-y: scroll !important;
+                overflow-y: scroll;
                 overflow-x: hidden;
                 -webkit-overflow-scrolling: touch;
-                scroll-behavior: auto;
+                touch-action: pan-y;
             }
             
             .input-area {
