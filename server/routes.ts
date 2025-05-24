@@ -23,6 +23,7 @@ const require = createRequire(__filename);
 
 import * as freeImageGenerators from './free-image-generators.js';
 const imageAnalyzer = require('./image-analyzer.js');
+import pdfParse from 'pdf-parse';
 
 // Настройка multer для загрузки файлов
 const upload = multer({
