@@ -22,6 +22,7 @@ const __dirname = path.dirname(__filename);
 const require = createRequire(__filename);
 
 import * as freeImageGenerators from './free-image-generators.js';
+const imageAnalyzer = require('./image-analyzer.js');
 
 // Настройка multer для загрузки файлов
 const upload = multer({
