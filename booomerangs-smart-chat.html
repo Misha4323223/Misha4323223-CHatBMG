@@ -1717,6 +1717,9 @@
                 
                 console.log('🧠 Контекст для AI:', contextPrompt ? 'добавлен' : 'отсутствует');
                 
+                // Определяем предпочитаемый провайдер на основе контекста
+                const preferredProvider = getPreferredProvider(requestType);
+                
                 // Отправляем на сервер через правильный API endpoint
                 const response = await fetch('/api/g4f/chat', {
                     method: 'POST',
@@ -1725,7 +1728,9 @@
                     },
                     body: JSON.stringify({
                         message: enhancedMessage,
-                        provider: 'auto'
+                        provider: preferredProvider,
+                        requestType: requestType,
+                        previousProvider: getLastUsedProvider()
                     })
                 });
                 
@@ -3089,6 +3094,12 @@
 
         // Переменная для текущего режима работы
         let aiMode = 'normal'; // normal, creative, coder
+        let lastUsedProvider = null;
+        let conversationContext = {
+            type: 'normal',
+            provider: null,
+            messageCount: 0
+        };
         
         // Умная функция определения типа запроса
         function detectRequestType(message) {
@@ -3130,6 +3141,41 @@
             
             // Если не найдено специфических ключевых слов, возвращаем обычный режим
             return 'normal';
+        }
+        
+        // Функция для получения предпочитаемого провайдера
+        function getPreferredProvider(requestType) {
+            // Если продолжаем разговор того же типа, используем того же провайдера
+            if (conversationContext.type === requestType && conversationContext.provider && conversationContext.messageCount < 5) {
+                return conversationContext.provider;
+            }
+            
+            // Провайдеры, лучше подходящие для разных типов задач
+            const providerPreferences = {
+                'coding': ['Claude', 'OpenAI', 'DeepSeek', 'HuggingChat'],
+                'creative': ['Claude', 'Gemini', 'You', 'FreeChat'],
+                'normal': ['auto'] // автоматический выбор
+            };
+            
+            const preferred = providerPreferences[requestType] || ['auto'];
+            return preferred[0]; // возвращаем первый предпочтительный провайдер
+        }
+        
+        // Получение последнего использованного провайдера
+        function getLastUsedProvider() {
+            return lastUsedProvider;
+        }
+        
+        // Обновление контекста разговора
+        function updateConversationContext(requestType, provider) {
+            if (conversationContext.type === requestType) {
+                conversationContext.messageCount++;
+            } else {
+                conversationContext.type = requestType;
+                conversationContext.provider = provider;
+                conversationContext.messageCount = 1;
+            }
+            lastUsedProvider = provider;
         }
         
         // Функция для получения текущего режима
