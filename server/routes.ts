@@ -24,6 +24,7 @@ const require = createRequire(__filename);
 import * as freeImageGenerators from './free-image-generators.js';
 const imageAnalyzer = require('./image-analyzer.js');
 const { getFreeGPT4Response } = require('./gpt4-free-providers.js');
+const EdgeGPTAuthBypass = require('./edgegpt-auth-bypass.js');
 // PDF обработка будет загружаться динамически
 
 // Настройка multer для загрузки файлов
@@ -83,7 +84,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // EdgeGPT - прямое подключение к вашему аккаунту ChatGPT
+  // EdgeGPT - прямое подключение к вашему аккаунту ChatGPT с обходом
   app.post('/api/edgegpt/chat', async (req, res) => {
     try {
       const { message } = req.body;
@@ -92,13 +93,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json({ success: false, error: 'Сообщение не может быть пустым' });
       }
 
-      console.log('🔑 Подключение к вашему аккаунту ChatGPT...');
+      console.log('🚀 Запуск EdgeGPT обхода для вашего аккаунта...');
       
-      // Используем прямую интеграцию с EdgeGPT
-      const { getChatGPTResponse } = require('./edgegpt-direct.js');
-      const result = await getChatGPTResponse(message);
-      
-      res.json(result);
+      // Сначала пробуем новый обход
+      try {
+        const edgeGPT = new EdgeGPTAuthBypass();
+        const result = await edgeGPT.sendMessage(message);
+        console.log('✅ EdgeGPT обход успешен!');
+        return res.json(result);
+      } catch (bypassError) {
+        console.log('⚠️ Обход не сработал, пробуем прямую интеграцию...');
+        
+        // Резерв - прямая интеграция с EdgeGPT
+        const { getChatGPTResponse } = require('./edgegpt-direct.js');
+        const result = await getChatGPTResponse(message);
+        return res.json(result);
+      }
 
     } catch (error: any) {
       console.error('❌ Ошибка EdgeGPT:', error);
