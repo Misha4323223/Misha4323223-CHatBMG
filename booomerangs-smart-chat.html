@@ -2505,6 +2505,134 @@
             console.log('🧮 Математический пример добавлен в поле ввода');
         }
 
+        // === МУЛЬТИМОДАЛЬНЫЕ ВОЗМОЖНОСТИ ===
+
+        // Анализ изображений
+        async function analyzeImage(file) {
+            console.log('🖼️ Начало анализа изображения:', file.name);
+            
+            const formData = new FormData();
+            formData.append('image', file);
+            
+            try {
+                const response = await fetch('/api/analyze-image', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log('✅ Анализ изображения завершен:', result);
+                    return result.description || 'Изображение было проанализировано, но описание недоступно.';
+                } else {
+                    throw new Error('Ошибка сервера при анализе изображения');
+                }
+            } catch (error) {
+                console.error('❌ Ошибка анализа изображения:', error);
+                return 'К сожалению, не удалось проанализировать изображение. Попробуйте еще раз.';
+            }
+        }
+
+        // Обработка различных типов файлов
+        async function processFile(file) {
+            const fileType = file.type;
+            
+            if (fileType.startsWith('image/')) {
+                return await analyzeImage(file);
+            } else if (fileType.startsWith('audio/')) {
+                return await transcribeAudio(file);
+            } else if (fileType === 'application/pdf' || fileType.includes('document')) {
+                return await extractTextFromDocument(file);
+            } else {
+                return `Получен файл "${file.name}" (${formatFileSize(file.size)}). Поддерживаются изображения, аудио и документы для анализа.`;
+            }
+        }
+
+        // Транскрипция аудио
+        async function transcribeAudio(file) {
+            console.log('🎵 Начало транскрипции аудио:', file.name);
+            
+            const formData = new FormData();
+            formData.append('audio', file);
+            
+            try {
+                // Пока возвращаем заглушку, в будущем можно добавить реальную транскрипцию
+                return `🎵 Получено аудио файл "${file.name}" (${formatFileSize(file.size)}). Функция транскрипции будет добавлена в следующих обновлениях.`;
+            } catch (error) {
+                console.error('❌ Ошибка транскрипции аудио:', error);
+                return 'Не удалось обработать аудио файл.';
+            }
+        }
+
+        // Извлечение текста из документов
+        async function extractTextFromDocument(file) {
+            console.log('📄 Начало извлечения текста из документа:', file.name);
+            
+            const formData = new FormData();
+            formData.append('document', file);
+            
+            try {
+                // Пока возвращаем заглушку, в будущем можно добавить реальное извлечение текста
+                return `📄 Получен документ "${file.name}" (${formatFileSize(file.size)}). Функция извлечения текста будет добавлена в следующих обновлениях.`;
+            } catch (error) {
+                console.error('❌ Ошибка извлечения текста:', error);
+                return 'Не удалось обработать документ.';
+            }
+        }
+
+        // Генерация диаграмм и графиков
+        function generateChart(data, type = 'line') {
+            console.log('📊 Генерация диаграммы:', type);
+            
+            // Создаем простую SVG диаграмму
+            const svg = `
+                <svg width="400" height="300" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="400" height="300" fill="#1a1a1a" stroke="#dc2626" stroke-width="2" rx="8"/>
+                    <text x="200" y="30" text-anchor="middle" fill="#e5e7eb" font-size="16" font-weight="bold">
+                        📊 Диаграмма сгенерирована
+                    </text>
+                    <text x="200" y="150" text-anchor="middle" fill="#9ca3af" font-size="14">
+                        Функция генерации графиков
+                    </text>
+                    <text x="200" y="170" text-anchor="middle" fill="#9ca3af" font-size="14">
+                        будет улучшена в следующих версиях
+                    </text>
+                    <circle cx="200" cy="220" r="30" fill="none" stroke="#dc2626" stroke-width="3"/>
+                    <text x="200" y="225" text-anchor="middle" fill="#dc2626" font-size="20">🎯</text>
+                </svg>
+            `;
+            
+            return `data:image/svg+xml;base64,${btoa(svg)}`;
+        }
+
+        // Улучшенная отправка сообщения с поддержкой файлов
+        async function sendMessageWithFile() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (!message && !currentFile) {
+                return;
+            }
+            
+            let finalMessage = message;
+            
+            // Если есть прикрепленный файл, обрабатываем его
+            if (currentFile) {
+                console.log('📎 Обработка прикрепленного файла:', currentFile.name);
+                
+                const fileAnalysis = await processFile(currentFile);
+                finalMessage = message ? `${message}\n\n[Анализ файла: ${fileAnalysis}]` : fileAnalysis;
+                
+                // Очищаем предварительный просмотр файла
+                removeFilePreview();
+            }
+            
+            // Отправляем сообщение как обычно
+            input.value = finalMessage;
+            await sendMessage();
+            input.value = message; // Возвращаем исходное сообщение в поле ввода
+        }
+
     </script>
 </body>
 </html>

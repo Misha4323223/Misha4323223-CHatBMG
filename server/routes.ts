@@ -14,23 +14,25 @@ import * as path from 'path';
 import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
 import multer from 'multer';
+import { analyzeImage, cleanupTempFile } from './image-analyzer';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const require = createRequire(__filename);
 
-// Настройка multer для загрузки изображений
+// Настройка multer для загрузки файлов
 const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB лимит
-  },
-  fileFilter: (req, file, cb) => {
+  dest: 'uploads/',
+  fileFilter: (req: any, file: any, cb: any) => {
+    // Разрешаем только изображения
     if (file.mimetype.startsWith('image/')) {
       cb(null, true);
     } else {
-      cb(new Error('Только изображения разрешены'), false);
+      cb(new Error('Разрешены только изображения'), false);
     }
+  },
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10MB максимум
   }
 });
 
@@ -964,6 +966,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   }
   
+  // API для анализа изображений
+  app.post('/api/analyze-image', upload.single('image'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({
+          success: false,
+          error: 'Файл изображения не загружен'
+        });
+      }
+
+      console.log('🖼️ Получен запрос на анализ изображения:', req.file.originalname);
+      
+      const result = await analyzeImage(req.file.path, req.file.originalname);
+      
+      // Очищаем временный файл
+      cleanupTempFile(req.file.path);
+      
+      res.json(result);
+      
+    } catch (error) {
+      console.error('❌ Ошибка анализа изображения:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Внутренняя ошибка сервера при анализе изображения'
+      });
+    }
+  });
+
   // API для работы с BOOOMERANGS AI интеграцией (с поддержкой Qwen и других провайдеров)
   app.post('/api/ai/chat', upload.single('image'), async (req, res) => {
     try {
