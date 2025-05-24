@@ -1749,7 +1749,7 @@
                             console.log('  📊 Длина ответа:', data.response.length, 'символов');
                             console.log('  ⚡ Скорость ответа:', Math.round(performance.now() - startTime), 'мс');
                             
-                            addMessage(data.response, 'ai');
+                            addMessage(data.response, 'ai', false, data.provider, data.model);
                             
                             // Добавляем в долгосрочную память и обновляем профиль
                             const topics = extractTopics(message);
@@ -1799,7 +1799,7 @@
         }
 
         // Добавление сообщения в интерфейс
-        function addMessage(content, sender, isHtml = false) {
+        function addMessage(content, sender, isHtml = false, provider = null, model = null) {
             console.log(`🔥 [DEBUG] addMessage вызвана: ${sender} - ${content.substring(0, 50)}...`);
             
             const messagesArea = document.getElementById('messagesArea');
@@ -1838,7 +1838,27 @@
                     line-height: 1.6 !important;
                     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
                 `;
-                messageDiv.innerHTML = isHtml ? content : `🤖 <strong>AI:</strong> ${content}`;
+                // Создаем основной контент
+                let aiContent = isHtml ? content : `🤖 <strong>AI:</strong> ${content}`;
+                
+                // Добавляем информацию о провайдере, если она есть
+                if (provider) {
+                    const providerInfo = `
+                        <div style="
+                            margin-top: 12px;
+                            padding-top: 8px;
+                            border-top: 1px solid rgba(75, 85, 99, 0.3);
+                            font-size: 11px;
+                            color: rgba(156, 163, 175, 0.8);
+                            text-align: right;
+                        ">
+                            🔧 ${provider}${model ? ` • ${model}` : ''}
+                        </div>
+                    `;
+                    aiContent += providerInfo;
+                }
+                
+                messageDiv.innerHTML = aiContent;
             } else {
                 messageDiv.innerHTML = isHtml ? content : `👤 <strong>Вы:</strong> ${content}`;
             }
