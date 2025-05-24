@@ -9,6 +9,7 @@ import BooomerangsAuth from "@/pages/BooomerangsAuth";
 import Chat from "@/pages/Chat";
 import AIChat from "@/pages/AIChat";
 import AIProviderChat from "@/pages/AIProviderChat";
+import SimpleChatPage from "@/pages/SimpleChatPage";
 
 import SmartChatPage from "@/pages/SmartChatPage";
 
@@ -47,12 +48,11 @@ function Router() {
       {showNavigation && <MainNavigation />}
       <main className={showNavigation ? "pt-2" : ""}>
         <Switch>
-          <Route path="/" component={AuthScreen} />
+          <Route path="/" component={SimpleChatPage} />
           <Route path="/new-auth" component={BooomerangsAuth} />
           <Route path="/chat" component={Chat} />
           <Route path="/ai-chat" component={AIChat} />
           <Route path="/provider" component={AIProviderChat} />
-
           <Route path="/smart-chat" component={AIProviderChat} />
           <Route component={NotFound} />
         </Switch>
