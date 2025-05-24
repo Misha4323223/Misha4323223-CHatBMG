@@ -1073,6 +1073,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // API для извлечения текста из PDF документов
+  app.post('/api/extract-text', upload.single('document'), async (req, res) => {
+    try {
+      const file = req.file;
+      
+      if (!file) {
+        return res.status(400).json({
+          success: false,
+          error: 'Файл не был загружен'
+        });
+      }
+
+      console.log('📄 Начинаем извлечение текста из PDF:', file.originalname);
+
+      // Читаем буфер файла
+      const dataBuffer = fs.readFileSync(file.path);
+      
+      // Извлекаем текст с помощью pdf-parse
+      const data = await pdfParse(dataBuffer);
+      
+      // Удаляем временный файл
+      fs.unlinkSync(file.path);
+      
+      if (data.text && data.text.trim()) {
+        console.log('✅ Текст успешно извлечен, длина:', data.text.length);
+        
+        return res.json({
+          success: true,
+          text: data.text.trim(),
+          pages: data.numpages,
+          info: data.info
+        });
+      } else {
+        console.log('⚠️ PDF не содержит текста или защищен');
+        
+        return res.json({
+          success: false,
+          error: 'PDF не содержит извлекаемого текста или защищен паролем'
+        });
+      }
+      
+    } catch (error) {
+      console.error('❌ Ошибка извлечения текста из PDF:', error);
+      
+      // Удаляем временный файл в случае ошибки
+      if (req.file?.path && fs.existsSync(req.file.path)) {
+        try {
+          fs.unlinkSync(req.file.path);
+        } catch (unlinkError) {
+          console.error('❌ Ошибка удаления временного файла:', unlinkError);
+        }
+      }
+      
+      return res.status(500).json({
+        success: false,
+        error: 'Ошибка при обработке PDF файла'
+      });
+    }
+  });
+
   // API для работы с BOOOMERANGS AI интеграцией (с поддержкой Qwen и других провайдеров)
   app.post('/api/ai/chat', upload.single('image'), async (req, res) => {
     try {
