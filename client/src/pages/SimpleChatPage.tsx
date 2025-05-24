@@ -1,115 +1,172 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Plus, MessageSquare, Image as ImageIcon, User, Bot } from 'lucide-react';
+import { Send, Plus, MessageSquare, Image as ImageIcon, User, Bot, Menu, Settings, History, Trash2 } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface Message {
-  id: string;
+  id: number;
   content: string;
   sender: 'user' | 'ai';
-  timestamp: Date;
+  timestamp: string;
   provider?: string;
   model?: string;
   imageUrl?: string;
 }
 
+interface ChatSession {
+  id: number;
+  userId: string;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 const SimpleChatPage: React.FC = () => {
   const [input, setInput] = useState('');
-  const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [currentSessionId, setCurrentSessionId] = useState<number | null>(null);
+  const [showSidebar, setShowSidebar] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const queryClient = useQueryClient();
+  const userId = 'anna'; // Используем фиксированного пользователя
+
+  // Получение списка сессий
+  const { data: sessions = [] } = useQuery<ChatSession[]>({
+    queryKey: ['/api/chat/sessions'],
+    queryFn: async () => {
+      const response = await fetch('/api/chat/sessions');
+      const data = await response.json();
+      return data.sessions || [];
+    }
+  });
+
+  // Получение сообщений текущей сессии
+  const { data: messages = [] } = useQuery<Message[]>({
+    queryKey: ['/api/chat/sessions', currentSessionId, 'messages'],
+    queryFn: async () => {
+      if (!currentSessionId) return [];
+      const response = await fetch(`/api/chat/sessions/${currentSessionId}/messages`);
+      const data = await response.json();
+      return data.messages || [];
+    },
+    enabled: !!currentSessionId
+  });
 
   // Прокрутка к последнему сообщению
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const handleSendMessage = async () => {
-    if (!input.trim() || isLoading) return;
+  // Выбираем первую сессию при загрузке
+  useEffect(() => {
+    if (sessions.length > 0 && !currentSessionId) {
+      setCurrentSessionId(sessions[0].id);
+    }
+  }, [sessions, currentSessionId]);
 
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      content: input.trim(),
-      sender: 'user',
-      timestamp: new Date()
-    };
+  // Мутация для создания новой сессии
+  const createSessionMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch('/api/chat/sessions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          title: 'Новый чат'
+        })
+      });
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/chat/sessions'] });
+      setCurrentSessionId(data.session.id);
+    }
+  });
 
-    setMessages(prev => [...prev, userMessage]);
-    const currentInput = input;
-    setInput('');
-    setIsLoading(true);
-
-    try {
-      // Проверяем, запрашивает ли пользователь генерацию изображения
-      const isImageRequest = /создай|нарисуй|сгенерируй|изображение|картинку|рисунок/i.test(currentInput);
+  // Мутация для отправки сообщения
+  const sendMessageMutation = useMutation({
+    mutationFn: async ({ message, sessionId }: { message: string; sessionId: number }) => {
+      const isImageRequest = /создай|нарисуй|сгенерируй|изображение|картинку|рисунок/i.test(message);
       
+      // Сначала сохраняем сообщение пользователя
+      await fetch(`/api/chat/sessions/${sessionId}/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content: message,
+          sender: 'user',
+          userId
+        })
+      });
+
       if (isImageRequest) {
         // Генерация изображения
         const response = await fetch('/api/generate-image', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            prompt: currentInput,
-            style: 'realistic'
-          }),
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt: message, style: 'realistic' })
         });
-
         const data = await response.json();
-
+        
         if (data.success) {
-          const aiMessage: Message = {
-            id: Date.now().toString(),
-            content: `Создал изображение по запросу: "${currentInput}"`,
-            sender: 'ai',
-            timestamp: new Date(),
-            provider: data.provider,
-            imageUrl: data.imageUrl
-          };
-          setMessages(prev => [...prev, aiMessage]);
-        } else {
-          throw new Error(data.error || 'Ошибка генерации изображения');
+          // Сохраняем ответ с изображением
+          await fetch(`/api/chat/sessions/${sessionId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `Создал изображение: "${message}"`,
+              sender: 'ai',
+              userId,
+              provider: data.provider,
+              imageUrl: data.imageUrl
+            })
+          });
         }
+        return data;
       } else {
-        // Обычный текстовый чат
+        // Обычный чат
         const response = await fetch('/api/ai/smart-chat', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            message: currentInput,
-            userId: 'anna'
-          }),
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message, userId })
         });
-
         const data = await response.json();
-
+        
         if (data.success) {
-          const aiMessage: Message = {
-            id: Date.now().toString(),
-            content: data.response,
-            sender: 'ai',
-            timestamp: new Date(),
-            provider: data.provider,
-            model: data.model
-          };
-          setMessages(prev => [...prev, aiMessage]);
-        } else {
-          throw new Error(data.error || 'Ошибка получения ответа');
+          // Сохраняем ответ AI
+          await fetch(`/api/chat/sessions/${sessionId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: data.response,
+              sender: 'ai',
+              userId,
+              provider: data.provider,
+              model: data.model
+            })
+          });
         }
+        return data;
       }
-    } catch (err) {
-      console.error('Error:', err);
-      const errorMessage: Message = {
-        id: Date.now().toString(),
-        content: `Произошла ошибка: ${err instanceof Error ? err.message : 'Неизвестная ошибка'}`,
-        sender: 'ai',
-        timestamp: new Date(),
-        provider: 'System'
-      };
-      setMessages(prev => [...prev, errorMessage]);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/chat/sessions', currentSessionId, 'messages'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/chat/sessions'] });
+    }
+  });
+
+  const handleSendMessage = async () => {
+    if (!input.trim() || isLoading || !currentSessionId) return;
+
+    const message = input.trim();
+    setInput('');
+    setIsLoading(true);
+
+    try {
+      await sendMessageMutation.mutateAsync({ message, sessionId: currentSessionId });
+    } catch (error) {
+      console.error('Error sending message:', error);
     } finally {
       setIsLoading(false);
     }
@@ -123,29 +180,96 @@ const SimpleChatPage: React.FC = () => {
   };
 
   const startNewConversation = () => {
-    setMessages([]);
-    setInput('');
+    createSessionMutation.mutate();
   };
 
+  // Мутация для удаления сессии
+  const deleteSessionMutation = useMutation({
+    mutationFn: async (sessionId: number) => {
+      await fetch(`/api/chat/sessions/${sessionId}`, {
+        method: 'DELETE'
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/chat/sessions'] });
+      if (sessions.length > 1) {
+        const remainingSessions = sessions.filter(s => s.id !== currentSessionId);
+        setCurrentSessionId(remainingSessions[0]?.id || null);
+      } else {
+        setCurrentSessionId(null);
+      }
+    }
+  });
+
   return (
-    <div className="chatgpt-container min-h-screen flex flex-col">
-      {/* Шапка */}
-      <div className="chatgpt-header flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <h1 className="chatgpt-title">ChatGPT</h1>
+    <div className="flex h-screen bg-gray-50">
+      {/* Боковая панель */}
+      <div className={`${showSidebar ? 'w-64' : 'w-0'} transition-all duration-300 overflow-hidden bg-gray-900 text-white flex-shrink-0`}>
+        <div className="p-4">
+          <button 
+            onClick={startNewConversation}
+            className="w-full flex items-center gap-2 px-3 py-2 text-sm border border-gray-600 rounded-md hover:bg-gray-800 transition-colors"
+            disabled={createSessionMutation.isPending}
+          >
+            <Plus className="w-4 h-4" />
+            Новый чат
+          </button>
         </div>
-        <button 
-          onClick={startNewConversation}
-          className="chatgpt-button"
-        >
-          <Plus className="chatgpt-icon" />
-          Новый чат
-        </button>
+        
+        <div className="flex-1 overflow-y-auto px-2">
+          {sessions.map((session) => (
+            <div key={session.id} className="group relative">
+              <button
+                onClick={() => setCurrentSessionId(session.id)}
+                className={`w-full text-left px-3 py-2 text-sm rounded-md mb-1 hover:bg-gray-800 transition-colors ${
+                  currentSessionId === session.id ? 'bg-gray-800' : ''
+                }`}
+              >
+                <div className="truncate">{session.title}</div>
+                <div className="text-xs text-gray-400 truncate">
+                  {new Date(session.updatedAt).toLocaleDateString()}
+                </div>
+              </button>
+              
+              <button
+                onClick={() => deleteSessionMutation.mutate(session.id)}
+                className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-700 rounded transition-all"
+                disabled={deleteSessionMutation.isPending}
+              >
+                <Trash2 className="w-3 h-3" />
+              </button>
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* Область сообщений */}
-      <div className="flex-1 overflow-hidden flex flex-col">
-        <div className="flex-1 overflow-y-auto px-4 py-4">
+      {/* Основная область */}
+      <div className="flex-1 flex flex-col">
+        {/* Шапка */}
+        <div className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setShowSidebar(!showSidebar)}
+              className="p-1 hover:bg-gray-100 rounded transition-colors"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+            <h1 className="text-lg font-medium">ChatGPT</h1>
+          </div>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={startNewConversation}
+              className="flex items-center gap-2 px-3 py-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+              disabled={createSessionMutation.isPending}
+            >
+              <Plus className="w-4 h-4" />
+              Новый чат
+            </button>
+          </div>
+        </div>
+
+        {/* Область сообщений */}
+        <div className="flex-1 overflow-y-auto px-4 py-4 bg-white">
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center">
               <MessageSquare className="w-8 h-8 text-gray-400 mb-4" />
@@ -176,11 +300,11 @@ const SimpleChatPage: React.FC = () => {
                         {message.content}
                       </div>
                       
-                      {/* Изображение если есть */}
-                      {message.imageUrl && (
+                      {/* Изображение если есть - проверяем и поле imageUrl и поле content на наличие URL */}
+                      {(message.imageUrl || message.content?.includes('/generated-images/')) && (
                         <div className="mt-3">
                           <img 
-                            src={message.imageUrl} 
+                            src={message.imageUrl || message.content.match(/\/generated-images\/[^\s]+/)?.[0]} 
                             alt="Сгенерированное изображение"
                             className="max-w-md rounded-lg border border-gray-200 shadow-sm"
                             onError={(e) => {
@@ -223,17 +347,17 @@ const SimpleChatPage: React.FC = () => {
         </div>
 
         {/* Поле ввода */}
-        <div className="border-t border-gray-200 px-4 py-4">
+        <div className="border-t border-gray-200 px-4 py-4 bg-white">
           <div className="max-w-3xl mx-auto">
             <div className="relative flex items-end gap-3 bg-white border border-gray-300 rounded-xl p-3 shadow-sm">
               <Textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Сообщение ChatGPT"
+                placeholder="Сообщение ChatGPT..."
                 className="flex-1 border-0 resize-none focus:ring-0 focus:outline-none text-sm p-0 min-h-[20px] max-h-[200px]"
                 rows={1}
-                disabled={isLoading}
+                disabled={isLoading || !currentSessionId}
               />
               
               <div className="flex items-center gap-2">
@@ -246,7 +370,7 @@ const SimpleChatPage: React.FC = () => {
                 
                 <button
                   onClick={handleSendMessage}
-                  disabled={isLoading || !input.trim()}
+                  disabled={isLoading || !input.trim() || !currentSessionId}
                   className="p-1.5 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Send className="w-4 h-4" />
