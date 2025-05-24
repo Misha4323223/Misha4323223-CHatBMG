@@ -10,6 +10,6 @@ dependencies = [
     "numpy>=2.2.6",
     "pillow>=11.2.1",
     "requests>=2.32.3",
-    "edgegpt>=0.13.2",
     "playwright>=1.52.0",
+    "edgegpt==0.3.9",
 ]
