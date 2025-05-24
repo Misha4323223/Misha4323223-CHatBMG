@@ -44,11 +44,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup WebSocket server
   setupWebSocket(httpServer, storage);
   
+  // Маршрут для сгенерированных изображений (высокий приоритет)
+  app.use('/generated-images', express.static(path.join(process.cwd(), 'public/generated-images'), {
+    setHeaders: (res, filePath) => {
+      if (filePath.endsWith('.jpg') || filePath.endsWith('.jpeg')) {
+        res.setHeader('Content-Type', 'image/jpeg');
+      } else if (filePath.endsWith('.png')) {
+        res.setHeader('Content-Type', 'image/png');
+      }
+    }
+  }));
+  
   // Setup proxy middleware
   setupProxyMiddleware(app);
-  
-  // Маршрут для сгенерированных изображений
-  app.use('/generated-images', express.static(path.join(process.cwd(), 'public/generated-images')));
   
   app.get('/booomerangs-chat', (req, res) => {
     console.log('📱 Запрос к /booomerangs-chat - отправляем team-chat-anna.html');
