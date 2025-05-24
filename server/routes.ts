@@ -11,6 +11,7 @@ import { eq, and, desc, gt, count, sql } from "drizzle-orm";
 
 // Импортируем модули для работы с изображениями и AI провайдерами
 import * as path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
 import multer from 'multer';
@@ -44,16 +45,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup WebSocket server
   setupWebSocket(httpServer, storage);
   
-  // Маршрут для сгенерированных изображений (высокий приоритет)
-  app.use('/generated-images', express.static(path.join(process.cwd(), 'public/generated-images'), {
-    setHeaders: (res, filePath) => {
-      if (filePath.endsWith('.jpg') || filePath.endsWith('.jpeg')) {
+  // ПРИОРИТЕТНЫЙ маршрут для сгенерированных изображений - ПЕРВЫМ!
+  app.get('/generated-images/:filename', (req, res) => {
+    const filename = req.params.filename;
+    const filepath = path.join(process.cwd(), 'public/generated-images', filename);
+    
+    if (fs.existsSync(filepath)) {
+      if (filename.endsWith('.jpg') || filename.endsWith('.jpeg')) {
         res.setHeader('Content-Type', 'image/jpeg');
-      } else if (filePath.endsWith('.png')) {
+      } else if (filename.endsWith('.png')) {
         res.setHeader('Content-Type', 'image/png');
       }
+      res.sendFile(filepath);
+    } else {
+      res.status(404).send('Image not found');
     }
-  }));
+  });
   
   // Setup proxy middleware
   setupProxyMiddleware(app);
@@ -63,9 +70,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.sendFile(path.resolve('./team-chat-anna.html'));
   });
   
-  // Статические файлы из корневой директории - НЕ блокируем team-chat-anna.html
+  // Статические файлы из корневой директории с исключением generated-images
   app.use(express.static(path.join(process.cwd()), {
     setHeaders: (res, filePath) => {
+      // Блокируем доступ к generated-images через общий static
+      if (filePath.includes('generated-images')) {
+        res.status(404);
+        return false;
+      }
       // Разрешаем доступ к team-chat-anna.html
       if (filePath.includes('team-chat-anna.html')) {
         return true;
