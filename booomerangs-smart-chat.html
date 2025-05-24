@@ -1718,7 +1718,7 @@
         }
 
         // Добавление сообщения в интерфейс
-        function addMessage(content, sender) {
+        function addMessage(content, sender, isHtml = false) {
             console.log(`Добавляем сообщение: ${sender} - ${content.substring(0, 50)}...`);
             
             const messagesArea = document.getElementById('messagesArea');
@@ -1755,9 +1755,9 @@
                     line-height: 1.6 !important;
                     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
                 `;
-                messageDiv.innerHTML = `🤖 <strong>AI:</strong> ${content}`;
+                messageDiv.innerHTML = isHtml ? content : `🤖 <strong>AI:</strong> ${content}`;
             } else {
-                messageDiv.innerHTML = content;
+                messageDiv.innerHTML = isHtml ? content : `👤 <strong>Вы:</strong> ${content}`;
             }
             
             messagesArea.appendChild(messageDiv);
@@ -2651,6 +2651,16 @@
 
         // Основная функция анализа изображения
         async function analyzeImage(file) {
+            // Сначала показываем загруженное изображение в чате
+            const imageUrl = URL.createObjectURL(file);
+            const userImageHtml = `
+                <div class="image-message" style="margin: 10px 0;">
+                    <img src="${imageUrl}" alt="Загруженное изображение" style="max-width: 300px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <div style="margin-top: 5px; color: #666; font-size: 12px;">📁 ${file.name}</div>
+                </div>
+            `;
+            addMessage(userImageHtml, 'user', true); // true для HTML контента
+            
             // Показываем индикатор загрузки
             addMessage('🔍 Анализирую изображение...', 'ai');
             
