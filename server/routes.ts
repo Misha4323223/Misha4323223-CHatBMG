@@ -43,6 +43,8 @@ const chatFreeProvider = require('./simple-chatfree');
 
 // Создаем экземпляр ChatGPT скрапера
 const { ChatGPTWebScraper, chatgptScraper } = require('./chatgpt-web-scraper.js');
+const ChatGPTBypass2025 = require('./chatgpt-bypass-2025.js');
+const chatgptBypass = new ChatGPTBypass2025();
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Create HTTP server
@@ -77,6 +79,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error('❌ Ошибка авторизации:', error);
+      res.json({ success: false, error: error.message });
+    }
+  });
+
+  // Новые обходные пути ChatGPT 2025
+  app.post('/api/chatgpt-bypass/chat', async (req, res) => {
+    try {
+      const { message, sessionToken } = req.body;
+      
+      if (!message) {
+        return res.json({ success: false, error: 'Сообщение не может быть пустым' });
+      }
+
+      console.log('🚀 Тестирование новых обходных путей ChatGPT...');
+      
+      const result = await chatgptBypass.getResponse(message, { sessionToken });
+      
+      res.json(result);
+    } catch (error: any) {
+      console.error('❌ Ошибка обходных путей:', error);
       res.json({ success: false, error: error.message });
     }
   });
