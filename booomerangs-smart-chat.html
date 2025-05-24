@@ -1783,7 +1783,7 @@
         }
 
         // Сохранение сообщения в историю
-        async function saveMessageToHistory(content, sender, provider = null, model = null) {
+        async function saveMessageToHistory(content, sender, provider = null, model = null, imageUrl = null) {
             if (!currentSessionId) return;
             
             try {
@@ -1796,6 +1796,7 @@
                 
                 if (provider) messageData.provider = provider;
                 if (model) messageData.model = model;
+                if (imageUrl) messageData.imageUrl = imageUrl;
                 
                 const response = await fetch(`/api/chat/sessions/${currentSessionId}/messages`, {
                     method: 'POST',
