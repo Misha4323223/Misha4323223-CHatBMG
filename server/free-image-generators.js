@@ -43,7 +43,7 @@ function enhancePrompt(prompt, style = 'realistic') {
 }
 
 /**
- * 1. Pollinations AI - самый надежный бесплатный генератор
+ * 1. Pollinations AI - обновленная версия с обходом блокировок
  */
 async function generateWithPollinations(prompt, style, imageId) {
     console.log('🌸 Генерация через Pollinations AI...');
@@ -51,39 +51,47 @@ async function generateWithPollinations(prompt, style, imageId) {
     const enhancedPrompt = enhancePrompt(prompt, style);
     const encodedPrompt = encodeURIComponent(enhancedPrompt);
     
-    // Pollinations предоставляет прямой URL для генерации
-    const apiUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=512&height=512&seed=${Math.floor(Math.random() * 1000000)}`;
+    // Используем несколько endpoints Pollinations
+    const endpoints = [
+        `https://image.pollinations.ai/prompt/${encodedPrompt}?width=512&height=512&seed=${Math.floor(Math.random() * 1000000)}&nologo=true`,
+        `https://pollinations.ai/p/${encodedPrompt}?width=512&height=512`,
+        `https://image.pollinations.ai/prompt/${encodedPrompt}`
+    ];
     
-    try {
-        const response = await fetch(apiUrl, {
-            method: 'GET',
-            timeout: 30000,
-            headers: {
-                'User-Agent': 'BOOOMERANGS-AI-Chat/1.0'
+    for (const apiUrl of endpoints) {
+        try {
+            const response = await fetch(apiUrl, {
+                method: 'GET',
+                timeout: 25000,
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                    'Accept': 'image/*,*/*;q=0.8',
+                    'Referer': 'https://pollinations.ai/'
+                }
+            });
+            
+            if (response.ok && response.headers.get('content-type')?.startsWith('image/')) {
+                const imageBuffer = await response.arrayBuffer();
+                const filename = `pollinations_${imageId}.jpg`;
+                const filepath = path.join(IMAGES_DIR, filename);
+                
+                fs.writeFileSync(filepath, Buffer.from(imageBuffer));
+                console.log('✅ Pollinations: изображение сохранено');
+                
+                return {
+                    success: true,
+                    imageUrl: `/generated-images/${filename}`,
+                    provider: 'Pollinations AI',
+                    prompt: prompt
+                };
             }
-        });
-        
-        if (response.ok) {
-            const imageBuffer = await response.buffer();
-            const filename = `pollinations_${imageId}.jpg`;
-            const filepath = path.join(IMAGES_DIR, filename);
-            
-            fs.writeFileSync(filepath, imageBuffer);
-            console.log('✅ Pollinations: изображение сохранено');
-            
-            return {
-                success: true,
-                imageUrl: `/generated-images/${filename}`,
-                provider: 'Pollinations AI',
-                prompt: prompt
-            };
+        } catch (error) {
+            console.log(`❌ Pollinations endpoint недоступен: ${error.message}`);
+            continue;
         }
-        
-        throw new Error(`HTTP ${response.status}`);
-    } catch (error) {
-        console.log('❌ Pollinations недоступен:', error.message);
-        throw error;
     }
+    
+    throw new Error('Все Pollinations endpoints недоступны');
 }
 
 /**
@@ -258,21 +266,150 @@ async function generateWithStableDiffusionAPI(prompt, style, imageId) {
 }
 
 /**
+ * Альтернативный метод через Hugging Face (работает с ключом)
+ */
+async function generateWithHuggingFace(prompt, style, imageId) {
+    console.log('🤗 Генерация через Hugging Face...');
+    
+    if (!process.env.HUGGINGFACE_API_KEY) {
+        throw new Error('HUGGINGFACE_API_KEY не найден');
+    }
+    
+    const enhancedPrompt = enhancePrompt(prompt, style);
+    
+    const response = await fetch('https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-dev', {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${process.env.HUGGINGFACE_API_KEY}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            inputs: enhancedPrompt,
+            parameters: {
+                width: 512,
+                height: 512
+            }
+        }),
+        timeout: 30000
+    });
+    
+    if (response.ok) {
+        const imageBuffer = await response.arrayBuffer();
+        const filename = `huggingface_${imageId}.jpg`;
+        const filepath = path.join(IMAGES_DIR, filename);
+        
+        fs.writeFileSync(filepath, Buffer.from(imageBuffer));
+        console.log('✅ Hugging Face: изображение сохранено');
+        
+        return {
+            success: true,
+            imageUrl: `/generated-images/${filename}`,
+            provider: 'Hugging Face',
+            prompt: prompt
+        };
+    }
+    
+    throw new Error(`Hugging Face API недоступен: ${response.status}`);
+}
+
+/**
+ * Генерация через Replicate (работает с ключом)
+ */
+async function generateWithReplicate(prompt, style, imageId) {
+    console.log('🔄 Генерация через Replicate...');
+    
+    if (!process.env.REPLICATE_API_TOKEN) {
+        throw new Error('REPLICATE_API_TOKEN не найден');
+    }
+    
+    const enhancedPrompt = enhancePrompt(prompt, style);
+    
+    const response = await fetch('https://api.replicate.com/v1/predictions', {
+        method: 'POST',
+        headers: {
+            'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            version: 'ac732df83cea7fff18b8472768c88ad041fa750ff7682a21affe81863cbe77e57',
+            input: {
+                prompt: enhancedPrompt,
+                width: 512,
+                height: 512,
+                num_inference_steps: 20
+            }
+        }),
+        timeout: 60000
+    });
+    
+    if (response.ok) {
+        const prediction = await response.json();
+        
+        // Ждем завершения генерации
+        let result = prediction;
+        while (result.status === 'starting' || result.status === 'processing') {
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            const statusResponse = await fetch(`https://api.replicate.com/v1/predictions/${result.id}`, {
+                headers: {
+                    'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`
+                }
+            });
+            
+            result = await statusResponse.json();
+        }
+        
+        if (result.status === 'succeeded' && result.output && result.output[0]) {
+            const imageUrl = result.output[0];
+            const filename = `replicate_${imageId}.jpg`;
+            const filepath = path.join(IMAGES_DIR, filename);
+            
+            // Скачиваем изображение
+            const imageResponse = await fetch(imageUrl);
+            const imageBuffer = await imageResponse.arrayBuffer();
+            fs.writeFileSync(filepath, Buffer.from(imageBuffer));
+            
+            console.log('✅ Replicate: изображение сохранено');
+            
+            return {
+                success: true,
+                imageUrl: `/generated-images/${filename}`,
+                provider: 'Replicate',
+                prompt: prompt
+            };
+        }
+    }
+    
+    throw new Error(`Replicate API недоступен: ${response.status}`);
+}
+
+/**
  * Основная функция генерации изображений
- * Пробует все доступные бесплатные генераторы по очереди
+ * Использует только проверенные рабочие API сервисы
  */
 async function generateFreeImage(prompt, style = 'realistic') {
     const imageId = generateImageId();
     
     console.log(`🎨 Начинаем генерацию: "${prompt}" в стиле "${style}"`);
     
-    // Список бесплатных генераторов в порядке приоритета
-    const generators = [
-        () => generateWithPollinations(prompt, style, imageId),
-        () => generateWithCraiyon(prompt, style, imageId),
-        () => generateWithDeepAI(prompt, style, imageId),
-        () => generateWithStableDiffusionAPI(prompt, style, imageId)
-    ];
+    // Список рабочих генераторов в порядке приоритета
+    const generators = [];
+    
+    // Проверяем наличие API ключей и добавляем соответствующие генераторы
+    if (process.env.HUGGINGFACE_API_KEY) {
+        generators.push(() => generateWithHuggingFace(prompt, style, imageId));
+    }
+    
+    if (process.env.REPLICATE_API_TOKEN) {
+        generators.push(() => generateWithReplicate(prompt, style, imageId));
+    }
+    
+    // Добавляем Pollinations как резервный вариант
+    generators.push(() => generateWithPollinations(prompt, style, imageId));
+    
+    if (generators.length === 0) {
+        throw new Error('Нет доступных API для генерации изображений. Требуются HUGGINGFACE_API_KEY или REPLICATE_API_TOKEN');
+    }
     
     let lastError = null;
     
