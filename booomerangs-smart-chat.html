@@ -1305,7 +1305,13 @@
                 addMessage(messageText, msg.sender);
             });
             
-            messagesArea.scrollTop = messagesArea.scrollHeight;
+            // Плавная прокрутка вниз после загрузки сообщений
+            setTimeout(() => {
+                messagesArea.scrollTo({
+                    top: messagesArea.scrollHeight,
+                    behavior: 'smooth'
+                });
+            }, 200);
             console.log(`✅ Отображено ${messages.length} сообщений`);
         }
 
@@ -1396,6 +1402,15 @@
                             console.log('Модель:', data.model);
                             addMessage(data.response, 'ai');
                             
+                            // Дополнительная прокрутка после добавления AI ответа
+                            setTimeout(() => {
+                                const messagesArea = document.getElementById('messagesArea');
+                                messagesArea.scrollTo({
+                                    top: messagesArea.scrollHeight,
+                                    behavior: 'smooth'
+                                });
+                            }, 300);
+                            
                             // Сохраняем ответ AI в историю
                             await saveMessageToHistory(data.response, 'ai', data.provider, data.model);
                         } else {
@@ -1479,8 +1494,13 @@
                 console.log('AI сообщение создано альтернативным методом');
             }
             
-            // Прокрутка к последнему сообщению
-            messagesArea.scrollTop = messagesArea.scrollHeight;
+            // Плавная прокрутка к последнему сообщению
+            setTimeout(() => {
+                messagesArea.scrollTo({
+                    top: messagesArea.scrollHeight,
+                    behavior: 'smooth'
+                });
+            }, 100);
             
             console.log(`Сообщение добавлено: ${sender}`);
         }
