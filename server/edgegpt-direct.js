@@ -21,11 +21,10 @@ import json
 
 async def chat_with_edgegpt():
     try:
-        from EdgeGPT.EdgeGPT import Chatbot
+        from EdgeGPT import Chatbot
         
-        # Создаем подключение к вашему аккаунту ChatGPT без proxies
-        cookies = None  # Используем автоматическое получение cookies
-        bot = await Chatbot.create(cookies=cookies)
+        # Создаем подключение к вашему аккаунту ChatGPT
+        bot = Chatbot()
         
         # Отправляем ваше сообщение
         response = await bot.ask(prompt="${message.replace(/"/g, '\\"')}")

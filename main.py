@@ -13,10 +13,10 @@ async def init_chatgpt():
     """Инициализация EdgeGPT бота"""
     global bot
     try:
-        from EdgeGPT.EdgeGPT import Chatbot, ConversationStyle
+        from EdgeGPT import Chatbot
         
-        # Создаем бота с вашими учетными данными
-        bot = await Chatbot.create()
+        # Создаем бота без cookies файла (автоматическое подключение)
+        bot = Chatbot()
         print(f"✅ EdgeGPT успешно инициализирован с аккаунтом: {EMAIL}")
         return True
     except Exception as e:
