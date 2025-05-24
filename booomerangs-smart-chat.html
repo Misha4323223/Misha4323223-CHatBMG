@@ -1299,8 +1299,18 @@
         function scrollToBottomManual() {
             const messagesArea = document.getElementById('messagesArea');
             if (messagesArea) {
-                messagesArea.scrollTop = messagesArea.scrollHeight + 2000;
-                console.log('🔽 Ручная прокрутка вниз выполнена');
+                // Принудительная прокрутка несколькими способами
+                messagesArea.scrollTop = 999999;
+                messagesArea.scroll(0, 999999);
+                messagesArea.scrollTo({ top: 999999, behavior: 'smooth' });
+                
+                // Находим последнее сообщение и прокручиваем к нему
+                const lastMessage = messagesArea.querySelector('.message:last-child');
+                if (lastMessage) {
+                    lastMessage.scrollIntoView({ behavior: 'smooth', block: 'end', inline: 'nearest' });
+                }
+                
+                console.log('🔽 Принудительная прокрутка вниз:', messagesArea.scrollTop, 'из', messagesArea.scrollHeight);
             }
         }
 
