@@ -98,21 +98,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { spawn } = require('child_process');
       
       const pythonScript = `
-import asyncio
-from edgegpt import Chatbot
+import requests
 import json
-import sys
+import os
 
-async def chat_with_gpt():
+def chat_with_openai():
     try:
-        bot = Chatbot()
-        response = await bot.ask("${message.replace(/"/g, '\\"')}")
-        await bot.aclose()
-        print(json.dumps({"success": True, "response": response["text"], "provider": "EdgeGPT", "model": "gpt-4"}))
+        email = os.getenv("CHATGPT_EMAIL")
+        password = os.getenv("CHATGPT_PASSWORD")
+        
+        # Используем прямой API запрос
+        headers = {
+            'Content-Type': 'application/json',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
+        
+        # Пытаемся подключиться через открытый GPT API
+        payload = {
+            "model": "gpt-3.5-turbo",
+            "messages": [{"role": "user", "content": "${message.replace(/"/g, '\\"')}"}],
+            "temperature": 0.7
+        }
+        
+        # Используем бесплатный ChatGPT провайдер
+        response = requests.post(
+            "https://chatgpt-api.shn.hk/v1/",
+            headers=headers,
+            json=payload,
+            timeout=30
+        )
+        
+        if response.status_code == 200:
+            data = response.json()
+            if "choices" in data and len(data["choices"]) > 0:
+                result = data["choices"][0]["message"]["content"]
+                print(json.dumps({"success": True, "response": result, "provider": "OpenAI-Compatible", "model": "gpt-3.5-turbo"}))
+            else:
+                print(json.dumps({"success": False, "error": "Нет ответа от API"}))
+        else:
+            print(json.dumps({"success": False, "error": f"HTTP {response.status_code}"}))
+            
     except Exception as e:
         print(json.dumps({"success": False, "error": str(e)}))
 
-asyncio.run(chat_with_gpt())
+chat_with_openai()
 `;
 
       const python = spawn('python3', ['-c', pythonScript]);
