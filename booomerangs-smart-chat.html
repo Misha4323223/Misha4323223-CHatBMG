@@ -1326,6 +1326,17 @@
         let isRecording = false;
         let mediaRecorder = null;
         let audioChunks = [];
+        
+        // Переменные для расширенной памяти
+        let userProfile = {
+            preferences: {},
+            interests: [],
+            conversationHistory: [],
+            contextMemory: {},
+            personalData: {}
+        };
+        let conversationContext = [];
+        let longTermMemory = [];
 
         // Инициализация при загрузке
         document.addEventListener('DOMContentLoaded', function() {
@@ -1350,6 +1361,211 @@
                     voiceBtn.title = 'Голосовые функции недоступны в этом браузере';
                 }
             }
+            
+            // Загрузка пользовательского профиля и памяти
+            loadUserProfile();
+            initializeMemorySystem();
+        }
+
+        // === СИСТЕМА РАСШИРЕННОЙ ПАМЯТИ ===
+
+        // Загрузка профиля пользователя
+        function loadUserProfile() {
+            if (!currentUser) return;
+            
+            const savedProfile = localStorage.getItem(`userProfile_${currentUser}`);
+            if (savedProfile) {
+                userProfile = JSON.parse(savedProfile);
+                console.log('👤 Профиль пользователя загружен:', userProfile);
+            } else {
+                // Создание нового профиля
+                userProfile = {
+                    preferences: {
+                        language: 'ru',
+                        tone: 'friendly',
+                        responseLength: 'medium',
+                        topics: []
+                    },
+                    interests: [],
+                    conversationHistory: [],
+                    contextMemory: {},
+                    personalData: {
+                        name: currentUser,
+                        firstVisit: new Date().toISOString()
+                    }
+                };
+                saveUserProfile();
+                console.log('✨ Создан новый профиль пользователя');
+            }
+        }
+
+        // Сохранение профиля пользователя
+        function saveUserProfile() {
+            if (!currentUser) return;
+            localStorage.setItem(`userProfile_${currentUser}`, JSON.stringify(userProfile));
+        }
+
+        // Инициализация системы памяти
+        function initializeMemorySystem() {
+            console.log('🧠 Инициализация системы памяти...');
+            
+            // Загружаем долгосрочную память
+            const savedMemory = localStorage.getItem(`longTermMemory_${currentUser}`);
+            if (savedMemory) {
+                longTermMemory = JSON.parse(savedMemory);
+                console.log('💾 Долгосрочная память загружена, записей:', longTermMemory.length);
+            }
+        }
+
+        // Добавление в долгосрочную память
+        function addToLongTermMemory(message, response, context) {
+            const memoryEntry = {
+                timestamp: new Date().toISOString(),
+                userMessage: message,
+                aiResponse: response,
+                context: context,
+                topics: extractTopics(message),
+                sentiment: analyzeSentiment(message),
+                importance: calculateImportance(message, response)
+            };
+            
+            longTermMemory.push(memoryEntry);
+            
+            // Ограничиваем размер памяти (последние 100 записей)
+            if (longTermMemory.length > 100) {
+                longTermMemory = longTermMemory.slice(-100);
+            }
+            
+            localStorage.setItem(`longTermMemory_${currentUser}`, JSON.stringify(longTermMemory));
+            console.log('💾 Добавлено в долгосрочную память:', memoryEntry.topics);
+        }
+
+        // Извлечение тем из сообщения
+        function extractTopics(message) {
+            const topicKeywords = {
+                'программирование': ['код', 'программ', 'javascript', 'python', 'html', 'css', 'функция', 'переменная'],
+                'математика': ['уравнение', 'формула', 'производная', 'интеграл', 'график', 'корень', 'решение'],
+                'наука': ['исследование', 'эксперимент', 'теория', 'гипотеза', 'анализ'],
+                'технологии': ['компьютер', 'интернет', 'сайт', 'приложение', 'разработка', 'AI', 'ИИ'],
+                'творчество': ['дизайн', 'искусство', 'музыка', 'рисование', 'творческий', 'идея'],
+                'личное': ['семья', 'друзья', 'работа', 'хобби', 'интересы', 'планы']
+            };
+            
+            const topics = [];
+            const lowerMessage = message.toLowerCase();
+            
+            for (const [topic, keywords] of Object.entries(topicKeywords)) {
+                if (keywords.some(keyword => lowerMessage.includes(keyword))) {
+                    topics.push(topic);
+                }
+            }
+            
+            return topics;
+        }
+
+        // Простой анализ тональности
+        function analyzeSentiment(message) {
+            const positiveWords = ['хорошо', 'отлично', 'замечательно', 'круто', 'супер', 'класс', 'спасибо', 'благодарю'];
+            const negativeWords = ['плохо', 'ужасно', 'проблема', 'ошибка', 'не работает', 'сложно', 'трудно'];
+            
+            const lowerMessage = message.toLowerCase();
+            const positiveCount = positiveWords.filter(word => lowerMessage.includes(word)).length;
+            const negativeCount = negativeWords.filter(word => lowerMessage.includes(word)).length;
+            
+            if (positiveCount > negativeCount) return 'positive';
+            if (negativeCount > positiveCount) return 'negative';
+            return 'neutral';
+        }
+
+        // Расчет важности сообщения
+        function calculateImportance(message, response) {
+            let importance = 1;
+            
+            // Увеличиваем важность для длинных сообщений
+            if (message.length > 100) importance += 1;
+            if (response.length > 200) importance += 1;
+            
+            // Увеличиваем важность для вопросов
+            if (message.includes('?') || message.includes('как') || message.includes('что') || message.includes('где')) {
+                importance += 1;
+            }
+            
+            // Увеличиваем важность для личной информации
+            if (message.includes('меня зовут') || message.includes('я работаю') || message.includes('мне нравится')) {
+                importance += 2;
+            }
+            
+            return Math.min(importance, 5); // Максимум 5
+        }
+
+        // Получение релевантного контекста
+        function getRelevantContext(message) {
+            const topics = extractTopics(message);
+            const relevantMemories = longTermMemory.filter(memory => 
+                memory.topics.some(topic => topics.includes(topic)) ||
+                memory.userMessage.toLowerCase().includes(message.toLowerCase().substring(0, 20))
+            ).slice(-5); // Последние 5 релевантных записей
+            
+            return relevantMemories.map(memory => ({
+                message: memory.userMessage,
+                response: memory.aiResponse,
+                topics: memory.topics,
+                timestamp: memory.timestamp
+            }));
+        }
+
+        // Построение контекста для AI
+        function buildContextForAI(message) {
+            const context = getRelevantContext(message);
+            const userPreferences = userProfile.preferences;
+            
+            let contextPrompt = '';
+            
+            if (context.length > 0) {
+                contextPrompt += 'Предыдущий контекст разговора:\n';
+                context.forEach(item => {
+                    contextPrompt += `Пользователь: ${item.message}\nВаш ответ: ${item.response}\n\n`;
+                });
+            }
+            
+            if (userPreferences.topics && userPreferences.topics.length > 0) {
+                contextPrompt += `Интересы пользователя: ${userPreferences.topics.join(', ')}\n`;
+            }
+            
+            if (userProfile.personalData.name) {
+                contextPrompt += `Имя пользователя: ${userProfile.personalData.name}\n`;
+            }
+            
+            return contextPrompt;
+        }
+
+        // Обновление профиля пользователя на основе разговора
+        function updateUserProfile(message, topics) {
+            // Обновляем интересы
+            topics.forEach(topic => {
+                if (!userProfile.interests.includes(topic)) {
+                    userProfile.interests.push(topic);
+                }
+            });
+            
+            // Обновляем предпочтительные темы
+            if (!userProfile.preferences.topics) {
+                userProfile.preferences.topics = [];
+            }
+            
+            topics.forEach(topic => {
+                const existingTopic = userProfile.preferences.topics.find(t => t.name === topic);
+                if (existingTopic) {
+                    existingTopic.count++;
+                } else {
+                    userProfile.preferences.topics.push({ name: topic, count: 1 });
+                }
+            });
+            
+            // Сортируем темы по частоте
+            userProfile.preferences.topics.sort((a, b) => b.count - a.count);
+            
+            saveUserProfile();
         }
 
         // Проверка авторизации
@@ -1631,6 +1847,12 @@
             await saveMessageToHistory(message, 'user');
             
             try {
+                // Строим контекст для AI с использованием памяти
+                const contextPrompt = buildContextForAI(message);
+                const enhancedMessage = contextPrompt ? `${contextPrompt}\n\nТекущий запрос: ${message}` : message;
+                
+                console.log('🧠 Контекст для AI:', contextPrompt ? 'добавлен' : 'отсутствует');
+                
                 // Отправляем на сервер через правильный API endpoint
                 const response = await fetch('/api/g4f/chat', {
                     method: 'POST',
@@ -1638,7 +1860,7 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        message: message,
+                        message: enhancedMessage,
                         provider: 'auto'
                     })
                 });
@@ -1656,6 +1878,13 @@
                             console.log('Провайдер:', data.provider);
                             console.log('Модель:', data.model);
                             addMessage(data.response, 'ai');
+                            
+                            // Добавляем в долгосрочную память и обновляем профиль
+                            const topics = extractTopics(message);
+                            addToLongTermMemory(message, data.response, contextPrompt);
+                            updateUserProfile(message, topics);
+                            
+                            console.log('💾 Обновлена память и профиль пользователя');
                             
                             // Дополнительная прокрутка после добавления AI ответа
                             setTimeout(() => {
