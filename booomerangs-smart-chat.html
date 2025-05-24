@@ -2931,12 +2931,15 @@
                 display: flex;
                 align-items: center;
                 gap: 10px;
-                padding: 10px;
-                margin-bottom: 10px;
+                padding: 8px;
+                margin: 5px 0;
                 background: #f5f5f5;
                 border: 2px solid #007bff;
                 border-radius: 8px;
                 position: relative;
+                width: calc(100% - 60px);
+                box-sizing: border-box;
+                z-index: 1;
             `;
             
             if (fileType === 'pdf') {
@@ -3008,9 +3011,10 @@
                 `;
             }
             
-            // Добавляем превью перед полем ввода
+            // Добавляем превью над полем ввода
             const messageInput = document.getElementById('messageInput');
-            inputContainer.insertBefore(previewDiv, messageInput);
+            const inputArea = messageInput.parentElement;
+            inputArea.insertBefore(previewDiv, inputArea.firstChild);
         }
 
         // Функция для удаления превью файла
