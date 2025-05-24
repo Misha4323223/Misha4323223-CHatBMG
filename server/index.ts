@@ -55,8 +55,8 @@ app.use((req, res, next) => {
 (async () => {
   // КРИТИЧЕСКИ ВАЖНО: маршруты чата ДО setupVite
   app.get('/smart-chat', (req, res) => {
-    console.log('🎯 КРИТИЧЕСКИЙ МАРШРУТ: /smart-chat обработан ДО Vite');
-    res.sendFile('client/index.html', { root: '.' });
+    console.log('🎯 ПРЯМОЕ ПЕРЕНАПРАВЛЕНИЕ: /smart-chat -> /provider');
+    res.redirect('/provider');
   });
   
   const server = await registerRoutes(app);
