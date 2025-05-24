@@ -86,6 +86,7 @@ async function saveMessage(messageData) {
  * Получение сообщений из сессии
  */
 async function getSessionMessages(sessionId) {
+  console.log(`🔍 НАЧАЛО getSessionMessages для сессии ${sessionId}`);
   // Получаем AI сообщения из базы данных
   const aiMessagesData = await db
     .select()
