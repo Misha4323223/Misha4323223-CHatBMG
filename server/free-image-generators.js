@@ -3,9 +3,13 @@
  * Работает без API ключей и регистрации
  */
 
-const fs = require('fs');
-const path = require('path');
-const fetch = require('node-fetch');
+import fs from 'fs';
+import path from 'path';
+import fetch from 'node-fetch';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Директория для сохранения изображений
 const IMAGES_DIR = path.join(__dirname, '../public/generated-images');
@@ -345,7 +349,7 @@ async function checkFreeGeneratorsStatus() {
     return results;
 }
 
-module.exports = {
+export {
     generateFreeImage,
     checkFreeGeneratorsStatus,
     generateWithPollinations,

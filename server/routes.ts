@@ -20,7 +20,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const require = createRequire(__filename);
 
-const freeImageGenerators = require('./free-image-generators');
+import * as freeImageGenerators from './free-image-generators.js';
 
 // Настройка multer для загрузки файлов
 const upload = multer({
