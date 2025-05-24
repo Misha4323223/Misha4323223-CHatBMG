@@ -86,12 +86,12 @@ async function analyzeImageBasic(imageBuffer) {
     const metadata = await sharp(imageBuffer).metadata();
     
     // Анализируем доминирующие цвета
-    const { dominant } = await sharp(imageBuffer)
+    const rawBuffer = await sharp(imageBuffer)
       .resize(50, 50)
       .raw()
-      .toBuffer({ resolveWithObject: true });
+      .toBuffer();
       
-    const colors = analyzeDominantColors(dominant);
+    const colors = analyzeDominantColors(rawBuffer);
     
     // Определяем тип контента по размерам и форме
     const contentType = determineContentType(metadata);
@@ -207,6 +207,12 @@ function generateSmartDescription(filename, base64Image) {
  */
 function analyzeDominantColors(rawBuffer) {
   const colors = [];
+  
+  // Проверяем валидность буфера
+  if (!rawBuffer || !rawBuffer.length || rawBuffer.length < 3) {
+    return ['серый', 'неопределенный'];
+  }
+  
   const pixels = rawBuffer.length / 3; // RGB
   
   let r = 0, g = 0, b = 0;
