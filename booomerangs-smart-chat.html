@@ -2482,8 +2482,10 @@
         async function extractTextFromDocument(file) {
             console.log('📄 Начало извлечения текста из документа:', file.name);
             
-            // Сначала показываем что документ загружен
-            addMessage('user', `📄 Загружен документ: ${file.name} (${formatFileSize(file.size)})`);
+            // Сначала показываем что документ загружен и сохраняем в базу
+            const userMessage = `📄 Загружен документ: ${file.name} (${formatFileSize(file.size)})`;
+            addMessage('user', userMessage);
+            await saveMessage('user', userMessage);
             
             const formData = new FormData();
             formData.append('document', file);
@@ -2506,8 +2508,9 @@
                         analysisText = result.error || `📄 Документ "${file.name}" (${formatFileSize(file.size)}) загружен, но текст не удалось извлечь.`;
                     }
                     
-                    // Показываем результат анализа в чате
+                    // Показываем результат анализа в чате и сохраняем в базу
                     addMessage('ai', analysisText, 'Document Processor');
+                    await saveMessage('ai', analysisText, 'Document Processor');
                     
                     return analysisText;
                 } else {
@@ -2517,6 +2520,7 @@
                 console.error('❌ Ошибка извлечения текста:', error);
                 const errorMsg = `📄 Документ "${file.name}" (${formatFileSize(file.size)}) получен, но не удалось извлечь текст. Попробуйте другой файл или проверьте формат документа.`;
                 addMessage('ai', errorMsg, 'Document Processor');
+                await saveMessage('ai', errorMsg, 'Document Processor');
                 return errorMsg;
             }
         }
