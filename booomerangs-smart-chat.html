@@ -1816,14 +1816,30 @@
             console.log(`🔥 [DEBUG] Содержимое сообщения: ${messageDiv.textContent.substring(0, 50)}...`);
             
             // Принудительное обновление DOM для мгновенного отображения
-            messageDiv.style.opacity = '0';
-            messageDiv.style.display = 'block';
+            messageDiv.style.opacity = '1';
+            messageDiv.style.display = 'flex';
             messageDiv.style.visibility = 'visible';
+            messageDiv.style.position = 'relative';
+            messageDiv.style.zIndex = '1';
+            
+            // Принудительно делаем все сообщения видимыми
+            messagesArea.style.display = 'flex';
+            messagesArea.style.flexDirection = 'column';
+            messagesArea.style.gap = '10px';
             
             // Простая и надежная автопрокрутка
             setTimeout(() => {
                 messageDiv.style.opacity = '1';
                 messageDiv.style.transition = 'opacity 0.3s ease-in';
+                messageDiv.style.backgroundColor = '#f0f0f0'; // Временная подсветка
+                
+                // Принудительно показываем сообщение
+                messageDiv.style.height = 'auto';
+                messageDiv.style.minHeight = '40px';
+                messageDiv.style.padding = '10px';
+                messageDiv.style.margin = '5px 0';
+                messageDiv.style.border = '1px solid #ddd';
+                messageDiv.style.borderRadius = '8px';
                 
                 const lastMessage = messagesArea.lastElementChild;
                 if (lastMessage) {
@@ -1833,6 +1849,11 @@
                         inline: 'nearest' 
                     });
                 }
+                
+                // Убираем подсветку через 2 секунды
+                setTimeout(() => {
+                    messageDiv.style.backgroundColor = '';
+                }, 2000);
                 
                 console.log(`🔥 [DEBUG] Прокрутка выполнена, высота области: ${messagesArea.scrollHeight}`);
             }, 100);
