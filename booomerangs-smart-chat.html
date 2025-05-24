@@ -1596,7 +1596,7 @@
             const result = await processFile(currentFile);
             
             // Отправляем результат обработки как сообщение от AI
-            addMessage(result, 'ai');
+            addMessage(result, 'ai', false, 'File Processor', 'file-processing');
             await saveMessageToHistory(result, 'ai', 'File Processor', 'file-processing');
             
             // Убираем превью файла
@@ -1660,7 +1660,7 @@
                 console.log('🎨 Стиль изображения:', style);
                 
                 // Показываем индикатор загрузки для генерации изображения
-                addMessage('🎨 Генерирую изображение, подождите...', 'ai');
+                addMessage('🎨 Генерирую изображение, подождите...', 'ai', false, 'Image Generator', 'processing');
                 
                 // Генерируем изображение
                 const imageResult = await generateImage(imagePrompt, style);
@@ -1778,7 +1778,7 @@
                             });
                         } else {
                             console.log('Ответ AI не найден в данных:', data);
-                            addMessage('Извините, получен некорректный ответ от сервера.', 'ai');
+                            addMessage('Извините, получен некорректный ответ от сервера.', 'ai', false, 'System', 'error');
                         }
                     } catch (parseError) {
                         console.log('Ошибка парсинга JSON:', parseError);
@@ -2813,7 +2813,7 @@
                     </div>
                 `;
                 
-                addMessage(imageHtml, 'ai');
+                addMessage(imageHtml, 'ai', true, imageResult.provider, 'Image Generation');
                 
                 // Сохраняем сообщение с изображением в базу данных
                 await saveMessageToHistory(
