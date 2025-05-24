@@ -1625,6 +1625,11 @@
                 return;
             }
             
+            // Проверяем команды смены режима
+            if (message && checkModeCommands(message)) {
+                return; // Команда режима обработана, завершаем
+            }
+            
             // Если есть файл, обрабатываем его
             if (selectedFile) {
                 await processSelectedFile();
