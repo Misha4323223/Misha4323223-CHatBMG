@@ -13,11 +13,11 @@ async def init_chatgpt():
     """Инициализация EdgeGPT бота"""
     global bot
     try:
-        from EdgeGPT import Chatbot
+        from EdgeGPT.EdgeGPT import Chatbot
         
-        # Создаем бота без cookies файла (автоматическое подключение)
-        bot = Chatbot()
-        print(f"✅ EdgeGPT успешно инициализирован с аккаунтом: {EMAIL}")
+        # Создаем бота для работы с Bing Chat
+        bot = await Chatbot.create()
+        print(f"✅ EdgeGPT успешно инициализирован для аккаунта: {EMAIL}")
         return True
     except Exception as e:
         print(f"❌ Ошибка инициализации EdgeGPT: {e}")
