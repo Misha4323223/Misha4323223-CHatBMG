@@ -288,10 +288,10 @@
             max-width: 1000px;
             margin: 0 auto;
             width: 100%;
-            height: calc(100vh - 140px);
             min-height: 0;
             position: relative;
             z-index: 2;
+            scroll-behavior: smooth;
         }
 
         /* Стили для скроллбара */
@@ -1452,57 +1452,53 @@
                 welcomeScreen.remove();
             }
             
+            // Создаем единое сообщение для всех типов
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${sender}`;
             
-            // Безопасное создание контента сообщения
-            const messageContent = document.createElement('div');
-            messageContent.className = 'message-content';
-            messageContent.textContent = content;
-            
-            messageDiv.appendChild(messageContent);
-            messagesArea.appendChild(messageDiv);
-            
-            // Принудительно делаем сообщения AI видимыми - альтернативный метод
             if (sender === 'ai') {
-                // Создаем новый элемент с абсолютной гарантией видимости
-                const aiBox = document.createElement('div');
-                aiBox.innerHTML = `
-                    <div style="
-                        display: block !important;
-                        visibility: visible !important;
-                        opacity: 1 !important;
-                        background: #1f2937 !important;
-                        color: #f9fafb !important;
-                        padding: 16px 20px !important;
-                        border-radius: 24px 24px 24px 4px !important;
-                        border: 1px solid #374151 !important;
-                        margin-bottom: 16px !important;
-                        width: 100% !important;
-                        max-width: 80% !important;
-                        word-wrap: break-word !important;
-                        font-size: 15px !important;
-                        line-height: 1.6 !important;
-                    ">
-                        🤖 AI: ${content}
-                    </div>
+                messageDiv.style.cssText = `
+                    display: block !important;
+                    visibility: visible !important;
+                    opacity: 1 !important;
+                    background: linear-gradient(135deg, rgba(31, 41, 55, 0.95) 0%, rgba(17, 24, 39, 0.98) 100%) !important;
+                    color: #f9fafb !important;
+                    padding: 20px 24px !important;
+                    border-radius: 28px 28px 28px 8px !important;
+                    border: 1px solid rgba(55, 65, 81, 0.5) !important;
+                    margin-bottom: 16px !important;
+                    max-width: 85% !important;
+                    word-wrap: break-word !important;
+                    font-size: 15px !important;
+                    line-height: 1.6 !important;
+                    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
                 `;
-                
-                // Удаляем старое сообщение и добавляем новое
-                messageDiv.remove();
-                messagesArea.appendChild(aiBox);
-                console.log('AI сообщение создано альтернативным методом');
+                messageDiv.innerHTML = `🤖 <strong>AI:</strong> ${content}`;
+            } else {
+                messageDiv.innerHTML = content;
             }
             
-            // Плавная прокрутка к последнему сообщению
+            messagesArea.appendChild(messageDiv);
+            
+            // Принудительная прокрутка с несколькими попытками
+            const scrollToBottom = () => {
+                messagesArea.scrollTop = messagesArea.scrollHeight;
+            };
+            
+            // Немедленная прокрутка
+            scrollToBottom();
+            
+            // Дополнительные попытки прокрутки
+            setTimeout(scrollToBottom, 50);
+            setTimeout(scrollToBottom, 150);
             setTimeout(() => {
                 messagesArea.scrollTo({
                     top: messagesArea.scrollHeight,
                     behavior: 'smooth'
                 });
-            }, 100);
+            }, 300);
             
-            console.log(`Сообщение добавлено: ${sender}`);
+            console.log(`Сообщение добавлено: ${sender}, scrollHeight: ${messagesArea.scrollHeight}`);
         }
 
         // Создание новой сессии чата
