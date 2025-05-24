@@ -33,7 +33,7 @@ const upload = multer({
     }
   }
 });
-const svgGenerator = require('./svg-generator');
+
 const g4fHandlers = require('./g4f-handlers');
 const directAiRoutes = require('./direct-ai-routes');
 // Отключаем внешние Python серверы - работаем только на порту 5000
@@ -77,11 +77,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   }));
   
-  // API для генератора изображений только для /api/svg
-  app.use('/api/svg', svgGenerator);
+
   
-  // Импортируем модуль генерации изображений с AI
-  const aiImageGenerator = require('./ai-image-generator');
+
 
   // API для генерации изображений через бесплатные AI провайдеры
   app.post("/api/ai-image/generate", async (req, res) => {
@@ -119,10 +117,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.sendFile('test-page.html', { root: '.' });
   });
   
-  // Демо-страница генератора изображений
-  app.get('/demo', (req, res) => {
-    res.sendFile('demo.html', { root: '.' });
-  });
+
   
   // Чат на API маршруте который точно не перехватывается Vite
   app.get('/api/chat-ui', (req, res) => {
@@ -198,14 +193,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // BOOOMERANGS только генератор изображений (стабильная версия)
-  app.get('/image-generator', (req, res) => {
-    res.sendFile('public/image-generator.html', { root: '.' });
-  });
+
   
-  // BOOOMERANGS AI генератор изображений
-  app.get('/ai-images', (req, res) => {
-    res.sendFile('public/ai-image-app.html', { root: '.' });
-  });
+
   
   // BOOOMERANGS приложение со стримингом
   app.get('/booom-streaming', (req, res) => {

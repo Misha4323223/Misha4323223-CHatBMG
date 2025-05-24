@@ -9,7 +9,7 @@ import BooomerangsAuth from "@/pages/BooomerangsAuth";
 import Chat from "@/pages/Chat";
 import AIChat from "@/pages/AIChat";
 import AIProviderChat from "@/pages/AIProviderChat";
-import ImageGeneratorSimple from "@/pages/ImageGeneratorSimple";
+
 import SmartChatPage from "@/pages/SmartChatPage";
 import SimpleAIChat from "@/pages/SimpleAIChat";
 import { useEffect } from "react";
@@ -25,7 +25,7 @@ function Router() {
     const token = localStorage.getItem("access_token");
     
     // Страницы, доступные без аутентификации
-    const publicPages = ["/", "/image-generator", "/provider", "/ai-chat", "/smart-chat"];
+    const publicPages = ["/", "/provider", "/ai-chat", "/smart-chat"];
     const isPublicPage = publicPages.includes(location);
     
     // If no token and not on public page, redirect to auth
@@ -52,7 +52,7 @@ function Router() {
           <Route path="/chat" component={Chat} />
           <Route path="/ai-chat" component={AIChat} />
           <Route path="/provider" component={AIProviderChat} />
-          <Route path="/image-generator" component={ImageGeneratorSimple} />
+
           <Route path="/smart-chat" component={SimpleAIChat} />
           <Route component={NotFound} />
         </Switch>
