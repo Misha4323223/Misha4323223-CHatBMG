@@ -81,38 +81,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Прямой чат с официальным ChatGPT
-  app.post('/api/chatgpt/chat', async (req, res) => {
+  // Высококачественный AI чат (уровень GPT-4)
+  app.post('/api/premium-ai/chat', async (req, res) => {
     try {
-      const { message } = req.body;
+      const { message, preferredProvider } = req.body;
       
       if (!message) {
         return res.json({ success: false, error: 'Сообщение не может быть пустым' });
       }
 
-      // Авто-логин если не авторизован
-      if (!chatgptScraper.isAuthenticated()) {
-        const email = process.env.CHATGPT_EMAIL;
-        const password = process.env.CHATGPT_PASSWORD;
-        
-        if (email && password) {
-          console.log('🔐 Авто-логин в ChatGPT...');
-          await chatgptScraper.login(email, password);
-        }
-      }
-
-      console.log('💭 Отправка в официальный ChatGPT:', message.substring(0, 50) + '...');
+      console.log('🚀 Запрос к премиум AI провайдерам:', message.substring(0, 50) + '...');
       
-      const result = await chatgptScraper.sendMessage(message);
+      // Приоритетные провайдеры уровня GPT-4
+      const premiumProviders = [
+        'Qwen_Qwen_2_5_Max',
+        'You', 
+        'Claude-3-Sonnet',
+        'DeepInfra',
+        'Gemini'
+      ];
       
-      res.json({
-        success: result.success,
-        response: result.response || result.error,
-        provider: 'Official ChatGPT',
-        model: 'gpt-4'
+      const targetProvider = preferredProvider || premiumProviders[0];
+      
+      // Используем основную G4F систему для высококачественных ответов
+      const g4fResponse = await g4fHandlers.getChatResponse(message, {
+        provider: targetProvider,
+        temperature: 0.7
       });
+      
+      if (g4fResponse.success) {
+        res.json({
+          success: true,
+          response: g4fResponse.response,
+          provider: g4fResponse.provider || targetProvider,
+          model: g4fResponse.model || 'premium-ai'
+        });
+      } else {
+        // Фолбэк на резервный провайдер
+        const fallbackResponse = await g4fHandlers.getChatResponse(message, {
+          provider: 'AIChatFree'
+        });
+        
+        res.json({
+          success: fallbackResponse.success,
+          response: fallbackResponse.response || 'Извините, временно недоступно',
+          provider: fallbackResponse.provider || 'Fallback AI',
+          model: fallbackResponse.model || 'ai-assistant'
+        });
+      }
     } catch (error) {
-      console.error('❌ Ошибка ChatGPT чата:', error);
+      console.error('❌ Ошибка премиум AI чата:', error);
       res.json({ success: false, error: error.message });
     }
   });
