@@ -83,22 +83,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Новые обходные пути ChatGPT 2025
-  app.post('/api/chatgpt-bypass/chat', async (req, res) => {
+  // EdgeGPT - прямое подключение к ChatGPT через Edge
+  app.post('/api/edgegpt/chat', async (req, res) => {
     try {
-      const { message, sessionToken } = req.body;
+      const { message } = req.body;
       
       if (!message) {
         return res.json({ success: false, error: 'Сообщение не может быть пустым' });
       }
 
-      console.log('🚀 Тестирование новых обходных путей ChatGPT...');
+      console.log('🚀 Подключение к ChatGPT через EdgeGPT...');
       
-      const result = await chatgptBypass.getResponse(message, { sessionToken });
+      // Используем EdgeGPT через Python subprocess
+      const { spawn } = require('child_process');
       
-      res.json(result);
+      const pythonScript = `
+import asyncio
+from edgegpt import Chatbot
+import json
+import sys
+
+async def chat_with_gpt():
+    try:
+        bot = Chatbot()
+        response = await bot.ask("${message.replace(/"/g, '\\"')}")
+        await bot.aclose()
+        print(json.dumps({"success": True, "response": response["text"], "provider": "EdgeGPT", "model": "gpt-4"}))
+    except Exception as e:
+        print(json.dumps({"success": False, "error": str(e)}))
+
+asyncio.run(chat_with_gpt())
+`;
+
+      const python = spawn('python3', ['-c', pythonScript]);
+      let output = '';
+      let error = '';
+
+      python.stdout.on('data', (data) => {
+        output += data.toString();
+      });
+
+      python.stderr.on('data', (data) => {
+        error += data.toString();
+      });
+
+      python.on('close', (code) => {
+        try {
+          if (output.trim()) {
+            const result = JSON.parse(output.trim());
+            res.json(result);
+          } else {
+            res.json({ success: false, error: error || 'Нет ответа от EdgeGPT' });
+          }
+        } catch (e) {
+          res.json({ success: false, error: 'Ошибка парсинга ответа EdgeGPT' });
+        }
+      });
+
     } catch (error: any) {
-      console.error('❌ Ошибка обходных путей:', error);
+      console.error('❌ Ошибка EdgeGPT:', error);
       res.json({ success: false, error: error.message });
     }
   });

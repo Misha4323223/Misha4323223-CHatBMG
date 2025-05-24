@@ -1,8 +1,29 @@
 // Прямая интеграция с AI API (без использования g4f пакета)
 const fetch = require('node-fetch').default;
 
-// Набор рабочих API-провайдеров - обновленные провайдеры из списка G4F
+// Набор рабочих AI-провайдеров - EdgeGPT как первый приоритет (настоящий ChatGPT)
 const AI_PROVIDERS = {
+  // EdgeGPT - прямое подключение к настоящему ChatGPT (высший приоритет)
+  EDGEGPT: {
+    name: 'EdgeGPT (Real ChatGPT)',
+    url: '/api/edgegpt/chat',
+    needsKey: false,
+    isInternal: true,
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    prepareRequest: (message, options = {}) => {
+      return { message };
+    },
+    extractResponse: async (response) => {
+      const jsonResponse = await response.json();
+      if (jsonResponse && jsonResponse.success && jsonResponse.response) {
+        return jsonResponse.response;
+      }
+      throw new Error(jsonResponse.error || 'Ошибка EdgeGPT');
+    }
+  },
+  
   // ChatFree API - новый стабильный провайдер без необходимости API ключа
   CHATFREE: {
     name: 'ChatFree',
