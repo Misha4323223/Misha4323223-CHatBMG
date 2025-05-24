@@ -925,12 +925,13 @@
                 top: 0;
                 left: 0;
                 height: 100vh;
-                transform: translateX(-100%);
+                transform: translateX(0);
                 z-index: 2000;
+                width: 280px;
             }
             
-            .sidebar.visible {
-                transform: translateX(0);
+            .sidebar.hidden {
+                transform: translateX(-100%);
             }
             
             .input-area {
