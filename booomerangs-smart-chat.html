@@ -350,7 +350,7 @@
         .input-area {
             position: fixed;
             bottom: 0;
-            left: 300px;
+            left: 0;
             right: 0;
             z-index: 1000;
             padding: 32px;
@@ -360,6 +360,12 @@
             box-shadow: 
                 0 -10px 30px rgba(0, 0, 0, 0.3),
                 0 0 50px rgba(220, 38, 38, 0.05);
+            margin-left: 300px;
+            transition: margin-left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .input-area.sidebar-hidden {
+            margin-left: 0;
         }
 
         .input-container {
@@ -424,8 +430,8 @@
         }
 
         .send-button {
-            width: 52px;
-            height: 52px;
+            width: 48px;
+            height: 48px;
             background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
             border: none;
             border-radius: 50%;
@@ -434,13 +440,14 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 22px;
+            font-size: 20px;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             overflow: hidden;
             box-shadow: 
                 0 4px 20px rgba(220, 38, 38, 0.3),
                 inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            flex-shrink: 0;
         }
 
         .send-button::before {
@@ -871,6 +878,48 @@
         .placeholder-image span {
             font-size: 3rem;
             margin-bottom: 1rem;
+        }
+
+        /* Адаптивность для мобильных устройств */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                height: 100vh;
+                transform: translateX(-100%);
+                z-index: 2000;
+            }
+            
+            .sidebar.visible {
+                transform: translateX(0);
+            }
+            
+            .input-area {
+                margin-left: 0 !important;
+                padding: 16px;
+            }
+            
+            .input-container {
+                padding: 16px 20px;
+            }
+            
+            .send-button {
+                width: 44px;
+                height: 44px;
+                font-size: 18px;
+            }
+            
+            .messages-area {
+                padding: 20px 16px 120px 16px;
+            }
+            
+            .sidebar-toggle {
+                position: fixed;
+                top: 20px;
+                left: 20px;
+                z-index: 1500;
+            }
         }
 
         /* Командный чат */
