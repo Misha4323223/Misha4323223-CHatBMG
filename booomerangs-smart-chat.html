@@ -955,6 +955,9 @@
                             <button class="action-button" id="fileUploadBtn" title="Загрузить файл" onclick="triggerFileUpload()">
                                 📎
                             </button>
+                            <button class="action-button" id="imageAnalyzeBtn" title="Анализ изображений" onclick="triggerImageAnalysis()">
+                                🔍
+                            </button>
                             <button class="action-button" id="voiceBtn" title="Голосовое сообщение" onclick="toggleVoiceRecording()">
                                 🎤
                             </button>
@@ -2594,6 +2597,99 @@
             input.value = finalMessage;
             await sendMessage();
             input.value = message; // Возвращаем исходное сообщение в поле ввода
+        }
+
+        // ========== АНАЛИЗ ИЗОБРАЖЕНИЙ ==========
+        
+        // Функция для запуска анализа изображения
+        function triggerImageAnalysis() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.style.display = 'none';
+            
+            input.onchange = async function(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    console.log('🔍 Начинаем анализ изображения:', file.name);
+                    await analyzeImage(file);
+                }
+            };
+            
+            document.body.appendChild(input);
+            input.click();
+            document.body.removeChild(input);
+        }
+
+        // Основная функция анализа изображения
+        async function analyzeImage(file) {
+            // Показываем индикатор загрузки
+            addMessage('🔍 Анализирую изображение...', 'ai');
+            
+            try {
+                // Создаем FormData для отправки файла
+                const formData = new FormData();
+                formData.append('image', file);
+                
+                // Отправляем на сервер для анализа
+                const response = await fetch('/api/analyze-image', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Отображаем результат анализа
+                    const analysisHtml = `
+                        <div class="image-analysis-container" style="margin: 10px 0; border-radius: 8px; overflow: hidden; border: 1px solid #e5e5e5;">
+                            <img src="${result.imageUrl}" alt="Анализируемое изображение" style="width: 100%; max-width: 300px; height: auto; display: block;">
+                            <div style="background: #f9fafb; padding: 15px; color: #374151; border-top: 1px solid #e5e5e5;">
+                                <div style="font-weight: bold; color: #000000; margin-bottom: 10px;">🔍 Анализ изображения</div>
+                                <div style="margin-bottom: 8px;"><strong>Описание:</strong> ${result.description}</div>
+                                ${result.objects ? `<div style="margin-bottom: 8px;"><strong>Объекты:</strong> ${result.objects.join(', ')}</div>` : ''}
+                                ${result.text ? `<div style="margin-bottom: 8px;"><strong>Найденный текст:</strong> ${result.text}</div>` : ''}
+                                ${result.mood ? `<div style="margin-bottom: 8px;"><strong>Настроение:</strong> ${result.mood}</div>` : ''}
+                                ${result.colors ? `<div style="margin-bottom: 8px;"><strong>Основные цвета:</strong> ${result.colors.join(', ')}</div>` : ''}
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Удаляем индикатор загрузки и добавляем результат
+                    const messages = document.querySelectorAll('.message');
+                    const lastMessage = messages[messages.length - 1];
+                    if (lastMessage && lastMessage.textContent.includes('Анализирую изображение')) {
+                        lastMessage.remove();
+                    }
+                    
+                    addMessage(analysisHtml, 'ai');
+                    
+                    // Сохраняем в историю чата
+                    await saveMessageToHistory(`Анализ изображения: ${result.description}`, 'ai', 'Image Analyzer', 'Image Analysis', result.imageUrl);
+                    
+                } else {
+                    // Показываем ошибку
+                    const messages = document.querySelectorAll('.message');
+                    const lastMessage = messages[messages.length - 1];
+                    if (lastMessage && lastMessage.textContent.includes('Анализирую изображение')) {
+                        lastMessage.remove();
+                    }
+                    
+                    addMessage(`❌ Ошибка анализа изображения: ${result.error}`, 'ai');
+                }
+                
+            } catch (error) {
+                console.error('Ошибка при анализе изображения:', error);
+                
+                // Удаляем индикатор загрузки
+                const messages = document.querySelectorAll('.message');
+                const lastMessage = messages[messages.length - 1];
+                if (lastMessage && lastMessage.textContent.includes('Анализирую изображение')) {
+                    lastMessage.remove();
+                }
+                
+                addMessage('❌ Не удалось проанализировать изображение. Попробуйте позже.', 'ai');
+            }
         }
 
     </script>
