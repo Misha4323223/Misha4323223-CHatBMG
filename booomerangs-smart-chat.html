@@ -2930,26 +2930,29 @@
             previewDiv.style.cssText = `
                 display: flex;
                 align-items: center;
-                gap: 10px;
-                padding: 8px;
-                margin: 5px 0;
-                background: #f5f5f5;
-                border: 2px solid #007bff;
-                border-radius: 8px;
-                position: relative;
-                width: calc(100% - 60px);
+                gap: 6px;
+                padding: 4px 6px;
+                margin: 2px 0;
+                background: #f8f9fa;
+                border: 1px solid #007bff;
+                border-radius: 4px;
+                position: absolute;
+                top: -40px;
+                left: 0;
+                right: 50px;
+                font-size: 12px;
                 box-sizing: border-box;
-                z-index: 1;
+                z-index: 10;
             `;
             
             if (fileType === 'pdf') {
                 // Для PDF показываем иконку и информацию
                 previewDiv.innerHTML = `
-                    <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
-                        <div style="font-size: 24px;">📄</div>
-                        <div>
-                            <div style="font-weight: bold; color: #333;">${file.name}</div>
-                            <div style="font-size: 12px; color: #666;">${formatFileSize(file.size)} • PDF документ</div>
+                    <div style="display: flex; align-items: center; gap: 4px; flex: 1;">
+                        <span style="font-size: 14px;">📄</span>
+                        <div style="overflow: hidden;">
+                            <div style="font-weight: bold; color: #333; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px;">${file.name}</div>
+                            <div style="font-size: 9px; color: #666;">${formatFileSize(file.size)}</div>
                         </div>
                     </div>
                     <button onclick="removeFilePreview()" style="
@@ -2957,10 +2960,11 @@
                         color: white;
                         border: none;
                         border-radius: 50%;
-                        width: 24px;
-                        height: 24px;
+                        width: 16px;
+                        height: 16px;
                         cursor: pointer;
-                        font-size: 14px;
+                        font-size: 10px;
+                        line-height: 1;
                     ">×</button>
                 `;
             } else if (fileType === 'image') {
@@ -2968,11 +2972,11 @@
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     previewDiv.innerHTML = `
-                        <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
-                            <img src="${e.target.result}" style="width: 40px; height: 40px; border-radius: 4px; object-fit: cover;">
-                            <div>
-                                <div style="font-weight: bold; color: #333;">${file.name}</div>
-                                <div style="font-size: 12px; color: #666;">${formatFileSize(file.size)} • Изображение</div>
+                        <div style="display: flex; align-items: center; gap: 4px; flex: 1;">
+                            <img src="${e.target.result}" style="width: 20px; height: 20px; border-radius: 2px; object-fit: cover;">
+                            <div style="overflow: hidden;">
+                                <div style="font-weight: bold; color: #333; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px;">${file.name}</div>
+                                <div style="font-size: 9px; color: #666;">${formatFileSize(file.size)}</div>
                             </div>
                         </div>
                         <button onclick="removeFilePreview()" style="
@@ -2980,10 +2984,11 @@
                             color: white;
                             border: none;
                             border-radius: 50%;
-                            width: 24px;
-                            height: 24px;
+                            width: 16px;
+                            height: 16px;
                             cursor: pointer;
-                            font-size: 14px;
+                            font-size: 10px;
+                            line-height: 1;
                         ">×</button>
                     `;
                 };
@@ -2991,11 +2996,11 @@
             } else {
                 // Для других документов
                 previewDiv.innerHTML = `
-                    <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
-                        <div style="font-size: 24px;">📋</div>
-                        <div>
-                            <div style="font-weight: bold; color: #333;">${file.name}</div>
-                            <div style="font-size: 12px; color: #666;">${formatFileSize(file.size)} • Документ</div>
+                    <div style="display: flex; align-items: center; gap: 4px; flex: 1;">
+                        <span style="font-size: 14px;">📋</span>
+                        <div style="overflow: hidden;">
+                            <div style="font-weight: bold; color: #333; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px;">${file.name}</div>
+                            <div style="font-size: 9px; color: #666;">${formatFileSize(file.size)}</div>
                         </div>
                     </div>
                     <button onclick="removeFilePreview()" style="
@@ -3003,10 +3008,11 @@
                         color: white;
                         border: none;
                         border-radius: 50%;
-                        width: 24px;
-                        height: 24px;
+                        width: 16px;
+                        height: 16px;
                         cursor: pointer;
-                        font-size: 14px;
+                        font-size: 10px;
+                        line-height: 1;
                     ">×</button>
                 `;
             }
