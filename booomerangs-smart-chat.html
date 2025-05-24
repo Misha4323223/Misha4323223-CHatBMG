@@ -952,11 +952,8 @@
                     <div class="input-container">
                         <!-- Кнопки умных функций -->
                         <div class="smart-actions">
-                            <button class="action-button" id="fileUploadBtn" title="Загрузить файл" onclick="triggerFileUpload()">
+                            <button class="action-button" id="fileUploadBtn" title="Загрузить и анализировать изображение" onclick="triggerFileUpload()">
                                 📎
-                            </button>
-                            <button class="action-button" id="imageAnalyzeBtn" title="Анализ изображений" onclick="triggerImageAnalysis()">
-                                🔍
                             </button>
                             <button class="action-button" id="voiceBtn" title="Голосовое сообщение" onclick="toggleVoiceRecording()">
                                 🎤
@@ -2153,7 +2150,7 @@
             document.getElementById('fileInput').click();
         }
 
-        function handleFileUpload(event) {
+        async function handleFileUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
 
@@ -2166,6 +2163,16 @@
                 return;
             }
 
+            // Если это изображение, автоматически запускаем анализ
+            if (file.type.startsWith('image/')) {
+                console.log('🖼️ Обнаружено изображение, запускаем автоматический анализ...');
+                await analyzeImage(file);
+                // Очищаем выбор файла после анализа
+                event.target.value = '';
+                return;
+            }
+
+            // Для других типов файлов показываем превью как раньше
             currentFile = file;
             showFilePreview(file);
         }
