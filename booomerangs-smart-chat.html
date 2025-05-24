@@ -1584,12 +1584,43 @@
             });
         }
 
+        // Обработка и отправка файла
+        async function processFileAndSend() {
+            if (!currentFile) return;
+            
+            console.log('📄 Обрабатываем файл для отправки:', currentFile.name);
+            
+            // Создаем новую сессию если её нет
+            if (!currentSessionId) {
+                await createNewChatSession();
+            }
+            
+            // Обрабатываем файл в зависимости от типа
+            const result = await processFile(currentFile);
+            
+            // Отправляем результат обработки как сообщение от AI
+            addMessage(result, 'ai');
+            await saveMessageToHistory(result, 'ai', 'File Processor', 'file-processing');
+            
+            // Убираем превью файла
+            removeFilePreview();
+            
+            console.log('✅ Файл успешно обработан и отправлен');
+        }
+
         // Отправка сообщения
         async function sendMessage() {
             const input = document.getElementById('messageInput');
             const message = input.value.trim();
             
-            if (!message) return;
+            // Проверяем есть ли сообщение или файл для отправки
+            if (!message && !currentFile) return;
+            
+            // Если есть файл, но нет текста, обрабатываем файл
+            if (currentFile && !message) {
+                await processFileAndSend();
+                return;
+            }
             
             // Очищаем поле ввода
             input.value = '';
