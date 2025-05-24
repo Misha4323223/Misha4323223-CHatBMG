@@ -21,16 +21,14 @@ import json
 
 async def chat_with_edgegpt():
     try:
-        from EdgeGPT.EdgeGPT import Chatbot, ConversationStyle
+        from EdgeGPT.EdgeGPT import Chatbot
         
-        # Создаем подключение к вашему аккаунту ChatGPT
-        bot = await Chatbot.create()
+        # Создаем подключение к вашему аккаунту ChatGPT без proxies
+        cookies = None  # Используем автоматическое получение cookies
+        bot = await Chatbot.create(cookies=cookies)
         
         # Отправляем ваше сообщение
-        response = await bot.ask(
-            prompt="${message.replace(/"/g, '\\"')}", 
-            conversation_style=ConversationStyle.balanced
-        )
+        response = await bot.ask(prompt="${message.replace(/"/g, '\\"')}")
         
         # Извлекаем ответ
         if response and 'item' in response:
