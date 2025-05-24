@@ -99,7 +99,8 @@ async function getSessionMessages(sessionId) {
     text: msg.content,
     sender: msg.sender, // 'user' или 'ai'
     timestamp: msg.createdAt,
-    provider: msg.provider
+    provider: msg.provider,
+    imageUrl: msg.imageUrl // Добавляем поле imageUrl
   }));
     
   return formattedMessages;
