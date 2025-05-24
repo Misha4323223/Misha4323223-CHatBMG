@@ -3188,40 +3188,44 @@
         
         // Получение лучшего доступного GPT-4 провайдера
         function getBestGPT4Provider() {
-            const gpt4Providers = ['You', 'Poe', 'Bing'];
+            // Приоритетный порядок GPT-4 провайдеров
+            const gpt4Providers = ['You', 'Poe', 'Bing', 'OpenAI'];
             
             for (const provider of gpt4Providers) {
                 if (isGPT4Available(provider)) {
+                    console.log(`🚀 GPT-4 доступен: ${provider} (${gpt4Limits[provider].used}/${gpt4Limits[provider].limit})`);
                     return provider;
                 }
             }
             
+            console.log('⚠️ Все GPT-4 провайдеры исчерпали лимиты');
             return null; // все GPT-4 провайдеры исчерпали лимиты
         }
         
         // Функция для получения предпочитаемого провайдера
         function getPreferredProvider(requestType) {
-            // Если продолжаем разговор того же типа, используем того же провайдера
-            if (conversationContext.type === requestType && conversationContext.provider && conversationContext.messageCount < 5) {
-                return conversationContext.provider;
-            }
-            
-            // Сначала пробуем получить GPT-4
+            // ПРИОРИТЕТ 1: Всегда пробуем GPT-4 первым (кроме случаев продолжения разговора)
             const availableGPT4 = getBestGPT4Provider();
             if (availableGPT4) {
-                console.log(`🚀 Используем GPT-4 провайдер: ${availableGPT4}`);
+                console.log(`🚀 ПРИОРИТЕТ: Используем GPT-4 провайдер: ${availableGPT4}`);
                 return availableGPT4;
             }
             
-            // Если GPT-4 недоступен, используем специализированные провайдеры
+            // ПРИОРИТЕТ 2: Если продолжаем разговор того же типа и GPT-4 недоступен
+            if (conversationContext.type === requestType && conversationContext.provider && conversationContext.messageCount < 5) {
+                console.log(`🔄 Продолжаем с тем же провайдером: ${conversationContext.provider}`);
+                return conversationContext.provider;
+            }
+            
+            // ПРИОРИТЕТ 3: Если GPT-4 недоступен, используем специализированные провайдеры
             const providerPreferences = {
-                'coding': ['Claude', 'DeepSeek', 'HuggingChat', 'OpenAI'],
-                'creative': ['Claude', 'Gemini', 'FreeChat', 'You'],
+                'coding': ['Claude', 'DeepSeek', 'HuggingChat'],
+                'creative': ['Claude', 'Gemini', 'FreeChat'],
                 'normal': ['Claude', 'Gemini', 'auto'] // приоритет качественным провайдерам
             };
             
             const preferred = providerPreferences[requestType] || ['auto'];
-            console.log(`💡 GPT-4 недоступен, используем: ${preferred[0]}`);
+            console.log(`💡 Резервный провайдер: ${preferred[0]}`);
             return preferred[0];
         }
         
