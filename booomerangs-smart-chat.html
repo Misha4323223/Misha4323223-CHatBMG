@@ -13,77 +13,32 @@
         }
 
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: radial-gradient(ellipse at top, #1a0a0a 0%, #0a0a0a 50%, #000000 100%);
-            color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: #f7f7f8;
+            color: #000000;
             height: 100vh;
             position: relative;
-            animation: bodyPulse 8s ease-in-out infinite;
-        }
-
-        @keyframes bodyPulse {
-            0%, 100% { filter: brightness(1) contrast(1); }
-            50% { filter: brightness(1.05) contrast(1.1); }
-        }
-
-        /* Анимированный фон с частицами */
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: 
-                radial-gradient(circle at 20% 80%, rgba(220, 38, 38, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(245, 158, 11, 0.1) 0%, transparent 50%);
-            animation: backgroundShift 20s ease-in-out infinite;
-            z-index: -1;
-        }
-
-        @keyframes backgroundShift {
-            0%, 100% { opacity: 0.3; transform: scale(1); }
-            50% { opacity: 0.6; transform: scale(1.1); }
+            font-size: 14px;
+            line-height: 1.5;
         }
 
         /* Главный контейнер */
         .app-container {
             display: flex;
             height: 100vh;
-            background: #0a0a0a;
+            background: #ffffff;
         }
 
         /* Боковая панель */
         .sidebar {
-            width: 300px;
-            background: linear-gradient(135deg, rgba(26, 26, 26, 0.95) 0%, rgba(16, 16, 16, 0.98) 100%);
-            backdrop-filter: blur(20px);
-            border-right: 1px solid rgba(220, 38, 38, 0.2);
+            width: 260px;
+            background: #171717;
+            border-right: 1px solid #e5e5e5;
             display: flex;
             flex-direction: column;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.3s ease;
             position: relative;
             z-index: 100;
-            box-shadow: 
-                0 0 50px rgba(220, 38, 38, 0.1),
-                inset 0 1px 0 rgba(255, 255, 255, 0.1);
-        }
-
-        .sidebar::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: linear-gradient(90deg, #dc2626, #f59e0b, #dc2626);
-            background-size: 200% 100%;
-            animation: borderGlow 3s ease-in-out infinite;
-        }
-
-        @keyframes borderGlow {
-            0%, 100% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
         }
 
         .sidebar.hidden {

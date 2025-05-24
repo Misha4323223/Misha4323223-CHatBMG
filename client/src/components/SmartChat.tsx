@@ -228,13 +228,11 @@ const SmartChat: React.FC = () => {
     <div className="flex flex-col w-full mx-auto overflow-hidden
                     h-[300px] sm:h-[400px] md:h-[500px] lg:h-[600px] xl:h-[650px]
                     max-w-sm sm:max-w-md md:max-w-2xl lg:max-w-4xl xl:max-w-5xl
-                    bg-gradient-to-br from-gray-900/95 via-black/98 to-gray-900/95
-                    backdrop-blur-xl border border-orange-500/30 rounded-3xl
-                    shadow-[0_8px_25px_rgba(0,0,0,0.4),0_0_30px_rgba(255,165,0,0.3)]
-                    relative"
+                    bg-white border border-gray-200 rounded-lg
+                    shadow-sm relative"
          style={{
-           background: 'linear-gradient(135deg, rgba(31, 41, 55, 0.95) 0%, rgba(17, 24, 39, 0.98) 100%)',
-           boxShadow: '0 10px 40px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 0 30px rgba(220, 38, 38, 0.1)'
+           background: 'white',
+           boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
          }}>
       
       <ScrollArea className="flex-grow p-2 sm:p-3 md:p-4">
@@ -244,28 +242,22 @@ const SmartChat: React.FC = () => {
               key={message.id}
               className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
             >
-              <div className={`flex gap-2 sm:gap-3 max-w-[85%] sm:max-w-[80%] md:max-w-[75%] 
-                               ${message.sender === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                <Avatar className={`h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 flex-shrink-0
-                                    ${message.sender === 'user' ? 'bg-blue-600' : 'bg-gray-700'}`}>
-                  <AvatarFallback className="text-xs sm:text-sm text-white">
-                    {message.sender === 'user' ? 'U' : 'AI'}
-                  </AvatarFallback>
-                </Avatar>
+              <div className="flex gap-3 max-w-[85%] sm:max-w-[80%] md:max-w-[75%]">
+                <div className="flex-shrink-0">
+                  {message.sender === 'user' ? (
+                    <div className="w-6 h-6 bg-blue-500 rounded-sm flex items-center justify-center">
+                      <span className="text-white text-xs font-medium">U</span>
+                    </div>
+                  ) : (
+                    <div className="w-6 h-6 bg-green-500 rounded-sm flex items-center justify-center">
+                      <span className="text-white text-xs font-medium">AI</span>
+                    </div>
+                  )}
+                </div>
                 
                 <div className="flex flex-col min-w-0 flex-1">
-                  <div className={`rounded-2xl p-3 sm:p-4 text-sm sm:text-base break-words transition-all duration-300 ${
-                    message.loading ? 'bg-gray-700/80 text-gray-300 backdrop-blur-sm' :
-                    message.error ? 'bg-red-900/50 text-red-300 border border-red-500/30' :
-                    message.sender === 'user' ? 
-                      'bg-gradient-to-br from-orange-500 to-red-600 text-white shadow-lg hover:shadow-orange-500/30 hover:scale-[1.02] border border-orange-400/40' : 
-                      'bg-gradient-to-br from-gray-800/90 to-gray-900/95 text-gray-100 backdrop-blur-sm border border-gray-600/30 hover:shadow-lg hover:scale-[1.02]'
-                  }`}
-                       style={message.sender === 'user' ? {
-                         boxShadow: '0 8px 25px rgba(220, 38, 38, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
-                       } : {
-                         boxShadow: '0 8px 25px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
-                       }}>
+                  <div className="text-sm text-gray-800 break-words"
+                       style={{ padding: '0', background: 'transparent' }}>
                     {message.loading ? (
                       <div className="flex items-center space-x-2">
                         <Loader2 className="h-4 w-4 animate-spin flex-shrink-0" />
@@ -302,29 +294,24 @@ const SmartChat: React.FC = () => {
         </div>
       </ScrollArea>
       
-      <div className="border-t border-gray-700"></div>
+      <div className="border-t border-gray-200"></div>
       
       {imageUrl && (
-        <div className="p-2 sm:p-3 flex items-center gap-2 border-t border-gray-700 bg-gray-800/50">
+        <div className="p-3 flex items-center gap-2 border-t border-gray-200 bg-gray-50">
           <div className="relative">
             <img src={imageUrl} alt="Selected" className="h-10 w-10 sm:h-12 sm:w-12 object-cover rounded-lg" />
             <button
               onClick={handleRemoveImage}
-              className="absolute -top-1 -right-1 bg-red-600 text-white rounded-full p-1 w-5 h-5 flex items-center justify-center text-xs hover:bg-red-700 transition-colors"
+              className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1 w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600 transition-colors"
             >
               <X className="h-3 w-3" />
             </button>
           </div>
-          <span className="text-sm text-gray-400">Изображение загружено</span>
+          <span className="text-sm text-gray-600">Изображение загружено</span>
         </div>
       )}
       
-      <div className="p-3 sm:p-4 md:p-5 border-t border-red-600/20 relative overflow-hidden"
-           style={{
-             background: 'linear-gradient(to top, rgba(10, 10, 10, 0.98) 0%, rgba(10, 10, 10, 0.95) 70%, transparent 100%)',
-             backdropFilter: 'blur(25px)',
-             boxShadow: '0 -10px 30px rgba(0, 0, 0, 0.3), 0 0 50px rgba(220, 38, 38, 0.05)'
-           }}>
+      <div className="p-4 border-t border-gray-200 bg-white">
         <div className="flex gap-3 sm:gap-4">
           <Button
             variant="outline"
