@@ -1320,15 +1320,37 @@
         let currentSessionId = null;
         let isSidebarVisible = true;
         let currentTab = 'chat';
+        
+        // Переменные для умных функций
+        let currentFile = null;
+        let isRecording = false;
+        let mediaRecorder = null;
+        let audioChunks = [];
 
         // Инициализация при загрузке
         document.addEventListener('DOMContentLoaded', function() {
             console.log('🪃 BOOOMERANGS Modern Chat инициализирован');
             setupMessageInput();
+            setupSmartFeatures();
             
             // Проверяем авторизацию
             checkAuth();
         });
+
+        // Настройка умных функций
+        function setupSmartFeatures() {
+            console.log('🧠 Инициализация умных функций...');
+            
+            // Проверка поддержки голосовых API
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                console.warn('⚠️ Голосовые функции недоступны в этом браузере');
+                const voiceBtn = document.getElementById('voiceBtn');
+                if (voiceBtn) {
+                    voiceBtn.style.opacity = '0.5';
+                    voiceBtn.title = 'Голосовые функции недоступны в этом браузере';
+                }
+            }
+        }
 
         // Проверка авторизации
         function checkAuth() {
@@ -2094,6 +2116,165 @@
             screenResolution: `${screen.width}x${screen.height}`,
             colorDepth: screen.colorDepth
         });
+
+        // === УМНЫЕ ФУНКЦИИ ОБЩЕНИЯ ===
+
+        // Функции для работы с файлами
+        function triggerFileUpload() {
+            console.log('📎 Открытие диалога загрузки файлов...');
+            document.getElementById('fileInput').click();
+        }
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            console.log('📄 Файл выбран:', file.name, file.type, file.size);
+            
+            // Проверка размера файла (максимум 10 МБ)
+            const maxSize = 10 * 1024 * 1024;
+            if (file.size > maxSize) {
+                alert('Файл слишком большой. Максимальный размер: 10 МБ');
+                return;
+            }
+
+            currentFile = file;
+            showFilePreview(file);
+        }
+
+        function showFilePreview(file) {
+            const preview = document.getElementById('filePreview');
+            const filename = document.getElementById('previewFilename');
+            const filesize = document.getElementById('previewFilesize');
+            const icon = preview.querySelector('.preview-icon');
+
+            filename.textContent = file.name;
+            filesize.textContent = formatFileSize(file.size);
+            
+            // Установка иконки в зависимости от типа файла
+            if (file.type.startsWith('image/')) {
+                icon.textContent = '🖼️';
+            } else if (file.type.startsWith('audio/')) {
+                icon.textContent = '🎵';
+            } else if (file.type.startsWith('video/')) {
+                icon.textContent = '🎬';
+            } else if (file.type.includes('pdf')) {
+                icon.textContent = '📕';
+            } else if (file.type.includes('document') || file.type.includes('word')) {
+                icon.textContent = '📄';
+            } else {
+                icon.textContent = '📎';
+            }
+
+            preview.style.display = 'block';
+            console.log('👁️ Предварительный просмотр файла показан');
+        }
+
+        function removeFilePreview() {
+            currentFile = null;
+            document.getElementById('filePreview').style.display = 'none';
+            document.getElementById('fileInput').value = '';
+            console.log('🗑️ Файл удален из предварительного просмотра');
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Б';
+            const k = 1024;
+            const sizes = ['Б', 'КБ', 'МБ', 'ГБ'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Функции для голосовых сообщений
+        function toggleVoiceRecording() {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                alert('Голосовые функции недоступны в вашем браузере');
+                return;
+            }
+
+            if (isRecording) {
+                stopRecording();
+            } else {
+                startRecording();
+            }
+        }
+
+        async function startRecording() {
+            try {
+                console.log('🎤 Начало записи голосового сообщения...');
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+                
+                mediaRecorder.ondataavailable = event => {
+                    audioChunks.push(event.data);
+                };
+                
+                mediaRecorder.onstop = processAudioRecording;
+                
+                mediaRecorder.start();
+                isRecording = true;
+                
+                const voiceBtn = document.getElementById('voiceBtn');
+                voiceBtn.classList.add('active');
+                voiceBtn.textContent = '⏹️';
+                voiceBtn.title = 'Остановить запись';
+                
+                console.log('✅ Запись голоса началась');
+            } catch (error) {
+                console.error('❌ Ошибка при запуске записи:', error);
+                alert('Не удалось получить доступ к микрофону');
+            }
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && isRecording) {
+                console.log('⏹️ Остановка записи голосового сообщения...');
+                mediaRecorder.stop();
+                mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                
+                isRecording = false;
+                
+                const voiceBtn = document.getElementById('voiceBtn');
+                voiceBtn.classList.remove('active');
+                voiceBtn.textContent = '🎤';
+                voiceBtn.title = 'Голосовое сообщение';
+            }
+        }
+
+        function processAudioRecording() {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+            console.log('🎵 Голосовое сообщение записано, размер:', formatFileSize(audioBlob.size));
+            
+            const file = new File([audioBlob], `voice_${Date.now()}.wav`, { type: 'audio/wav' });
+            currentFile = file;
+            showFilePreview(file);
+        }
+
+        // Математический помощник
+        function showMathHelper() {
+            const input = document.getElementById('messageInput');
+            const mathExamples = [
+                'Реши уравнение: 2x + 5 = 15',
+                'Найди производную функции: f(x) = x² + 3x - 2',
+                'Вычисли интеграл: ∫(2x + 1)dx',
+                'Построй график функции: y = sin(x)',
+                'Найди корни квадратного уравнения: x² - 5x + 6 = 0',
+                'Вычисли предел: lim(x→0) sin(x)/x',
+                'Найди площадь треугольника со сторонами 3, 4, 5'
+            ];
+            
+            const randomExample = mathExamples[Math.floor(Math.random() * mathExamples.length)];
+            input.value = randomExample;
+            input.focus();
+            
+            // Автоматически подгоняем высоту поля ввода
+            input.style.height = 'auto';
+            input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+            
+            console.log('🧮 Математический пример добавлен в поле ввода');
+        }
 
     </script>
 </body>
