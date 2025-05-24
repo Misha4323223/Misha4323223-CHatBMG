@@ -3101,6 +3101,14 @@
             messageCount: 0
         };
         
+        // Система отслеживания лимитов GPT-4 провайдеров
+        let gpt4Limits = {
+            'You': { used: 0, limit: 10, resetTime: null },
+            'Bing': { used: 0, limit: 5, resetTime: null },
+            'Poe': { used: 0, limit: 8, resetTime: null },
+            'OpenAI': { used: 0, limit: 1000, resetTime: null } // для API ключей
+        };
+        
         // Умная функция определения типа запроса
         function detectRequestType(message) {
             const lowerMessage = message.toLowerCase();
@@ -3143,6 +3151,35 @@
             return 'normal';
         }
         
+        // Проверка доступности GPT-4 провайдера
+        function isGPT4Available(provider) {
+            if (!gpt4Limits[provider]) return false;
+            
+            const limit = gpt4Limits[provider];
+            const now = new Date();
+            
+            // Сбрасываем лимиты каждый час
+            if (limit.resetTime && now - limit.resetTime > 60 * 60 * 1000) {
+                limit.used = 0;
+                limit.resetTime = now;
+            }
+            
+            return limit.used < limit.limit;
+        }
+        
+        // Получение лучшего доступного GPT-4 провайдера
+        function getBestGPT4Provider() {
+            const gpt4Providers = ['You', 'Poe', 'Bing'];
+            
+            for (const provider of gpt4Providers) {
+                if (isGPT4Available(provider)) {
+                    return provider;
+                }
+            }
+            
+            return null; // все GPT-4 провайдеры исчерпали лимиты
+        }
+        
         // Функция для получения предпочитаемого провайдера
         function getPreferredProvider(requestType) {
             // Если продолжаем разговор того же типа, используем того же провайдера
@@ -3150,20 +3187,39 @@
                 return conversationContext.provider;
             }
             
-            // Провайдеры, лучше подходящие для разных типов задач
+            // Сначала пробуем получить GPT-4
+            const availableGPT4 = getBestGPT4Provider();
+            if (availableGPT4) {
+                console.log(`🚀 Используем GPT-4 провайдер: ${availableGPT4}`);
+                return availableGPT4;
+            }
+            
+            // Если GPT-4 недоступен, используем специализированные провайдеры
             const providerPreferences = {
-                'coding': ['Claude', 'OpenAI', 'DeepSeek', 'HuggingChat'],
-                'creative': ['Claude', 'Gemini', 'You', 'FreeChat'],
-                'normal': ['auto'] // автоматический выбор
+                'coding': ['Claude', 'DeepSeek', 'HuggingChat', 'OpenAI'],
+                'creative': ['Claude', 'Gemini', 'FreeChat', 'You'],
+                'normal': ['Claude', 'Gemini', 'auto'] // приоритет качественным провайдерам
             };
             
             const preferred = providerPreferences[requestType] || ['auto'];
-            return preferred[0]; // возвращаем первый предпочтительный провайдер
+            console.log(`💡 GPT-4 недоступен, используем: ${preferred[0]}`);
+            return preferred[0];
         }
         
         // Получение последнего использованного провайдера
         function getLastUsedProvider() {
             return lastUsedProvider;
+        }
+        
+        // Обновление лимитов после использования провайдера
+        function updateProviderLimit(provider) {
+            if (gpt4Limits[provider]) {
+                gpt4Limits[provider].used++;
+                if (!gpt4Limits[provider].resetTime) {
+                    gpt4Limits[provider].resetTime = new Date();
+                }
+                console.log(`📊 ${provider}: ${gpt4Limits[provider].used}/${gpt4Limits[provider].limit}`);
+            }
         }
         
         // Обновление контекста разговора
@@ -3176,6 +3232,26 @@
                 conversationContext.messageCount = 1;
             }
             lastUsedProvider = provider;
+            
+            // Обновляем лимиты если это GPT-4 провайдер
+            updateProviderLimit(provider);
+        }
+        
+        // Получение статуса всех GPT-4 провайдеров
+        function getGPT4Status() {
+            const status = [];
+            for (const [provider, limit] of Object.entries(gpt4Limits)) {
+                if (provider !== 'OpenAI') { // не показываем OpenAI в статусе
+                    const available = isGPT4Available(provider);
+                    status.push({
+                        provider,
+                        used: limit.used,
+                        total: limit.limit,
+                        available
+                    });
+                }
+            }
+            return status;
         }
         
         // Функция для получения текущего режима
