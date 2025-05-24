@@ -65,10 +65,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (filePath.includes('team-chat-anna.html')) {
         return true;
       }
-      // Блокируем HTML файлы чатов чтобы React мог их обработать
+      // Разрешаем доступ к booomerangs-smart-chat.html
+      if (filePath.includes('booomerangs-smart-chat.html')) {
+        return true;
+      }
+      // Блокируем другие HTML файлы чатов чтобы не было конфликтов
       if (filePath.endsWith('.html') && (
           filePath.includes('smart-chat') || 
-          filePath.includes('booomerangs-smart-chat') ||
           filePath.includes('booomerangs-chat')
         )) {
         res.status(404);

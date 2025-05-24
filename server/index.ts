@@ -55,8 +55,8 @@ app.use((req, res, next) => {
 (async () => {
   // КРИТИЧЕСКИ ВАЖНО: маршруты чата ДО setupVite
   app.get('/smart-chat', (req, res) => {
-    console.log('🎯 ПРЯМАЯ ОТПРАВКА React index.html');
-    res.sendFile('client/index.html', { root: '.' });
+    console.log('🎯 BOOOMERANGS SMART CHAT - главный файл');
+    res.sendFile('booomerangs-smart-chat.html', { root: '.' });
   });
   
   const server = await registerRoutes(app);
