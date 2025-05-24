@@ -51,11 +51,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup proxy middleware
   setupProxyMiddleware(app);
   
-  // ВАЖНО: Прямой доступ к чату через множественные маршруты
-  app.get('/smart-chat', (req, res) => {
-    console.log('📱 Запрос к /smart-chat - отправляем team-chat-anna.html');
-    res.sendFile(path.resolve('./team-chat-anna.html'));
-  });
+  // Убираем дублирующий маршрут - теперь /smart-chat обрабатывается в index.ts
   
   app.get('/booomerangs-chat', (req, res) => {
     console.log('📱 Запрос к /booomerangs-chat - отправляем team-chat-anna.html');
