@@ -102,7 +102,7 @@ async function getSessionMessages(sessionId) {
     sender: msg.sender, // 'user' или 'ai'
     timestamp: msg.createdAt,
     provider: msg.provider,
-    imageUrl: msg.imageUrl // Добавляем поле imageUrl
+    imageUrl: msg.imageUrl // Используем правильное имя поля из схемы БД
   }));
   
   console.log('📋 Отформатированные сообщения:', JSON.stringify(formattedMessages, null, 2));
