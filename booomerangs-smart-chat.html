@@ -2889,6 +2889,49 @@
             }
         }
 
+        // Функция для запуска диалога загрузки файлов
+        function triggerFileUpload() {
+            console.log('🔥 [DEBUG] triggerFileUpload вызвана');
+            
+            // Создаем скрытый input для загрузки файлов
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = '.pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.bmp,.webp';
+            fileInput.style.display = 'none';
+            
+            fileInput.addEventListener('change', async function(event) {
+                console.log('🔥 [DEBUG] Файл выбран в диалоге');
+                const file = event.target.files[0];
+                
+                if (file) {
+                    console.log('🔥 [DEBUG] Обрабатываем файл:', file.name, file.type);
+                    
+                    // Проверяем тип файла
+                    if (file.type.includes('image/')) {
+                        console.log('🔥 [DEBUG] Это изображение, запускаем анализ изображения');
+                        await analyzeImage(file);
+                    } else if (file.type.includes('pdf') || file.name.toLowerCase().endsWith('.pdf')) {
+                        console.log('🔥 [DEBUG] Это PDF, запускаем анализ документа');
+                        await extractTextFromDocument(file);
+                    } else {
+                        console.log('🔥 [DEBUG] Это документ, запускаем анализ документа');
+                        await extractTextFromDocument(file);
+                    }
+                } else {
+                    console.log('🔥 [DEBUG] Файл не выбран');
+                }
+                
+                // Удаляем временный input
+                document.body.removeChild(fileInput);
+            });
+            
+            // Добавляем в DOM и запускаем диалог
+            document.body.appendChild(fileInput);
+            fileInput.click();
+            
+            console.log('🔥 [DEBUG] Диалог загрузки файлов запущен');
+        }
+
     </script>
 </body>
 </html>
