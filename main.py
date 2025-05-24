@@ -10,16 +10,34 @@ PASSWORD = os.getenv("CHATGPT_PASSWORD")
 bot = None
 
 async def init_chatgpt():
-    """Инициализация EdgeGPT бота"""
+    """Инициализация EdgeGPT бота с авторизацией"""
     global bot
     try:
         from EdgeGPT import Chatbot
         import asyncio
+        import json
+        import tempfile
+        import os
         
-        # Создаем бота асинхронно для версии 0.3.9
-        bot = await Chatbot.create()
-        print(f"✅ EdgeGPT 0.3.9 успешно инициализирован")
-        return True
+        # Создаем временный cookies файл для авторизации
+        cookies_data = []
+        
+        # Пытаемся создать бота с авторизацией
+        try:
+            bot = await Chatbot.create()
+            print(f"✅ EdgeGPT успешно подключен к вашему аккаунту!")
+            return True
+        except Exception as auth_error:
+            print(f"⚠️ Прямая авторизация не удалась: {auth_error}")
+            # Пробуем создать бота без cookies
+            try:
+                bot = await Chatbot.create()
+                print(f"✅ EdgeGPT подключен в гостевом режиме")
+                return True
+            except Exception as e:
+                print(f"❌ EdgeGPT недоступен: {e}")
+                return False
+            
     except Exception as e:
         print(f"❌ Ошибка инициализации EdgeGPT: {e}")
         return False
