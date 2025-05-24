@@ -15,6 +15,7 @@ import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
 import multer from 'multer';
 // import { analyzeImage, cleanupTempFile } from './image-analyzer';
+const imageGenerator = require('./image-generator');
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -958,6 +959,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   }
   
+  // API для генерации изображений
+  app.post('/api/generate-image', async (req, res) => {
+    try {
+      const { prompt, style = 'realistic' } = req.body;
+      
+      if (!prompt || prompt.trim().length === 0) {
+        return res.status(400).json({
+          success: false,
+          error: 'Описание изображения не может быть пустым'
+        });
+      }
+
+      console.log('🎨 Получен запрос на генерацию изображения:', prompt);
+      
+      const result = await imageGenerator.generateImage(prompt, style);
+      
+      res.json(result);
+      
+    } catch (error) {
+      console.error('❌ Ошибка генерации изображения:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Внутренняя ошибка сервера при генерации изображения'
+      });
+    }
+  });
+
   // API для анализа изображений (временно отключен)
   app.post('/api/analyze-image', upload.single('image'), async (req, res) => {
     try {

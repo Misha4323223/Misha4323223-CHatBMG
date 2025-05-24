@@ -1846,6 +1846,41 @@
             // Сохраняем сообщение пользователя
             await saveMessageToHistory(message, 'user');
             
+            // Проверяем, является ли запрос просьбой сгенерировать изображение
+            if (isImageGenerationRequest(message)) {
+                console.log('🎨 Обнаружен запрос на генерацию изображения');
+                
+                // Извлекаем промпт и стиль
+                const imagePrompt = extractImagePrompt(message);
+                const style = detectImageStyle(message);
+                
+                console.log('🎨 Промпт для генерации:', imagePrompt);
+                console.log('🎨 Стиль изображения:', style);
+                
+                // Показываем индикатор загрузки для генерации изображения
+                addMessage('🎨 Генерирую изображение, подождите...', 'ai');
+                
+                // Генерируем изображение
+                const imageResult = await generateImage(imagePrompt, style);
+                
+                // Удаляем сообщение с индикатором загрузки
+                const messages = document.querySelectorAll('.message');
+                const lastMessage = messages[messages.length - 1];
+                if (lastMessage && lastMessage.textContent.includes('Генерирую изображение')) {
+                    lastMessage.remove();
+                }
+                
+                // Добавляем результат в чат
+                addGeneratedImageToChat(imageResult, imagePrompt);
+                
+                // Добавляем в память
+                const topics = extractTopics(message);
+                addToLongTermMemory(message, `Сгенерировано изображение: ${imagePrompt}`, '');
+                updateUserProfile(message, topics);
+                
+                return; // Завершаем выполнение, не отправляем запрос к AI
+            }
+            
             try {
                 // Строим контекст для AI с использованием памяти
                 const contextPrompt = buildContextForAI(message);
@@ -2505,6 +2540,32 @@
             console.log('🧮 Математический пример добавлен в поле ввода');
         }
 
+        // Помощник генерации изображений
+        function showImageHelper() {
+            const input = document.getElementById('messageInput');
+            const imageExamples = [
+                'Нарисуй красивый закат над морем',
+                'Создай изображение кота в космосе',
+                'Сгенерируй картинку футуристического города',
+                'Нарисуй дракона в горах',
+                'Создай рисунок волшебного леса',
+                'Изобрази робота в стиле стимпанк',
+                'Нарисуй абстрактную картину в красных тонах',
+                'Создай логотип для IT-компании',
+                'Сгенерируй картинку уютного кафе'
+            ];
+            
+            const randomExample = imageExamples[Math.floor(Math.random() * imageExamples.length)];
+            input.value = randomExample;
+            input.focus();
+            
+            // Автоматически подгоняем высоту поля ввода
+            input.style.height = 'auto';
+            input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+            
+            console.log('🎨 Пример генерации изображения добавлен в поле ввода');
+        }
+
         // === МУЛЬТИМОДАЛЬНЫЕ ВОЗМОЖНОСТИ ===
 
         // Анализ изображений
@@ -2603,6 +2664,123 @@
             `;
             
             return `data:image/svg+xml;base64,${btoa(svg)}`;
+        }
+
+        // === ГЕНЕРАЦИЯ ИЗОБРАЖЕНИЙ ===
+
+        // Генерация изображения по текстовому описанию
+        async function generateImage(prompt, style = 'realistic') {
+            console.log('🎨 Начало генерации изображения:', prompt);
+            
+            try {
+                const response = await fetch('/api/generate-image', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        style: style
+                    })
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log('✅ Изображение сгенерировано:', result);
+                    return result;
+                } else {
+                    throw new Error('Ошибка сервера при генерации изображения');
+                }
+            } catch (error) {
+                console.error('❌ Ошибка генерации изображения:', error);
+                return {
+                    success: false,
+                    error: 'Не удалось сгенерировать изображение. Попробуйте еще раз.'
+                };
+            }
+        }
+
+        // Определение, является ли запрос просьбой создать изображение
+        function isImageGenerationRequest(message) {
+            const imageKeywords = [
+                'создай изображение', 'нарисуй', 'сгенерируй картинку', 'создай картинку',
+                'нарисуй мне', 'покажи как выглядит', 'создай рисунок', 'изобрази',
+                'сделай картинку', 'визуализируй', 'создай фото', 'нарисуй картину'
+            ];
+            
+            const lowerMessage = message.toLowerCase();
+            return imageKeywords.some(keyword => lowerMessage.includes(keyword));
+        }
+
+        // Извлечение промпта для генерации изображения
+        function extractImagePrompt(message) {
+            const lowerMessage = message.toLowerCase();
+            
+            // Убираем команды генерации и оставляем описание
+            let prompt = message;
+            
+            const prefixes = [
+                'создай изображение', 'нарисуй', 'сгенерируй картинку', 'создай картинку',
+                'нарисуй мне', 'покажи как выглядит', 'создай рисунок', 'изобрази',
+                'сделай картинку', 'визуализируй', 'создай фото', 'нарисуй картину'
+            ];
+            
+            for (const prefix of prefixes) {
+                if (lowerMessage.includes(prefix)) {
+                    const index = lowerMessage.indexOf(prefix);
+                    prompt = message.substring(index + prefix.length).trim();
+                    break;
+                }
+            }
+            
+            // Убираем лишние предлоги в начале
+            prompt = prompt.replace(/^(как|где|что|с|для|про|о|об|)\s+/i, '').trim();
+            
+            return prompt;
+        }
+
+        // Определение стиля изображения
+        function detectImageStyle(message) {
+            const lowerMessage = message.toLowerCase();
+            
+            if (lowerMessage.includes('реалистич') || lowerMessage.includes('фото')) {
+                return 'realistic';
+            }
+            
+            if (lowerMessage.includes('аниме') || lowerMessage.includes('мульт')) {
+                return 'anime';
+            }
+            
+            if (lowerMessage.includes('арт') || lowerMessage.includes('художественн')) {
+                return 'artistic';
+            }
+            
+            if (lowerMessage.includes('логотип') || lowerMessage.includes('иконка')) {
+                return 'logo';
+            }
+            
+            return 'realistic';
+        }
+
+        // Добавление сгенерированного изображения в чат
+        function addGeneratedImageToChat(imageResult, originalPrompt) {
+            if (imageResult.success) {
+                const imageHtml = `
+                    <div class="generated-image-container" style="margin: 10px 0; border-radius: 8px; overflow: hidden; border: 2px solid #dc2626;">
+                        <img src="${imageResult.imageUrl}" alt="Сгенерированное изображение" style="width: 100%; max-width: 400px; height: auto; display: block;">
+                        <div style="background: #1a1a1a; padding: 10px; color: #e5e7eb; font-size: 12px;">
+                            <div style="font-weight: bold; color: #dc2626; margin-bottom: 5px;">🎨 Сгенерированное изображение</div>
+                            <div><strong>Описание:</strong> ${originalPrompt}</div>
+                            <div><strong>Провайдер:</strong> ${imageResult.provider}</div>
+                            ${imageResult.isPlaceholder ? '<div style="color: #f59e0b;">⚠️ Временная заглушка - улучшения скоро!</div>' : ''}
+                        </div>
+                    </div>
+                `;
+                
+                addMessage(imageHtml, 'ai');
+            } else {
+                addMessage(`❌ Не удалось сгенерировать изображение: ${imageResult.error}`, 'ai');
+            }
         }
 
         // Улучшенная отправка сообщения с поддержкой файлов
