@@ -57,56 +57,89 @@ class ChatGPTWebScraper {
         }
     }
 
-    // Авторизация через логин/пароль
+    // Улучшенная авторизация через логин/пароль с обходом защиты
     async login(email, password) {
         try {
-            console.log('🔐 Авторизация в ChatGPT...');
+            console.log('🔐 Попытка авторизации в ChatGPT с улучшенными заголовками...');
 
-            // 1. Получаем страницу логина
-            const authPage = await axios.get('https://chat.openai.com/auth/login', {
-                headers: this.headers
-            });
+            // Улучшенные заголовки для имитации реального браузера
+            const enhancedHeaders = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.9,ru;q=0.8',
+                'Accept-Encoding': 'gzip, deflate, br',
+                'Referer': 'https://chat.openai.com/',
+                'Origin': 'https://chat.openai.com',
+                'Sec-Fetch-Dest': 'document',
+                'Sec-Fetch-Mode': 'navigate',
+                'Sec-Fetch-Site': 'same-origin',
+                'Sec-Fetch-User': '?1',
+                'Upgrade-Insecure-Requests': '1',
+                'Cache-Control': 'max-age=0'
+            };
 
-            // 2. Получаем CSRF токен
-            const csrfMatch = authPage.data.match(/name="csrf-token" content="([^"]+)"/);
-            const csrfToken = csrfMatch ? csrfMatch[1] : null;
-
-            if (!csrfToken) {
-                throw new Error('Не удалось получить CSRF токен');
-            }
-
-            // 3. Отправляем данные логина
-            const loginResponse = await axios.post('https://chat.openai.com/api/auth/signin/auth0', {
-                email: email,
-                password: password,
-                csrf_token: csrfToken
-            }, {
-                headers: {
-                    ...this.headers,
-                    'Content-Type': 'application/json',
-                    'X-CSRF-Token': csrfToken
-                },
-                withCredentials: true
-            });
-
-            if (loginResponse.data.url) {
-                // 4. Получаем access token из callback
-                const callbackResponse = await axios.get(loginResponse.data.url, {
-                    headers: this.headers,
-                    withCredentials: true
+            // Метод 1: Попытка через основной Auth0 endpoint
+            try {
+                console.log('🔄 Метод 1: Прямая авторизация через Auth0...');
+                
+                const auth0Response = await axios.post('https://auth0.openai.com/u/login', {
+                    client_id: 'pdlLIX2Y72MIl2rhLhTE9VV9bN905kBh',
+                    connection: 'auth0-connection-main',
+                    username: email,
+                    password: password,
+                    grant_type: 'password',
+                    scope: 'openid profile email'
+                }, {
+                    headers: {
+                        ...enhancedHeaders,
+                        'Content-Type': 'application/json'
+                    },
+                    timeout: 15000
                 });
 
-                // Извлекаем токен из ответа
-                const tokenMatch = callbackResponse.data.match(/accessToken":"([^"]+)"/);
-                if (tokenMatch) {
-                    this.accessToken = tokenMatch[1];
+                if (auth0Response.data.access_token) {
+                    this.accessToken = auth0Response.data.access_token;
                     this.saveSession();
-                    console.log('✅ Успешная авторизация в ChatGPT!');
+                    console.log('✅ Успешная авторизация через Auth0!');
                     return true;
                 }
+            } catch (auth0Error) {
+                console.log('⚠️ Auth0 метод не сработал:', auth0Error.response?.status);
             }
 
-            throw new Error('Не удалось получить access token');
+            // Метод 2: Альтернативный endpoint
+            try {
+                console.log('🔄 Метод 2: Альтернативная авторизация...');
+                
+                const altResponse = await axios.post('https://chat.openai.com/api/auth/signin', {
+                    username: email,
+                    password: password
+                }, {
+                    headers: {
+                        ...enhancedHeaders,
+                        'Content-Type': 'application/json'
+                    },
+                    timeout: 15000
+                });
+
+                if (altResponse.data.user) {
+                    // Получаем сессионные данные
+                    const sessionResponse = await axios.get('https://chat.openai.com/api/auth/session', {
+                        headers: enhancedHeaders
+                    });
+
+                    if (sessionResponse.data.accessToken) {
+                        this.accessToken = sessionResponse.data.accessToken;
+                        this.saveSession();
+                        console.log('✅ Успешная авторизация через альтернативный метод!');
+                        return true;
+                    }
+                }
+            } catch (altError) {
+                console.log('⚠️ Альтернативный метод не сработал:', altError.response?.status);
+            }
+
+            throw new Error('Все методы авторизации не сработали - возможно требуется 2FA или CAPTCHA');
 
         } catch (error) {
             console.log('❌ Ошибка авторизации:', error.message);
