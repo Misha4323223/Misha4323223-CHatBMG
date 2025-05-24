@@ -1512,11 +1512,13 @@
             
             messages.forEach(msg => {
                 console.log('Добавляем сообщение:', msg);
+                console.log('Проверяем imageUrl:', msg.imageUrl, 'sender:', msg.sender);
                 // Используем msg.text вместо msg.content (согласно структуре базы данных)
                 const messageText = msg.text || msg.content || 'Пустое сообщение';
                 
                 // Проверяем, есть ли изображение в сообщении
                 if (msg.imageUrl && msg.sender === 'ai') {
+                    console.log('🎨 Отображаем изображение:', msg.imageUrl);
                     // Если есть изображение, создаем специальное отображение
                     const imageHtml = `
                         <div class="generated-image-container" style="margin: 10px 0; border-radius: 8px; overflow: hidden; border: 1px solid #e5e5e5;">
