@@ -1075,6 +1075,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // API для извлечения текста из PDF документов
   app.post('/api/extract-text', upload.single('document'), async (req, res) => {
+    console.log('🚀 PDF ОБРАБОТКА: Начало обработки запроса');
+    console.log('⏰ Время запроса:', new Date().toISOString());
+    console.log('🌐 IP адрес:', req.ip || req.connection.remoteAddress);
+    
     try {
       const file = req.file;
       
@@ -1086,9 +1090,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       console.log('📄 Получен PDF файл:', file.originalname);
+      console.log('📊 Размер файла:', Math.round(file.size / 1024), 'КБ');
+      console.log('📂 Временный путь:', file.path);
 
       // Читаем буфер файла
       const dataBuffer = fs.readFileSync(file.path);
+      console.log('📥 Буфер загружен, размер:', dataBuffer.length, 'байт');
       
       try {
         // Динамически загружаем pdf-parse для извлечения текста
@@ -1097,18 +1104,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Удаляем временный файл
         fs.unlinkSync(file.path);
+        console.log('🗑️ Временный файл успешно удален после обработки');
         
         if (data.text && data.text.trim()) {
-          console.log('✅ Текст успешно извлечен, длина:', data.text.length);
+          console.log('✅ PDF АНАЛИЗ: Текстовый документ обнаружен');
+          console.log('📝 Извлеченный текст, длина:', data.text.length, 'символов');
+          console.log('📊 Количество страниц:', data.numpages);
           
           return res.json({
             success: true,
-            text: data.text.trim(),
+            text: `📄 **Анализ PDF документа "${file.originalname}"**\n\n📝 **Извлеченный текст:**\n${data.text.trim().substring(0, 1000)}${data.text.length > 1000 ? '...\n\n[Показаны первые 1000 символов]' : ''}\n\n📊 **Статистика:** ${data.text.length} символов, ${data.numpages} страниц`,
             pages: data.numpages,
             info: data.info
           });
         } else {
-          console.log('⚠️ PDF не содержит прямого текста, возможно это изображение или логотип');
+          console.log('⚠️ PDF АНАЛИЗ: Графический документ (без текста)');
+          console.log('📊 Страниц:', data.numpages || 1);
+          console.log('💾 Размер буфера:', Math.round(dataBuffer.length / 1024), 'КБ');
           
           // Для PDF с изображениями (как логотипы) возвращаем полезную информацию
           return res.json({
@@ -1118,35 +1130,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
             info: data.info || { title: file.originalname }
           });
         }
-      } catch (pdfError) {
-        console.log('❌ Ошибка извлечения текста из PDF:', pdfError.message);
+      } catch (pdfError: any) {
+        console.error('❌ PDF ОШИБКА: Детальная информация об ошибке извлечения текста');
+        console.error('📄 Файл:', file.originalname);
+        console.error('📊 Размер:', Math.round(file.size / 1024), 'КБ');
+        console.error('🔍 Тип ошибки:', pdfError.name || 'Unknown');
+        console.error('💬 Сообщение ошибки:', pdfError.message || 'Нет описания');
+        console.error('📚 Стек ошибки:', pdfError.stack || 'Стек недоступен');
+        
+        // Дополнительная диагностика файла
+        try {
+          const stats = fs.statSync(file.path);
+          console.error('📈 Статистика файла:');
+          console.error('  - Размер на диске:', stats.size, 'байт');
+          console.error('  - Создан:', stats.birthtime);
+          console.error('  - Изменен:', stats.mtime);
+          console.error('  - Доступен для чтения:', fs.constants.R_OK);
+        } catch (statError) {
+          console.error('⚠️ Не удалось получить статистику файла:', statError);
+        }
         
         // Удаляем временный файл
         if (fs.existsSync(file.path)) {
-          fs.unlinkSync(file.path);
+          try {
+            fs.unlinkSync(file.path);
+            console.log('🗑️ Временный файл удален после ошибки');
+          } catch (unlinkError) {
+            console.error('❌ Ошибка удаления временного файла:', unlinkError);
+          }
         }
         
         return res.json({
           success: false,
-          error: 'Не удалось извлечь текст из PDF. Возможно, файл поврежден или защищен паролем.'
+          error: `Не удалось извлечь текст из PDF "${file.originalname}". Возможные причины: файл поврежден, защищен паролем, или содержит только изображения. Тип ошибки: ${pdfError.name || 'Unknown'}`
         });
       }
       
-    } catch (error) {
-      console.error('❌ Ошибка обработки PDF:', error);
+    } catch (error: any) {
+      console.error('❌ КРИТИЧЕСКАЯ ОШИБКА: Общая ошибка обработки PDF');
+      console.error('📄 Запрос:', req.method, req.url);
+      console.error('📊 Файл в запросе:', req.file ? `${req.file.originalname} (${req.file.size} байт)` : 'Файл отсутствует');
+      console.error('🔍 Тип ошибки:', error.name || 'Unknown');
+      console.error('💬 Сообщение:', error.message || 'Нет описания');
+      console.error('📚 Стек:', error.stack || 'Стек недоступен');
+      
+      // Проверяем состояние мультер-загрузки
+      if (req.file) {
+        console.error('📋 Детали загруженного файла:');
+        console.error('  - Оригинальное имя:', req.file.originalname);
+        console.error('  - MIME тип:', req.file.mimetype);
+        console.error('  - Размер:', req.file.size, 'байт');
+        console.error('  - Временный путь:', req.file.path);
+        console.error('  - Поле формы:', req.file.fieldname);
+      }
       
       // Удаляем временный файл в случае ошибки
       if (req.file?.path && fs.existsSync(req.file.path)) {
         try {
           fs.unlinkSync(req.file.path);
+          console.log('🗑️ Временный файл очищен после критической ошибки');
         } catch (unlinkError) {
-          console.error('❌ Ошибка удаления временного файла:', unlinkError);
+          console.error('❌ КРИТИЧЕСКАЯ: Не удалось удалить временный файл:', unlinkError);
         }
       }
       
       return res.status(500).json({
         success: false,
-        error: 'Ошибка при обработке PDF файла'
+        error: `Критическая ошибка при обработке PDF файла${req.file ? ` "${req.file.originalname}"` : ''}. Обратитесь к администратору. Код ошибки: ${error.name || 'UNKNOWN'}`
       });
     }
   });
