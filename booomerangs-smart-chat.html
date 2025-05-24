@@ -956,23 +956,51 @@
 
         /* Адаптивность для мобильных устройств */
         @media (max-width: 768px) {
+            .container {
+                height: 100vh;
+                overflow: hidden;
+            }
+            
             .sidebar {
                 position: fixed;
                 top: 0;
                 left: 0;
                 height: 100vh;
-                transform: translateX(0);
+                transform: translateX(-100%);
                 z-index: 2000;
-                width: 280px;
+                width: 250px;
             }
             
-            .sidebar.hidden {
-                transform: translateX(-100%);
+            .sidebar:not(.hidden) {
+                transform: translateX(0);
+            }
+            
+            .main-area {
+                width: 100%;
+                height: 100vh;
+                overflow: hidden;
+            }
+            
+            .messages-area {
+                height: calc(100vh - 140px);
+                padding: 20px 16px 20px 16px;
+                overflow-y: auto !important;
             }
             
             .input-area {
-                margin-left: 0 !important;
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                margin: 0;
                 padding: 16px;
+                background: rgba(16, 16, 16, 0.95);
+                backdrop-filter: blur(20px);
+                border-top: 1px solid rgba(220, 38, 38, 0.2);
+            }
+            
+            .input-container {
+                max-width: none;
             }
             
             .input-container {
@@ -1280,12 +1308,10 @@
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const toggle = document.getElementById('sidebarToggle');
-            const inputArea = document.querySelector('.input-area');
             const isMobile = window.innerWidth <= 768;
             
             if (isSidebarVisible) {
                 sidebar.classList.add('hidden');
-                if (inputArea) inputArea.classList.add('sidebar-hidden');
                 toggle.innerHTML = '<span>☰</span>';
                 
                 // Позиционирование для разных экранов
@@ -1296,12 +1322,11 @@
                 }
             } else {
                 sidebar.classList.remove('hidden');
-                if (inputArea) inputArea.classList.remove('sidebar-hidden');
                 toggle.innerHTML = '<span>✕</span>';
                 
                 // Позиционирование для разных экранов  
                 if (isMobile) {
-                    toggle.style.left = '250px';
+                    toggle.style.left = '220px';
                 } else {
                     toggle.style.left = '280px';
                 }
