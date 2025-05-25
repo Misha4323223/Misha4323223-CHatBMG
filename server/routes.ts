@@ -361,13 +361,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             await chatHistory.saveMessage(aiMessageData);
             console.log('✅ Ответ AI сохранен в сессию:', aiResponse.response);
             
-            // Отправляем обновленный список сообщений клиенту
-            const updatedMessages = await chatHistory.getSessionMessages(sessionId);
+            // Просто отправляем успешный ответ - обновление произойдет автоматически
             res.json({ 
               success: true, 
               message: userMessage,
-              aiResponse: aiResponse.response,
-              allMessages: updatedMessages
+              aiResponse: aiResponse.response
             });
             return;
           }
