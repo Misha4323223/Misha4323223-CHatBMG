@@ -789,21 +789,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const message = await chatHistory.saveMessage(messageData);
       console.log('✅ Сообщение пользователя сохранено');
       
-      // Если это первое сообщение пользователя в чате, обновляем заголовок
+      // Быстрое обновление заголовка только для первого сообщения
       if (messageData.sender === 'user' && messageData.content) {
-        try {
-          const existingMessages = await chatHistory.getSessionMessages(sessionId);
-          const userMessages = existingMessages.filter(m => m.sender === 'user');
-          
-          // Если это первое или второе сообщение пользователя, обновляем заголовок
-          if (userMessages.length <= 2) {
+        // Асинхронно обновляем заголовок без ожидания
+        setImmediate(async () => {
+          try {
             const smartTitle = chatHistory.generateChatTitle(messageData.content);
             await chatHistory.updateSessionTitle(sessionId, smartTitle);
-            console.log(`🎯 Обновлен заголовок чата ${sessionId}: "${smartTitle}"`);
+            console.log(`🎯 Заголовок обновлен: "${smartTitle}"`);
+          } catch (titleError) {
+            console.log('⚠️ Ошибка обновления заголовка:', titleError);
           }
-        } catch (titleError) {
-          console.log('⚠️ Не удалось обновить заголовок чата:', titleError);
-        }
+        });
       }
       
       res.json({ success: true, message });
