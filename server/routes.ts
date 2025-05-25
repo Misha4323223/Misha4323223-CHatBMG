@@ -1317,9 +1317,13 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
 
   // Streaming API endpoint для потоковой генерации
   app.post("/api/stream", async (req, res) => {
+    console.log('🔥 [DEBUG] НАЧАЛО /api/stream');
+    console.log('🔥 [DEBUG] req.body ПОЛНОСТЬЮ:', JSON.stringify(req.body, null, 2));
+    
     const { message, provider = 'Qwen_Qwen_2_5_Max', sessionId } = req.body;
     
     console.log(`🚀 Запуск потоковой генерации для: "${message}"`);
+    console.log(`🔥 [DEBUG] Извлеченные параметры: message="${message}", provider="${provider}", sessionId="${sessionId}"`);
     
     // 🧠 ДОБАВЛЯЕМ КОНТЕКСТ РАЗГОВОРА
     console.log('🧠 [STREAM] === НАЧАЛО АНАЛИЗА КОНТЕКСТА ===');
