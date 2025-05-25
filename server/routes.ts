@@ -225,8 +225,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/api/python', pythonProviderRoutes.router);
   
   // API для стриминга от провайдеров, поддерживающих stream=True
-  // const streamingRoutes = require('./streaming-routes');
-  // app.use('/api/streaming', streamingRoutes); // ОТКЛЮЧЕН - используем новый маршрут ниже
+  const simpleStreaming = require('./simple-streaming');
+  app.use('/api/streaming', simpleStreaming);
   
   // API для Flask-стриминга (надежный вариант)
   const flaskStreamBridge = require('./stream-flask-bridge');

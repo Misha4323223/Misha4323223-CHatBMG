@@ -71,6 +71,7 @@ router.get('/chat', async (req, res) => {
       
       if (response.success) {
         const fullText = response.response;
+        console.log('✅ Получен ответ, начинаем стриминг:', fullText.substring(0, 50) + '...');
         
         // Имитируем стриминг, отправляя текст по частям
         const chunkSize = 3; // Символов в каждом chunk
@@ -103,19 +104,17 @@ router.get('/chat', async (req, res) => {
         sendNextChunk();
         
       } else {
+        console.log('❌ Ошибка от smartRouter:', response.error);
         sendEvent('error', { message: 'Ошибка получения ответа от AI' });
         res.end();
       }
     } catch (error) {
+      console.error('❌ Ошибка стриминга:', error);
       sendEvent('error', { message: 'Ошибка обработки запроса' });
       res.end();
     }
     
-    // Создаем флаг для отслеживания завершения
-    let isCompleted = false;
-    
-    // Обрабатываем вывод от скрипта
-    pythonProcess.stdout.on('data', (data) => {
+    // Все обработано выше, старый код удален
       if (isCompleted) return;
       
       const outputText = data.toString();
