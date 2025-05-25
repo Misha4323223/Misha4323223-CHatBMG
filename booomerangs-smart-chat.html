@@ -1097,6 +1097,45 @@
         let currentTab = 'chat';
         
         // Переменные для стриминга
+        // Функция для преобразования технических названий провайдеров в красивые
+        function getBeautifulProviderName(provider, model = '') {
+            // Карта технических названий в красивые
+            const providerMap = {
+                'PythonG4F-Stream': getModelBasedName(model),
+                'Qwen_Qwen_2_5_Max': '🧠 Qwen AI Pro',
+                'Phind': '💻 Phind Code Expert', 
+                'Gemini': '✨ Google Gemini',
+                'Claude': '🤖 Claude AI',
+                'ChatGpt': '🔥 ChatGPT Plus',
+                'You': '🔍 You.com AI',
+                'DeepInfra': '⚡ DeepInfra Speed',
+                'Groq': '🚀 Groq Lightning',
+                'Perplexity': '📚 Perplexity Search',
+                'DeepSeek': '🛠️ DeepSeek Coder',
+                'HuggingChat': '🤗 Hugging Face',
+                'Document Processor': '📄 Document Analyzer',
+                'Image Analyzer': '🖼️ Image Vision AI',
+                'BOOOMERANGS-Live': '🪃 BOOOMERANGS AI'
+            };
+            
+            return providerMap[provider] || provider;
+        }
+        
+        // Функция для определения красивого названия на основе модели
+        function getModelBasedName(model) {
+            if (!model) return '🤖 Smart AI';
+            
+            const modelLower = model.toLowerCase();
+            if (modelLower.includes('qwen')) return '🧠 Qwen AI Pro';
+            if (modelLower.includes('claude')) return '🤖 Claude AI';
+            if (modelLower.includes('gemini')) return '✨ Google Gemini';
+            if (modelLower.includes('gpt')) return '🔥 ChatGPT Plus';
+            if (modelLower.includes('phind')) return '💻 Phind Code Expert';
+            if (modelLower.includes('deepseek')) return '🛠️ DeepSeek Coder';
+            
+            return '🤖 Smart AI';
+        }
+
         let isStreamMode = true; // Стриминг всегда включен
         let currentStream = null;
         
@@ -2004,8 +2043,11 @@
                                 });
                             }, 300);
                             
+                            // Преобразуем техническое название провайдера в красивое
+                            const beautifulProviderName = getBeautifulProviderName(data.provider, data.model);
+                            
                             // Сохраняем ответ AI в историю
-                            await saveMessageToHistory(data.response, 'ai', data.provider, data.model);
+                            await saveMessageToHistory(data.response, 'ai', beautifulProviderName, data.model);
                             
                             console.log('⚡ [PERF] Полная отправка сообщения (' + Math.round(performance.now() - startTime) + 'ms):', {
                                 userMessage: message.substring(0, 50) + (message.length > 50 ? '...' : ''),
