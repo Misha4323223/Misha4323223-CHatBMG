@@ -14,7 +14,7 @@ async function getPythonG4FResponse(message, provider = 'Qwen_Qwen_2_5_Max') {
   try {
     console.log(`🎯 Прямой запрос к Python G4F: ${message.substring(0, 50)}...`);
     
-    const response = await axios.post('http://localhost:5004/python/chat', {
+    const response = await axios.post('http://localhost:5000/python/chat', {
       message: message,
       provider: provider
     }, {
