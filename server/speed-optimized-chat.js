@@ -5,63 +5,36 @@
 
 const axios = require('axios');
 
-// Быстрые провайдеры с минимальными таймаутами
+// Быстрые провайдеры на основе наших рабочих бесплатных сервисов
 const FAST_PROVIDERS = [
   {
-    name: 'ChatGPT4Online',
-    url: 'https://chatgpt4online.org/wp-json/mwai-ui/v1/chats/submit',
-    timeout: 5000,
-    format: 'chatgpt4online'
-  },
-  {
-    name: 'Free2GPT',
-    url: 'https://free2gpt.xyz/api/generate',
+    name: 'FastChatFree',
+    url: 'http://localhost:5000/api/chatfree/chat',
     timeout: 4000,
-    format: 'free2gpt'
+    format: 'local'
   },
   {
-    name: 'ChatAnyWhere', 
-    url: 'https://api.chatanywhere.com.cn/v1/chat/completions',
+    name: 'FastFreeChatEnhanced',
+    url: 'http://localhost:5000/api/freechat/chat',
+    timeout: 5000,
+    format: 'local'
+  },
+  {
+    name: 'FastDirectAI',
+    url: 'http://localhost:5000/api/direct-ai/chat',
     timeout: 6000,
-    format: 'openai'
+    format: 'local'
   }
 ];
 
 /**
- * Форматирование запроса для ChatGPT4Online
+ * Форматирование запроса для локальных провайдеров
  */
-function formatChatGPT4OnlineRequest(message) {
+function formatLocalRequest(message) {
   return {
-    botId: 'default',
-    customId: null,
-    session: 'N/A',
-    chatId: `chatcmpl-${Date.now()}`,
-    contextId: 1,
-    messages: [{ role: 'user', content: message }],
-    newMessage: message,
-    stream: false
-  };
-}
-
-/**
- * Форматирование запроса для Free2GPT
- */
-function formatFree2GPTRequest(message) {
-  return {
-    prompt: message,
-    model: 'gpt-3.5-turbo'
-  };
-}
-
-/**
- * Форматирование запроса для OpenAI-совместимых API
- */
-function formatOpenAIRequest(message) {
-  return {
-    model: 'gpt-3.5-turbo',
-    messages: [{ role: 'user', content: message }],
-    temperature: 0.7,
-    max_tokens: 1000
+    message: message,
+    provider: 'auto',
+    timeout: 5000
   };
 }
 
@@ -73,14 +46,8 @@ async function getResponseFromProvider(provider, message) {
     let requestData;
     
     switch (provider.format) {
-      case 'chatgpt4online':
-        requestData = formatChatGPT4OnlineRequest(message);
-        break;
-      case 'free2gpt':
-        requestData = formatFree2GPTRequest(message);
-        break;
-      case 'openai':
-        requestData = formatOpenAIRequest(message);
+      case 'local':
+        requestData = formatLocalRequest(message);
         break;
       default:
         requestData = { message };
