@@ -247,85 +247,90 @@ async function tryProviderWithRetries(provider, messages, options) {
   throw new Error(`Не удалось получить ответ от провайдера ${provider} после ${maxRetries} попыток: ${error ? error.message : 'неизвестная ошибка'}`);
 }
 
-// Обработчик для Qwen через бесплатные AI сервисы
+// Обработчик для Qwen 2.5 MAX
 async function handleQwenProvider(messages, options = {}) {
   try {
-    console.log('🔄 Подключаемся к бесплатным AI сервисам...');
+    console.log('🔄 Подключаемся к Qwen 2.5 MAX...');
     
     const messageText = messages[messages.length - 1].content;
     
-    // Бесплатные AI сервисы которые работали
-    const freeAIServices = [
-      {
-        name: 'You.com AI',
-        url: 'https://you.com/api/streamingSearch',
-        headers: { 
-          'Content-Type': 'application/json',
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        }
-      },
-      {
-        name: 'Perplexity AI',
-        url: 'https://www.perplexity.ai/socket.io/',
-        headers: { 
-          'Content-Type': 'application/json',
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        }
-      },
-      {
-        name: 'Character AI',
-        url: 'https://beta.character.ai/chat/streaming/',
-        headers: { 
-          'Content-Type': 'application/json',
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        }
-      }
+    // Бесплатная версия Qwen 2.5 MAX
+    const qwenEndpoints = [
+      'https://qwen.aliyuncs.com/api/v1/services/aigc/text-generation/generation',
+      'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions',
+      'https://api.qwen.aliyun.com/v1/chat/completions'
     ];
 
-    for (const service of freeAIServices) {
+    for (const endpoint of qwenEndpoints) {
       try {
-        console.log(`🔄 Пробуем ${service.name}...`);
+        console.log(`🔄 Пробуем бесплатный Qwen endpoint: ${endpoint}`);
         
-        const response = await fetch(service.url, {
+        const qwenResponse = await fetch(endpoint, {
           method: 'POST',
-          headers: service.headers,
+          headers: {
+            'Content-Type': 'application/json',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            'X-DashScope-SSE': 'disable'
+          },
           body: JSON.stringify({
-            inputs: messageText,
-            parameters: { max_length: 100, temperature: 0.7 }
+            model: 'qwen2.5-max',
+            input: {
+              messages: [{ role: 'user', content: messageText }]
+            },
+            parameters: {
+              max_tokens: 500,
+              temperature: 0.7,
+              top_p: 0.8
+            }
           }),
-          timeout: 8000
+          timeout: 12000
         });
 
-        if (response.ok) {
-          const data = await response.json();
-          let aiResponse = '';
+        if (qwenResponse.ok) {
+          const data = await qwenResponse.json();
           
-          // Обработка разных форматов ответов
-          if (data.generated_text) {
-            aiResponse = data.generated_text;
-          } else if (data[0] && data[0].generated_text) {
-            aiResponse = data[0].generated_text;
-          } else if (data.completions && data.completions[0]) {
-            aiResponse = data.completions[0].data.text;
+          let aiResponse = '';
+          if (data.output && data.output.text) {
+            aiResponse = data.output.text;
+          } else if (data.choices && data.choices[0] && data.choices[0].message) {
+            aiResponse = data.choices[0].message.content;
+          } else if (data.data && data.data.text) {
+            aiResponse = data.data.text;
           }
           
           if (aiResponse && aiResponse.length > 15) {
-            console.log(`✅ Получен ответ от ${service.name}:`, aiResponse.substring(0, 60));
+            console.log('✅ Получен ответ от бесплатного Qwen 2.5 MAX:', aiResponse.substring(0, 60));
             return {
               response: aiResponse,
-              provider: `AI (${service.name})`,
-              model: 'free-ai'
+              provider: 'Qwen 2.5 MAX (Free)',
+              model: 'qwen2.5-max'
             };
           }
         }
-      } catch (serviceError) {
-        console.log(`❌ ${service.name} недоступен:`, serviceError.message);
+      } catch (endpointError) {
+        console.log(`❌ Endpoint недоступен: ${endpointError.message}`);
         continue;
       }
     }
+
+    if (qwenResponse.ok) {
+      const data = await qwenResponse.json();
+      
+      if (data.choices && data.choices[0] && data.choices[0].message) {
+        const aiResponse = data.choices[0].message.content;
+        console.log('✅ Получен ответ от Qwen 2.5 MAX:', aiResponse.substring(0, 60));
+        return {
+          response: aiResponse,
+          provider: 'Qwen 2.5 MAX',
+          model: 'qwen2.5-max'
+        };
+      }
+    } else {
+      console.log('❌ Qwen 2.5 MAX недоступен, статус:', qwenResponse.status);
+    }
     
   } catch (error) {
-    console.log('❌ Ошибка подключения к AI сервисам:', error.message);
+    console.log('❌ Ошибка подключения к Qwen 2.5 MAX:', error.message);
   }
   
   const messageText = messages[messages.length - 1].content;
