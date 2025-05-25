@@ -26,6 +26,7 @@ const imageAnalyzer = require('./image-analyzer.js');
 const { getFreeGPT4Response } = require('./gpt4-free-providers.js');
 const EdgeGPTAuthBypass = require('./edgegpt-auth-bypass.js');
 import ChatGPTBrowserBypass from './chatgpt-browser-bypass.js';
+const enhancedFreeProviders = require('./enhanced-free-providers.js');
 // PDF обработка будет загружаться динамически
 
 // Настройка multer для загрузки файлов
