@@ -1606,6 +1606,11 @@
             await saveMessageToHistory(aiResponse, 'ai', provider, category);
             console.log(`✅ Ответ AI сохранен (${provider})`);
             
+            // Обновляем список чатов после сохранения
+            setTimeout(() => {
+              loadChatSessions();
+            }, 500);
+            
             // Показываем краткое уведомление об успешном сохранении
             showTemporarySaveNotification();
           } catch (error) {
