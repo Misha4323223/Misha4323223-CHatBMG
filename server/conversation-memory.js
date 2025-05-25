@@ -46,6 +46,57 @@ class Conversation {
   }
 
   /**
+   * Анализ контекста разговора для понимания намерений
+   */
+  analyzeIntent() {
+    if (this.messages.length < 2) return null;
+    
+    const lastMessages = this.messages.slice(-5); // Последние 5 сообщений
+    const userMessages = lastMessages.filter(m => m.sender === 'user');
+    
+    // Ищем паттерны запросов о поиске
+    const searchPatterns = [
+      /найди.*магазин/i, /где.*купить/i, /магазины.*в/i, /ищу.*магазин/i,
+      /find.*store/i, /where.*buy/i, /shops.*in/i, /looking.*for.*store/i
+    ];
+    
+    const locationPatterns = [
+      /в\s+(\w+)/i, /город\s+(\w+)/i, /in\s+(\w+)/i, /city\s+(\w+)/i
+    ];
+    
+    let isSearchQuery = false;
+    let location = null;
+    
+    // Проверяем есть ли запрос на поиск
+    for (const msg of userMessages) {
+      if (searchPatterns.some(pattern => pattern.test(msg.content))) {
+        isSearchQuery = true;
+        break;
+      }
+    }
+    
+    // Если есть запрос на поиск, ищем упоминание города
+    if (isSearchQuery) {
+      for (const msg of this.messages) {
+        for (const pattern of locationPatterns) {
+          const match = msg.content.match(pattern);
+          if (match) {
+            location = match[1];
+            break;
+          }
+        }
+        if (location) break;
+      }
+    }
+    
+    return {
+      isSearchQuery,
+      location,
+      context: isSearchQuery && location ? `Пользователь ищет магазины в городе ${location}. ` : null
+    };
+  }
+
+  /**
    * Получение контекста для AI провайдера
    */
   getContext() {

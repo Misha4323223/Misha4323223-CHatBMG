@@ -97,6 +97,18 @@ const PROVIDER_SPECIALTIES = {
       "geometry", "algebra", "statistics", "calculus", "probability", "theorem"
     ]
   },
+  shopping: {
+    // Поиск магазинов, покупки, торговые центры, услуги
+    providers: ["You", "PerplexityApi", "Qwen_Qwen_2_5_Max", "Phind"],
+    keywords: [
+      "магазин", "магазины", "купить", "где купить", "торговый центр", "тц", "мол", "супермаркет",
+      "shop", "store", "shopping", "buy", "purchase", "mall", "supermarket", "market",
+      "аптека", "pharmacy", "ресторан", "кафе", "restaurant", "cafe", "бар", "bar",
+      "банк", "bank", "отделение", "офис", "салон", "центр", "сервис", "service",
+      "найди", "где находится", "адрес", "местоположение", "рядом", "близко",
+      "find", "locate", "address", "location", "near", "nearby", "close", "around"
+    ]
+  },
   business: {
     // Бизнес-вопросы, экономика, финансы
     providers: ["Claude", "GeminiPro", "Qwen_Qwen_2_5_Max"],
