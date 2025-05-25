@@ -44,15 +44,21 @@ function needsWebSearch(query) {
  */
 async function searchDuckDuckGo(query) {
     try {
+        console.log('🔍 [SEARCH] === НАЧИНАЕМ DUCKDUCKGO ПОИСК ===');
+        console.log('🔍 [SEARCH] Тип fetch:', typeof fetch);
+        console.log('🔍 [SEARCH] Fetch объект:', fetch);
+        
         const encodedQuery = encodeURIComponent(query);
         const url = `https://api.duckduckgo.com/?q=${encodedQuery}&format=json&no_html=1&skip_disambig=1`;
+        console.log('🔍 [SEARCH] URL для запроса:', url);
         
         const response = await fetch(url, {
             headers: {
                 'User-Agent': 'BOOOMERANGS-Search/1.0'
-            },
-            timeout: 8000
+            }
         });
+        
+        console.log('🔍 [SEARCH] Ответ получен, статус:', response.status);
         
         if (!response.ok) {
             throw new Error(`DuckDuckGo API error: ${response.status}`);
