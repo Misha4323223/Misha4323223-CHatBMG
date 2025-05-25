@@ -67,6 +67,7 @@ async function searchDuckDuckGo(query) {
         }
         
         const data = await response.json();
+        console.log('🔍 [SEARCH] DuckDuckGo данные:', JSON.stringify(data, null, 2));
         
         let results = [];
         
