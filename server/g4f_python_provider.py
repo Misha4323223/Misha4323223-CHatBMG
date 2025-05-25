@@ -53,25 +53,7 @@ provider_groups = {
     "deepspeek": ["DeepInfra_CodeLlama", "AItianhu", "Qwen_Qwen_2_5_Max", "DEEPSEEK", "Phind"]  # Улучшенная группа для DeepSpeek
 }
 
-def get_demo_response(message):
-    """Получение демо-ответа по шаблону"""
-    message_lower = message.lower()
-    
-    if any(word in message_lower for word in ['привет', 'здравствуй', 'hello', 'hi']):
-        return "Привет! Я BOOOMERANGS AI ассистент. Чем могу помочь вам сегодня?"
-    elif any(word in message_lower for word in ['как дела', 'как ты', 'how are you']):
-        return "У меня всё отлично, спасибо что спросили! Как ваши дела?"
-    elif any(word in message_lower for word in ['изображен', 'картин', 'image', 'picture']):
-        return "Вы можете создать изображение, перейдя на вкладку 'Генератор изображений'. Просто опишите то, что хотите увидеть, и выберите стиль!"
-    elif 'booomerangs' in message_lower:
-        return "BOOOMERANGS - это бесплатный мультимодальный AI-сервис для общения и создания изображений. Мы обеспечиваем доступ к возможностям искусственного интеллекта без необходимости платных API ключей!"
-    else:
-        random_responses = [
-            "Интересный вопрос! BOOOMERANGS использует различные AI-провайдеры, чтобы предоставлять ответы даже без платных API ключей. Наша система автоматически выбирает лучший доступный провайдер в каждый момент времени.",
-            "Спасибо за ваш вопрос! BOOOMERANGS позволяет не только общаться с AI, но и генерировать изображения по текстовому описанию, а также конвертировать их в векторный формат SVG.",
-            "BOOOMERANGS стремится сделать технологии искусственного интеллекта доступными для всех. Наше приложение работает прямо в браузере и оптимизировано для использования на мобильных устройствах."
-        ]
-        return random.choice(random_responses)
+# ФУНКЦИЯ get_demo_response УДАЛЕНА - больше никаких заготовленных ответов!
 
 def try_provider(provider_name, message, timeout=15, use_stream=False):
     """Попытка получить ответ от провайдера с обработкой ошибок и системой резервных моделей"""
@@ -218,7 +200,7 @@ def get_chat_response(message, specific_provider=None, use_stream=False):
     print("❌ Все провайдеры недоступны, возвращаем демо-ответ")
     return {
         "error": "Все провайдеры недоступны",
-        "response": get_demo_response(message),
+        "response": "Python G4F недоступен - нет живых провайдеров",
         "provider": "BOOOMERANGS-Demo",
         "model": "fallback-mode"
     }
@@ -274,7 +256,7 @@ def chat():
         traceback.print_exc()
         return jsonify({
             "error": str(e),
-            "response": get_demo_response(message if 'message' in locals() else ""),
+            "response": "Ошибка Python G4F - все провайдеры недоступны",
             "provider": "BOOOMERANGS-Error",
             "model": "error-mode"
         })

@@ -21,7 +21,7 @@ async function getPythonG4FResponse(message, provider = 'Qwen_Qwen_2_5_Max') {
       headers: {
         'Content-Type': 'application/json'
       },
-      timeout: 12000
+      timeout: 20000
     });
 
     if (response.data && response.data.response) {

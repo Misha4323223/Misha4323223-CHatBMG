@@ -10,7 +10,7 @@ const FAST_PROVIDERS = [
   {
     name: 'PythonG4F-Direct',
     url: 'http://localhost:5000/api/python-direct/chat',
-    timeout: 12000,
+    timeout: 20000,
     format: 'standard',
     provider: 'Qwen_Qwen_2_5_Max'
   }
