@@ -1165,20 +1165,28 @@
                 
                 while (true) {
                     const { done, value } = await reader.read();
-                    if (done) break;
+                    if (done) {
+                        console.log('🌊 Чтение стрима завершено');
+                        break;
+                    }
                     
                     const chunk = decoder.decode(value);
+                    console.log('🌊 Получен чанк:', chunk.substring(0, 100) + '...');
                     const lines = chunk.split('\n');
                     
                     let currentEvent = '';
                     for (const line of lines) {
+                        console.log('🌊 Обрабатываем строку:', line);
                         if (line.startsWith('event: ')) {
                             currentEvent = line.slice(7).trim();
+                            console.log('🌊 Событие:', currentEvent);
                         } else if (line.startsWith('data: ')) {
                             const data = line.slice(6);
+                            console.log('🌊 Данные:', data);
                             
                             try {
                                 const parsed = JSON.parse(data);
+                                console.log('🌊 Парсинг успешен:', parsed);
                                 
                                 if (currentEvent === 'chunk' && parsed.text) {
                                     aiMessage += parsed.text;
@@ -1198,7 +1206,7 @@
                                     return aiMessage;
                                 }
                             } catch (e) {
-                                console.log('🌊 Ошибка парсинга:', e);
+                                console.log('🌊 Ошибка парсинга JSON:', e, 'данные:', data);
                             }
                         }
                     }
