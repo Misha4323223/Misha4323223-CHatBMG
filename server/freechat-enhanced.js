@@ -88,7 +88,7 @@ async function getChatFreeEnhancedResponse(message, options = {}) {
   try {
     console.log(`FreeChat Enhanced: Использование Python G4F с провайдером AIChatFree...`);
     
-    const response = await fetch("http://localhost:5004/python/chat?provider=AIChatFree", {
+    const response = await fetch("http://localhost:5004/python/test", {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json'
@@ -651,10 +651,12 @@ async function getChatFreeEnhancedResponse(message, options = {}) {
     console.log(`⚠️ Ошибка при использовании автоматического выбора: ${error.message}`);
   }
   
-  // Если все методы не сработали, возвращаем ошибку
+  // КРИТИЧНО: Если дошли сюда, значит Python G4F недоступен - НЕ используем заготовленные ответы!
+  console.log('❌ ВСЕ AI ПРОВАЙДЕРЫ НЕДОСТУПНЫ - возвращаем ошибку');
+  
   return {
     success: false,
-    error: 'Не удалось получить ответ от всех доступных провайдеров',
+    error: 'Все AI провайдеры временно недоступны. Python G4F сервер не отвечает.',
     provider: 'FreeChat Enhanced',
     model: model
   };
