@@ -1261,30 +1261,41 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
       // Отправляем информацию о провайдере
       res.write(`data: ${JSON.stringify({ provider: provider })}\n\n`);
       
-      // Получаем ответ от Python G4F
-      const pythonResponse = await callG4F(message, provider);
-      
-      if (pythonResponse && pythonResponse.response && typeof pythonResponse.response === 'string') {
-        // Симулируем потоковую отправку, разбивая текст на части
-        const text = pythonResponse.response;
-        const words = text.split(' ');
+      // Используем тот же Python G4F что работает в обычном API
+      try {
+        console.log('🐍 [STREAMING] Вызываем Python G4F...');
+        const pythonResponse = await fetch(`http://127.0.0.1:5004/python/chat?provider=${provider}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: message }),
+          timeout: 10000
+        });
         
-        for (let i = 0; i < words.length; i++) {
-          const chunk = i === 0 ? words[i] : ' ' + words[i];
-          res.write(`data: ${JSON.stringify({ text: chunk })}\n\n`);
+        if (pythonResponse.ok) {
+          const data = await pythonResponse.json();
+          console.log('✅ [STREAMING] Python G4F ответил:', data);
           
-          // Небольшая задержка для эффекта печатания
-          await new Promise(resolve => setTimeout(resolve, 50));
+          if (data.response && typeof data.response === 'string') {
+            const text = data.response;
+            const words = text.split(' ');
+            
+            for (let i = 0; i < words.length; i++) {
+              const chunk = i === 0 ? words[i] : ' ' + words[i];
+              res.write(`data: ${JSON.stringify({ text: chunk })}\n\n`);
+              await new Promise(resolve => setTimeout(resolve, 50));
+            }
+            
+            res.write(`data: ${JSON.stringify({ finished: true, provider: data.provider || provider })}\n\n`);
+          } else {
+            throw new Error('Неверный формат ответа от Python G4F');
+          }
+        } else {
+          throw new Error(`Python G4F вернул статус ${pythonResponse.status}`);
         }
-        
-        // Сигнализируем о завершении
-        res.write(`data: ${JSON.stringify({ finished: true, provider: pythonResponse.provider })}\n\n`);
-      } else {
-        // Fallback ответ
-        console.log('⚠️ [STREAMING] Используем fallback ответ');
+      } catch (pythonError) {
+        console.log('⚠️ [STREAMING] Ошибка Python G4F, используем fallback');
         const fallbackText = "Извините, произошла ошибка при генерации ответа.";
         
-        // Отправляем fallback ответ по частям
         const words = fallbackText.split(' ');
         for (let i = 0; i < words.length; i++) {
           const chunk = i === 0 ? words[i] : ' ' + words[i];
