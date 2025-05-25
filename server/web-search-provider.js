@@ -3,7 +3,7 @@
  * Использует несколько бесплатных поисковых API и сервисов
  */
 
-const fetch = require('node-fetch');
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
 /**
  * Определяет требуется ли веб-поиск для запроса
