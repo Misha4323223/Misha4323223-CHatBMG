@@ -327,11 +327,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Сохранение сообщения
+  // Сохранение сообщения с автоматическим AI ответом
   app.post('/api/chat/messages', async (req, res) => {
     try {
       const messageData = req.body;
       const message = await chatHistory.saveMessage(messageData);
+      
+      // Если это сообщение от пользователя, получаем ответ AI
+      if (messageData.sender === 'user') {
+        try {
+          const smartRouter = require('./smart-router');
+          const aiResponse = await smartRouter.getChatResponse(messageData.content, {
+            userId: `session_${messageData.sessionId || 'default'}`
+          });
+          
+          if (aiResponse && aiResponse.response) {
+            // Сохраняем ответ AI
+            const aiMessageData = {
+              ...messageData,
+              content: aiResponse.response,
+              sender: 'ai',
+              provider: aiResponse.provider,
+              timestamp: new Date().toISOString()
+            };
+            
+            await chatHistory.saveMessage(aiMessageData);
+            console.log('✅ Ответ AI автоматически добавлен в чат');
+          }
+        } catch (aiError) {
+          console.error('Ошибка получения ответа AI:', aiError);
+        }
+      }
+      
       res.json({ success: true, message });
     } catch (error) {
       console.error('Ошибка сохранения сообщения:', error);
