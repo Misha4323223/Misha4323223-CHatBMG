@@ -1098,6 +1098,10 @@
         let isSidebarVisible = true;
         let currentTab = 'chat';
         
+        // Переменные для стриминга
+        let isStreamMode = false;
+        let currentStream = null;
+        
         // Переменные для умных функций
         let currentFile = null;
         let isRecording = false;
@@ -1113,6 +1117,90 @@
             personalData: {}
         };
         let longTermMemory = [];
+
+        // Функция переключения стриминга
+        function toggleStreamMode() {
+            isStreamMode = !isStreamMode;
+            const streamToggle = document.getElementById('streamToggle');
+            const streamIcon = document.getElementById('streamIcon');
+            
+            if (isStreamMode) {
+                streamToggle.classList.add('active');
+                streamIcon.textContent = '🌊';
+                streamToggle.title = 'Стриминг режим включен - слова появляются мгновенно';
+                console.log('🌊 Стриминг режим включен!');
+            } else {
+                streamToggle.classList.remove('active');
+                streamIcon.textContent = '⚡';
+                streamToggle.title = 'Быстрый режим включен - полный ответ за 6-8 секунд';
+                console.log('⚡ Быстрый режим включен!');
+            }
+        }
+
+        // Функция отправки стримингового сообщения
+        async function sendStreamMessage(message, context) {
+            console.log('🌊 Отправка стримингового сообщения:', message);
+            
+            try {
+                const response = await fetch('/api/ai/stream-chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ message, context })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Стриминг недоступен');
+                }
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let aiMessage = '';
+                
+                // Добавляем пустое сообщение AI для стриминга
+                addMessage('ai', '');
+                const aiMessageElement = document.querySelector('.message-bubble:last-child .message-text');
+                
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    
+                    const chunk = decoder.decode(value);
+                    const lines = chunk.split('\n');
+                    
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            const data = line.slice(6);
+                            if (data === '[DONE]') {
+                                console.log('🌊 Стриминг завершен');
+                                return aiMessage;
+                            }
+                            
+                            try {
+                                const parsed = JSON.parse(data);
+                                if (parsed.content) {
+                                    aiMessage += parsed.content;
+                                    if (aiMessageElement) {
+                                        aiMessageElement.textContent = aiMessage;
+                                    }
+                                }
+                            } catch (e) {
+                                // Игнорируем ошибки парсинга
+                            }
+                        }
+                    }
+                }
+                
+                return aiMessage;
+                
+            } catch (error) {
+                console.error('🌊 Ошибка стриминга:', error);
+                // Fallback на обычный режим
+                console.log('⚡ Переключение на быстрый режим...');
+                return null;
+            }
+        }
 
         // Инициализация при загрузке
         document.addEventListener('DOMContentLoaded', function() {
@@ -1813,6 +1901,30 @@
                 // Определяем предпочитаемый провайдер на основе контекста
                 const preferredProvider = getPreferredProvider(requestType);
                 
+                // Проверяем режим стриминга
+                if (isStreamMode) {
+                    console.log('🌊 Используем стриминг режим...');
+                    const streamResult = await sendStreamMessage(enhancedMessage, contextPrompt);
+                    
+                    if (streamResult) {
+                        // Стриминг успешен, сохраняем результат
+                        await saveMessageToHistory(streamResult, 'ai', 'PythonG4F-Stream', 'Qwen_Qwen_2_5_Max');
+                        updateMemoryWithResponse(message, streamResult);
+                        
+                        const endTime = performance.now();
+                        const duration = Math.round(endTime - startTime);
+                        console.log(`⚡ [PERF] Стриминговое сообщение (${duration}ms):`, {
+                            userMessage: message,
+                            aiResponse: streamResult.substring(0, 50) + '...',
+                            provider: 'PythonG4F-Stream'
+                        });
+                        return; // Завершаем, стриминг обработан
+                    } else {
+                        // Стриминг не удался, переключаемся на обычный режим
+                        console.log('⚡ Стриминг недоступен, используем быстрый режим...');
+                    }
+                }
+
                 // Сначала пробуем быстрые провайдеры для ускоренного ответа
                 console.log('🚀 Пробуем быстрые провайдеры для ускорения...');
                 let response = await fetch('/api/ai/fast-chat', {
