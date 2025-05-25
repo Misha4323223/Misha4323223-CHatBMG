@@ -101,16 +101,18 @@ const SmartChat: React.FC = () => {
 
       const data = await response.json();
       
+      console.log('✅ Получен ответ от AI:', data);
+      
       // Обновляем временное сообщение реальным ответом
       setMessages(prevMessages => prevMessages.map(msg => 
         msg.id === tempAiMessageId ? {
           id: tempAiMessageId,
-          text: data.response || "Не удалось получить ответ",
+          text: data.response || data.text || "Не удалось получить ответ",
           sender: 'ai',
           timestamp: new Date(),
           loading: false,
           category: data.category || "general",
-          provider: data.provider || "Unknown",
+          provider: data.provider || "AI",
           bestProvider: data.bestProvider,
           error: !data.success,
           errorMessage: data.error
