@@ -1206,12 +1206,19 @@
       const userId = 1; // Временно используем фиксированный ID пользователя
       
       // Функции для работы с боковой панелью
-      async function loadChatSessions() {
+      async function loadChatSessions(forceRefresh = false) {
         try {
-          const response = await fetch('/api/chat/sessions');
+          const url = forceRefresh ? `/api/chat/sessions?t=${Date.now()}` : '/api/chat/sessions';
+          const response = await fetch(url, {
+            cache: 'no-cache',
+            headers: {
+              'Cache-Control': 'no-cache'
+            }
+          });
           if (!response.ok) return;
           
           const data = await response.json();
+          console.log('📋 Загруженные сессии:', data.sessions);
           if (data.success && data.sessions) {
             renderChatSessions(data.sessions);
           }
@@ -1297,7 +1304,7 @@
       async function createNewChat() {
         await createNewChatSession();
         chatMessages.innerHTML = '';
-        loadChatSessions();
+        await loadChatSessions(true);
       }
       
       async function deleteSession(sessionId, event) {
@@ -1317,13 +1324,13 @@
               // Если удаляем текущую сессию, создаем новую
               await createNewChat();
             } else {
-              // Просто обновляем список сессий
-              await loadChatSessions();
+              // Принудительно обновляем список сессий без кэша
+              await loadChatSessions(true);
             }
           } else {
             console.error(`❌ Ошибка удаления сессии ${sessionId}:`, response.status);
-            // Все равно обновляем список, возможно сессия уже была удалена
-            await loadChatSessions();
+            // Все равно принудительно обновляем список
+            await loadChatSessions(true);
           }
         } catch (error) {
           console.error('❌ Ошибка удаления сессии:', error);
