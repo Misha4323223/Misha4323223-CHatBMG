@@ -349,8 +349,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (messageData.sender === 'user') {
         console.log('🤖 Получаем ответ AI для сообщения:', messageData.content);
         try {
-          const { getChatResponse } = require('./smart-router');
-          const aiResponse = await getChatResponse(messageData.content, {
+          // Очищаем кэш и загружаем модуль заново
+          delete require.cache[require.resolve('./smart-router')];
+          const smartRouter = require('./smart-router');
+          const aiResponse = await smartRouter.getChatResponse(messageData.content, {
             userId: `session_${sessionId}`
           });
           
