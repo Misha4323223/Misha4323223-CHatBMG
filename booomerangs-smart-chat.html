@@ -1570,7 +1570,7 @@
           scrollToBottom();
           
           // Используем EventSource для стриминга
-          const eventSource = new EventSource(`/api/stream/chat?message=${encodeURIComponent(userMessageText)}&provider=auto&imageUrl=${encodeURIComponent(uploadedImageUrl || '')}`);
+          const eventSource = new EventSource(`/api/streaming/chat?message=${encodeURIComponent(userMessageText)}&provider=auto&imageUrl=${encodeURIComponent(uploadedImageUrl || '')}`);
           
           let streamedText = '';
           let currentProvider = '';
