@@ -924,24 +924,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const pythonProviderRoutes = require('./python_provider_routes');
       
       // 🧠 ДОБАВЛЯЕМ КОНТЕКСТ РАЗГОВОРА
+      console.log('🧠 [STREAM] === НАЧАЛО АНАЛИЗА КОНТЕКСТА ===');
+      console.log('🧠 [STREAM] req.body:', JSON.stringify(req.body, null, 2));
+      
       const conversationMemory = require('./conversation-memory');
       const userId = req.body.userId || `session_${req.body.sessionId || 'stream'}`;
+      console.log('🧠 [STREAM] userId для контекста:', userId);
       
       // Получаем контекст разговора с анализом намерений
+      console.log('🧠 [STREAM] Получаем контекст для сообщения:', finalMessage);
       const contextInfo = conversationMemory.getMessageContext(userId, finalMessage);
       
-      console.log('🧠 [STREAM] Анализ контекста:', {
+      console.log('🧠 [STREAM] ДЕТАЛЬНЫЙ анализ контекста:', {
         hasIntent: !!contextInfo.intent,
+        intent: contextInfo.intent,
         isSearchQuery: contextInfo.intent?.isSearchQuery,
         location: contextInfo.intent?.location,
-        contextLength: contextInfo.context?.length || 0
+        contextLength: contextInfo.context?.length || 0,
+        context: contextInfo.context?.substring(0, 200) + '...',
+        messageHistory: contextInfo.messageHistory?.length || 0
       });
       
       // Используем сообщение с контекстом
       if (contextInfo.context && contextInfo.context.trim()) {
+        const originalMessage = finalMessage;
         finalMessage = contextInfo.context + finalMessage;
-        console.log('🧠 [STREAM] Добавлен контекст к сообщению');
+        console.log('🧠 [STREAM] КОНТЕКСТ ДОБАВЛЕН!');
+        console.log('🧠 [STREAM] Оригинальное сообщение:', originalMessage);
+        console.log('🧠 [STREAM] Сообщение с контекстом:', finalMessage.substring(0, 300) + '...');
+      } else {
+        console.log('🧠 [STREAM] КОНТЕКСТ НЕ ДОБАВЛЕН - нет контекста или пустой');
       }
+      console.log('🧠 [STREAM] === КОНЕЦ АНАЛИЗА КОНТЕКСТА ===');
       
       // Сначала создаем демо-ответ для запасного варианта
       const demoResponse = generateDemoResponse(finalMessage);
