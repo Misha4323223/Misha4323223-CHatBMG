@@ -44,31 +44,28 @@ class G4FManager:
         """Получить ответ от AI провайдера"""
         providers = PROVIDERS.get(provider_type, PROVIDERS['general'])
         
-        for provider in providers:
+        for provider_name in providers:
             try:
-                print(f"🔄 Пробуем провайдер: {provider.__name__}")
+                print(f"🔄 Пробуем провайдер: {provider_name}")
                 
-                response = await asyncio.to_thread(
-                    self.client.chat.completions.create,
+                # Используем простой синхронный вызов g4f
+                response = g4f.ChatCompletion.create(
                     model="gpt-3.5-turbo",
                     messages=[{"role": "user", "content": message}],
-                    provider=provider,
-                    max_tokens=max_tokens
+                    provider=getattr(g4f.Provider, provider_name, None)
                 )
                 
-                if response and hasattr(response, 'choices') and response.choices:
-                    result = response.choices[0].message.content
-                    if result and len(result.strip()) > 10:
-                        print(f"✅ Успешный ответ от {provider.__name__}")
-                        return {
-                            'success': True,
-                            'response': result.strip(),
-                            'provider': provider.__name__,
-                            'model': 'gpt-3.5-turbo'
-                        }
+                if response and isinstance(response, str) and len(response.strip()) > 10:
+                    print(f"✅ Успешный ответ от {provider_name}")
+                    return {
+                        'success': True,
+                        'response': response.strip(),
+                        'provider': provider_name,
+                        'model': 'gpt-3.5-turbo'
+                    }
                 
             except Exception as e:
-                print(f"❌ Ошибка {provider.__name__}: {str(e)}")
+                print(f"❌ Ошибка {provider_name}: {str(e)}")
                 continue
         
         return {

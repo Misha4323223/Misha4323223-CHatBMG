@@ -247,45 +247,76 @@ async function tryProviderWithRetries(provider, messages, options) {
   throw new Error(`Не удалось получить ответ от провайдера ${provider} после ${maxRetries} попыток: ${error ? error.message : 'неизвестная ошибка'}`);
 }
 
-// Обработчик для Qwen через Python G4F API
+// Обработчик для Qwen через бесплатные AI сервисы
 async function handleQwenProvider(messages, options = {}) {
   try {
-    console.log('🔄 Подключаемся к Qwen через Python G4F API...');
+    console.log('🔄 Подключаемся к бесплатным AI сервисам...');
     
     const messageText = messages[messages.length - 1].content;
     
-    // Подключаемся к Python G4F API сервису
-    const response = await fetch('http://localhost:5001/chat', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
+    // Бесплатные AI сервисы для тестирования
+    const freeAIServices = [
+      {
+        name: 'HuggingFace Inference',
+        url: 'https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium',
+        headers: { 'Content-Type': 'application/json' }
       },
-      body: JSON.stringify({
-        message: messageText,
-        provider: 'qwen'
-      }),
-      timeout: 15000
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      
-      if (data.success && data.response) {
-        console.log(`✅ Получен ответ от Python G4F (${data.provider}):`, data.response.substring(0, 60));
-        return {
-          response: data.response,
-          provider: `Qwen AI (${data.provider})`,
-          model: data.model || 'qwen-turbo'
-        };
-      } else {
-        console.log('❌ Python G4F API ошибка:', data.error);
+      {
+        name: 'Cohere Free API',
+        url: 'https://api.cohere.ai/v1/generate',
+        headers: { 'Content-Type': 'application/json' }
+      },
+      {
+        name: 'AI21 Free',
+        url: 'https://api.ai21.com/studio/v1/j2-light/complete',
+        headers: { 'Content-Type': 'application/json' }
       }
-    } else {
-      console.log('❌ Python G4F API недоступен, статус:', response.status);
+    ];
+
+    for (const service of freeAIServices) {
+      try {
+        console.log(`🔄 Пробуем ${service.name}...`);
+        
+        const response = await fetch(service.url, {
+          method: 'POST',
+          headers: service.headers,
+          body: JSON.stringify({
+            inputs: messageText,
+            parameters: { max_length: 100, temperature: 0.7 }
+          }),
+          timeout: 8000
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          let aiResponse = '';
+          
+          // Обработка разных форматов ответов
+          if (data.generated_text) {
+            aiResponse = data.generated_text;
+          } else if (data[0] && data[0].generated_text) {
+            aiResponse = data[0].generated_text;
+          } else if (data.completions && data.completions[0]) {
+            aiResponse = data.completions[0].data.text;
+          }
+          
+          if (aiResponse && aiResponse.length > 15) {
+            console.log(`✅ Получен ответ от ${service.name}:`, aiResponse.substring(0, 60));
+            return {
+              response: aiResponse,
+              provider: `AI (${service.name})`,
+              model: 'free-ai'
+            };
+          }
+        }
+      } catch (serviceError) {
+        console.log(`❌ ${service.name} недоступен:`, serviceError.message);
+        continue;
+      }
     }
     
-  } catch (fetchError) {
-    console.log('❌ Ошибка подключения к Python G4F API:', fetchError.message);
+  } catch (error) {
+    console.log('❌ Ошибка подключения к AI сервисам:', error.message);
   }
   
   const messageText = messages[messages.length - 1].content;
