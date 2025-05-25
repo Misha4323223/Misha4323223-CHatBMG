@@ -34,9 +34,7 @@ const upload = multer({
 const svgGenerator = require('./svg-generator');
 const g4fHandlers = require('./g4f-handlers');
 const directAiRoutes = require('./direct-ai-routes');
-const pythonProviderRoutes = require('./python_provider_routes');
-const deepspeekProvider = require('./deepspeek-fixed');
-const chatFreeProvider = require('./simple-chatfree');
+// Удалены лишние провайдеры, оставлен только g4f-provider.js
 // const streamingRoutes = require('./streaming-routes'); // УДАЛЕН
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -221,51 +219,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // API с прямым доступом к AI провайдерам (более стабильный вариант)
   app.use('/api/direct-ai', directAiRoutes);
   
-  // API с Python-версией G4F
-  app.use('/api/python', pythonProviderRoutes.router);
+  // Используем только g4f-provider.js
   
   // API для стриминга от провайдеров, поддерживающих stream=True
   // Используем встроенный стриминг в routes.ts
   
   // API для Flask-стриминга (надежный вариант)
-  const flaskStreamBridge = require('./stream-flask-bridge');
-  app.use('/api/flask-stream', flaskStreamBridge);
+  // Flask стриминг встроен в основной роутер
   
   // API для DeepSpeek - специализированного AI для технических вопросов
-  const deepspeekRoutes = require('./deepspeek-routes');
-  app.use('/api/deepspeek', deepspeekRoutes);
+  // DeepSpeek встроен в g4f-provider.js
+  // DeepSpeek функции встроены в g4f-provider.js
   
   // API для проверки состояния провайдеров
-  const checkProvidersRoutes = require('./check-providers');
-  app.use('/api/providers', checkProvidersRoutes);
+  // Проверка провайдеров через g4f-provider.js
+  // Проверка провайдеров встроена в g4f-provider.js
   
-  // API для Ollama - локальный AI провайдер
-  const ollamaProvider = require('./ollama-provider');
-  app.use('/api/ollama', ollamaProvider);
+  // Ollama встроен в g4f-provider.js
   
-  // API для улучшенного ChatFree провайдера
-  const chatFreeImproved = require('./chatfree-improved');
-  app.use('/api/chatfree', chatFreeImproved);
+  // ChatFree встроен в g4f-provider.js
   
-  // API для FreeChat с интеграцией Phind и Qwen
-  const freechatEnhanced = require('./freechat-enhanced');
-  app.use('/api/freechat', freechatEnhanced);
+  // FreeChat встроен в g4f-provider.js
   
-  // API для Claude от Anthropic через Python G4F
-  const claudeProvider = require('./claude-provider');
-  app.use('/api/claude', claudeProvider);
+  // Claude встроен в g4f-provider.js
   
-  // API для DeepInfra - высококачественные модели
-  const deepInfraProvider = require('./deepinfra-provider');
-  app.use('/api/deepinfra', deepInfraProvider);
+  // DeepInfra встроен в g4f-provider.js
   
-  // API для мультимодального анализа изображений
-  const multimodalProvider = require('./multimodal-provider');
-  app.use('/api/multimodal', multimodalProvider);
+  // Мультимодальный анализ встроен в g4f-provider.js
   
-  // API для тестирования провайдеров
-  const providerTestRoute = require('./provider-test-route');
-  app.use('/api/test-providers', providerTestRoute);
+  // Тестирование провайдеров встроено в g4f-provider.js
   
   // API для умной маршрутизации сообщений к подходящим провайдерам
   const smartRouter = require('./smart-router');
@@ -646,7 +628,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Используем Ollama через Python G4F
         try {
           console.log(`Пробуем использовать Ollama через Python G4F...`);
-          const ollamaResponse = await pythonProviderRoutes.callPythonAI(message, 'Ollama');
+          // Ollama отключен, используем g4f-provider
+          const g4fProvider = require('./g4f-provider');
+          const ollamaResponse = await g4fProvider.getResponse(message, { provider: 'Qwen' });
           
           if (ollamaResponse) {
             return {
@@ -694,8 +678,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             return chatFreeResponse;
           } else {
             // Пробуем использовать простую версию как запасной вариант
-            const simpleChatFree = require('./simple-chatfree');
-            const simpleResponse = await simpleChatFree.getChatFreeResponse(message);
+            // Используем g4f-provider вместо simple-chatfree
+            const g4fProvider = require('./g4f-provider');
+            const simpleResponse = await g4fProvider.getResponse(message, { provider: 'Qwen' });
             
             if (simpleResponse.success) {
               console.log(`✅ Успешно получен ответ от простого ChatFree провайдера`);
@@ -750,7 +735,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { AI_PROVIDERS } = directAiProvider;
       
       // Импортируем Python провайдер
-      const pythonProviderRoutes = require('./python_provider_routes');
+      // Используем только g4f-provider.js
+      const g4fProvider = require('./g4f-provider');
       
       // Сначала создаем демо-ответ для запасного варианта
       const demoResponse = generateDemoResponse(finalMessage);
@@ -896,7 +882,7 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
         console.log(`Пробуем использовать Python провайдер ${selectedProvider}...`);
         
         // Используем нашу новую функцию callPythonAI
-        const aiResponse = await pythonProviderRoutes.callPythonAI(message, selectedProvider);
+        const aiResponse = await g4fProvider.getResponse(message, { provider: selectedProvider });
         
         if (aiResponse) {
           console.log(`✅ Успешно получен ответ от Python провайдера ${selectedProvider}`);
@@ -1265,32 +1251,25 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
       let response;
       console.log('🔍 smartRouter properties:', Object.keys(smartRouter));
       
-      // Используем рабочий Python G4F провайдер напрямую
+      // Используем рабочий G4F провайдер с Qwen, Phind, Gemini
       try {
-        const pythonProvider = require('./python_provider_routes');
-        console.log('🔄 Пробуем Python G4F провайдер...');
-        const result = await fetch('http://localhost:5001/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: message, provider: 'auto' })
-        });
-        const data = await result.json();
-        if (data.success) {
-          response = data;
-          console.log('✅ Получен ответ от Python G4F');
-        } else {
-          throw new Error('Python G4F не ответил');
-        }
+        const g4fProvider = require('./g4f-provider');
+        console.log('🔄 Пробуем G4F провайдер (Qwen, Phind, Gemini)...');
+        response = await g4fProvider.getChatResponse(message as string, { provider: 'auto' });
+        console.log('✅ Получен ответ от G4F провайдера');
       } catch (error) {
-        console.log('❌ Python G4F недоступен, пробуем другие провайдеры...');
+        console.log('❌ G4F провайдер недоступен, пробуем умный роутер...');
         // Fallback к умному роутеру
         if (typeof smartRouter.analyzeMessage === 'function') {
           response = await smartRouter.analyzeMessage(message as string, {});
           console.log('✅ Используем smartRouter.analyzeMessage');
         } else {
-          const directAi = require('./direct-ai-provider');
-          response = await directAi.getChatResponse(message as string, {});
-          console.log('🔄 Используем fallback direct-ai-provider');
+          console.log('🔄 Используем демо-ответ');
+          response = {
+            success: true,
+            response: 'Демо-ответ от BOOOMERANGS AI. Настройте провайдеры для получения реальных ответов.',
+            provider: 'DEMO'
+          };
         }
       }
       
