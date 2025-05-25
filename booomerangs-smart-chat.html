@@ -1546,6 +1546,8 @@
           
           const data = await response.json();
           
+          console.log('✅ Получен ответ от AI:', data);
+          
           // Если есть изображение, сбрасываем его после отправки
           if (uploadedImageUrl) {
             resetImageUpload();
@@ -1556,8 +1558,8 @@
           let category = '';
           
           if (data.success) {
-            aiResponse = data.response || 'Ошибка получения ответа';
-            provider = data.provider || 'Неизвестно';
+            aiResponse = data.response || data.text || 'Ошибка получения ответа';
+            provider = data.provider || 'AI';
             category = data.category || 'general';
           } else {
             aiResponse = data.error || 'Произошла ошибка при обработке запроса';
