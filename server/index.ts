@@ -11,6 +11,16 @@ app.use(cors()); // Разрешаем CORS для всех маршрутов
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// Логирование POST запросов для отладки сохранения чатов
+app.use((req, res, next) => {
+  if (req.method === 'POST' && req.url.includes('/api/chat/sessions')) {
+    console.log(`🌐 POST запрос получен: ${req.url}`);
+    console.log(`🌐 Content-Type:`, req.headers['content-type']);
+    console.log(`🌐 Данные запроса:`, req.body);
+  }
+  next();
+});
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;

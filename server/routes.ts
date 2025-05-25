@@ -42,16 +42,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create HTTP server
   const httpServer = createServer(app);
   
-  // Логирование всех POST запросов для отладки (ДОЛЖНО БЫТЬ ПЕРВЫМ!)
-  app.use((req, res, next) => {
-    if (req.method === 'POST' && req.url.includes('/api/chat/sessions')) {
-      console.log(`🌐 POST запрос получен: ${req.url}`);
-      console.log(`🌐 Content-Type:`, req.headers['content-type']);
-      console.log(`🌐 Данные запроса:`, req.body);
-      console.log(`🌐 Raw body length:`, JSON.stringify(req.body).length);
-    }
-    next();
-  });
   
   // Setup WebSocket server
   setupWebSocket(httpServer, storage);
