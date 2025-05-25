@@ -247,59 +247,45 @@ async function tryProviderWithRetries(provider, messages, options) {
   throw new Error(`Не удалось получить ответ от провайдера ${provider} после ${maxRetries} попыток: ${error ? error.message : 'неизвестная ошибка'}`);
 }
 
-// Обработчик для Qwen через новую gpt4free библиотеку
+// Обработчик для Qwen через Python G4F API
 async function handleQwenProvider(messages, options = {}) {
   try {
-    console.log('🔄 Подключаемся к Qwen через gpt4free...');
+    console.log('🔄 Подключаемся к Qwen через Python G4F API...');
     
-    // Используем новую gpt4free библиотеку
-    const gpt4free = await import('gpt4free');
+    const messageText = messages[messages.length - 1].content;
     
-    console.log('📦 gpt4free модуль загружен:', typeof gpt4free);
-    console.log('📦 gpt4free.default:', typeof gpt4free.default);
-    console.log('📦 gpt4free exports:', Object.keys(gpt4free));
-    
-    const G4F = gpt4free.default || gpt4free;
-    
-    // Бесплатные провайдеры для Qwen
-    const qwenProviders = [
-      'Qwen',
-      'ChatGpt',
-      'Bing', 
-      'You',
-      'Gemini',
-      'GPTalk'
-    ];
-    
-    for (const provider of qwenProviders) {
-      try {
-        console.log(`🔄 Пробуем gpt4free с провайдером ${provider}...`);
-        
-        const messages_text = messages.map(m => `${m.role}: ${m.content}`).join('\n');
-        
-        const response = await G4F.chatCompletion([
-          { role: 'user', content: messages[messages.length - 1].content }
-        ], {
-          provider: provider,
-          model: 'qwen-turbo'
-        });
-        
-        if (response && response.length > 15) {
-          console.log(`✅ Получен ответ от gpt4free (${provider}):`, response.substring(0, 60));
-          return {
-            response: response,
-            provider: `Qwen AI (${provider})`,
-            model: 'qwen-turbo'
-          };
-        }
-      } catch (providerError) {
-        console.log(`❌ gpt4free ${provider} ошибка:`, providerError.message);
-        continue;
+    // Подключаемся к Python G4F API сервису
+    const response = await fetch('http://localhost:5001/chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        message: messageText,
+        provider: 'qwen'
+      }),
+      timeout: 15000
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      
+      if (data.success && data.response) {
+        console.log(`✅ Получен ответ от Python G4F (${data.provider}):`, data.response.substring(0, 60));
+        return {
+          response: data.response,
+          provider: `Qwen AI (${data.provider})`,
+          model: data.model || 'qwen-turbo'
+        };
+      } else {
+        console.log('❌ Python G4F API ошибка:', data.error);
       }
+    } else {
+      console.log('❌ Python G4F API недоступен, статус:', response.status);
     }
     
-  } catch (importError) {
-    console.log('❌ Ошибка импорта gpt4free:', importError.message);
+  } catch (fetchError) {
+    console.log('❌ Ошибка подключения к Python G4F API:', fetchError.message);
   }
   
   const messageText = messages[messages.length - 1].content;
