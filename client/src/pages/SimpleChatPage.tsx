@@ -182,21 +182,22 @@ const SimpleChatPage: React.FC = () => {
           });
           const data = await response.json();
         
-        if (data.success) {
-          // Сохраняем ответ AI
-          await fetch(`/api/chat/sessions/${sessionId}/messages`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              content: data.response,
-              sender: 'ai',
-              userId,
-              provider: data.provider,
-              model: data.model
-            })
-          });
+          if (data.success) {
+            // Сохраняем ответ AI
+            await fetch(`/api/chat/sessions/${sessionId}/messages`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                content: data.response,
+                sender: 'ai',
+                userId,
+                provider: data.provider,
+                model: data.model
+              })
+            });
+          }
+          return data;
         }
-        return data;
       }
     },
     onSuccess: () => {
