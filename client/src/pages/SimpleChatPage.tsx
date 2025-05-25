@@ -125,13 +125,62 @@ const SimpleChatPage: React.FC = () => {
         }
         return data;
       } else {
-        // Обычный чат
-        const response = await fetch('/api/ai/smart-chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message, userId })
+        // Стриминг чат через EventSource
+        console.log('💾 Сохраняем сообщение в сессию', sessionId, { content: message, sender: 'user', provider: null });
+        
+        // Создаем EventSource для стриминга
+        const eventSource = new EventSource(`/api/streaming/chat?message=${encodeURIComponent(message)}&sessionId=${sessionId}`);
+        let fullResponse = '';
+        
+        const streamPromise = new Promise((resolve, reject) => {
+          eventSource.onmessage = (event) => {
+            console.log('📡 Получены данные стриминга:', event.data);
+            try {
+              const data = JSON.parse(event.data);
+              console.log('🔍 Обработка данных:', data);
+              
+              if (data.type === 'chunk') {
+                fullResponse += data.content;
+              } else if (data.type === 'complete') {
+                eventSource.close();
+                resolve({ success: true, response: fullResponse, provider: data.provider });
+              } else if (data.type === 'error') {
+                eventSource.close();
+                console.log('❌ Ошибка стриминга, переключаемся на обычный запрос');
+                reject(new Error('Streaming failed'));
+              }
+            } catch (err) {
+              console.error('Ошибка парсинга:', err);
+            }
+          };
+          
+          eventSource.onerror = () => {
+            console.log('🔄 Стриминг не отвечает, переключаемся на обычный запрос...');
+            eventSource.close();
+            reject(new Error('Streaming timeout'));
+          };
+          
+          // Таймаут для стриминга
+          setTimeout(() => {
+            if (eventSource.readyState !== EventSource.CLOSED) {
+              eventSource.close();
+              reject(new Error('Streaming timeout'));
+            }
+          }, 15000);
         });
-        const data = await response.json();
+        
+        try {
+          const data = await streamPromise;
+          return data;
+        } catch (streamError) {
+          // Fallback на обычный запрос если стриминг не работает
+          console.error('Fallback request error:', streamError);
+          const response = await fetch('/api/ai/smart-chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message, userId, sessionId })
+          });
+          const data = await response.json();
         
         if (data.success) {
           // Сохраняем ответ AI

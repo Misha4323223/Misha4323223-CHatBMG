@@ -1281,7 +1281,7 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
         const chunkSize = 3;
         let currentIndex = 0;
         
-        const sendNextChunk = () => {
+        const sendNextChunk = async () => {
           if (currentIndex < fullText.length) {
             const chunk = fullText.slice(currentIndex, currentIndex + chunkSize);
             console.log(`📤 Отправляем chunk: "${chunk}"`);
@@ -1295,7 +1295,27 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
             currentIndex += chunkSize;
             setTimeout(sendNextChunk, 50);
           } else {
-            console.log('✅ Стриминг завершен');
+            console.log('✅ Стриминг завершен, сохраняем ответ AI в базу');
+            
+            // Сохраняем ответ AI в базу данных
+            try {
+              const chatHistory = require('./chat-history');
+              const sessionId = req.query.sessionId || '1';
+              
+              await chatHistory.saveMessage({
+                sessionId: parseInt(String(sessionId)),
+                content: fullText,
+                sender: 'ai',
+                provider: response.provider,
+                model: response.model,
+                category: response.category || 'general'
+              });
+              
+              console.log('✅ Ответ AI сохранен в базу данных');
+            } catch (saveError) {
+              console.error('❌ Ошибка сохранения ответа AI:', saveError);
+            }
+            
             res.write(`data: ${JSON.stringify({ 
               type: 'complete',
               provider: response.provider,
