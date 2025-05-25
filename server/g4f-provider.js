@@ -236,17 +236,31 @@ async function tryProviderWithRetries(provider, messages, options) {
 async function handleQwenProvider(messages, options = {}) {
   const messageText = messages[messages.length - 1].content;
   
-  // Пробуем реальные бесплатные API по очереди
+  // Пробуем реальные бесплатные AI API без токенов
   const freeAPIs = [
     {
-      name: 'HuggingFace Qwen',
-      url: 'https://api-inference.huggingface.co/models/Qwen/Qwen2.5-72B-Instruct',
-      headers: { 'Content-Type': 'application/json' }
+      name: 'DeepInfra Free',
+      url: 'https://api.deepinfra.com/v1/openai/chat/completions',
+      headers: { 
+        'Content-Type': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (compatible; BOOOMERANGS/1.0)'
+      }
     },
     {
-      name: 'Replicate Qwen',
-      url: 'https://api.replicate.com/v1/models/qwen/qwen2.5-72b-instruct/predictions',
-      headers: { 'Content-Type': 'application/json' }
+      name: 'Together AI Free',
+      url: 'https://api.together.xyz/v1/chat/completions',
+      headers: { 
+        'Content-Type': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (compatible; BOOOMERANGS/1.0)'
+      }
+    },
+    {
+      name: 'Groq Free',
+      url: 'https://api.groq.com/openai/v1/chat/completions',
+      headers: { 
+        'Content-Type': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (compatible; BOOOMERANGS/1.0)'
+      }
     }
   ];
 
@@ -258,28 +272,34 @@ async function handleQwenProvider(messages, options = {}) {
         method: 'POST',
         headers: api.headers,
         body: JSON.stringify({
-          inputs: messageText,
-          parameters: {
-            max_new_tokens: 512,
-            temperature: 0.7,
-            top_p: 0.9
-          }
+          model: "qwen2.5-72b-instruct",
+          messages: [
+            { role: "user", content: messageText }
+          ],
+          temperature: 0.7,
+          max_tokens: 500,
+          stream: false
         }),
-        timeout: 15000
+        timeout: 12000
       });
 
+      console.log(`📡 ${api.name} статус ответа:`, response.status);
+      
       if (response.ok) {
         const data = await response.json();
+        console.log(`📊 ${api.name} данные:`, JSON.stringify(data, null, 2));
         
-        // Обрабатываем разные форматы ответов
+        // Обрабатываем OpenAI-совместимый формат ответов
         let aiResponse = '';
-        if (data[0] && data[0].generated_text) {
-          aiResponse = data[0].generated_text.replace(messageText, '').trim();
-        } else if (data.output) {
-          aiResponse = data.output;
+        if (data.choices && data.choices[0] && data.choices[0].message) {
+          aiResponse = data.choices[0].message.content;
         } else if (data.response) {
           aiResponse = data.response;
+        } else if (data.output) {
+          aiResponse = data.output;
         }
+        
+        console.log(`✅ ${api.name} извлеченный ответ:`, aiResponse);
         
         if (aiResponse && aiResponse.length > 10) {
           return {
@@ -288,6 +308,9 @@ async function handleQwenProvider(messages, options = {}) {
             model: 'qwen-2.5-72b'
           };
         }
+      } else {
+        const errorText = await response.text();
+        console.log(`❌ ${api.name} ошибка ${response.status}:`, errorText);
       }
     } catch (error) {
       console.log(`❌ ${api.name} недоступен:`, error.message);
