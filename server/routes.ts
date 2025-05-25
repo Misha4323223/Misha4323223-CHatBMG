@@ -43,9 +43,12 @@ const directAiRoutes = require('./direct-ai-routes');
 const deepspeekProvider = require('./deepspeek-fixed');
 const chatFreeProvider = require('./simple-chatfree');
 
-// Создаем экземпляр ChatGPT скрапера
-const { ChatGPTWebScraper, chatgptScraper } = require('./chatgpt-web-scraper.js');
-const ChatGPTBypass2025 = require('./chatgpt-bypass-2025.js');
+// Импортируем ChatGPT модули
+import ChatGPTWebScraper from './chatgpt-web-scraper.js';
+import ChatGPTBypass2025 from './chatgpt-bypass-2025.js';
+
+// Создаем экземпляры
+const chatgptScraper = new ChatGPTWebScraper();
 const chatgptBypass = new ChatGPTBypass2025();
 
 export async function registerRoutes(app: Express): Promise<Server> {
