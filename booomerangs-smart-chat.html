@@ -1326,12 +1326,13 @@
         try {
           console.log(`💾 Сохраняем сообщение в сессию ${currentSessionId}:`, { content, sender, provider });
           
-          const response = await fetch(`/api/chat/sessions/${currentSessionId}/messages`, {
+          const response = await fetch('/api/chat/messages', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
+              sessionId: currentSessionId,
               content,
               sender,
               provider,
