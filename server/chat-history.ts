@@ -89,10 +89,43 @@ async function getUserChatSessions(username: any) {
 }
 
 /**
+ * Функция для получения красивых названий провайдеров
+ */
+function getBeautifulProviderName(technicalName: string): string {
+  const providerMap: { [key: string]: string } = {
+    'Qwen_Qwen_2_5_Max': '🧠 Qwen AI Pro',
+    'Qwen_Qwen_2_5': '🧠 Qwen AI',
+    'Phind': '💻 Phind Code Expert',
+    'Gemini': '✨ Google Gemini',
+    'GeminiPro': '✨ Google Gemini Pro',
+    'Anthropic': '🤖 Claude AI',
+    'Claude': '🤖 Claude AI',
+    'ChatGpt': '🔥 ChatGPT Plus',
+    'OpenaiChat': '🔥 ChatGPT Plus',
+    'You': '🔍 You.com AI',
+    'DeepInfra': '⚡ DeepInfra Speed',
+    'Groq': '🚀 Groq Lightning',
+    'PerplexityApi': '📚 Perplexity Search',
+    'DeepSeek': '🛠️ DeepSeek Coder',
+    'HuggingChat': '🤗 Hugging Face',
+    'Ollama': '🦙 Llama AI',
+    'PythonG4F-Stream': '🧠 Qwen AI Pro',
+    'auto': '🎯 Smart Auto'
+  };
+
+  return providerMap[technicalName] || `🤖 ${technicalName}`;
+}
+
+/**
  * Сохранение сообщения в чат
  */
-async function saveMessage(messageData) {
+async function saveMessage(messageData: any) {
   try {
+    // Заменяем техническое название провайдера на красивое
+    if (messageData.provider) {
+      messageData.provider = getBeautifulProviderName(messageData.provider);
+    }
+    
     const [message] = await db
       .insert(aiMessages)
       .values(messageData)
