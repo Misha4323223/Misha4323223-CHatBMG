@@ -125,6 +125,60 @@ if llama_available:
 app = Flask(__name__)
 CORS(app)
 
+@app.route('/python/ai', methods=['POST'])
+def python_ai_chat():
+    """Основной эндпойнт для общения с AI провайдерами"""
+    try:
+        data = request.get_json()
+        message = data.get('message', '')
+        provider_name = data.get('provider', 'auto')
+        
+        if not message:
+            return jsonify({"error": "Сообщение не указано"}), 400
+        
+        # Автоматический выбор провайдера
+        if provider_name == 'auto':
+            provider_name = random.choice(list(providers.keys()))
+        
+        # Проверяем, есть ли провайдер
+        if provider_name not in providers:
+            return jsonify({"error": f"Провайдер {provider_name} не найден"}), 400
+        
+        provider = providers[provider_name]
+        
+        # Создаем сообщения для диалога
+        messages = [
+            {"role": "system", "content": "Вы AI-ассистент BOOOMERANGS. Отвечайте по-русски, если вопрос на русском. Давайте краткие и полезные ответы."},
+            {"role": "user", "content": message}
+        ]
+        
+        print(f"🤖 Обрабатываем запрос через {provider_name}: {message[:50]}...")
+        
+        # Отправляем запрос к провайдеру
+        response = g4f.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=messages,
+            provider=provider,
+            timeout=30
+        )
+        
+        return jsonify({
+            "success": True,
+            "response": response,
+            "provider": provider_name,
+            "model": "gpt-3.5-turbo"
+        })
+        
+    except Exception as e:
+        error_msg = str(e)
+        print(f"❌ Ошибка в python_ai_chat: {error_msg}")
+        
+        return jsonify({
+            "success": False,
+            "error": error_msg,
+            "provider": provider_name if 'provider_name' in locals() else 'unknown'
+        }), 500
+
 def get_demo_response(message):
     """Генерирует демо-ответ для случаев, когда API недоступен"""
     message_lower = message.lower()
