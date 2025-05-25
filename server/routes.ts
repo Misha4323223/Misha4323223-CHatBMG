@@ -1317,9 +1317,43 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
 
   // Streaming API endpoint для потоковой генерации
   app.post("/api/stream", async (req, res) => {
-    const { message, provider = 'Qwen_Qwen_2_5_Max' } = req.body;
+    const { message, provider = 'Qwen_Qwen_2_5_Max', sessionId } = req.body;
     
     console.log(`🚀 Запуск потоковой генерации для: "${message}"`);
+    
+    // 🧠 ДОБАВЛЯЕМ КОНТЕКСТ РАЗГОВОРА
+    console.log('🧠 [STREAM] === НАЧАЛО АНАЛИЗА КОНТЕКСТА ===');
+    console.log('🧠 [STREAM] req.body:', JSON.stringify(req.body, null, 2));
+    
+    const conversationMemory = require('./conversation-memory');
+    const userId = `session_${sessionId || 'stream'}`;
+    console.log('🧠 [STREAM] userId для контекста:', userId);
+    
+    // Получаем контекст разговора с анализом намерений
+    console.log('🧠 [STREAM] Получаем контекст для сообщения:', message);
+    const contextInfo = conversationMemory.getMessageContext(userId, message);
+    
+    console.log('🧠 [STREAM] ДЕТАЛЬНЫЙ анализ контекста:', {
+      hasIntent: !!contextInfo.intent,
+      intent: contextInfo.intent,
+      isSearchQuery: contextInfo.intent?.isSearchQuery,
+      location: contextInfo.intent?.location,
+      contextLength: contextInfo.context?.length || 0,
+      context: contextInfo.context?.substring(0, 200) + '...',
+      messageHistory: contextInfo.messageHistory?.length || 0
+    });
+    
+    // Используем сообщение с контекстом
+    let finalMessage = message;
+    if (contextInfo.context && contextInfo.context.trim()) {
+      finalMessage = contextInfo.context + message;
+      console.log('🧠 [STREAM] КОНТЕКСТ ДОБАВЛЕН!');
+      console.log('🧠 [STREAM] Оригинальное сообщение:', message);
+      console.log('🧠 [STREAM] Сообщение с контекстом:', finalMessage.substring(0, 300) + '...');
+    } else {
+      console.log('🧠 [STREAM] КОНТЕКСТ НЕ ДОБАВЛЕН - нет контекста или пустой');
+    }
+    console.log('🧠 [STREAM] === КОНЕЦ АНАЛИЗА КОНТЕКСТА ===');
     
     // Настраиваем заголовки для Server-Sent Events
     res.writeHead(200, {
@@ -1340,7 +1374,7 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
         const pythonResponse = await fetch(`http://127.0.0.1:5004/python/chat?provider=${provider}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: message }),
+          body: JSON.stringify({ message: finalMessage }),
           timeout: 10000
         });
         
