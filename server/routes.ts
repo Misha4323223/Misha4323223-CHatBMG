@@ -329,6 +329,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Удаление сессии чата
+  app.delete('/api/chat/sessions/:sessionId', async (req, res) => {
+    try {
+      const sessionId = parseInt(req.params.sessionId);
+      console.log(`🗑️ Удаляем сессию ${sessionId}`);
+      
+      await chatHistory.deleteSession(sessionId);
+      res.json({ success: true, message: 'Сессия удалена' });
+    } catch (error) {
+      console.error('Ошибка удаления сессии:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Не удалось удалить сессию' 
+      });
+    }
+  });
+
   // Получение всех сессий конкретного пользователя
   app.get('/api/chat/sessions/:userId', async (req, res) => {
     try {
