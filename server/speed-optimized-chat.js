@@ -5,20 +5,14 @@
 
 const axios = require('axios');
 
-// Быстрые AI провайдеры - приоритет самым быстрым
+// Только настоящие AI провайдеры - без заготовленных ответов
 const FAST_PROVIDERS = [
   {
-    name: 'PythonG4F-Qwen',
-    url: 'http://localhost:5004/python/chat',
-    timeout: 7000,
-    format: 'python',
-    provider: 'Qwen_Qwen_2_5_Max'
-  },
-  {
-    name: 'FastFreeChatEnhanced',
+    name: 'PythonG4F-Direct',
     url: 'http://localhost:5000/api/freechat/chat',
     timeout: 8000,
-    format: 'local'
+    format: 'direct',
+    provider: 'Qwen_Qwen_2_5_Max'
   }
 ];
 
