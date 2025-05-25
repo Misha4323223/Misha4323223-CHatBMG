@@ -1128,12 +1128,12 @@
                 streamToggle.classList.add('active');
                 streamIcon.textContent = '🌊';
                 streamToggle.title = 'Стриминг режим включен - слова появляются мгновенно';
-                console.log('🌊 Стриминг режим включен!');
+                console.log('🌊 Стриминг режим включен! Переменная isStreamMode:', isStreamMode);
             } else {
                 streamToggle.classList.remove('active');
                 streamIcon.textContent = '⚡';
                 streamToggle.title = 'Быстрый режим включен - полный ответ за 6-8 секунд';
-                console.log('⚡ Быстрый режим включен!');
+                console.log('⚡ Быстрый режим включен! Переменная isStreamMode:', isStreamMode);
             }
         }
 
@@ -1909,6 +1909,7 @@
                 const preferredProvider = getPreferredProvider(requestType);
                 
                 // Проверяем режим стриминга
+                console.log('🔍 Проверка режима стриминга. isStreamMode:', isStreamMode);
                 if (isStreamMode) {
                     console.log('🌊 Используем стриминг режим...');
                     const streamResult = await sendStreamMessage(enhancedMessage, contextPrompt);
