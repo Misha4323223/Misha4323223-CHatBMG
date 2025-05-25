@@ -43,13 +43,11 @@ const directAiRoutes = require('./direct-ai-routes');
 const deepspeekProvider = require('./deepspeek-fixed');
 const chatFreeProvider = require('./simple-chatfree');
 
-// Импортируем ChatGPT модули
-import ChatGPTWebScraper from './chatgpt-web-scraper.js';
-import ChatGPTBypass2025 from './chatgpt-bypass-2025.js';
+// Импортируем единую систему ChatGPT
+import UnifiedChatGPTSystem from './unified-chatgpt-system.js';
 
-// Создаем экземпляры
-const chatgptScraper = new ChatGPTWebScraper();
-const chatgptBypass = new ChatGPTBypass2025();
+// Создаем единую систему ChatGPT
+const unifiedChatGPT = new UnifiedChatGPTSystem();
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Create HTTP server
@@ -232,6 +230,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   
 
+
+  // API для единой системы ChatGPT (EdgeGPT + Обходы 2025)
+  app.post("/api/chatgpt/unified", async (req, res) => {
+    try {
+      const { message } = req.body;
+      
+      if (!message) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Необходимо указать сообщение для ChatGPT'
+        });
+      }
+      
+      console.log(`🚀 Запрос к единой системе ChatGPT: "${message}"`);
+      
+      // Используем единую систему ChatGPT
+      const result = await unifiedChatGPT.getChatGPTResponse(message);
+      
+      res.json(result);
+    } catch (error) {
+      console.error('❌ Ошибка единой системы ChatGPT:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Ошибка обработки запроса к ChatGPT',
+        details: error.message
+      });
+    }
+  });
 
   // API для генерации изображений через бесплатные AI провайдеры
   app.post("/api/ai-image/generate", async (req, res) => {
