@@ -37,6 +37,7 @@ const directAiRoutes = require('./direct-ai-routes');
 const pythonProviderRoutes = require('./python_provider_routes');
 const deepspeekProvider = require('./deepspeek-fixed');
 const chatFreeProvider = require('./simple-chatfree');
+const streamingRoutes = require('./streaming-routes');
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Create HTTP server

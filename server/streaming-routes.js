@@ -17,12 +17,17 @@ const STREAMING_PROVIDERS = [
 // API endpoint для стриминга через SSE (Server-Sent Events)
 router.get('/chat', async (req, res) => {
   try {
+    console.log('🚀 НАЧАЛО СТРИМИНГ ЗАПРОСА');
+    console.log('📋 Все параметры req.query:', req.query);
+    
     const { 
       message, 
       provider = 'auto', // Автоматический выбор провайдера
       imageUrl,
       timeout = 30000 // 30 секунд таймаут по умолчанию
     } = req.query;
+    
+    console.log('📝 Извлеченные параметры:', { message, provider, imageUrl });
     
     // Проверяем, что сообщение присутствует
     if (!message) {
