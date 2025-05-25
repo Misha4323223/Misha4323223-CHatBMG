@@ -1720,19 +1720,35 @@
                 // Определяем предпочитаемый провайдер на основе контекста
                 const preferredProvider = getPreferredProvider(requestType);
                 
-                // Отправляем на сервер через правильный API endpoint
-                const response = await fetch('/api/g4f/chat', {
+                // Сначала пробуем быстрые провайдеры для ускоренного ответа
+                console.log('🚀 Пробуем быстрые провайдеры для ускорения...');
+                let response = await fetch('/api/ai/fast-chat', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
                         message: enhancedMessage,
-                        provider: preferredProvider,
-                        requestType: requestType,
-                        previousProvider: getLastUsedProvider()
+                        provider: preferredProvider
                     })
                 });
+                
+                // Если быстрые провайдеры не сработали, используем стандартные
+                if (!response.ok) {
+                    console.log('🔄 Переключаемся на стандартные провайдеры...');
+                    response = await fetch('/api/g4f/chat', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            message: enhancedMessage,
+                            provider: preferredProvider,
+                            requestType: requestType,
+                            previousProvider: getLastUsedProvider()
+                        })
+                    });
+                }
                 
                 if (response.ok) {
                     const text = await response.text();
