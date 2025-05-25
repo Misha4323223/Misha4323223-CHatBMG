@@ -1359,7 +1359,9 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
     }
     
     // 🔍 ПРОВЕРЯЕМ НУЖЕН ЛИ ВЕБ-ПОИСК
+    console.log('🔍 [STREAM] Загружаем веб-поиск модуль...');
     const webSearch = require('./web-search-provider');
+    console.log('🔍 [STREAM] Проверяем сообщение:', message);
     const needsSearch = webSearch.needsWebSearch(message);
     console.log('🔍 [STREAM] Требуется веб-поиск:', needsSearch);
     
