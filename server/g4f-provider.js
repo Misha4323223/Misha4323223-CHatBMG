@@ -251,8 +251,89 @@ async function tryProviderWithRetries(provider, messages, options) {
 async function handleQwenProvider(messages, options = {}) {
   const messageText = messages[messages.length - 1].content;
   
-  // Используем только локальные интеллектуальные AI ответы
-  console.log('🤖 Используем локальный Qwen AI провайдер');
+  // Пробуем реально работающие бесплатные AI сервисы
+  const workingAIs = [
+    {
+      name: 'ChatGPT Free Web',
+      url: 'https://chat.openai.com/backend-api/conversation',
+      method: 'web-scraping'
+    },
+    {
+      name: 'You.com Free',
+      url: 'https://you.com/api/streamingSearch',
+      method: 'direct'
+    },
+    {
+      name: 'Poe Free',
+      url: 'https://poe.com/api/gql_POST',
+      method: 'web-interface'
+    }
+  ];
+
+  // Пробуем реальные бесплатные AI провайдеры
+  const realAIs = [
+    {
+      name: 'Blackbox AI',
+      url: 'https://www.blackbox.ai/api/chat',
+      headers: { 'Content-Type': 'application/json' }
+    },
+    {
+      name: 'Pi AI',
+      url: 'https://pi.ai/api/chat',
+      headers: { 'Content-Type': 'application/json' }
+    },
+    {
+      name: 'CharacterAI',
+      url: 'https://beta.character.ai/chat/streaming/',
+      headers: { 'Content-Type': 'application/json' }
+    }
+  ];
+
+  for (const ai of realAIs) {
+    try {
+      console.log(`🔄 Пробуем ${ai.name}...`);
+      
+      const response = await fetch(ai.url, {
+        method: 'POST',
+        headers: {
+          ...ai.headers,
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        },
+        body: JSON.stringify({
+          messages: [{ role: 'user', content: messageText }],
+          stream: false
+        }),
+        timeout: 8000
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        let aiResponse = '';
+        
+        if (data.response) {
+          aiResponse = data.response;
+        } else if (data.message) {
+          aiResponse = data.message;
+        } else if (data.text) {
+          aiResponse = data.text;
+        }
+        
+        if (aiResponse && aiResponse.length > 15) {
+          console.log(`✅ Получен ответ от ${ai.name}:`, aiResponse.substring(0, 50));
+          return {
+            response: aiResponse,
+            provider: ai.name,
+            model: 'free-ai'
+          };
+        }
+      }
+    } catch (error) {
+      console.log(`❌ ${ai.name} недоступен:`, error.message);
+      continue;
+    }
+  }
+
+  console.log('🤖 Используем локальный Qwen AI провайдер как резерв');
   
   // Если внешние API недоступны, создаем интеллектуальный ответ
   const query = messageText.toLowerCase();
