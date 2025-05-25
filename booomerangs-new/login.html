@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Вход в BOOOMERANGS AI</title>
+  <style>
+    :root {
+      --bg: #0f0f1a;
+      --card-bg: #1a1a2e;
+      --accent: #6c63ff;
+      --text: #ffffff;
+      --text-secondary: #b8b8b8;
+      --border: #2d2d3a;
+      --success: #10b981;
+      --error: #ef4444;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .login-container {
+      background: var(--card-bg);
+      border-radius: 16px;
+      padding: 40px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--border);
+    }
+
+    .logo-section {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .logo {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      margin-bottom: 16px;
+    }
+
+    .title {
+      font-size: 1.8rem;
+      font-weight: 600;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .form-input {
+      width: 100%;
+      background: var(--bg);
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 16px;
+      color: var(--text);
+      font-size: 1rem;
+      transition: all 0.2s ease;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.1);
+    }
+
+    .login-button {
+      width: 100%;
+      background: linear-gradient(135deg, var(--accent), #5a52d5);
+      border: none;
+      border-radius: 8px;
+      padding: 14px;
+      color: white;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-bottom: 20px;
+    }
+
+    .login-button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 20px rgba(108, 99, 255, 0.3);
+    }
+
+    .login-button:disabled {
+      background: var(--border);
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .message {
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 0.9rem;
+      text-align: center;
+    }
+
+    .message.success {
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid var(--success);
+      color: var(--success);
+    }
+
+    .message.error {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid var(--error);
+      color: var(--error);
+    }
+
+    .demo-credentials {
+      background: rgba(108, 99, 255, 0.1);
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+
+    .demo-title {
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--accent);
+    }
+
+    .demo-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 4px;
+      font-size: 0.9rem;
+    }
+
+    .demo-item strong {
+      color: var(--text);
+    }
+
+    .demo-item span {
+      color: var(--text-secondary);
+      font-family: monospace;
+    }
+
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 2px solid transparent;
+      border-top: 2px solid white;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 480px) {
+      .login-container {
+        padding: 30px 20px;
+      }
+      
+      .title {
+        font-size: 1.5rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="login-container">
+    <div class="logo-section">
+      <img src="booomerangs-logo.jpg" alt="BOOOMERANGS" class="logo">
+      <h1 class="title">BOOOMERANGS AI</h1>
+      <p class="subtitle">Войдите в систему для доступа к AI чату</p>
+    </div>
+
+    <div id="message-container"></div>
+
+    <div class="demo-credentials">
+      <div class="demo-title">Данные для входа:</div>
+      <div class="demo-item">
+        <strong>Логин:</strong>
+        <span>mikhail</span>
+      </div>
+      <div class="demo-item">
+        <strong>Пароль:</strong>
+        <span>mikhail123</span>
+      </div>
+    </div>
+
+    <form id="login-form">
+      <div class="form-group">
+        <label for="username" class="form-label">Логин</label>
+        <input 
+          type="text" 
+          id="username" 
+          class="form-input" 
+          placeholder="Введите ваш логин"
+          value="mikhail"
+          required
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="password" class="form-label">Пароль</label>
+        <input 
+          type="password" 
+          id="password" 
+          class="form-input" 
+          placeholder="Введите ваш пароль"
+          value="mikhail123"
+          required
+        >
+      </div>
+
+      <button type="submit" class="login-button" id="login-button">
+        Войти в систему
+      </button>
+    </form>
+  </div>
+
+  <script>
+    // Проверяем, авторизован ли пользователь
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+      // Проверяем валидность токена
+      checkAuthAndRedirect();
+    }
+
+    // Обработка формы входа
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value.trim();
+      const button = document.getElementById('login-button');
+      
+      if (!username || !password) {
+        showMessage('Заполните все поля', 'error');
+        return;
+      }
+
+      // Показываем состояние загрузки
+      button.disabled = true;
+      button.innerHTML = '<div class="loading"></div> Вход...';
+      
+      try {
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ username, password })
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+          // Сохраняем токен и данные пользователя
+          localStorage.setItem('auth_token', data.user.token);
+          localStorage.setItem('user_data', JSON.stringify({
+            id: data.user.id,
+            username: data.user.username,
+            displayName: data.user.displayName
+          }));
+          
+          showMessage(`Добро пожаловать, ${data.user.displayName}!`, 'success');
+          
+          // Перенаправляем на главную страницу через 1 секунду
+          setTimeout(() => {
+            window.location.href = '/booomerangs-smart-chat.html';
+          }, 1000);
+        } else {
+          showMessage(data.error || 'Ошибка авторизации', 'error');
+        }
+      } catch (error) {
+        console.error('Ошибка входа:', error);
+        showMessage('Ошибка соединения с сервером', 'error');
+      } finally {
+        button.disabled = false;
+        button.innerHTML = 'Войти в систему';
+      }
+    });
+
+    // Проверка авторизации и перенаправление
+    async function checkAuthAndRedirect() {
+      try {
+        const response = await fetch('/api/auth/user', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            // Пользователь уже авторизован, перенаправляем
+            window.location.href = '/booomerangs-smart-chat.html';
+          }
+        }
+      } catch (error) {
+        console.error('Ошибка проверки авторизации:', error);
+      }
+    }
+
+    // Показ сообщений
+    function showMessage(text, type) {
+      const container = document.getElementById('message-container');
+      container.innerHTML = `<div class="message ${type}">${text}</div>`;
+      
+      // Автоматически скрываем сообщение через 5 секунд
+      setTimeout(() => {
+        container.innerHTML = '';
+      }, 5000);
+    }
+
+    // Автофокус на поле логина если оно пустое
+    window.addEventListener('load', () => {
+      const usernameField = document.getElementById('username');
+      if (!usernameField.value) {
+        usernameField.focus();
+      }
+    });
+  </script>
+</body>
+</html>
