@@ -42,9 +42,10 @@ const upload = multer({
 // Отключаем внешние Python серверы - работаем только на порту 5000
 // const pythonProviderRoutes = require('./python_provider_routes');
 const deepspeekProvider = require('./deepspeek-fixed');
-const chatFreeProvider = require('./simple-chatfree');
+// Временно отключаем проблемные провайдеры
+// const chatFreeProvider = require('./simple-chatfree');
 const fastAiProviders = require('./fast-ai-providers');
-const speedOptimizedChat = require('./speed-optimized-chat');
+// const speedOptimizedChat = require('./speed-optimized-chat');
 
 // Убираем неиспользуемый импорт unified-chatgpt-system
 
