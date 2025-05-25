@@ -1914,30 +1914,20 @@
                 // Определяем предпочитаемый провайдер на основе контекста
                 const preferredProvider = getPreferredProvider(requestType);
                 
-                // Проверяем режим стриминга
-                console.log('🔍 Проверка режима стриминга. isStreamMode:', isStreamMode);
-                if (isStreamMode) {
-                    console.log('🌊 Используем стриминг режим...');
-                    const streamResult = await sendStreamMessage(enhancedMessage, contextPrompt);
-                    
-                    if (streamResult) {
-                        // Стриминг успешен, сохраняем результат
-                        await saveMessageToHistory(streamResult, 'ai', 'PythonG4F-Stream', 'Qwen_Qwen_2_5_Max');
-                        updateMemoryWithResponse(message, streamResult);
-                        
-                        const endTime = performance.now();
-                        const duration = Math.round(endTime - startTime);
-                        console.log(`⚡ [PERF] Стриминговое сообщение (${duration}ms):`, {
-                            userMessage: message,
-                            aiResponse: streamResult.substring(0, 50) + '...',
-                            provider: 'PythonG4F-Stream'
-                        });
-                        return; // Завершаем, стриминг обработан
-                    } else {
-                        // Стриминг не удался, переключаемся на обычный режим
-                        console.log('⚡ Стриминг недоступен, используем быстрый режим...');
-                    }
-                }
+                // Всегда используем стриминг как основной режим
+                console.log('🌊 Стриминг включен как основной режим');
+                const streamResult = await sendStreamMessage(enhancedMessage, contextPrompt);
+                
+                // Всегда завершаем после стриминга, не проверяем результат
+                // Стриминг сам обрабатывает отображение сообщений в реальном времени
+                console.log('🌊 Стриминг завершен, прерываем дальнейшее выполнение');
+                
+                updateMemoryWithResponse(message, streamResult || 'Стриминговый ответ обработан');
+                
+                const endTime = performance.now();
+                const duration = Math.round(endTime - startTime);
+                console.log(`⚡ [PERF] Стриминговое сообщение (${duration}ms)`);
+                return; // Всегда завершаем после стриминга
 
                 // Сначала пробуем быстрые провайдеры для ускоренного ответа
                 console.log('🚀 Пробуем быстрые провайдеры для ускорения...');
