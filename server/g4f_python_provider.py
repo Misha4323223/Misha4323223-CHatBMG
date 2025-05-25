@@ -424,15 +424,13 @@ def chat_stream():
                         }
                         yield f"data: {json.dumps(error_data)}\n\n"
                         
-                        # Имитируем завершение
-                        completion_data = {
-                            'status': 'done',
-                            'full_text': demo_response,
-                            'provider': 'BOOOMERANGS-Demo',
-                            'model': 'fallback-mode',
+                        # Возвращаем ошибку вместо заглушки
+                        error_completion = {
+                            'status': 'error',
+                            'error': 'Все AI провайдеры недоступны',
                             'elapsed': time.time() - start_time
                         }
-                        yield f"data: {json.dumps(completion_data)}\n\n"
+                        yield f"data: {json.dumps(error_completion)}\n\n"
                     else:
                         # Если есть обычный ответ, отправляем его целиком
                         text_data = {

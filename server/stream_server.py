@@ -188,29 +188,7 @@ def python_ai_chat():
             "provider": provider_name if 'provider_name' in locals() else 'unknown'
         }), 500
 
-def get_demo_response(message):
-    """Генерирует демо-ответ для случаев, когда API недоступен"""
-    message_lower = message.lower()
-    
-    if any(word in message_lower for word in ['привет', 'здравствуй', 'hello', 'hi']):
-        return "Привет! Я BOOOMERANGS AI ассистент. Чем могу помочь вам сегодня?"
-    elif any(word in message_lower for word in ['как дела', 'как ты', 'how are you']):
-        return "У меня всё отлично, спасибо что спросили! Как ваши дела?"
-    elif any(word in message_lower for word in ['изображен', 'картин', 'image', 'picture']):
-        return "Вы можете создать изображение, перейдя на вкладку \"Генератор изображений\". Просто опишите, что хотите увидеть!"
-    elif 'бот' in message_lower:
-        return "Да, я бот-ассистент BOOOMERANGS. Я использую различные AI модели для ответов на ваши вопросы без необходимости платных API ключей."
-    elif any(word in message_lower for word in ['booomerangs', 'буумеранг']):
-        return "BOOOMERANGS - это бесплатный мультимодальный AI-сервис для общения и создания изображений без необходимости платных API ключей."
-    
-    # Если не нашли ключевых слов, используем случайный ответ    
-    random_responses = [
-        "BOOOMERANGS использует различные AI-провайдеры, чтобы предоставлять ответы даже без платных API ключей. Наша система автоматически выбирает лучший доступный провайдер в каждый момент времени.",
-        "BOOOMERANGS позволяет не только общаться с AI, но и генерировать изображения по текстовому описанию, а также конвертировать их в векторный формат SVG.",
-        "BOOOMERANGS стремится сделать технологии искусственного интеллекта доступными для всех. Наше приложение работает прямо в браузере и оптимизировано для использования на мобильных устройствах."
-    ]
-        
-    return random.choice(random_responses)
+# ФУНКЦИЯ get_demo_response ПОЛНОСТЬЮ УДАЛЕНА - больше никаких заготовленных ответов!
 
 @app.route('/stream', methods=['POST'])
 def stream_chat():
@@ -507,38 +485,18 @@ def stream_chat():
                         except Exception as provider_error:
                             print(f"Ошибка при инициализации резервного провайдера {backup_provider}: {str(provider_error)}")
                 
-                # Если все провайдеры не сработали, используем демо-ответ
-                print("Все провайдеры не работают, используем демо-ответ")
-                demo_response = get_demo_response(message)
-                
-                yield f"event: update\ndata: {json.dumps({'text': 'Используем демо-режим...', 'provider': 'BOOOMERANGS-Demo'})}\n\n"
-                
-                # Имитируем стриминг для демо-ответа
-                words = demo_response.split()
-                chunk_size = max(1, len(words) // 5)  # Разбиваем на 5 частей
-                
-                for i in range(0, len(words), chunk_size):
-                    chunk = ' '.join(words[i:i+chunk_size])
-                    yield f"event: chunk\ndata: {json.dumps({'text': chunk + ' ', 'provider': 'BOOOMERANGS-Demo'})}\n\n"
-                    time.sleep(0.1)  # Небольшая задержка для имитации печати
-                
-                # Отправляем полный ответ в конце
+                # Если все провайдеры не сработали, возвращаем ошибку
+                print("❌ Все провайдеры недоступны - возвращаем ошибку")
                 elapsed = time.time() - start_time
-                yield f"event: complete\ndata: {json.dumps({'text': demo_response, 'provider': 'BOOOMERANGS-Demo', 'elapsed': elapsed})}\n\n"
+                yield f"event: error\ndata: {json.dumps({'error': 'Все AI провайдеры временно недоступны. Попробуйте позже.', 'elapsed': elapsed})}\n\n"
             
             except Exception as e:
                 print(f"Критическая ошибка в генераторе стриминга: {str(e)}")
                 traceback.print_exc()
                 
                 # В случае общей ошибки, отправляем сообщение об ошибке
-                demo_response = "Извините, произошла ошибка при обработке запроса. Попробуйте еще раз."
-                
-                yield f"event: update\ndata: {json.dumps({'text': 'Ошибка соединения...', 'provider': 'BOOOMERANGS-Demo'})}\n\n"
-                yield f"event: chunk\ndata: {json.dumps({'text': demo_response, 'provider': 'BOOOMERANGS-Demo'})}\n\n"
-                
-                # Отправляем завершающее событие
                 elapsed = time.time() - start_time
-                yield f"event: complete\ndata: {json.dumps({'text': demo_response, 'provider': 'BOOOMERANGS-Demo', 'elapsed': elapsed})}\n\n"
+                yield f"event: error\ndata: {json.dumps({'error': 'Произошла ошибка при обработке запроса. Попробуйте еще раз.', 'elapsed': elapsed})}\n\n"
         
         # Возвращаем потоковый ответ
         return Response(stream_generator(), content_type='text/event-stream')
