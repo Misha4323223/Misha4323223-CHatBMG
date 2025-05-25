@@ -1241,6 +1241,59 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
       model: 'demo-mode'
     };
   }
+
+  // Streaming API endpoint для потоковой генерации
+  app.post("/api/stream", async (req, res) => {
+    const { message, provider = 'Qwen_Qwen_2_5_Max' } = req.body;
+    
+    console.log(`🚀 Запуск потоковой генерации для: "${message}"`);
+    
+    // Настраиваем заголовки для Server-Sent Events
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Headers': 'Cache-Control'
+    });
+    
+    try {
+      // Отправляем информацию о провайдере
+      res.write(`data: ${JSON.stringify({ provider: provider })}\n\n`);
+      
+      // Получаем ответ от Python G4F
+      const pythonResponse = await callG4F(message, provider);
+      
+      if (pythonResponse && pythonResponse.response) {
+        // Симулируем потоковую отправку, разбивая текст на части
+        const text = pythonResponse.response;
+        const words = text.split(' ');
+        
+        for (let i = 0; i < words.length; i++) {
+          const chunk = i === 0 ? words[i] : ' ' + words[i];
+          res.write(`data: ${JSON.stringify({ text: chunk })}\n\n`);
+          
+          // Небольшая задержка для эффекта печатания
+          await new Promise(resolve => setTimeout(resolve, 50));
+        }
+        
+        // Сигнализируем о завершении
+        res.write(`data: ${JSON.stringify({ finished: true, provider: pythonResponse.provider })}\n\n`);
+      } else {
+        // Fallback ответ
+        const fallbackText = "Извините, произошла ошибка при генерации ответа.";
+        res.write(`data: ${JSON.stringify({ text: fallbackText })}\n\n`);
+        res.write(`data: ${JSON.stringify({ finished: true, provider: "Fallback" })}\n\n`);
+      }
+      
+      res.end();
+      
+    } catch (error) {
+      console.error('❌ Ошибка потоковой генерации:', error);
+      res.write(`data: ${JSON.stringify({ text: "Произошла ошибка при генерации ответа", finished: true })}\n\n`);
+      res.end();
+    }
+  });
   
   // Auth endpoint - validate token and return user
   app.post("/api/auth", async (req, res) => {

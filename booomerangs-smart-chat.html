@@ -1664,7 +1664,7 @@
         
         try {
           // Делаем запрос к стриминговому серверу
-          const response = await fetch('http://localhost:5001/stream', {
+          const response = await fetch('/api/stream', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
