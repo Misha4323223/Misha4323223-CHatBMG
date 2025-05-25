@@ -16,6 +16,43 @@ function getUserIdFromName(username: string): number {
 }
 
 /**
+ * Умное определение темы чата на основе сообщения пользователя
+ */
+function generateChatTitle(userMessage: string): string {
+  // Очищаем сообщение от лишних символов
+  const cleanMessage = userMessage.trim().replace(/[^\w\s\u0400-\u04FF]/g, '');
+  
+  // Ключевые слова для разных типов запросов
+  const patterns = {
+    'Генерация изображений': /(?:создай|нарисуй|сгенерируй|изображение|картинку|фото)/i,
+    'Анализ кода': /(?:код|программ|разработ|функци|алгоритм|javascript|python|css|html)/i,
+    'Творческие задачи': /(?:стих|рассказ|письмо|текст|сочин|креатив|идея)/i,
+    'Переводы': /(?:перевед|translate|переводи|на английский|на русский)/i,
+    'Вопросы и ответы': /(?:что|как|где|когда|почему|зачем|объясни|расскажи)/i,
+    'Анализ документов': /(?:анализ|документ|файл|pdf|изучи|прочитай)/i,
+    'Обучение': /(?:учеб|урок|объясн|изуч|пониман|научи)/i
+  };
+
+  // Проверяем паттерны
+  for (const [category, pattern] of Object.entries(patterns)) {
+    if (pattern.test(cleanMessage)) {
+      const firstWords = cleanMessage.split(' ').slice(0, 4).join(' ');
+      return `${category}: ${firstWords}...`.substring(0, 50);
+    }
+  }
+
+  // Если паттерн не найден, берем первые слова
+  const firstWords = cleanMessage.split(' ').slice(0, 6).join(' ');
+  
+  // Ограничиваем длину
+  if (firstWords.length > 40) {
+    return firstWords.substring(0, 37) + '...';
+  }
+  
+  return firstWords || 'Новый чат';
+}
+
+/**
  * Создание новой сессии чата
  */
 async function createChatSession(username: any, title: string) {
@@ -159,5 +196,6 @@ module.exports = {
   saveMessage,
   getSessionMessages,
   updateSessionTitle,
-  deleteSession
+  deleteSession,
+  generateChatTitle
 };
