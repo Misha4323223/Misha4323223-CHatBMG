@@ -24,14 +24,14 @@ const PROVIDER_MODELS = {
 // Только БЕСПЛАТНЫЕ провайдеры (никаких API ключей не требуется)
 const KEY_REQUIRED_PROVIDERS = [];
 
-// Порядок БЕСПЛАТНЫХ провайдеров от самых стабильных к менее стабильным
+// Порядок БЕСПЛАТНЫХ провайдеров - приоритет на Qwen и Phind
 const PROVIDER_PRIORITY = [
-  PROVIDERS.QWEN,        // Qwen AI через HuggingFace
-  PROVIDERS.PHIND,       // Phind для кода и поиска
-  PROVIDERS.GEMINI,      // Gemini через бесплатные API
-  PROVIDERS.LIAOBOTS,    // Бесплатный GPT провайдер
+  PROVIDERS.QWEN,        // 🥇 ПРИОРИТЕТ: Qwen AI - основной провайдер
+  PROVIDERS.PHIND,       // 🥈 ПРИОРИТЕТ: Phind - для кода и технических вопросов
+  PROVIDERS.LIAOBOTS,    // Резервный GPT провайдер
   PROVIDERS.YOU,         // You.com бесплатный
-  PROVIDERS.DIFY         // Dify AI бесплатный
+  PROVIDERS.DIFY,        // Dify AI бесплатный
+  PROVIDERS.GEMINI       // Gemini (только если другие недоступны)
   // PROVIDERS.CHATGPT,   // Требуется access_token
   // Временно недоступные провайдеры:
   // PROVIDERS.PHIND,     // Недоступен из Replit
@@ -116,8 +116,23 @@ async function getResponse(message, options = {}) {
     });
   }
   
-  // Иначе перебираем провайдеры по приоритету
-  const providersToTry = [...PROVIDER_PRIORITY]; // Копируем массив приоритетов
+  // 🎯 SMART ROUTING: Автоматический выбор провайдера на основе типа запроса
+  let providersToTry = [];
+  const query = (message || chatMessages[chatMessages.length - 1]?.content || '').toLowerCase();
+  
+  // 🔍 Анализируем тип запроса для выбора оптимального провайдера
+  if (query.includes('код') || query.includes('программирование') || query.includes('javascript') || 
+      query.includes('python') || query.includes('html') || query.includes('css') || 
+      query.includes('react') || query.includes('function') || query.includes('api') ||
+      query.includes('алгоритм') || query.includes('массив') || query.includes('объект')) {
+    // Для кода и программирования - приоритет PHIND
+    console.log('🔍 Обнаружен запрос по программированию - приоритет PHIND');
+    providersToTry = [PROVIDERS.PHIND, PROVIDERS.QWEN, ...PROVIDER_PRIORITY.slice(2)];
+  } else {
+    // Для общих вопросов - приоритет QWEN
+    console.log('💬 Общий запрос - приоритет QWEN');
+    providersToTry = [...PROVIDER_PRIORITY]; // Копируем массив приоритетов
+  }
   let lastError = null;
   let successfulProviders = [];
   
