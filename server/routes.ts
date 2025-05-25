@@ -28,7 +28,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`💬 Получено сообщение: ${message?.substring(0, 50)}...`);
       
       // Используем старый роутер со всеми провайдерами
-      const smartRouter = require('./smart-router-old');
+      const { default: smartRouter } = await import('./smart-router-old.js');
       
       let response;
       if (typeof smartRouter.routeMessage === 'function') {
@@ -37,7 +37,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('✅ Получен ответ от старого роутера');
       } else {
         // Fallback к G4F провайдеру
-        const g4fProvider = require('./g4f-provider');
+        const { default: g4fProvider } = await import('./g4f-provider.js');
         console.log('🔄 Fallback к G4F провайдеру...');
         response = await g4fProvider.getChatResponse(message, { provider: 'auto' });
         console.log('✅ Получен ответ от G4F провайдера');
@@ -77,7 +77,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       // Получаем ответ через старый роутер
-      const smartRouter = require('./smart-router-old');
+      const { default: smartRouter } = await import('./smart-router-old.js');
       console.log('🔍 Загружен smartRouter:', typeof smartRouter);
       
       let response;
@@ -88,7 +88,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log('✅ Получен ответ от старого роутера');
         } else {
           // Fallback к G4F провайдеру
-          const g4fProvider = require('./g4f-provider');
+          const { default: g4fProvider } = await import('./g4f-provider.js');
           console.log('🔄 Fallback к G4F провайдеру...');
           response = await g4fProvider.getChatResponse(message, { provider: 'auto' });
           console.log('✅ Получен ответ от G4F провайдера');
