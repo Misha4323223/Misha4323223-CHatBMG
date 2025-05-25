@@ -11,6 +11,14 @@ app.use(cors()); // Разрешаем CORS для всех маршрутов
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// Настраиваем статические файлы для HTML интерфейсов
+app.use(express.static('.'));
+
+// Главная страница - booomerangs-smart-chat.html
+app.get('/', (req, res) => {
+  res.sendFile('booomerangs-smart-chat.html', { root: '.' });
+});
+
 // Логирование POST запросов для отладки сохранения чатов
 app.use((req, res, next) => {
   if (req.method === 'POST' && req.url.includes('/api/chat/sessions')) {
