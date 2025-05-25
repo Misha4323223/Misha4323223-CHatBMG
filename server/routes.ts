@@ -342,11 +342,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Если это сообщение от пользователя, получаем ответ AI
       if (messageData.sender === 'user') {
+        console.log('🤖 Получаем ответ AI для сообщения:', messageData.content);
         try {
           const smartRouter = require('./smart-router');
           const aiResponse = await smartRouter.getChatResponse(messageData.content, {
             userId: `session_${sessionId}`
           });
+          
+          console.log('🎯 AI ответил:', aiResponse);
           
           if (aiResponse && aiResponse.response) {
             // Сохраняем ответ AI в ту же сессию
@@ -358,19 +361,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
               timestamp: new Date().toISOString()
             };
             
+            console.log('💾 Сохраняем ответ AI в БД:', aiMessageData);
             await chatHistory.saveMessage(aiMessageData);
-            console.log('✅ Ответ AI сохранен в сессию:', aiResponse.response);
+            console.log('✅ Ответ AI успешно сохранен в сессию');
             
-            // Просто отправляем успешный ответ - обновление произойдет автоматически
+            // Отправляем ответ клиенту
+            console.log('📤 Отправляем ответ клиенту');
             res.json({ 
               success: true, 
               message: userMessage,
-              aiResponse: aiResponse.response
+              aiResponse: aiResponse.response,
+              provider: aiResponse.provider
             });
             return;
+          } else {
+            console.log('⚠️ AI не вернул ответ');
           }
         } catch (aiError) {
-          console.error('Ошибка получения ответа AI:', aiError);
+          console.error('❌ Ошибка получения ответа AI:', aiError);
         }
       }
       
