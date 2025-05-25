@@ -190,9 +190,16 @@ function analyzeMessage(message) {
  * @returns {Promise<Object>} - Результат от провайдера
  */
 async function routeMessage(message, options = {}) {
+  const startTime = Date.now();
+  SmartLogger.route(`Начинаем маршрутизацию сообщения`, { 
+    messageLength: message.length, 
+    hasImage: !!options.imageUrl,
+    options: Object.keys(options)
+  });
+
   // Если изображение, используем наш собственный детектор объектов
   if (options.imageUrl) {
-    console.log(`🖼️ Обнаружено изображение! Используем собственный детектор объектов`);
+    SmartLogger.route(`Обнаружено изображение! Используем собственный детектор объектов`);
     
     try {
       const imageDetector = require('./image-object-detector');
@@ -236,7 +243,10 @@ async function routeMessage(message, options = {}) {
 
   // Если есть предпочтительный провайдер (продолжение разговора)
   if (options.preferredProvider) {
-    console.log(`💭 Продолжаем разговор с провайдером: ${options.preferredProvider}`);
+    SmartLogger.provider(`Продолжаем разговор с провайдером`, { 
+      provider: options.preferredProvider,
+      hasContext: !!options.context 
+    });
     
     // Добавляем контекст к сообщению
     const messageWithContext = options.context ? options.context + message : message;
