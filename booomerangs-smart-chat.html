@@ -1555,62 +1555,134 @@
         }, 3000);
         
         try {
-          // Отправляем запрос к серверу
-          const response = await fetch('/api/smart/message', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              message: userMessageText,
-              imageUrl: uploadedImageUrl
-            }),
-          });
+          // Создаем пустое сообщение для стриминга
+          const aiMessageDiv = document.createElement('div');
+          aiMessageDiv.className = 'message ai';
           
-          if (!response.ok) {
-            throw new Error(`Ошибка сервера: ${response.status}`);
-          }
+          const messageText = document.createElement('p');
+          messageText.textContent = '';
+          aiMessageDiv.appendChild(messageText);
           
-          const data = await response.json();
+          // Добавляем индикатор печати
+          const typingIndicator = document.createElement('span');
+          typingIndicator.className = 'typing-indicator';
+          typingIndicator.textContent = '●';
+          messageText.appendChild(typingIndicator);
           
-          console.log('✅ Получен ответ от AI:', data);
+          chatMessages.appendChild(aiMessageDiv);
+          scrollToBottom();
           
-          // Если есть изображение, сбрасываем его после отправки
-          if (uploadedImageUrl) {
-            resetImageUpload();
-          }
+          // Пробуем стриминг сначала
+          let streamingWorked = false;
           
-          let aiResponse = '';
-          let provider = '';
-          let category = '';
+          const eventSource = new EventSource(`/api/streaming/chat?message=${encodeURIComponent(userMessageText)}&provider=auto&imageUrl=${encodeURIComponent(uploadedImageUrl || '')}`);
           
-          if (data.success) {
-            aiResponse = data.response || data.text || 'Ошибка получения ответа';
-            provider = data.provider || 'AI';
-            category = data.category || 'general';
-          } else {
-            aiResponse = data.error || 'Произошла ошибка при обработке запроса';
-            provider = 'Ошибка';
-          }
+          let streamedText = '';
+          let currentProvider = '';
+          let currentCategory = '';
           
-          // Показываем полученный ответ
-          addMessage(aiResponse, false, { provider, category });
+          eventSource.onmessage = function(event) {
+            streamingWorked = true;
+            try {
+              const data = JSON.parse(event.data);
+              
+              if (data.type === 'chunk' && data.content) {
+                streamedText += data.content;
+                messageText.innerHTML = streamedText + '<span class="typing-indicator">●</span>';
+                scrollToBottom();
+              } else if (data.type === 'info') {
+                currentProvider = data.provider || currentProvider;
+                console.log('🤖 Провайдер:', data.message);
+              } else if (data.type === 'complete') {
+                currentProvider = data.provider || currentProvider;
+                currentCategory = data.category || 'general';
+                
+                messageText.innerHTML = streamedText;
+                
+                if (currentProvider) {
+                  const metadataDiv = document.createElement('div');
+                  metadataDiv.className = 'message-metadata';
+                  
+                  const providerBadge = document.createElement('span');
+                  providerBadge.className = 'provider-badge';
+                  providerBadge.textContent = currentProvider;
+                  metadataDiv.appendChild(providerBadge);
+                  
+                  if (currentCategory && currentCategory !== 'general') {
+                    const categoryBadge = document.createElement('span');
+                    categoryBadge.className = 'category-badge';
+                    categoryBadge.textContent = currentCategory;
+                    metadataDiv.appendChild(categoryBadge);
+                  }
+                  
+                  aiMessageDiv.appendChild(metadataDiv);
+                }
+                
+                scrollToBottom();
+                eventSource.close();
+                
+                saveMessageToHistory(streamedText, 'ai', currentProvider, currentCategory)
+                  .then(() => console.log('✅ Ответ AI сохранен'))
+                  .catch(error => console.error('❌ Ошибка сохранения ответа AI:', error));
+              }
+            } catch (parseError) {
+              console.error('Ошибка парсинга данных стриминга:', parseError);
+            }
+          };
           
-          // Сохраняем ответ AI в истории
-          try {
-            await saveMessageToHistory(aiResponse, 'ai', provider, category);
-            console.log(`✅ Ответ AI сохранен (${provider})`);
-            
-            // Обновляем список чатов после сохранения
-            setTimeout(() => {
-              loadChatSessions();
-            }, 500);
-            
-            // Показываем краткое уведомление об успешном сохранении
-            showTemporarySaveNotification();
-          } catch (error) {
-            console.error('❌ Ошибка сохранения ответа AI:', error);
-          }
+          // Fallback на обычный запрос если стриминг не работает
+          setTimeout(() => {
+            if (!streamingWorked) {
+              console.log('🔄 Стриминг не отвечает, переключаемся на обычный запрос...');
+              eventSource.close();
+              
+              fetch('/api/smart/message', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: userMessageText, imageUrl: uploadedImageUrl })
+              })
+              .then(response => response.json())
+              .then(data => {
+                if (data.success) {
+                  messageText.innerHTML = data.response || 'Получен ответ от AI';
+                  
+                  // Добавляем метаданные провайдера
+                  const metadataDiv = document.createElement('div');
+                  metadataDiv.className = 'message-metadata';
+                  
+                  const providerBadge = document.createElement('span');
+                  providerBadge.className = 'provider-badge';
+                  providerBadge.textContent = data.provider || 'AI';
+                  metadataDiv.appendChild(providerBadge);
+                  
+                  if (data.category && data.category !== 'general') {
+                    const categoryBadge = document.createElement('span');
+                    categoryBadge.className = 'category-badge';
+                    categoryBadge.textContent = data.category;
+                    metadataDiv.appendChild(categoryBadge);
+                  }
+                  
+                  aiMessageDiv.appendChild(metadataDiv);
+                  
+                  // Сохраняем в истории
+                  saveMessageToHistory(data.response, 'ai', data.provider, data.category)
+                    .then(() => console.log('✅ Ответ AI сохранен'))
+                    .catch(error => console.error('❌ Ошибка сохранения ответа AI:', error));
+                } else {
+                  messageText.innerHTML = '❌ Ошибка получения ответа';
+                }
+              })
+              .catch(err => {
+                messageText.innerHTML = '❌ Ошибка подключения к серверу';
+                console.error('Fallback request error:', err);
+              });
+            }
+          }, 5000); // Ждем 5 секунд перед fallback
+          
+          eventSource.onerror = function(error) {
+            console.log('❌ Ошибка стриминга, переключаемся на обычный запрос');
+            eventSource.close();
+          };
         } catch (error) {
           console.error('Ошибка при отправке сообщения:', error);
           
