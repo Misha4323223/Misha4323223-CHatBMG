@@ -1358,7 +1358,20 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
       console.log('🧠 [STREAM] КОНТЕКСТ НЕ ДОБАВЛЕН - нет контекста или пустой');
     }
     
-    // 🔍 ПРОВЕРЯЕМ НУЖЕН ЛИ ВЕБ-ПОИСК
+
+    
+    console.log('🧠 [STREAM] === КОНЕЦ АНАЛИЗА КОНТЕКСТА ===');
+    
+    // Настраиваем заголовки для Server-Sent Events
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Headers': 'Cache-Control'
+    });
+    
+    // 🔍 ПРОВЕРЯЕМ НУЖЕН ЛИ ВЕБ-ПОИСК (ПОСЛЕ ЗАГОЛОВКОВ)
     console.log('🔍 [STREAM] Загружаем веб-поиск модуль...');
     const webSearch = require('./web-search-provider');
     console.log('🔍 [STREAM] Проверяем сообщение:', message);
@@ -1402,17 +1415,6 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
         })}\n\n`);
       }
     }
-    
-    console.log('🧠 [STREAM] === КОНЕЦ АНАЛИЗА КОНТЕКСТА ===');
-    
-    // Настраиваем заголовки для Server-Sent Events
-    res.writeHead(200, {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-      'Connection': 'keep-alive',
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Headers': 'Cache-Control'
-    });
     
     try {
       // Отправляем информацию о провайдере
