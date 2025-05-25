@@ -55,19 +55,13 @@ async function getUserChatSessions(username: any) {
  * Сохранение сообщения в чат
  */
 async function saveMessage(messageData) {
-  console.log('💾 Попытка сохранения сообщения:', JSON.stringify(messageData, null, 2));
-  
   try {
     const [message] = await db
       .insert(aiMessages)
       .values(messageData)
       .returning();
     
-    console.log('✅ Сообщение успешно сохранено:', message.id);
-    
-    // Проверяем что сообщение действительно сохранилось
-    const savedMessage = await db.select().from(aiMessages).where(eq(aiMessages.id, message.id));
-    console.log('🔍 Проверка сохранения:', savedMessage.length > 0 ? 'найдено в БД' : 'НЕ НАЙДЕНО В БД');
+    console.log('✅ Сообщение сохранено:', message.id);
     
     return message;
   } catch (error) {
