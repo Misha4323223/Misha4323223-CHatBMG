@@ -329,6 +329,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Сохранение сообщения в сессию с автоматическим AI ответом
   app.post('/api/chat/sessions/:sessionId/messages', async (req, res) => {
+    console.log('🚨🚨🚨 ВЫЗВАН ОБРАБОТЧИК /api/chat/sessions/:sessionId/messages');
     console.log('🚨 ЗАПРОС К /api/chat/sessions/:sessionId/messages');
     console.log('📝 Данные запроса:', req.body);
     console.log('🆔 ID сессии:', req.params.sessionId);
