@@ -1159,8 +1159,9 @@
                 let aiMessage = '';
                 
                 // Добавляем пустое сообщение AI для стриминга
-                addMessage('', 'ai');
-                const aiMessageElement = document.querySelector('.message-bubble:last-child');
+                addMessage('Генерирую ответ...', 'ai');
+                const messagesArea = document.getElementById('messagesArea');
+                const aiMessageElement = messagesArea.lastElementChild;
                 
                 while (true) {
                     const { done, value } = await reader.read();
@@ -1183,11 +1184,15 @@
                                     aiMessage += parsed.text;
                                     if (aiMessageElement) {
                                         aiMessageElement.innerHTML = `🤖 AI: ${aiMessage}`;
+                                        console.log('🌊 Обновлен текст:', aiMessage.substring(0, 50) + '...');
+                                    } else {
+                                        console.log('❌ Элемент AI сообщения не найден!');
                                     }
                                 } else if (currentEvent === 'complete' && parsed.text) {
                                     aiMessage = parsed.text;
                                     if (aiMessageElement) {
                                         aiMessageElement.innerHTML = `🤖 AI: ${aiMessage}`;
+                                        console.log('🌊 Финальный текст:', aiMessage.substring(0, 50) + '...');
                                     }
                                     console.log('🌊 Стриминг завершен успешно');
                                     return aiMessage;
