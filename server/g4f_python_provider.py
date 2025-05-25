@@ -162,10 +162,13 @@ def get_chat_response(message, specific_provider=None, use_stream=False):
         }
     
     # Если указан конкретный провайдер, пробуем его
-    if specific_provider:
+    if specific_provider and specific_provider != "Qwen_Qwen_2_5_Max":
         result = try_provider(specific_provider, message, timeout=25, use_stream=use_stream)
         if "error" not in result or use_stream:
             return result
+    
+    # Если указан Qwen или не указан провайдер - используем умную систему выбора
+    print(f"🧠 Активирую умную систему выбора провайдеров для: {message[:50]}...")
     
     # Стратегия с группами провайдеров
     def try_provider_group(group_name):
