@@ -270,65 +270,90 @@ async function handleQwenProvider(messages, options = {}) {
     }
   ];
 
-  // Пробуем реальные бесплатные AI провайдеры
-  const realAIs = [
+  // Пробуем настоящий Qwen AI через официальные каналы
+  const qwenAPIs = [
     {
-      name: 'Blackbox AI',
-      url: 'https://www.blackbox.ai/api/chat',
-      headers: { 'Content-Type': 'application/json' }
+      name: 'Qwen Official API',
+      url: 'https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer qwen-free-key',
+        'X-DashScope-Async': 'enable'
+      }
     },
     {
-      name: 'Pi AI',
-      url: 'https://pi.ai/api/chat',
-      headers: { 'Content-Type': 'application/json' }
+      name: 'Qwen HuggingFace',
+      url: 'https://huggingface.co/api/inference/Qwen/Qwen2.5-72B-Instruct',
+      headers: { 
+        'Content-Type': 'application/json'
+      }
     },
     {
-      name: 'CharacterAI',
-      url: 'https://beta.character.ai/chat/streaming/',
-      headers: { 'Content-Type': 'application/json' }
+      name: 'Qwen ModelScope',
+      url: 'https://modelscope.cn/api/v1/models/qwen/Qwen2.5-72B-Instruct/pipeline',
+      headers: { 
+        'Content-Type': 'application/json'
+      }
     }
   ];
 
-  for (const ai of realAIs) {
+  for (const qwen of qwenAPIs) {
     try {
-      console.log(`🔄 Пробуем ${ai.name}...`);
+      console.log(`🔄 Пробуем ${qwen.name}...`);
       
-      const response = await fetch(ai.url, {
+      const response = await fetch(qwen.url, {
         method: 'POST',
-        headers: {
-          ...ai.headers,
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        },
+        headers: qwen.headers,
         body: JSON.stringify({
-          messages: [{ role: 'user', content: messageText }],
-          stream: false
+          model: 'qwen2.5-72b-instruct',
+          input: {
+            messages: [
+              { role: 'user', content: messageText }
+            ]
+          },
+          parameters: {
+            max_tokens: 500,
+            temperature: 0.7
+          }
         }),
-        timeout: 8000
+        timeout: 12000
       });
+
+      console.log(`📡 ${qwen.name} статус:`, response.status);
 
       if (response.ok) {
         const data = await response.json();
+        console.log(`📊 ${qwen.name} ответ:`, JSON.stringify(data, null, 2));
+        
         let aiResponse = '';
         
-        if (data.response) {
-          aiResponse = data.response;
-        } else if (data.message) {
-          aiResponse = data.message;
+        // Обработка разных форматов ответов Qwen
+        if (data.output && data.output.text) {
+          aiResponse = data.output.text;
+        } else if (data.output && data.output.choices && data.output.choices[0]) {
+          aiResponse = data.output.choices[0].message.content;
+        } else if (data.choices && data.choices[0]) {
+          aiResponse = data.choices[0].message.content;
+        } else if (data.generated_text) {
+          aiResponse = data.generated_text;
         } else if (data.text) {
           aiResponse = data.text;
         }
         
-        if (aiResponse && aiResponse.length > 15) {
-          console.log(`✅ Получен ответ от ${ai.name}:`, aiResponse.substring(0, 50));
+        if (aiResponse && aiResponse.length > 20) {
+          console.log(`✅ Получен ответ от ${qwen.name}:`, aiResponse.substring(0, 80));
           return {
             response: aiResponse,
-            provider: ai.name,
-            model: 'free-ai'
+            provider: qwen.name,
+            model: 'qwen-2.5-72b'
           };
         }
+      } else {
+        const errorText = await response.text();
+        console.log(`❌ ${qwen.name} ошибка ${response.status}:`, errorText);
       }
     } catch (error) {
-      console.log(`❌ ${ai.name} недоступен:`, error.message);
+      console.log(`❌ ${qwen.name} недоступен:`, error.message);
       continue;
     }
   }
