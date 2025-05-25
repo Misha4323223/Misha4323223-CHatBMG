@@ -248,36 +248,36 @@ async function tryProviderWithRetries(provider, messages, options) {
   throw new Error(`Не удалось получить ответ от провайдера ${provider} после ${maxRetries} попыток: ${error ? error.message : 'неизвестная ошибка'}`);
 }
 
-// Обработчик для модели Qwen от Alibaba
+// Обработчик для бесплатного ChatGPT через G4F
 async function handleQwenProvider(messages, options = {}) {
   try {
-    const response = await fetch('https://api.lingyiwanwu.com/v1/chat/completions', {
+    // Используем бесплатный ChatGPT через публичные прокси
+    const messageText = messages[messages.length - 1].content;
+    
+    const response = await fetch('https://chatgpt-api.dariai.workers.dev/', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Cache-Control': 'no-cache'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
       },
       body: JSON.stringify({
-        messages: messages,
-        model: options.model || 'qwen-2.5-ultra-preview',
-        temperature: options.temperature || 0.7,
-        max_tokens: options.maxTokens || 800
+        messages: [{ role: 'user', content: messageText }],
+        model: 'gpt-3.5-turbo'
       })
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Qwen API вернул ошибку: ${response.status} - ${errorText}`);
+    if (response.ok) {
+      const data = await response.json();
+      return {
+        response: data.choices[0].message.content,
+        provider: 'Free ChatGPT',
+        model: 'gpt-3.5-turbo'
+      };
+    } else {
+      throw new Error('Первый провайдер недоступен');
     }
-
-    const data = await response.json();
-    return {
-      response: data.choices[0].message.content,
-      provider: 'Qwen',
-      model: data.model || 'qwen-2.5-ultra-preview'
-    };
   } catch (error) {
-    console.error('Ошибка при обращении к Qwen API:', error);
+    console.log('Пробуем резервный провайдер...');
     throw error;
   }
 }
