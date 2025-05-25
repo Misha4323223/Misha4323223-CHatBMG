@@ -253,9 +253,13 @@ async function handleQwenProvider(messages, options = {}) {
     console.log('🔄 Подключаемся к Qwen через gpt4free...');
     
     // Используем новую gpt4free библиотеку
-    const { G4F } = await import('gpt4free');
+    const gpt4free = await import('gpt4free');
     
-    console.log('📦 gpt4free модуль загружен:', typeof G4F);
+    console.log('📦 gpt4free модуль загружен:', typeof gpt4free);
+    console.log('📦 gpt4free.default:', typeof gpt4free.default);
+    console.log('📦 gpt4free exports:', Object.keys(gpt4free));
+    
+    const G4F = gpt4free.default || gpt4free;
     
     // Бесплатные провайдеры для Qwen
     const qwenProviders = [
