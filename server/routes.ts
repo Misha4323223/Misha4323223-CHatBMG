@@ -1260,7 +1260,7 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
       
       // Получаем ответ через умную маршрутизацию
       const smartRouter = require('./smart-router');
-      const response = await smartRouter.getSmartResponse(message as string);
+      const response = await smartRouter.getSmartResponse(message as string, {});
       
       if (response.success) {
         const fullText = response.response;
