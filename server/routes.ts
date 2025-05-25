@@ -1325,7 +1325,7 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
     console.log(`🚀 Запуск потоковой генерации для: "${message}"`);
     console.log(`🔥 [DEBUG] Извлеченные параметры: message="${message}", provider="${provider}", sessionId="${sessionId}"`);
     
-    // 🧠 ДОБАВЛЯЕМ КОНТЕКСТ РАЗГОВОРА
+    // 🧠 ДОБАВЛЯЕМ КОНТЕКСТ РАЗГОВОРА И ВЕБ-ПОИСК
     console.log('🧠 [STREAM] === НАЧАЛО АНАЛИЗА КОНТЕКСТА ===');
     console.log('🧠 [STREAM] req.body:', JSON.stringify(req.body, null, 2));
     
@@ -1357,6 +1357,50 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
     } else {
       console.log('🧠 [STREAM] КОНТЕКСТ НЕ ДОБАВЛЕН - нет контекста или пустой');
     }
+    
+    // 🔍 ПРОВЕРЯЕМ НУЖЕН ЛИ ВЕБ-ПОИСК
+    const webSearch = require('./web-search-provider');
+    const needsSearch = webSearch.needsWebSearch(message);
+    console.log('🔍 [STREAM] Требуется веб-поиск:', needsSearch);
+    
+    if (needsSearch) {
+      console.log('🔍 [STREAM] Выполняем поиск в интернете...');
+      
+      // Отправляем индикатор поиска пользователю
+      res.write(`data: ${JSON.stringify({ 
+        searchStatus: 'searching', 
+        message: 'Ищу актуальную информацию в интернете...' 
+      })}\n\n`);
+      
+      try {
+        const searchResults = await webSearch.performWebSearch(message);
+        if (searchResults.success) {
+          const searchInfo = webSearch.formatSearchResultsForAI(searchResults);
+          finalMessage = finalMessage + searchInfo;
+          console.log('🔍 [STREAM] Веб-поиск успешен! Найдено результатов:', searchResults.results.length);
+          
+          // Уведомляем о успешном поиске
+          res.write(`data: ${JSON.stringify({ 
+            searchStatus: 'found', 
+            message: `Найдено ${searchResults.results.length} результатов`,
+            resultsCount: searchResults.results.length
+          })}\n\n`);
+        } else {
+          console.log('🔍 [STREAM] Веб-поиск не дал результатов');
+          res.write(`data: ${JSON.stringify({ 
+            searchStatus: 'no_results', 
+            message: 'Поиск в интернете не дал результатов' 
+          })}\n\n`);
+        }
+      } catch (error) {
+        console.error('🔍 [STREAM] Ошибка веб-поиска:', error.message);
+        res.write(`data: ${JSON.stringify({ 
+          searchStatus: 'error', 
+          message: 'Ошибка поиска в интернете' 
+        })}\n\n`);
+      }
+    }
+    
     console.log('🧠 [STREAM] === КОНЕЦ АНАЛИЗА КОНТЕКСТА ===');
     
     // Настраиваем заголовки для Server-Sent Events
