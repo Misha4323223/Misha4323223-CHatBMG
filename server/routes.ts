@@ -1234,41 +1234,7 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
     }
   });
   
-  // Send a message
-  app.post("/api/messages", authMiddleware, async (req, res) => {
-    try {
-      const currentUserId = (req as any).userId;
-      
-      // Validate request body
-      const result = messageSchema.safeParse(req.body);
-      if (!result.success) {
-        return res.status(400).json({ 
-          message: "Invalid request", 
-          errors: result.error.format() 
-        });
-      }
-      
-      const { text, receiverId } = result.data;
-      
-      // Check if receiver exists
-      const receiver = await storage.getUser(receiverId);
-      if (!receiver) {
-        return res.status(404).json({ message: "Receiver not found" });
-      }
-      
-      // Create message
-      const message = await storage.createMessage({
-        senderId: currentUserId,
-        receiverId,
-        text
-      });
-      
-      return res.status(201).json(message);
-    } catch (error) {
-      console.error("Send message error:", error);
-      return res.status(500).json({ message: "Server error while sending message" });
-    }
-  });
+
 
   return httpServer;
 }
