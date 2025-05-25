@@ -43,6 +43,7 @@ const directAiRoutes = require('./direct-ai-routes');
 const deepspeekProvider = require('./deepspeek-fixed');
 const chatFreeProvider = require('./simple-chatfree');
 const fastAiProviders = require('./fast-ai-providers');
+const speedOptimizedChat = require('./speed-optimized-chat');
 
 // Импортируем единую систему ChatGPT
 import UnifiedChatGPTSystem from './unified-chatgpt-system.js';
@@ -476,6 +477,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // API для умной маршрутизации сообщений к подходящим провайдерам
   const smartRouter = require('./smart-router');
   app.use('/api/smart', smartRouter);
+
+  // ============================================
+  // БЫСТРЫЙ AI CHAT API - Оптимизированный маршрут для быстрых ответов
+  // ============================================
+  
+  app.post('/api/ai/fast-chat', async (req, res) => {
+    try {
+      const { message, provider = 'auto' } = req.body;
+      
+      if (!message || message.trim().length === 0) {
+        return res.status(400).json({
+          success: false,
+          error: 'Сообщение не может быть пустым'
+        });
+      }
+
+      console.log('🚀 Быстрый запрос к AI:', message.substring(0, 50) + '...');
+      
+      // Сначала пробуем оптимизированную систему быстрых ответов
+      const speedResult = await speedOptimizedChat.getSpeedOptimizedResponse(message);
+      
+      if (speedResult.success) {
+        console.log(`⚡ Быстрый ответ получен от ${speedResult.provider}!`);
+        return res.json({
+          success: true,
+          response: speedResult.response,
+          provider: speedResult.provider,
+          model: speedResult.model || 'gpt-3.5-turbo',
+          responseTime: 'fast'
+        });
+      }
+      
+      // Если быстрые провайдеры не сработали, используем обычные
+      console.log('🔄 Переключаемся на стандартные провайдеры...');
+      const standardResult = await callG4F(message, provider);
+      
+      res.json(standardResult);
+      
+    } catch (error) {
+      console.error('❌ Ошибка быстрого чата:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Ошибка получения ответа от AI'
+      });
+    }
+  });
 
   // API для сохранения истории чатов
   const chatHistory = require('./chat-history');
