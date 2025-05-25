@@ -5,13 +5,13 @@
 
 const axios = require('axios');
 
-// Только настоящие AI провайдеры - без заготовленных ответов
+// Прямое подключение к Python G4F - только живые ответы
 const FAST_PROVIDERS = [
   {
     name: 'PythonG4F-Direct',
-    url: 'http://localhost:5000/api/freechat/chat',
-    timeout: 8000,
-    format: 'direct',
+    url: 'http://localhost:5000/api/python-direct/chat',
+    timeout: 12000,
+    format: 'standard',
     provider: 'Qwen_Qwen_2_5_Max'
   }
 ];
