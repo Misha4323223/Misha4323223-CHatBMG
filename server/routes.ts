@@ -2447,5 +2447,79 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
     }
   });
 
+  // API для стримингового чата с мгновенными ответами
+  app.post('/api/ai/stream-chat', async (req, res) => {
+    try {
+      const { message, context } = req.body;
+      console.log('🌊 Стриминговый запрос:', message?.substring(0, 50) + '...');
+      
+      // Настраиваем Server-Sent Events
+      res.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+        'Access-Control-Allow-Origin': '*'
+      });
+
+      try {
+        console.log('🔗 Подключаемся к стриминговому серверу на 5001...');
+        
+        // Подключаемся к стриминговому серверу
+        const streamResponse = await fetch('http://localhost:5001/stream', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            message,
+            provider: 'Qwen_Qwen_2_5_Max',
+            stream: true
+          })
+        });
+
+        if (streamResponse.ok && streamResponse.body) {
+          console.log('✅ Стриминг подключен успешно!');
+          const reader = streamResponse.body.getReader();
+          const decoder = new TextDecoder();
+
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            
+            const chunk = decoder.decode(value);
+            res.write(chunk);
+          }
+        } else {
+          throw new Error('Стриминг недоступен');
+        }
+      } catch (streamError) {
+        console.log('⚠️ Стриминг недоступен, используем быстрый режим...');
+        
+        // Fallback на обычный быстрый ответ
+        const response = await fetch('http://localhost:5000/api/python-direct/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          res.write(`data: ${JSON.stringify({
+            type: 'complete',
+            content: data.response,
+            provider: 'PythonG4F-Direct'
+          })}\n\n`);
+        }
+      }
+      
+      res.write(`data: [DONE]\n\n`);
+      res.end();
+      
+    } catch (error) {
+      console.error('Ошибка стриминга:', error);
+      res.write(`data: ${JSON.stringify({ error: 'Ошибка стриминга' })}\n\n`);
+      res.end();
+    }
+  });
+
   return httpServer;
 }
