@@ -4,7 +4,8 @@
  */
 
 // Используем require для совместимости с CommonJS
-const fetch = require('node-fetch');
+const fetchModule = require('node-fetch');
+const fetch = fetchModule.default || fetchModule;
 
 /**
  * Определяет требуется ли веб-поиск для запроса
