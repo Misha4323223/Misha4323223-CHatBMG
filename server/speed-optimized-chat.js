@@ -5,8 +5,15 @@
 
 const axios = require('axios');
 
-// Только настоящие AI провайдеры - FastDirectAI удален
+// Быстрые AI провайдеры - приоритет самым быстрым
 const FAST_PROVIDERS = [
+  {
+    name: 'PythonG4F-Qwen',
+    url: 'http://localhost:5004/python/chat',
+    timeout: 7000,
+    format: 'python',
+    provider: 'Qwen_Qwen_2_5_Max'
+  },
   {
     name: 'FastFreeChatEnhanced',
     url: 'http://localhost:5000/api/freechat/chat',
@@ -36,6 +43,12 @@ async function getResponseFromProvider(provider, message) {
     switch (provider.format) {
       case 'local':
         requestData = formatLocalRequest(message);
+        break;
+      case 'python':
+        requestData = {
+          message: message,
+          provider: provider.provider || 'Qwen_Qwen_2_5_Max'
+        };
         break;
       default:
         requestData = { message };
