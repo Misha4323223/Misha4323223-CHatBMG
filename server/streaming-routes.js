@@ -51,8 +51,10 @@ router.get('/chat', async (req, res) => {
     const smartRouter = require('./smart-router');
     
     try {
+      console.log('🚀 Начинаем обработку стриминга...');
       // Отправляем запрос через умную маршрутизацию
       const response = await smartRouter.getSmartResponse(message, { imageUrl });
+      console.log('📨 Получен ответ от smartRouter:', response?.success);
       
       if (response.success) {
         const fullText = response.response;
