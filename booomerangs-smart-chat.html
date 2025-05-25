@@ -1536,24 +1536,35 @@
       
       // Обработчик отправки сообщения
       async function sendMessage() {
+        console.log('🚀 [CHAT] ========== НАЧАЛО ОТПРАВКИ СООБЩЕНИЯ ==========');
+        
         const messageText = chatInput.value.trim();
+        console.log(`📝 [CHAT] Текст сообщения: "${messageText}"`);
+        console.log(`🖼️ [CHAT] Загруженное изображение: ${uploadedImageUrl ? 'Есть' : 'Нет'}`);
         
         // Проверяем, есть ли текст или изображение для отправки
-        if (!messageText && !uploadedImageUrl) return;
+        if (!messageText && !uploadedImageUrl) {
+          console.log('⚠️ [CHAT] Пустое сообщение - отмена отправки');
+          return;
+        }
         
         // Определяем тип операции и показываем соответствующий статус
+        console.log('🎯 [CHAT] Определяем тип операции...');
         const operationType = detectOperationType(messageText);
+        console.log(`📋 [CHAT] Тип операции: ${operationType.title}`);
         showStatus(operationType.title, operationType.message);
         
         // Добавляем сообщение пользователя
+        console.log('➕ [CHAT] Добавляем сообщение пользователя в UI...');
         addMessage(messageText, true);
         
         // Сохраняем сообщение пользователя в истории
+        console.log('💾 [CHAT] Сохраняем сообщение пользователя в БД...');
         try {
           await saveMessageToHistory(messageText, 'user');
-          console.log('✅ Сообщение пользователя сохранено');
+          console.log('✅ [CHAT] Сообщение пользователя сохранено в БД');
         } catch (error) {
-          console.error('❌ Ошибка сохранения сообщения пользователя:', error);
+          console.error('❌ [CHAT] Ошибка сохранения сообщения пользователя:', error);
         }
         
         // Очищаем поле ввода
@@ -1623,11 +1634,14 @@
       
       // Функция для потоковой генерации ответов AI
       async function streamAIResponse(message, messageElement, imageUrl = null) {
+        console.log(`🚀 [STREAMING] Начинаем потоковую генерацию для сообщения: "${message}"`);
+        
         const typingIndicator = messageElement.querySelector('.typing-indicator');
         let fullResponse = '';
         let currentProvider = '';
         
         try {
+          console.log('📡 [STREAMING] Отправляем запрос к /api/stream...');
           // Делаем запрос к стриминговому серверу
           const response = await fetch('/api/stream', {
             method: 'POST',
@@ -1642,42 +1656,55 @@
           });
 
           if (!response.ok) {
+            console.error(`❌ [STREAMING] Ошибка HTTP: ${response.status} ${response.statusText}`);
             throw new Error(`Ошибка стримингового сервера: ${response.status}`);
           }
 
+          console.log('✅ [STREAMING] Получен ответ от сервера, начинаем чтение потока...');
           const reader = response.body.getReader();
           const decoder = new TextDecoder();
+          let chunkCount = 0;
 
           while (true) {
             const { done, value } = await reader.read();
-            if (done) break;
+            if (done) {
+              console.log(`📤 [STREAMING] Поток завершен. Получено чанков: ${chunkCount}`);
+              break;
+            }
 
+            chunkCount++;
             const chunk = decoder.decode(value);
+            console.log(`📥 [STREAMING] Чанк ${chunkCount}: "${chunk.substring(0, 100)}..."`);
+            
             const lines = chunk.split('\n');
 
             for (const line of lines) {
               if (line.startsWith('data: ')) {
                 try {
                   const data = JSON.parse(line.slice(6));
+                  console.log(`🔍 [STREAMING] Обработка данных:`, data);
                   
                   if (data.provider && !currentProvider) {
                     currentProvider = data.provider;
-                    console.log(`🤖 Потоковый ответ от ${currentProvider}`);
+                    console.log(`🤖 [STREAMING] Провайдер: ${currentProvider}`);
                   }
                   
                   if (data.text) {
                     // Убираем индикатор печатания при первом символе
                     if (typingIndicator && fullResponse === '') {
+                      console.log('⚡ [STREAMING] Убираем индикатор печатания');
                       typingIndicator.remove();
                     }
                     
                     fullResponse += data.text;
                     messageElement.textContent = fullResponse;
+                    console.log(`📝 [STREAMING] Текст обновлен: ${fullResponse.length} символов`);
                     scrollToBottom();
                   }
                   
                   if (data.finished) {
-                    console.log(`✅ Потоковая генерация завершена: ${fullResponse.length} символов`);
+                    console.log(`✅ [STREAMING] Генерация завершена: ${fullResponse.length} символов`);
+                    console.log(`💾 [STREAMING] Сохраняем в БД: "${fullResponse}"`);
                     
                     // Сохраняем ответ в базу данных
                     await saveMessageToHistory(fullResponse, 'ai', currentProvider);
@@ -1685,34 +1712,45 @@
                     return;
                   }
                 } catch (e) {
-                  // Игнорируем ошибки парсинга отдельных чанков
+                  console.warn(`⚠️ [STREAMING] Ошибка парсинга чанка: ${e.message}`);
                   continue;
                 }
               }
             }
           }
         } catch (error) {
-          console.error('❌ Ошибка потоковой генерации:', error);
+          console.error('❌ [STREAMING] Ошибка потоковой генерации:', error);
+          console.log('🔄 [FALLBACK] Переключаемся на обычный API...');
           
           // В случае ошибки используем обычный API
-          if (typingIndicator) typingIndicator.remove();
+          if (typingIndicator) {
+            console.log('🗑️ [FALLBACK] Убираем индикатор печатания');
+            typingIndicator.remove();
+          }
           messageElement.textContent = 'Переключаюсь на обычный режим...';
           
           try {
+            console.log('📡 [FALLBACK] Отправляем запрос к /api/smart/message...');
             const fallbackResponse = await fetch('/api/smart/message', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ message: message, imageUrl: imageUrl }),
             });
             
+            console.log(`📨 [FALLBACK] Статус ответа: ${fallbackResponse.status}`);
             const data = await fallbackResponse.json();
+            console.log('📋 [FALLBACK] Данные ответа:', data);
+            
             if (data.success) {
+              console.log(`✅ [FALLBACK] Успешный ответ от ${data.provider}: "${data.response}"`);
               messageElement.textContent = data.response;
               await saveMessageToHistory(data.response, 'ai', data.provider);
             } else {
+              console.error('❌ [FALLBACK] Неуспешный ответ:', data);
               messageElement.textContent = 'Произошла ошибка при получении ответа';
             }
           } catch (fallbackError) {
+            console.error('❌ [FALLBACK] Критическая ошибка:', fallbackError);
             messageElement.textContent = 'Не удалось получить ответ от AI';
           }
           

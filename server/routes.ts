@@ -1264,7 +1264,7 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
       // Получаем ответ от Python G4F
       const pythonResponse = await callG4F(message, provider);
       
-      if (pythonResponse && pythonResponse.response) {
+      if (pythonResponse && pythonResponse.response && typeof pythonResponse.response === 'string') {
         // Симулируем потоковую отправку, разбивая текст на части
         const text = pythonResponse.response;
         const words = text.split(' ');
