@@ -21,7 +21,7 @@ async function analyzeMessage(message, options = {}) {
       ...options 
     });
     
-    if (response && response.success) {
+    if (response && response.response) {
       return {
         success: true,
         response: response.response,

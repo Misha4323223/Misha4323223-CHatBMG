@@ -820,9 +820,15 @@ function quickSort(arr) {
   }
 }
 
+// Функция getChatResponse для совместимости
+async function getChatResponse(message, options = {}) {
+  return await getResponse(message, options);
+}
+
 // Экспорт функций и констант
 module.exports = {
   getResponse,
+  getChatResponse,
   getProviders,
   getModelForProvider,
   checkProviderAvailability,
