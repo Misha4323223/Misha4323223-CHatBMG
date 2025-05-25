@@ -8,7 +8,7 @@ const router = express.Router();
 // Импортируем провайдеры
 const simpleChatFree = require('./simple-chatfree');
 const deepspeek = require('./deepspeek-fixed');
-const directAiProvider = require('./direct-ai-provider');
+// FastDirectAI удален - используем только настоящие AI провайдеры
 const pythonProviderRoutes = require('./python_provider_routes');
 
 // Маршрут для проверки состояния всех провайдеров

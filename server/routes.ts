@@ -37,7 +37,7 @@ const upload = multer({
 });
 
 const g4fHandlers = require('./g4f-handlers');
-const directAiRoutes = require('./direct-ai-routes');
+// FastDirectAI полностью удален - используем только настоящие AI провайдеры
 // Отключаем внешние Python серверы - работаем только на порту 5000
 // const pythonProviderRoutes = require('./python_provider_routes');
 const deepspeekProvider = require('./deepspeek-fixed');
@@ -424,7 +424,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/api/g4f', g4fHandlers);
   
   // API с прямым доступом к AI провайдерам (более стабильный вариант)
-  app.use('/api/direct-ai', directAiRoutes);
+  // FastDirectAI маршрут удален - используем только настоящие AI
   
   // API с Python-версией G4F
   // Отключен Python провайдер - работаем только на порту 5000
@@ -1102,8 +1102,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Вспомогательная функция для вызова G4F API
   async function callG4F(message: string, provider: string) {
     try {
-      // Получаем ответ от прямого провайдера
-      const directAiProvider = require('./direct-ai-provider');
+      // FastDirectAI удален - используем только Python G4F
       
       // Если провайдер qwen, используем AItianhu который реализует доступ к Qwen AI
       // Если провайдер chatfree, используем наш локальный провайдер
@@ -1197,8 +1196,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Получаем ответ
-      const response = await directAiProvider.getChatResponse(message, { provider: actualProvider });
+      // Используем Python G4F для получения живых ответов
+      const pythonProviderRoutes = require('./python_provider_routes');
+      const response = await pythonProviderRoutes.callPythonAI(message, actualProvider);
       
       return {
         success: true,
@@ -1477,9 +1477,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Импортируем провайдер напрямую
-      const directAiProvider = require('./direct-ai-provider');
-      const { AI_PROVIDERS } = directAiProvider;
+      // FastDirectAI удален - используем только настоящие AI провайдеры
       
       // Импортируем Python провайдер
       // Python провайдер отключен - работаем только на порту 5000

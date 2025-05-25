@@ -2,7 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const { spawn } = require('child_process');
-const { getDemoResponse } = require('./direct-ai-provider');
+// FastDirectAI удален - используем только настоящие AI провайдеры
 
 // Импортируем функции для работы с чатом
 const chatHistory = require('./chat-history');

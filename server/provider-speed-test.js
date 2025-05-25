@@ -7,10 +7,8 @@ const axios = require('axios');
 
 // Список всех доступных провайдеров для тестирования
 const PROVIDERS_TO_TEST = [
-  // Быстрые локальные провайдеры
-  { name: 'FastChatFree', endpoint: '/api/chatfree/chat', type: 'fast' },
-  { name: 'FastFreeChatEnhanced', endpoint: '/api/freechat/chat', type: 'fast' },
-  { name: 'FastDirectAI', endpoint: '/api/direct-ai/chat', type: 'fast' },
+  // Настоящие AI провайдеры
+  { name: 'FastFreeChatEnhanced', endpoint: '/api/freechat/chat', type: 'real_ai' },
   
   // Стандартные G4F провайдеры
   { name: 'G4F-You', endpoint: '/api/g4f/chat', provider: 'You', type: 'standard' },

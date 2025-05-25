@@ -5,24 +5,12 @@
 
 const axios = require('axios');
 
-// Быстрые провайдеры на основе наших рабочих бесплатных сервисов
+// Только настоящие AI провайдеры - FastDirectAI удален
 const FAST_PROVIDERS = [
-  {
-    name: 'FastChatFree',
-    url: 'http://localhost:5000/api/chatfree/chat',
-    timeout: 4000,
-    format: 'local'
-  },
   {
     name: 'FastFreeChatEnhanced',
     url: 'http://localhost:5000/api/freechat/chat',
-    timeout: 5000,
-    format: 'local'
-  },
-  {
-    name: 'FastDirectAI',
-    url: 'http://localhost:5000/api/direct-ai/chat',
-    timeout: 6000,
+    timeout: 8000,
     format: 'local'
   }
 ];
