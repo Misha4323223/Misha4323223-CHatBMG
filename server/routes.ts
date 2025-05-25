@@ -329,6 +329,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Сохранение сообщения в сессию с автоматическим AI ответом
   app.post('/api/chat/sessions/:sessionId/messages', async (req, res) => {
+    console.log('🚨 ЗАПРОС К /api/chat/sessions/:sessionId/messages');
+    console.log('📝 Данные запроса:', req.body);
+    console.log('🆔 ID сессии:', req.params.sessionId);
     try {
       const sessionId = parseInt(req.params.sessionId);
       const messageData = { 
@@ -337,7 +340,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         timestamp: new Date().toISOString()
       };
       
-      console.log('✅ Сообщение пользователя сохранено');
+      console.log('💾 Подготовленные данные сообщения:', messageData);
+      console.log('✅ Сохраняем сообщение пользователя');
       const userMessage = await chatHistory.saveMessage(messageData);
       
       // Если это сообщение от пользователя, получаем ответ AI
