@@ -27,21 +27,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`💬 Получено сообщение: ${message?.substring(0, 50)}...`);
       
-      // Используем старый роутер со всеми провайдерами
-      const { default: smartRouter } = await import('./smart-router-old.js');
+      // Используем прямо G4F провайдер - самый стабильный
+      console.log('🔄 [ОБЫЧНЫЙ ЧАТ] Используем G4F провайдер...');
+      const { default: g4fProvider } = await import('./g4f-provider.js');
+      console.log('✅ [ОБЫЧНЫЙ ЧАТ] G4F провайдер загружен:', typeof g4fProvider);
       
       let response;
-      if (typeof smartRouter.routeMessage === 'function') {
-        console.log('🔄 Используем старый роутер со всеми провайдерами...');
-        response = await smartRouter.routeMessage(message);
-        console.log('✅ Получен ответ от старого роутера');
-      } else {
-        // Fallback к G4F провайдеру
-        const { default: g4fProvider } = await import('./g4f-provider.js');
-        console.log('🔄 Fallback к G4F провайдеру...');
-        response = await g4fProvider.getChatResponse(message, { provider: 'auto' });
-        console.log('✅ Получен ответ от G4F провайдера');
-      }
+      console.log('📤 [ОБЫЧНЫЙ ЧАТ] Отправляем сообщение в G4F:', message);
+      response = await g4fProvider.getChatResponse(message, { provider: 'auto' });
+      console.log('📨 [ОБЫЧНЫЙ ЧАТ] Получен ответ от G4F:', response ? 'есть ответ' : 'нет ответа');
+      console.log('📊 [ОБЫЧНЫЙ ЧАТ] Детали ответа:', JSON.stringify(response, null, 2));
       
       res.json(response);
       
@@ -76,25 +71,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         'Access-Control-Allow-Headers': 'Cache-Control'
       });
       
-      // Получаем ответ через старый роутер
-      const { default: smartRouter } = await import('./smart-router-old.js');
-      console.log('🔍 Загружен smartRouter:', typeof smartRouter);
+      // Используем прямо G4F провайдер - самый стабильный
+      console.log('🔄 Используем G4F провайдер с логированием...');
+      const { default: g4fProvider } = await import('./g4f-provider.js');
+      console.log('✅ G4F провайдер загружен:', typeof g4fProvider);
       
       let response;
       try {
-        if (typeof smartRouter.routeMessage === 'function') {
-          console.log('🔄 Используем старый роутер со всеми провайдерами...');
-          response = await smartRouter.routeMessage(message);
-          console.log('✅ Получен ответ от старого роутера');
-        } else {
-          // Fallback к G4F провайдеру
-          const { default: g4fProvider } = await import('./g4f-provider.js');
-          console.log('🔄 Fallback к G4F провайдеру...');
-          response = await g4fProvider.getChatResponse(message, { provider: 'auto' });
-          console.log('✅ Получен ответ от G4F провайдера');
-        }
+        console.log('📤 Отправляем сообщение в G4F:', message);
+        response = await g4fProvider.getChatResponse(message, { provider: 'auto' });
+        console.log('📨 Получен ответ от G4F:', response ? 'есть ответ' : 'нет ответа');
+        console.log('📊 Детали ответа:', JSON.stringify(response, null, 2));
       } catch (error) {
-        console.log('❌ Все провайдеры недоступны, используем демо-ответ...');
+        console.error('❌ [СТРИМИНГ] Ошибка G4F провайдера:', error.message);
+        console.error('❌ [СТРИМИНГ] Полная ошибка:', error);
+        console.log('🔄 [СТРИМИНГ] Используем демо-ответ...');
         response = {
           success: true,
           response: 'Демо-ответ от BOOOMERANGS AI. Настройте провайдеры для получения реальных ответов.',
