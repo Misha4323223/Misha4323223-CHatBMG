@@ -1324,7 +1324,9 @@
         }
         
         try {
-          await fetch(`/api/chat/sessions/${currentSessionId}/messages`, {
+          console.log(`💾 Сохраняем сообщение в сессию ${currentSessionId}:`, { content, sender, provider });
+          
+          const response = await fetch(`/api/chat/sessions/${currentSessionId}/messages`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -1336,6 +1338,12 @@
               category
             })
           });
+          
+          if (response.ok) {
+            console.log('✅ Сообщение успешно сохранено в базу данных');
+          } else {
+            console.error('❌ Ошибка при сохранении:', response.status);
+          }
         } catch (error) {
           console.error('Ошибка сохранения сообщения:', error);
         }
