@@ -1159,8 +1159,8 @@
                 let aiMessage = '';
                 
                 // Добавляем пустое сообщение AI для стриминга
-                addMessage('ai', '');
-                const aiMessageElement = document.querySelector('.message-bubble:last-child .message-text');
+                addMessage('', 'ai');
+                const aiMessageElement = document.querySelector('.message-bubble:last-child');
                 
                 while (true) {
                     const { done, value } = await reader.read();
@@ -1169,24 +1169,31 @@
                     const chunk = decoder.decode(value);
                     const lines = chunk.split('\n');
                     
+                    let currentEvent = '';
                     for (const line of lines) {
-                        if (line.startsWith('data: ')) {
+                        if (line.startsWith('event: ')) {
+                            currentEvent = line.slice(7).trim();
+                        } else if (line.startsWith('data: ')) {
                             const data = line.slice(6);
-                            if (data === '[DONE]') {
-                                console.log('🌊 Стриминг завершен');
-                                return aiMessage;
-                            }
                             
                             try {
                                 const parsed = JSON.parse(data);
-                                if (parsed.content) {
-                                    aiMessage += parsed.content;
+                                
+                                if (currentEvent === 'chunk' && parsed.text) {
+                                    aiMessage += parsed.text;
                                     if (aiMessageElement) {
-                                        aiMessageElement.textContent = aiMessage;
+                                        aiMessageElement.innerHTML = `🤖 AI: ${aiMessage}`;
                                     }
+                                } else if (currentEvent === 'complete' && parsed.text) {
+                                    aiMessage = parsed.text;
+                                    if (aiMessageElement) {
+                                        aiMessageElement.innerHTML = `🤖 AI: ${aiMessage}`;
+                                    }
+                                    console.log('🌊 Стриминг завершен успешно');
+                                    return aiMessage;
                                 }
                             } catch (e) {
-                                // Игнорируем ошибки парсинга
+                                console.log('🌊 Ошибка парсинга:', e);
                             }
                         }
                     }
