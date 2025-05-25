@@ -247,28 +247,74 @@ async function tryProviderWithRetries(provider, messages, options) {
   throw new Error(`Не удалось получить ответ от провайдера ${provider} после ${maxRetries} попыток: ${error ? error.message : 'неизвестная ошибка'}`);
 }
 
-// Обработчик для Qwen через бесплатные API
+// Обработчик для Qwen через g4f библиотеку
 async function handleQwenProvider(messages, options = {}) {
-  const messageText = messages[messages.length - 1].content;
-  
-  // Пробуем реально работающие бесплатные AI сервисы
-  const workingAIs = [
-    {
-      name: 'ChatGPT Free Web',
-      url: 'https://chat.openai.com/backend-api/conversation',
-      method: 'web-scraping'
-    },
-    {
-      name: 'You.com Free',
-      url: 'https://you.com/api/streamingSearch',
-      method: 'direct'
-    },
-    {
-      name: 'Poe Free',
-      url: 'https://poe.com/api/gql_POST',
-      method: 'web-interface'
+  try {
+    console.log('🔄 Подключаемся к Qwen через g4f...');
+    
+    // Используем g4f для подключения к Qwen
+    const g4f = await import('g4f');
+    
+    console.log('📦 g4f модуль загружен:', typeof g4f);
+    
+    // Пробуем разные Qwen провайдеры через g4f
+    const qwenOptions = [
+      { provider: 'Qwen', model: 'qwen-turbo' },
+      { provider: 'You', model: 'qwen' },
+      { provider: 'GPTalk', model: 'qwen' },
+      { provider: 'FreeChatgpt', model: 'qwen' }
+    ];
+    
+    for (const option of qwenOptions) {
+      try {
+        console.log(`🔄 Пробуем g4f с провайдером ${option.provider}...`);
+        
+        const response = await g4f.ChatCompletion.create({
+          model: option.model,
+          messages: messages,
+          provider: option.provider
+        });
+        
+        if (response && typeof response === 'string' && response.length > 15) {
+          console.log(`✅ Получен ответ от g4f (${option.provider}):`, response.substring(0, 60));
+          return {
+            response: response,
+            provider: `Qwen AI (g4f-${option.provider})`,
+            model: option.model
+          };
+        }
+      } catch (providerError) {
+        console.log(`❌ g4f ${option.provider} ошибка:`, providerError.message);
+        continue;
+      }
     }
-  ];
+    
+    // Альтернативный способ без указания провайдера
+    try {
+      console.log('🔄 Пробуем g4f без указания провайдера...');
+      
+      const defaultResponse = await g4f.ChatCompletion.create({
+        model: 'gpt-3.5-turbo',
+        messages: messages
+      });
+      
+      if (defaultResponse && typeof defaultResponse === 'string' && defaultResponse.length > 15) {
+        console.log('✅ Получен ответ от g4f (default)');
+        return {
+          response: defaultResponse,
+          provider: 'Qwen AI (g4f-default)',
+          model: 'gpt-3.5-turbo'
+        };
+      }
+    } catch (defaultError) {
+      console.log('❌ g4f default ошибка:', defaultError.message);
+    }
+    
+  } catch (importError) {
+    console.log('❌ Ошибка импорта g4f:', importError.message);
+  }
+  
+  const messageText = messages[messages.length - 1].content;
 
   // Пробуем настоящий Qwen AI через официальные каналы
   const qwenAPIs = [
