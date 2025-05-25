@@ -254,22 +254,31 @@ async function handleQwenProvider(messages, options = {}) {
     
     const messageText = messages[messages.length - 1].content;
     
-    // Бесплатные AI сервисы для тестирования
+    // Бесплатные AI сервисы которые работали
     const freeAIServices = [
       {
-        name: 'HuggingFace Inference',
-        url: 'https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium',
-        headers: { 'Content-Type': 'application/json' }
+        name: 'You.com AI',
+        url: 'https://you.com/api/streamingSearch',
+        headers: { 
+          'Content-Type': 'application/json',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
       },
       {
-        name: 'Cohere Free API',
-        url: 'https://api.cohere.ai/v1/generate',
-        headers: { 'Content-Type': 'application/json' }
+        name: 'Perplexity AI',
+        url: 'https://www.perplexity.ai/socket.io/',
+        headers: { 
+          'Content-Type': 'application/json',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
       },
       {
-        name: 'AI21 Free',
-        url: 'https://api.ai21.com/studio/v1/j2-light/complete',
-        headers: { 'Content-Type': 'application/json' }
+        name: 'Character AI',
+        url: 'https://beta.character.ai/chat/streaming/',
+        headers: { 
+          'Content-Type': 'application/json',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
       }
     ];
 
