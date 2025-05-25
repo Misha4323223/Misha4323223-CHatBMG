@@ -1099,7 +1099,7 @@
         let currentTab = 'chat';
         
         // Переменные для стриминга
-        let isStreamMode = false;
+        let isStreamMode = true; // Стриминг всегда включен
         let currentStream = null;
         
         // Переменные для умных функций
@@ -1118,24 +1118,7 @@
         };
         let longTermMemory = [];
 
-        // Функция переключения стриминга
-        function toggleStreamMode() {
-            isStreamMode = !isStreamMode;
-            const streamToggle = document.getElementById('streamToggle');
-            const streamIcon = document.getElementById('streamIcon');
-            
-            if (isStreamMode) {
-                streamToggle.classList.add('active');
-                streamIcon.textContent = '🌊';
-                streamToggle.title = 'Стриминг режим включен - слова появляются мгновенно';
-                console.log('🌊 Стриминг режим включен! Переменная isStreamMode:', isStreamMode);
-            } else {
-                streamToggle.classList.remove('active');
-                streamIcon.textContent = '⚡';
-                streamToggle.title = 'Быстрый режим включен - полный ответ за 6-8 секунд';
-                console.log('⚡ Быстрый режим включен! Переменная isStreamMode:', isStreamMode);
-            }
-        }
+        // Стриминг теперь всегда включен, функция переключения больше не нужна
 
         // Функция отправки стримингового сообщения
         async function sendStreamMessage(message, context) {
