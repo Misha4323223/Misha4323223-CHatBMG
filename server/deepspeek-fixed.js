@@ -233,12 +233,11 @@ async function generateTechnicalResponse(query) {
           
           // Фолбэк на демо-режим
           response = {
-            success: true,
-            response: FALLBACK_RESPONSES.intermediate,
-            provider: "BOOOMERANGS-Demo",
-            model: "demo-mode"
+            success: false,
+            error: "Все AI провайдеры недоступны",
+            provider: "Error"
           };
-          console.log("⚠️ Все провайдеры недоступны, используем демо-режим");
+          console.log("❌ Все провайдеры недоступны - возвращаем ошибку");
         }
         break;
         

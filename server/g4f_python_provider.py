@@ -462,14 +462,12 @@ def chat_stream():
                 yield f"data: {json.dumps(text_data)}\n\n"
                 
                 # Имитируем завершение
-                completion_data = {
-                    'status': 'done',
-                    'full_text': demo_response,
-                    'provider': 'BOOOMERANGS-Error',
-                    'model': 'error-mode',
+                error_data = {
+                    'status': 'error',
+                    'error': 'Все AI провайдеры недоступны',
                     'elapsed': time.time() - start_time
                 }
-                yield f"data: {json.dumps(completion_data)}\n\n"
+                yield f"data: {json.dumps(error_data)}\n\n"
         
         # Возвращаем потоковый ответ
         return Response(
