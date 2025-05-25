@@ -1269,7 +1269,7 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
       try {
         const pythonProvider = require('./python_provider_routes');
         console.log('🔄 Пробуем Python G4F провайдер...');
-        const result = await fetch('http://localhost:5001/python/chat', {
+        const result = await fetch('http://localhost:5001/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ message: message, provider: 'auto' })
