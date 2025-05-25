@@ -25,7 +25,7 @@ import * as freeImageGenerators from './free-image-generators.js';
 const imageAnalyzer = require('./image-analyzer.js');
 const { getFreeGPT4Response } = require('./gpt4-free-providers.js');
 const EdgeGPTAuthBypass = require('./edgegpt-auth-bypass.js');
-import ChatGPTBrowserBypass from './chatgpt-browser-bypass.js';
+const ChatGPTBrowserBypass = require('./chatgpt-browser-bypass.js');
 const enhancedFreeProviders = require('./enhanced-free-providers.js');
 // PDF обработка будет загружаться динамически
 
@@ -1660,12 +1660,12 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
         // Продолжаем выполнение и пробуем другие провайдеры
       }
       
-      // Если указан стандартный провайдер, пытаемся использовать его
-      if (provider && AI_PROVIDERS && AI_PROVIDERS[provider]) {
+      // Определяем провайдера для стандартной обработки
+      if (provider && provider !== 'auto') {
         try {
           // Получаем информацию о выбранном провайдере
-          const selectedProvider = AI_PROVIDERS[provider];
-          console.log(`Пробуем использовать провайдер ${selectedProvider.name} (${provider})...`);
+          const selectedProvider = provider;
+          console.log(`Пробуем использовать провайдер ${selectedProvider}...`);
           
           // Для демо-режима мы уже возвращаем демо-ответ
           if (provider === 'DEMO') {
