@@ -89,15 +89,29 @@ async function updateSessionTitle(sessionId, title) {
  * Удаление сессии и всех её сообщений
  */
 async function deleteSession(sessionId) {
+  console.log(`🗑️ Начинаем удаление сессии ${sessionId} из БД`);
+  
   // Сначала удаляем все сообщения
-  await db
+  const deletedMessages = await db
     .delete(aiMessages)
-    .where(eq(aiMessages.sessionId, sessionId));
+    .where(eq(aiMessages.sessionId, sessionId))
+    .returning();
+  
+  console.log(`🗑️ Удалено ${deletedMessages.length} сообщений из сессии ${sessionId}`);
   
   // Затем удаляем сессию
-  await db
+  const deletedSession = await db
     .delete(chatSessions)
-    .where(eq(chatSessions.id, sessionId));
+    .where(eq(chatSessions.id, sessionId))
+    .returning();
+  
+  if (deletedSession.length > 0) {
+    console.log(`✅ Сессия ${sessionId} успешно удалена из БД`);
+    return true;
+  } else {
+    console.log(`⚠️ Сессия ${sessionId} не найдена в БД`);
+    return false;
+  }
 }
 
 module.exports = {

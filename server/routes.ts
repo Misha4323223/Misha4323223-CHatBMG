@@ -333,22 +333,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete('/api/chat/sessions/:sessionId', async (req, res) => {
     try {
       const sessionId = parseInt(req.params.sessionId);
-      console.log(`🗑️ Удаляем сессию ${sessionId}`);
+      console.log(`🗑️ Запрос на удаление сессии ${sessionId}`);
       
-      // Проверяем, существует ли сессия
-      const sessions = await chatHistory.getUserChatSessions(1); // Проверяем для текущего пользователя
-      const sessionExists = sessions.some(session => session.id === sessionId);
+      const deleteResult = await chatHistory.deleteSession(sessionId);
       
-      if (!sessionExists) {
-        console.log(`⚠️ Сессия ${sessionId} уже не существует`);
-        return res.json({ success: true, message: 'Сессия уже была удалена' });
+      if (deleteResult) {
+        console.log(`✅ Сессия ${sessionId} успешно удалена с сервера`);
+        res.json({ success: true, message: 'Сессия удалена' });
+      } else {
+        console.log(`⚠️ Сессия ${sessionId} не найдена или уже была удалена`);
+        res.json({ success: true, message: 'Сессия уже была удалена' });
       }
-      
-      await chatHistory.deleteSession(sessionId);
-      console.log(`✅ Сессия ${sessionId} успешно удалена`);
-      res.json({ success: true, message: 'Сессия удалена' });
     } catch (error) {
-      console.error('Ошибка удаления сессии:', error);
+      console.error('❌ Ошибка удаления сессии:', error);
       res.status(500).json({ 
         success: false, 
         error: 'Не удалось удалить сессию' 
