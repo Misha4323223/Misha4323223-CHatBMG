@@ -828,21 +828,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete('/api/chat/sessions/:sessionId', async (req, res) => {
     try {
       const sessionId = parseInt(req.params.sessionId);
-      const username = req.query.username || 'anna';
-      console.log(`🗑️ Удаляем сессию ${sessionId} для пользователя ${username}...`);
+      console.log(`🗑️ Прямое удаление сессии ${sessionId}...`);
       
-      // Проверяем, существует ли сессия для данного пользователя
-      const sessions = await chatHistory.getUserChatSessions(username);
-      const sessionExists = sessions.some(session => session.id === sessionId);
-      
-      if (!sessionExists) {
-        console.log(`⚠️ Сессия ${sessionId} не найдена для пользователя ${username}`);
-        return res.status(404).json({ 
-          success: false, 
-          error: 'Сессия не найдена' 
-        });
-      }
-      
+      // Удаляем сессию напрямую без проверок
       await chatHistory.deleteSession(sessionId);
       console.log(`✅ Сессия ${sessionId} успешно удалена`);
       
