@@ -3,8 +3,8 @@
  * Использует несколько бесплатных поисковых API и сервисов
  */
 
-// Импорт fetch для Node.js среды  
-import fetch from 'node-fetch';
+// Используем require для совместимости с CommonJS
+const fetch = require('node-fetch');
 
 /**
  * Определяет требуется ли веб-поиск для запроса
