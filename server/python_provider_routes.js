@@ -58,7 +58,7 @@ async function checkPythonProvider() {
       
       const options = {
         hostname: 'localhost',
-        port: 5004,
+        port: 5000,
         path: '/python/test',
         method: 'POST',
         headers: {
