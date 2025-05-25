@@ -225,8 +225,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/api/python', pythonProviderRoutes.router);
   
   // API для стриминга от провайдеров, поддерживающих stream=True
-  const simpleStreaming = require('./simple-streaming');
-  app.use('/api/streaming', simpleStreaming);
+  // Используем встроенный стриминг в routes.ts
   
   // API для Flask-стриминга (надежный вариант)
   const flaskStreamBridge = require('./stream-flask-bridge');
@@ -1260,7 +1259,18 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
       
       // Получаем ответ через умную маршрутизацию
       const smartRouter = require('./smart-router');
-      const response = await smartRouter.getSmartResponse(message as string, {});
+      console.log('🔍 Загружен smartRouter:', typeof smartRouter);
+      
+      // Исправляем вызов функции
+      let response;
+      if (typeof smartRouter.getSmartResponse === 'function') {
+        response = await smartRouter.getSmartResponse(message as string, {});
+      } else if (typeof smartRouter === 'function') {
+        response = await smartRouter(message as string, {});
+      } else {
+        console.error('❌ getSmartResponse не найден в smartRouter');
+        throw new Error('Функция getSmartResponse не найдена');
+      }
       
       if (response.success) {
         const fullText = response.response;
