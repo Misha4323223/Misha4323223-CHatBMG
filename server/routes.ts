@@ -387,7 +387,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         category: category || null
       };
 
+      console.log('🔥 В routes.ts вызываем chatHistory.saveMessage с данными:', messageData);
       await chatHistory.saveMessage(messageData);
+      console.log('🔥 chatHistory.saveMessage выполнен успешно');
       res.json({ success: true });
     } catch (error) {
       console.error('Ошибка сохранения сообщения:', error);
