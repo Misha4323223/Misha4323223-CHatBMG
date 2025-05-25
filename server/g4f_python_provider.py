@@ -99,11 +99,33 @@ def try_provider(provider_name, message, timeout=15, use_stream=False):
             
             # Обработка стриминга (возвращает итератор)
             if use_stream:
+                # Создаем красивые имена провайдеров для стриминга
+                display_names = {
+                    "Qwen_Qwen_2_5_Max": "🧠 Qwen AI Pro",
+                    "Phind": "💻 Phind Code Expert", 
+                    "Gemini": "✨ Google Gemini",
+                    "Claude": "🤖 Claude AI",
+                    "ChatGpt": "🔥 ChatGPT Plus",
+                    "You": "🔍 You.com AI",
+                    "DeepInfra": "⚡ DeepInfra Speed",
+                    "Groq": "🚀 Groq Lightning",
+                    "Together": "🤝 Together AI",
+                    "Perplexity": "📚 Perplexity Search",
+                    "DeepSeek": "🛠️ DeepSeek Coder",
+                    "HuggingChat": "🤗 Hugging Face",
+                    "Anthropic": "🧭 Anthropic Claude",
+                    "GeminiPro": "💎 Gemini Pro",
+                    "Liaobots": "🌟 Liaobots AI",
+                    "AItianhu": "🐅 AItianhu Expert"
+                }
+                
+                display_provider = display_names.get(provider_name, f"🤖 {provider_name}")
+                
                 # Для стриминга возвращаем итератор
                 return {
                     "streaming": True,
                     "response_stream": response,
-                    "provider": provider_name,
+                    "provider": display_provider,
                     "model": model
                 }
             else:
@@ -119,10 +141,32 @@ def try_provider(provider_name, message, timeout=15, use_stream=False):
                 
                 print(f"✅ {provider_name} (модель {model}) успешно ответил за {time.time() - start_time:.2f} сек")
                 
+                # Создаем красивые имена провайдеров для отображения в чате
+                display_names = {
+                    "Qwen_Qwen_2_5_Max": "🧠 Qwen AI Pro",
+                    "Phind": "💻 Phind Code Expert", 
+                    "Gemini": "✨ Google Gemini",
+                    "Claude": "🤖 Claude AI",
+                    "ChatGpt": "🔥 ChatGPT Plus",
+                    "You": "🔍 You.com AI",
+                    "DeepInfra": "⚡ DeepInfra Speed",
+                    "Groq": "🚀 Groq Lightning",
+                    "Together": "🤝 Together AI",
+                    "Perplexity": "📚 Perplexity Search",
+                    "DeepSeek": "🛠️ DeepSeek Coder",
+                    "HuggingChat": "🤗 Hugging Face",
+                    "Anthropic": "🧭 Anthropic Claude",
+                    "GeminiPro": "💎 Gemini Pro",
+                    "Liaobots": "🌟 Liaobots AI",
+                    "AItianhu": "🐅 AItianhu Expert"
+                }
+                
+                display_provider = display_names.get(provider_name, f"🤖 {provider_name}")
+                
                 return {
                     "streaming": False,
                     "response": response,
-                    "provider": provider_name,
+                    "provider": display_provider,
                     "model": model,
                     "elapsed": time.time() - start_time
                 }
