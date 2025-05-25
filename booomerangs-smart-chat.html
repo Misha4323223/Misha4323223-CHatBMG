@@ -329,6 +329,38 @@
             background: #d1d5db;
         }
 
+        .stream-toggle {
+            width: 32px;
+            height: 32px;
+            background: #f3f4f6;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            color: #374151;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+            margin-right: 8px;
+        }
+
+        .stream-toggle:hover {
+            background: #e5e7eb;
+            border-color: #9ca3af;
+        }
+
+        .stream-toggle.active {
+            background: #3b82f6;
+            border-color: #2563eb;
+            color: white;
+        }
+
+        .stream-toggle.active:hover {
+            background: #2563eb;
+        }
+
         .send-button:disabled {
             background: #f9fafb;
             cursor: not-allowed;
@@ -968,6 +1000,11 @@
                             placeholder="" 
                             rows="1"
                         ></textarea>
+                        
+                        <!-- Переключатель режима стриминга -->
+                        <button class="stream-toggle" id="streamToggle" onclick="toggleStreamMode()" title="Переключить стриминг режим">
+                            <span id="streamIcon">🌊</span>
+                        </button>
                         
                         <button class="send-button" id="sendButton" onclick="sendMessage()">
                             <span>➤</span>
