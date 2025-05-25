@@ -1439,15 +1439,71 @@
             sessions.forEach(session => {
                 const chatItem = document.createElement('div');
                 chatItem.className = 'chat-item';
-                chatItem.onclick = () => selectChat(session.id);
+                chatItem.style.position = 'relative';
                 
                 chatItem.innerHTML = `
-                    <div style="font-weight: 500; margin-bottom: 4px;">${session.title}</div>
-                    <div style="font-size: 12px; color: #9ca3af;">${new Date(session.created_at).toLocaleDateString()}</div>
+                    <div onclick="selectChat(${session.id})" style="flex: 1; cursor: pointer;">
+                        <div style="font-weight: 500; margin-bottom: 4px;">${session.title}</div>
+                        <div style="font-size: 12px; color: #9ca3af;">${new Date(session.created_at).toLocaleDateString()}</div>
+                    </div>
+                    <button onclick="deleteChat(${session.id}, event)" 
+                            style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); 
+                                   background: rgba(220, 38, 38, 0.8); border: none; border-radius: 4px; 
+                                   color: white; width: 24px; height: 24px; font-size: 12px; cursor: pointer;
+                                   opacity: 0; transition: opacity 0.2s;"
+                            onmouseover="this.style.opacity='1'"
+                            onmouseout="this.style.opacity='0.6'"
+                            title="Удалить чат">🗑️</button>
                 `;
+                
+                // Показать кнопку удаления при наведении на чат
+                chatItem.onmouseenter = () => {
+                    const deleteBtn = chatItem.querySelector('button');
+                    deleteBtn.style.opacity = '0.6';
+                };
+                chatItem.onmouseleave = () => {
+                    const deleteBtn = chatItem.querySelector('button');
+                    deleteBtn.style.opacity = '0';
+                };
                 
                 historyContainer.appendChild(chatItem);
             });
+        }
+
+        // Удаление чата
+        async function deleteChat(sessionId, event) {
+            event.stopPropagation(); // Предотвращаем выбор чата при клике на кнопку удаления
+            
+            if (!confirm('Вы уверены, что хотите удалить этот чат? Это действие нельзя отменить.')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/chat/sessions/${sessionId}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        console.log(`✅ Чат ${sessionId} успешно удален`);
+                        
+                        // Если удаляемый чат активен, очищаем область сообщений
+                        if (currentSessionId === sessionId) {
+                            currentSessionId = null;
+                            document.getElementById('messagesArea').innerHTML = '';
+                        }
+                        
+                        // Обновляем список чатов
+                        await loadChatHistory();
+                    }
+                } else {
+                    alert('Ошибка при удалении чата');
+                }
+            } catch (error) {
+                console.error('Ошибка удаления чата:', error);
+                alert('Ошибка при удалении чата');
+            }
         }
 
         // Выбор чата
