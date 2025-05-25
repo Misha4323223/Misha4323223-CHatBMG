@@ -13,11 +13,12 @@ from flask_cors import CORS
 try:
     import g4f
     from g4f.client import Client
-    from g4f.Provider import (
-        Qwen, ChatGpt, Gemini, You, Bing, 
-        GPTalk, FreeChatgpt, Phind, DeepAi
-    )
     print("✅ G4F библиотека успешно загружена")
+    
+    # Получаем все доступные провайдеры
+    available_providers = g4f.Provider.__all__ if hasattr(g4f.Provider, '__all__') else []
+    print(f"📦 Доступные провайдеры: {len(available_providers)}")
+    
 except ImportError as e:
     print(f"❌ Ошибка импорта G4F: {e}")
     sys.exit(1)
@@ -25,13 +26,13 @@ except ImportError as e:
 app = Flask(__name__)
 CORS(app)
 
-# Конфигурация провайдеров
+# Конфигурация провайдеров - используем простые строки
 PROVIDERS = {
-    'qwen': [Qwen, You, ChatGpt],
-    'chatgpt': [ChatGpt, GPTalk, FreeChatgpt],
-    'gemini': [Gemini, You, Bing],
-    'phind': [Phind, ChatGpt, You],
-    'general': [Qwen, ChatGpt, Gemini, You]
+    'qwen': ['You', 'Bing', 'ChatGpt'],
+    'chatgpt': ['ChatGpt', 'You', 'Bing'],
+    'gemini': ['Gemini', 'You', 'Bing'],
+    'phind': ['Phind', 'ChatGpt', 'You'],
+    'general': ['You', 'Bing', 'ChatGpt', 'Gemini']
 }
 
 class G4FManager:
