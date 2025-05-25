@@ -366,6 +366,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Сохранение нового сообщения в сессию
+  app.post('/api/chat/sessions/:sessionId/messages', async (req, res) => {
+    try {
+      const sessionId = parseInt(req.params.sessionId);
+      const { content, sender, provider, category } = req.body;
+      
+      if (!content || !sender) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'content и sender обязательны' 
+        });
+      }
+
+      const messageData = {
+        sessionId,
+        content,
+        sender,
+        provider: provider || null,
+        category: category || null
+      };
+
+      await chatHistory.saveMessage(messageData);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Ошибка сохранения сообщения:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Не удалось сохранить сообщение' 
+      });
+    }
+  });
+
   // API для простой авторизации
   const { users, messages } = require('@shared/schema');
   const { eq } = require('drizzle-orm');
