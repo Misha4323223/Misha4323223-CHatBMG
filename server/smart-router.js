@@ -6,6 +6,26 @@
 const express = require('express');
 const router = express.Router();
 
+// Система логирования
+const SmartLogger = {
+  route: (message, data) => {
+    const timestamp = new Date().toISOString();
+    console.log(`🎯 [${timestamp}] SMART ROUTER: ${message}`, data ? JSON.stringify(data, null, 2) : '');
+  },
+  provider: (message, data) => {
+    const timestamp = new Date().toISOString();
+    console.log(`🤖 [${timestamp}] PROVIDER: ${message}`, data ? JSON.stringify(data, null, 2) : '');
+  },
+  success: (message, data) => {
+    const timestamp = new Date().toISOString();
+    console.log(`✅ [${timestamp}] SUCCESS: ${message}`, data ? JSON.stringify(data, null, 2) : '');
+  },
+  error: (message, error) => {
+    const timestamp = new Date().toISOString();
+    console.error(`❌ [${timestamp}] ERROR: ${message}`, error);
+  }
+};
+
 // Импортируем провайдеры
 const chatFreeProvider = require('./chatfree-provider');
 const deepspeekProvider = require('./deepspeek-provider');

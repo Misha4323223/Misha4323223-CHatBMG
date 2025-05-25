@@ -7,6 +7,30 @@ import { authMiddleware } from "./middleware/auth";
 import { z } from "zod";
 import { authSchema, messageSchema } from "@shared/schema";
 
+// Система логирования
+const Logger = {
+  info: (message: string, data?: any) => {
+    const timestamp = new Date().toISOString();
+    console.log(`🔵 [${timestamp}] ${message}`, data ? JSON.stringify(data, null, 2) : '');
+  },
+  success: (message: string, data?: any) => {
+    const timestamp = new Date().toISOString();
+    console.log(`✅ [${timestamp}] ${message}`, data ? JSON.stringify(data, null, 2) : '');
+  },
+  error: (message: string, error?: any) => {
+    const timestamp = new Date().toISOString();
+    console.error(`❌ [${timestamp}] ${message}`, error ? error : '');
+  },
+  warning: (message: string, data?: any) => {
+    const timestamp = new Date().toISOString();
+    console.warn(`⚠️ [${timestamp}] ${message}`, data ? JSON.stringify(data, null, 2) : '');
+  },
+  ai: (message: string, data?: any) => {
+    const timestamp = new Date().toISOString();
+    console.log(`🤖 [${timestamp}] ${message}`, data ? JSON.stringify(data, null, 2) : '');
+  }
+};
+
 // Импортируем модули для работы с изображениями и AI провайдерами
 import * as path from 'path';
 import { fileURLToPath } from 'url';
@@ -716,6 +740,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Вспомогательная функция для вызова G4F API
   async function callG4F(message: string, provider: string) {
+    const startTime = Date.now();
+    Logger.ai(`Начинаем AI запрос`, { provider, messageLength: message.length });
+    
     try {
       // Получаем ответ от прямого провайдера
       const directAiProvider = require('./direct-ai-provider');
@@ -734,13 +761,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const claudeResponse = await claudeProvider.getClaudeResponse(message);
           
           if (claudeResponse.success) {
-            console.log(`✅ Успешно получен ответ от Claude`);
+            const duration = Date.now() - startTime;
+            Logger.success(`Claude ответил успешно`, { 
+              duration: `${duration}ms`, 
+              responseLength: claudeResponse.response?.length || 0 
+            });
             return claudeResponse;
           } else {
             throw new Error(claudeResponse.error || 'Ошибка Claude');
           }
         } catch (error) {
-          console.error(`❌ Ошибка при использовании Claude:`, error);
+          Logger.error(`Ошибка при использовании Claude`, error);
           actualProvider = 'AItianhu'; // Фолбэк на стабильный провайдер
         }
       } else if (provider === 'ollama') {
