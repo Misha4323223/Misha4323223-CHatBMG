@@ -93,7 +93,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         };
       }
       
-      if (response.success) {
+      if (response && response.response) {
         const fullText = response.response;
         console.log('✅ Получен ответ, начинаем стриминг:', fullText.substring(0, 50) + '...');
         
@@ -127,6 +127,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         sendNextChunk();
       } else {
+        console.log('❌ [СТРИМИНГ] Ответ не прошел проверку:', JSON.stringify(response, null, 2));
+        console.log('❌ [СТРИМИНГ] Условие response && response.response:', !!(response && response.response));
         res.write(`data: ${JSON.stringify({ type: 'error', message: 'Ошибка получения ответа' })}\n\n`);
         res.end();
       }
