@@ -27,7 +27,17 @@ router.get('/chat', async (req, res) => {
     
     // Получаем ответ через умную маршрутизацию
     const smartRouter = require('./smart-router');
-    const response = await smartRouter.getSmartResponse(message, {});
+    console.log('🔍 Загружен smartRouter:', typeof smartRouter);
+    
+    // Пробуем разные способы вызова
+    let response;
+    if (typeof smartRouter.getSmartResponse === 'function') {
+      response = await smartRouter.getSmartResponse(message, {});
+    } else if (typeof smartRouter === 'function') {
+      response = await smartRouter(message, {});
+    } else {
+      throw new Error('getSmartResponse не найден в smartRouter');
+    }
     
     if (response.success) {
       const fullText = response.response;
