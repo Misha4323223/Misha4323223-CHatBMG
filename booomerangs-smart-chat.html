@@ -1237,8 +1237,12 @@
             const data = await response.json();
             if (data.success && data.messages) {
               data.messages.forEach(msg => {
-                displayMessage(msg.text, msg.sender === 'user' ? 'user' : 'ai', msg.provider);
+                addMessage(msg.content || msg.text, msg.sender === 'user', {
+                  provider: msg.provider,
+                  category: msg.category
+                });
               });
+              console.log(`✅ Восстановлено ${data.messages.length} сообщений`);
             }
           }
         } catch (error) {
