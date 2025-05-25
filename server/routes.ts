@@ -387,7 +387,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      res.json({ success: true, message: userMessage });
+      // Возвращаем успешный ответ с информацией об AI ответе
+      res.json({ 
+        success: true, 
+        message: userMessage,
+        hasAiResponse: messageData.sender === 'user'
+      });
     } catch (error) {
       console.error('Ошибка сохранения сообщения:', error);
       res.status(500).json({ 
