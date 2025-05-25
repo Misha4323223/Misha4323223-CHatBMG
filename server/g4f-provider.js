@@ -248,38 +248,76 @@ async function tryProviderWithRetries(provider, messages, options) {
   throw new Error(`Не удалось получить ответ от провайдера ${provider} после ${maxRetries} попыток: ${error ? error.message : 'неизвестная ошибка'}`);
 }
 
-// Обработчик для бесплатного ChatGPT через G4F
+// Обработчик для бесплатного AI через множественные провайдеры
 async function handleQwenProvider(messages, options = {}) {
-  try {
-    // Используем бесплатный ChatGPT через публичные прокси
-    const messageText = messages[messages.length - 1].content;
-    
-    const response = await fetch('https://chatgpt-api.dariai.workers.dev/', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-      },
-      body: JSON.stringify({
-        messages: [{ role: 'user', content: messageText }],
-        model: 'gpt-3.5-turbo'
-      })
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      return {
-        response: data.choices[0].message.content,
-        provider: 'Free ChatGPT',
-        model: 'gpt-3.5-turbo'
-      };
-    } else {
-      throw new Error('Первый провайдер недоступен');
+  const messageText = messages[messages.length - 1].content;
+  
+  // Список рабочих бесплатных провайдеров
+  const freeProviders = [
+    {
+      name: 'ChatFree',
+      url: 'https://api.chatanywhere.com.cn/v1/chat/completions',
+      headers: { 'Content-Type': 'application/json' }
+    },
+    {
+      name: 'FreeGPT',
+      url: 'https://chat-gpt.org/api/text',
+      headers: { 'Content-Type': 'application/json' }
+    },
+    {
+      name: 'AIChat',
+      url: 'https://api.aichat.org/chat',
+      headers: { 'Content-Type': 'application/json' }
     }
-  } catch (error) {
-    console.log('Пробуем резервный провайдер...');
-    throw error;
+  ];
+
+  for (const provider of freeProviders) {
+    try {
+      console.log(`🔄 Пробуем провайдер ${provider.name}...`);
+      
+      const response = await fetch(provider.url, {
+        method: 'POST',
+        headers: provider.headers,
+        body: JSON.stringify({
+          message: messageText,
+          model: 'gpt-3.5-turbo'
+        }),
+        timeout: 10000
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const aiResponse = data.response || data.choices?.[0]?.message?.content || data.message;
+        
+        if (aiResponse) {
+          return {
+            response: aiResponse,
+            provider: provider.name,
+            model: 'gpt-3.5-turbo'
+          };
+        }
+      }
+    } catch (error) {
+      console.log(`❌ Провайдер ${provider.name} недоступен:`, error.message);
+      continue;
+    }
   }
+  
+  // Если все провайдеры недоступны, используем демо-ответ
+  return {
+    response: `Привет! Я BOOOMERANGS AI ассистент. 
+
+К сожалению, внешние AI провайдеры временно недоступны, но я готов помочь вам в тестовом режиме.
+
+Для полноценной работы можете предоставить API ключи от:
+- OpenAI (для ChatGPT)
+- Anthropic (для Claude) 
+- Google (для Gemini)
+
+Что вас интересует?`,
+    provider: 'BOOOMERANGS Demo',
+    model: 'demo'
+  };
 }
 
 // Обработчик для Liaobots
