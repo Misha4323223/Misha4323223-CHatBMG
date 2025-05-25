@@ -101,22 +101,28 @@ const SmartChat: React.FC = () => {
       }
 
       const data = await response.json();
+      console.log('Получен ответ от сервера:', data);
       
-      // Обновляем временное сообщение реальным ответом
-      setMessages(prevMessages => prevMessages.map(msg => 
-        msg.id === tempAiMessageId ? {
-          id: tempAiMessageId,
-          text: data.response || "Не удалось получить ответ",
-          sender: 'ai',
-          timestamp: new Date(),
-          loading: false,
-          category: data.category || "general",
-          provider: data.provider || "Unknown",
-          bestProvider: data.bestProvider,
-          error: !data.success,
-          errorMessage: data.error
-        } : msg
-      ));
+      // Проверяем успешность ответа
+      if (data.success && data.response) {
+        // Обновляем временное сообщение реальным ответом
+        setMessages(prevMessages => prevMessages.map(msg => 
+          msg.id === tempAiMessageId ? {
+            id: tempAiMessageId,
+            text: data.response,
+            sender: 'ai',
+            timestamp: new Date(),
+            loading: false,
+            category: data.category || "general",
+            provider: data.provider || "AI",
+            bestProvider: data.bestProvider || data.provider,
+            error: false,
+            errorMessage: undefined
+          } : msg
+        ));
+      } else {
+        throw new Error(data.error || "Сервер вернул неуспешный ответ");
+      }
     } catch (error) {
       console.error('Ошибка:', error);
       
