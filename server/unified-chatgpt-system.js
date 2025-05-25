@@ -135,73 +135,165 @@ class UnifiedChatGPTSystem {
     }
 
     /**
-     * EdgeGPT через наш работающий Python G4F сервер
+     * EdgeGPT через сервер порт 3000 для прямого доступа к ChatGPT
      */
     async tryEdgeGPT(message) {
-        console.log('🔑 Пробую EdgeGPT через Python G4F сервер...');
+        console.log('🔑 Подключаюсь к EdgeGPT через сервер порт 3000...');
         
         try {
-            // Используем наш работающий Python G4F сервер для EdgeGPT
             const axios = (await import('axios')).default;
             
-            // Сначала пробуем прямое подключение к EdgeGPT
-            console.log('🚀 Подключаюсь к EdgeGPT через Python...');
+            // Пробуем EdgeGPT на порту 3000
+            console.log('🚀 Подключение к EdgeGPT сервер 3000...');
             
-            const edgeResponse = await axios.post('http://localhost:5001/python/chat', {
+            const edgeResponse = await axios.post('http://localhost:3000/api/chatgpt', {
                 message: message,
-                provider: 'EdgeGPT',
                 email: this.email,
                 password: this.password
             }, {
-                timeout: 25000,
+                timeout: 30000,
                 headers: { 'Content-Type': 'application/json' }
             });
 
             if (edgeResponse.data && edgeResponse.data.response) {
-                console.log('✅ EdgeGPT дал реальный ответ!');
+                console.log('✅ EdgeGPT порт 3000 дал ответ от ChatGPT!');
                 return {
                     success: true,
                     response: edgeResponse.data.response,
-                    provider: 'EdgeGPT-Real',
+                    provider: 'EdgeGPT-Port3000',
                     model: 'ChatGPT-EdgeGPT',
                     account: this.email
                 };
             }
             
-            // Если EdgeGPT не сработал, пробуем ChatGPT провайдеры через G4F
-            console.log('🔄 EdgeGPT недоступен, пробую ChatGPT провайдеры...');
+            // Альтернативные эндпоинты на порту 3000
+            const port3000Endpoints = [
+                'http://localhost:3000/api/chat',
+                'http://localhost:3000/chatgpt',
+                'http://localhost:3000/api/edgegpt'
+            ];
             
-            const chatgptProviders = ['ChatGpt', 'OpenaiChat', 'ChatgptFree', 'GPTalk'];
-            
-            for (const provider of chatgptProviders) {
+            for (const endpoint of port3000Endpoints) {
                 try {
-                    console.log(`🎯 Пробую провайдер: ${provider}`);
+                    console.log(`🎯 Пробую эндпоинт: ${endpoint}`);
                     
-                    const response = await axios.post('http://localhost:5001/python/chat', {
+                    const response = await axios.post(endpoint, {
                         message: message,
-                        provider: provider
+                        email: this.email,
+                        password: this.password
                     }, {
-                        timeout: 15000,
+                        timeout: 20000,
                         headers: { 'Content-Type': 'application/json' }
                     });
 
-                    if (response.data && response.data.response && response.data.response.length > 50) {
-                        console.log(`✅ ${provider} дал качественный ответ!`);
+                    if (response.data && response.data.response) {
+                        console.log(`✅ ${endpoint} дал ответ от ChatGPT!`);
                         return {
                             success: true,
                             response: response.data.response,
-                            provider: `ChatGPT-${provider}`,
-                            model: 'ChatGPT-G4F',
+                            provider: 'EdgeGPT-3000',
+                            model: 'ChatGPT-Port3000',
                             account: this.email
                         };
                     }
-                } catch (providerError) {
-                    console.log(`⚠️ ${provider} недоступен`);
+                } catch (endpointError) {
+                    console.log(`⚠️ ${endpoint} недоступен`);
                 }
             }
             
+            // Если порт 3000 недоступен, пробуем Python EdgeGPT напрямую
+            console.log('🐍 Порт 3000 недоступен, пробую Python EdgeGPT...');
+            
+            return new Promise((resolve) => {
+                const pythonScript = `
+import asyncio
+import sys
+import os
+from EdgeGPT import Chatbot, ConversationStyle
+
+async def chatgpt_port3000():
+    try:
+        print("🚀 EdgeGPT: Создание бота с учетными данными...")
+        bot = await Chatbot.create()
+        
+        message = "${message.replace(/"/g, '\\"')}"
+        print(f"📨 EdgeGPT: Отправка к ChatGPT: {message}")
+        
+        response = await bot.ask(message, conversation_style=ConversationStyle.balanced)
+        
+        if response and 'item' in response:
+            messages = response['item']['messages']
+            for msg in messages:
+                if msg.get('author') == 'bot':
+                    if 'text' in msg and msg['text']:
+                        print("CHATGPT_SUCCESS:" + msg['text'])
+                        break
+                    elif 'adaptiveCards' in msg and msg['adaptiveCards']:
+                        if msg['adaptiveCards'][0]['body']:
+                            text = msg['adaptiveCards'][0]['body'][0].get('text', '')
+                            if text:
+                                print("CHATGPT_SUCCESS:" + text)
+                                break
+        
+        await bot.close()
+        
+    except Exception as e:
+        print(f"CHATGPT_ERROR:{e}")
+
+asyncio.run(chatgpt_port3000())
+`;
+
+                const { spawn } = require('child_process');
+                const process = spawn('python3', ['-c', pythonScript], {
+                    stdio: ['pipe', 'pipe', 'pipe']
+                });
+
+                let output = '';
+                
+                process.stdout.on('data', (data) => {
+                    output += data.toString();
+                });
+
+                process.on('close', () => {
+                    const lines = output.split('\n');
+                    
+                    for (const line of lines) {
+                        if (line.startsWith('CHATGPT_SUCCESS:')) {
+                            const response = line.substring(16);
+                            resolve({
+                                success: true,
+                                response: response,
+                                provider: 'EdgeGPT-Python-ChatGPT',
+                                model: 'ChatGPT-EdgeGPT-Direct',
+                                account: this.email
+                            });
+                            return;
+                        }
+                    }
+
+                    // Если не получили реальный ответ
+                    resolve({
+                        success: false,
+                        error: 'EdgeGPT требует дополнительную настройку для ChatGPT'
+                    });
+                });
+
+                // Таймаут для Python EdgeGPT
+                setTimeout(() => {
+                    process.kill();
+                    resolve({
+                        success: false,
+                        error: 'EdgeGPT timeout'
+                    });
+                }, 25000);
+            });
+            
         } catch (error) {
-            console.log('❌ Ошибка EdgeGPT:', error.message);
+            console.log('❌ Ошибка EdgeGPT порт 3000:', error.message);
+            return {
+                success: false,
+                error: `EdgeGPT 3000: ${error.message}`
+            };
         }
 
             const process = spawn('python3', ['-c', pythonScript], {
