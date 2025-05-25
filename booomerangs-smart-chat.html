@@ -1260,7 +1260,11 @@
             const data = await response.json();
             if (data.success && data.messages) {
               data.messages.forEach(msg => {
-                addMessage(msg.content, msg.sender === 'user', {
+                console.log('Переключение на сессию - сообщение из БД:', msg);
+                const messageText = msg.content || msg.message || msg.text || 'Сообщение не найдено';
+                const isUser = msg.sender === 'user';
+                
+                addMessage(messageText, isUser, {
                   provider: msg.provider,
                   category: msg.category
                 });
@@ -1391,7 +1395,11 @@
                 
                 // Восстанавливаем сообщения в интерфейсе
                 messagesData.messages.forEach(msg => {
-                  addMessage(msg.content, msg.sender === 'user', {
+                  console.log('Обрабатываем сообщение из БД:', msg);
+                  const messageText = msg.content || msg.message || msg.text || 'Сообщение не найдено';
+                  const isUser = msg.sender === 'user';
+                  
+                  addMessage(messageText, isUser, {
                     provider: msg.provider,
                     category: msg.category
                   });
