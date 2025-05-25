@@ -91,6 +91,7 @@ const SmartChat: React.FC = () => {
         },
         body: JSON.stringify({ 
           message: messageText,
+          userId: 'anonymous',
           imageUrl: currentImageUrl
         }),
       });
