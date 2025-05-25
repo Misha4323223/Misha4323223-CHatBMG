@@ -35,8 +35,8 @@ const svgGenerator = require('./svg-generator');
 const g4fHandlers = require('./g4f-handlers');
 const directAiRoutes = require('./direct-ai-routes');
 const pythonProviderRoutes = require('./python_provider_routes');
-const deepspeekProvider = require('./deepspeek-fixed');
-const chatFreeProvider = require('./simple-chatfree');
+const deepspeekProvider = require('./deepspeek-provider');
+const chatFreeProvider = require('./chatfree-provider');
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Create HTTP server
@@ -234,21 +234,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const deepspeekRoutes = require('./deepspeek-routes');
   app.use('/api/deepspeek', deepspeekRoutes);
   
-  // API для проверки состояния провайдеров
-  const checkProvidersRoutes = require('./check-providers');
-  app.use('/api/providers', checkProvidersRoutes);
+  // API для проверки состояния провайдеров (отключено)
   
   // API для Ollama - локальный AI провайдер
   const ollamaProvider = require('./ollama-provider');
   app.use('/api/ollama', ollamaProvider);
   
-  // API для улучшенного ChatFree провайдера
-  const chatFreeImproved = require('./chatfree-improved');
-  app.use('/api/chatfree', chatFreeImproved);
+  // API для ChatFree провайдера
+  app.use('/api/chatfree', chatFreeProvider);
   
-  // API для FreeChat с интеграцией Phind и Qwen
-  const freechatEnhanced = require('./freechat-enhanced');
-  app.use('/api/freechat', freechatEnhanced);
+  // API для FreeChat (отключено)
   
   // API для Claude от Anthropic через Python G4F
   const claudeProvider = require('./claude-provider');
@@ -262,9 +257,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const multimodalProvider = require('./multimodal-provider');
   app.use('/api/multimodal', multimodalProvider);
   
-  // API для тестирования провайдеров
-  const providerTestRoute = require('./provider-test-route');
-  app.use('/api/test-providers', providerTestRoute);
+  // API для тестирования провайдеров (отключено)
   
   // API для умной маршрутизации сообщений к подходящим провайдерам
   const smartRouter = require('./smart-router');
@@ -948,7 +941,7 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
         console.log(`📊 Для DeepSpeek используем быстрый режим`);
         
         // Получаем функцию для генерации ответа от DeepSpeek
-        const deepspeekProvider = require('./deepspeek-fixed');
+        const deepspeekProvider = require('./deepspeek-provider');
         
         // Вызываем функцию DeepSpeek для обработки запроса
         try {

@@ -1237,7 +1237,7 @@
             const data = await response.json();
             if (data.success && data.messages) {
               data.messages.forEach(msg => {
-                displayMessage(msg.text, msg.sender === 'user' ? 'user' : 'ai', msg.provider);
+                displayMessage(msg.content, msg.sender === 'user' ? 'user' : 'ai', msg.provider);
               });
             }
           }

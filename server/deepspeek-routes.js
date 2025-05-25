@@ -5,8 +5,8 @@
 const express = require('express');
 const router = express.Router();
 
-// Используем исправленную версию DeepSpeek
-const deepspeekProvider = require('./deepspeek-fixed');
+// Используем DeepSpeek провайдер
+const deepspeekProvider = require('./deepspeek-provider');
 
 // API endpoint для запросов к DeepSpeek
 router.post('/query', async (req, res) => {

@@ -7,9 +7,8 @@ const express = require('express');
 const router = express.Router();
 
 // Импортируем провайдеры
-const chatFreeProvider = require('./chatfree-improved');
-const freechatEnhanced = require('./freechat-enhanced');
-const deepspeekProvider = require('./deepspeek-fixed');
+const chatFreeProvider = require('./chatfree-provider');
+const deepspeekProvider = require('./deepspeek-provider');
 const claudeProvider = require('./claude-provider');
 const deepInfraProvider = require('./deepinfra-provider');
 const pythonProviderRoutes = require('./python_provider_routes');
