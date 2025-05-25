@@ -1,37 +1,53 @@
 // G4F провайдеры для бесплатного доступа к AI моделям
-import fetch from 'node-fetch';
+const fetch = require('node-fetch').default; // Важно использовать .default для совместимости
 
-// Список доступных БЕСПЛАТНЫХ провайдеров (без API ключей)
+// Список доступных провайдеров, отсортированных по стабильности
 const PROVIDERS = {
-  QWEN: 'qwen',          // Qwen AI через HuggingFace
-  PHIND: 'phind',        // Phind для кода и поиска
-  GEMINI: 'gemini',      // Gemini через бесплатные API
-  LIAOBOTS: 'liaobots',  // Бесплатный GPT провайдер
-  YOU: 'you',            // You.com бесплатный
-  DIFY: 'dify'           // Dify AI бесплатный
+  QWEN: 'qwen',          // Самый стабильный
+  DIFY: 'dify',          // Хорошая альтернатива
+  LIAOBOTS: 'liaobots',  // Новый стабильный провайдер
+  OPENROUTER: 'openrouter', // Хороший провайдер, поддерживает gpt-4o
+  DEEPAI: 'deepai',      // Часто ограничения
+  AICHAT: 'aichat',      // Менее стабильный
+  CHATGPT: 'chatgpt',    // Может быть нестабильным
+  PHIND: 'phind',        // Более новый провайдер
+  PERPLEXITY: 'perplexity', // Требует конкретную модель
+  GEMINI: 'gemini',      // Требует валидный API ключ
+  GIGA: 'gigachat',      // Требует российский номер телефона
+  YOU: 'you',            // Провайдер YEW-bot
+  DEEPSPEEK: 'deepspeek' // Новый провайдер DeepSpeek, который мы добавляем
 };
 
-// Модели БЕСПЛАТНЫХ провайдеров
+// Модели провайдеров - каждый провайдер работает с разными моделями
 const PROVIDER_MODELS = {
-  [PROVIDERS.QWEN]: 'qwen-2.5-72b',
-  [PROVIDERS.PHIND]: 'phind-code-search',
-  [PROVIDERS.GEMINI]: 'gemini-pro-free',
-  [PROVIDERS.LIAOBOTS]: 'gpt-3.5-turbo',
+  [PROVIDERS.QWEN]: 'qwen-2.5-ultra-preview',
+  [PROVIDERS.LIAOBOTS]: 'gpt-4o',
+  [PROVIDERS.OPENROUTER]: 'gpt-4o',
+  [PROVIDERS.DIFY]: 'dify-gguf',
+  [PROVIDERS.PHIND]: 'phind-model',
+  [PROVIDERS.PERPLEXITY]: 'llama-3.1-sonar-small-128k-online',
+  [PROVIDERS.DEEPAI]: 'deepai-text-generator',
+  [PROVIDERS.GEMINI]: 'gemini-pro',
   [PROVIDERS.YOU]: 'you-chat',
-  [PROVIDERS.DIFY]: 'dify-chat'
+  [PROVIDERS.DEEPSPEEK]: 'deepspeek-model' // Добавляем модель для DeepSpeek
 };
 
-// Только БЕСПЛАТНЫЕ провайдеры (никаких API ключей не требуется)
-const KEY_REQUIRED_PROVIDERS = [];
+// Провайдеры, требующие API ключ (отключены)
+const KEY_REQUIRED_PROVIDERS = [
+  PROVIDERS.PERPLEXITY,
+  PROVIDERS.GEMINI,
+  PROVIDERS.GIGA,
+  PROVIDERS.DEEPAI     // Добавлен в список требующих ключ, так как без ключа не работает
+];
 
-// Порядок БЕСПЛАТНЫХ провайдеров - приоритет на Qwen и Phind
+// Порядок провайдеров от самых стабильных к менее стабильным
+// Обновлено по рекомендации пользователя - только бесплатные
 const PROVIDER_PRIORITY = [
-  PROVIDERS.QWEN,        // 🥇 ПРИОРИТЕТ: Qwen AI - основной провайдер
-  PROVIDERS.PHIND,       // 🥈 ПРИОРИТЕТ: Phind - для кода и технических вопросов
-  PROVIDERS.LIAOBOTS,    // Резервный GPT провайдер
-  PROVIDERS.YOU,         // You.com бесплатный
-  PROVIDERS.DIFY,        // Dify AI бесплатный
-  PROVIDERS.GEMINI       // Gemini (только если другие недоступны)
+  PROVIDERS.DEEPSPEEK,    // DeepSpeek (новый приоритетный провайдер)
+  PROVIDERS.YOU,          // You.com (стабильный, но медленный)
+  PROVIDERS.AICHAT,       // Быстрый, но нестабильный
+  // Провайдеры, требующие ключи (временно отключены):
+  // PROVIDERS.DEEPAI,    // DeepAI (требуется API-ключ)
   // PROVIDERS.CHATGPT,   // Требуется access_token
   // Временно недоступные провайдеры:
   // PROVIDERS.PHIND,     // Недоступен из Replit
@@ -116,23 +132,8 @@ async function getResponse(message, options = {}) {
     });
   }
   
-  // 🎯 SMART ROUTING: Автоматический выбор провайдера на основе типа запроса
-  let providersToTry = [];
-  const query = (message || chatMessages[chatMessages.length - 1]?.content || '').toLowerCase();
-  
-  // 🔍 Анализируем тип запроса для выбора оптимального провайдера
-  if (query.includes('код') || query.includes('программирование') || query.includes('javascript') || 
-      query.includes('python') || query.includes('html') || query.includes('css') || 
-      query.includes('react') || query.includes('function') || query.includes('api') ||
-      query.includes('алгоритм') || query.includes('массив') || query.includes('объект')) {
-    // Для кода и программирования - приоритет PHIND
-    console.log('🔍 Обнаружен запрос по программированию - приоритет PHIND');
-    providersToTry = [PROVIDERS.PHIND, PROVIDERS.QWEN, ...PROVIDER_PRIORITY.slice(2)];
-  } else {
-    // Для общих вопросов - приоритет QWEN
-    console.log('💬 Общий запрос - приоритет QWEN');
-    providersToTry = [...PROVIDER_PRIORITY]; // Копируем массив приоритетов
-  }
+  // Иначе перебираем провайдеры по приоритету
+  const providersToTry = [...PROVIDER_PRIORITY]; // Копируем массив приоритетов
   let lastError = null;
   let successfulProviders = [];
   
@@ -247,225 +248,38 @@ async function tryProviderWithRetries(provider, messages, options) {
   throw new Error(`Не удалось получить ответ от провайдера ${provider} после ${maxRetries} попыток: ${error ? error.message : 'неизвестная ошибка'}`);
 }
 
-// Обработчик для Qwen 2.5 MAX
+// Обработчик для модели Qwen от Alibaba
 async function handleQwenProvider(messages, options = {}) {
   try {
-    console.log('🔄 Подключаемся к Qwen 2.5 MAX...');
-    
-    const messageText = messages[messages.length - 1].content;
-    
-    // Бесплатная версия Qwen 2.5 MAX
-    const qwenEndpoints = [
-      'https://qwen.aliyuncs.com/api/v1/services/aigc/text-generation/generation',
-      'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions',
-      'https://api.qwen.aliyun.com/v1/chat/completions'
-    ];
-
-    for (const endpoint of qwenEndpoints) {
-      try {
-        console.log(`🔄 Пробуем бесплатный Qwen endpoint: ${endpoint}`);
-        
-        const qwenResponse = await fetch(endpoint, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-            'X-DashScope-SSE': 'disable'
-          },
-          body: JSON.stringify({
-            model: 'qwen2.5-max',
-            input: {
-              messages: [{ role: 'user', content: messageText }]
-            },
-            parameters: {
-              max_tokens: 500,
-              temperature: 0.7,
-              top_p: 0.8
-            }
-          }),
-          timeout: 12000
-        });
-
-        if (qwenResponse.ok) {
-          const data = await qwenResponse.json();
-          
-          let aiResponse = '';
-          if (data.output && data.output.text) {
-            aiResponse = data.output.text;
-          } else if (data.choices && data.choices[0] && data.choices[0].message) {
-            aiResponse = data.choices[0].message.content;
-          } else if (data.data && data.data.text) {
-            aiResponse = data.data.text;
-          }
-          
-          if (aiResponse && aiResponse.length > 15) {
-            console.log('✅ Получен ответ от бесплатного Qwen 2.5 MAX:', aiResponse.substring(0, 60));
-            return {
-              response: aiResponse,
-              provider: 'Qwen 2.5 MAX (Free)',
-              model: 'qwen2.5-max'
-            };
-          }
-        }
-      } catch (endpointError) {
-        console.log(`❌ Endpoint недоступен: ${endpointError.message}`);
-        continue;
-      }
-    }
-
-    if (qwenResponse.ok) {
-      const data = await qwenResponse.json();
-      
-      if (data.choices && data.choices[0] && data.choices[0].message) {
-        const aiResponse = data.choices[0].message.content;
-        console.log('✅ Получен ответ от Qwen 2.5 MAX:', aiResponse.substring(0, 60));
-        return {
-          response: aiResponse,
-          provider: 'Qwen 2.5 MAX',
-          model: 'qwen2.5-max'
-        };
-      }
-    } else {
-      console.log('❌ Qwen 2.5 MAX недоступен, статус:', qwenResponse.status);
-    }
-    
-  } catch (error) {
-    console.log('❌ Ошибка подключения к Qwen 2.5 MAX:', error.message);
-  }
-  
-  const messageText = messages[messages.length - 1].content;
-
-  // Пробуем настоящий Qwen AI через официальные каналы
-  const qwenAPIs = [
-    {
-      name: 'Qwen Official API',
-      url: 'https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation',
-      headers: { 
+    const response = await fetch('https://api.lingyiwanwu.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer qwen-free-key',
-        'X-DashScope-Async': 'enable'
-      }
-    },
-    {
-      name: 'Qwen HuggingFace',
-      url: 'https://huggingface.co/api/inference/Qwen/Qwen2.5-72B-Instruct',
-      headers: { 
-        'Content-Type': 'application/json'
-      }
-    },
-    {
-      name: 'Qwen ModelScope',
-      url: 'https://modelscope.cn/api/v1/models/qwen/Qwen2.5-72B-Instruct/pipeline',
-      headers: { 
-        'Content-Type': 'application/json'
-      }
+        'Cache-Control': 'no-cache'
+      },
+      body: JSON.stringify({
+        messages: messages,
+        model: options.model || 'qwen-2.5-ultra-preview',
+        temperature: options.temperature || 0.7,
+        max_tokens: options.maxTokens || 800
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Qwen API вернул ошибку: ${response.status} - ${errorText}`);
     }
-  ];
 
-  for (const qwen of qwenAPIs) {
-    try {
-      console.log(`🔄 Пробуем ${qwen.name}...`);
-      
-      const response = await fetch(qwen.url, {
-        method: 'POST',
-        headers: qwen.headers,
-        body: JSON.stringify({
-          model: 'qwen2.5-72b-instruct',
-          input: {
-            messages: [
-              { role: 'user', content: messageText }
-            ]
-          },
-          parameters: {
-            max_tokens: 500,
-            temperature: 0.7
-          }
-        }),
-        timeout: 12000
-      });
-
-      console.log(`📡 ${qwen.name} статус:`, response.status);
-
-      if (response.ok) {
-        const data = await response.json();
-        console.log(`📊 ${qwen.name} ответ:`, JSON.stringify(data, null, 2));
-        
-        let aiResponse = '';
-        
-        // Обработка разных форматов ответов Qwen
-        if (data.output && data.output.text) {
-          aiResponse = data.output.text;
-        } else if (data.output && data.output.choices && data.output.choices[0]) {
-          aiResponse = data.output.choices[0].message.content;
-        } else if (data.choices && data.choices[0]) {
-          aiResponse = data.choices[0].message.content;
-        } else if (data.generated_text) {
-          aiResponse = data.generated_text;
-        } else if (data.text) {
-          aiResponse = data.text;
-        }
-        
-        if (aiResponse && aiResponse.length > 20) {
-          console.log(`✅ Получен ответ от ${qwen.name}:`, aiResponse.substring(0, 80));
-          return {
-            response: aiResponse,
-            provider: qwen.name,
-            model: 'qwen-2.5-72b'
-          };
-        }
-      } else {
-        const errorText = await response.text();
-        console.log(`❌ ${qwen.name} ошибка ${response.status}:`, errorText);
-      }
-    } catch (error) {
-      console.log(`❌ ${qwen.name} недоступен:`, error.message);
-      continue;
-    }
+    const data = await response.json();
+    return {
+      response: data.choices[0].message.content,
+      provider: 'Qwen',
+      model: data.model || 'qwen-2.5-ultra-preview'
+    };
+  } catch (error) {
+    console.error('Ошибка при обращении к Qwen API:', error);
+    throw error;
   }
-
-  console.log('🤖 Используем локальный Qwen AI провайдер как резерв');
-  
-  // Если внешние API недоступны, создаем интеллектуальный ответ
-  const query = messageText.toLowerCase();
-  let aiResponse = '';
-  
-  if (query.includes('привет') || query.includes('hello') || query.includes('hi')) {
-    aiResponse = `Привет! Я Qwen AI помощник BOOOMERANGS. Готов помочь с любыми вопросами - от программирования до творческих задач. О чем хотите поговорить?`;
-  } else if (query.includes('программирование') || query.includes('код') || query.includes('javascript') || query.includes('python')) {
-    aiResponse = `Отлично! Специализируюсь на программировании. Могу помочь с:
-
-🔹 Написанием кода на JavaScript, Python, React
-🔹 Отладкой и оптимизацией алгоритмов
-🔹 Объяснением сложных концепций
-🔹 Архитектурными решениями
-
-Какая конкретная задача у вас?`;
-  } else if (query.includes('что ты умеешь') || query.includes('что можешь') || query.includes('help')) {
-    aiResponse = `Я Qwen AI с широкими возможностями:
-
-💻 **Программирование**: JavaScript, Python, React, Node.js
-🎨 **Дизайн**: создание UI/UX, работа с цветами
-📝 **Тексты**: написание, редактирование, переводы  
-🧠 **Анализ**: обработка данных, решение логических задач
-🔧 **Техподдержка**: настройка сервисов, отладка кода
-
-Просто опишите задачу!`;
-  } else {
-    aiResponse = `Интересно! Как Qwen AI, я анализирую ваш запрос "${messageText}".
-
-Это многогранная тема. Для качественного ответа помогите уточнить:
-- Какой аспект наиболее важен?
-- В каком контексте рассматриваем?
-- Какой результат ожидаете?
-
-Давайте разберем детально!`;
-  }
-  
-  return {
-    response: aiResponse,
-    provider: 'Qwen Local AI',
-    model: 'qwen-intelligent'
-  };
 }
 
 // Обработчик для Liaobots
@@ -537,133 +351,52 @@ async function handleOpenRouterProvider(messages, options = {}) {
   }
 }
 
-// Обработчик для Phind через бесплатные API
+// Обработчик для Phind
 async function handlePhindProvider(messages, options = {}) {
-  const messageText = messages[messages.length - 1].content;
-  
-  // Пробуем бесплатные кодовые API
-  const codeAPIs = [
-    {
-      name: 'HuggingFace CodeT5',
-      url: 'https://api-inference.huggingface.co/models/Salesforce/codet5p-770m',
-      headers: { 'Content-Type': 'application/json' }
-    },
-    {
-      name: 'CodeGen Free',
-      url: 'https://api-inference.huggingface.co/models/Salesforce/codegen-350M-mono',
-      headers: { 'Content-Type': 'application/json' }
+  try {
+    // Преобразуем массив сообщений в формат Phind
+    let phindMessages = messages;
+    
+    // Если формат сообщений отличается, конвертируем его
+    if (messages.length === 1 && messages[0].role === 'user') {
+      phindMessages = [
+        {
+          role: 'system',
+          content: 'You are Phind, a helpful AI assistant.'
+        },
+        messages[0]
+      ];
     }
-  ];
+    
+    const response = await fetch('https://api.phind.com/agent/web', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        messages: phindMessages,
+        model: options.model || 'phind-model',
+        temperature: options.temperature || 0.7,
+        max_tokens: options.maxTokens || 800,
+        web_search: false // отключаем поиск в интернете
+      })
+    });
 
-  for (const api of codeAPIs) {
-    try {
-      console.log(`🔄 Пробуем ${api.name}...`);
-      
-      const response = await fetch(api.url, {
-        method: 'POST',
-        headers: api.headers,
-        body: JSON.stringify({
-          inputs: messageText,
-          parameters: {
-            max_length: 200,
-            temperature: 0.7,
-            num_return_sequences: 1
-          }
-        }),
-        timeout: 10000
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        
-        if (data[0] && data[0].generated_text) {
-          const aiResponse = data[0].generated_text.trim();
-          if (aiResponse.length > 10) {
-            return {
-              response: `**Phind Code Assistant** 🔍\n\n${aiResponse}`,
-              provider: api.name,
-              model: 'phind-code'
-            };
-          }
-        }
-      }
-    } catch (error) {
-      console.log(`❌ ${api.name} недоступен:`, error.message);
-      continue;
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Phind API вернул ошибку: ${response.status} - ${errorText}`);
     }
+
+    const data = await response.json();
+    return {
+      response: data.response || data.answer,
+      provider: 'Phind',
+      model: options.model || 'phind-model'
+    };
+  } catch (error) {
+    console.error('Ошибка при обращении к Phind API:', error);
+    throw error;
   }
-  
-  // Создаем интеллектуальный ответ в стиле Phind
-  const query = messageText.toLowerCase();
-  let aiResponse = '';
-  
-  if (query.includes('код') || query.includes('программирование') || query.includes('javascript') || query.includes('python')) {
-    aiResponse = `**Phind AI Code Assistant** 🔍
-
-Для задачи "${messageText}" рекомендую следующий подход:
-
-\`\`\`javascript
-// Примерное решение
-function solution() {
-  // Анализируем требования
-  const requirements = parseInput();
-  
-  // Применяем алгоритм
-  const result = processData(requirements);
-  
-  // Возвращаем результат
-  return result;
-}
-\`\`\`
-
-**Объяснение:**
-1. Разбиваем задачу на подзадачи
-2. Используем подходящие структуры данных
-3. Оптимизируем производительность
-
-Нужны уточнения по реализации?`;
-  } else if (query.includes('поиск') || query.includes('найти') || query.includes('как')) {
-    aiResponse = `**Phind Search Results** 🔍
-
-По запросу "${messageText}" найдено:
-
-📌 **Основная информация:**
-Это важная тема, требующая комплексного подхода
-
-📚 **Рекомендации:**
-• Изучите базовые концепции
-• Практикуйтесь на примерах  
-• Используйте современные инструменты
-
-🔧 **Практические советы:**
-• Начните с простых случаев
-• Постепенно усложняйте задачи
-• Не забывайте про тестирование
-
-Нужна более детальная информация?`;
-  } else {
-    aiResponse = `**Phind AI Analysis** 🔍
-
-Анализирую ваш запрос: "${messageText}"
-
-**Ключевые аспекты:**
-• Тема требует структурированного подхода
-• Важно учесть контекст использования  
-• Рекомендую пошаговое решение
-
-**Следующие шаги:**
-1. Уточните конкретные требования
-2. Определите приоритеты
-3. Выберите оптимальную стратегию
-
-Готов помочь с детализацией!`;
-  }
-  
-  return {
-    response: aiResponse,
-    provider: 'Phind Local AI',
-    model: 'phind-search'
-  };
 }
 
 // Обработчик для Perplexity
@@ -1049,26 +782,9 @@ function quickSort(arr) {
   }
 }
 
-// Функция getChatResponse для совместимости
-async function getChatResponse(message, options = {}) {
-  return await getResponse(message, options);
-}
-
-// Экспорт функций и констант для ES модулей
-export {
+// Экспорт функций и констант
+module.exports = {
   getResponse,
-  getChatResponse,
-  getProviders,
-  getModelForProvider,
-  checkProviderAvailability,
-  PROVIDERS,
-  PROVIDER_MODELS,
-  KEY_REQUIRED_PROVIDERS
-};
-
-export default {
-  getResponse,
-  getChatResponse,
   getProviders,
   getModelForProvider,
   checkProviderAvailability,

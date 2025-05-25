@@ -4,9 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BOOOMERANGS - Умный AI Чат</title>
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -543,40 +540,6 @@
       position: relative;
       line-height: 1.3;
       font-size: 0.8rem;
-    }
-    
-    /* Анимация стриминга - появление букв по частям */
-    .typing-indicator {
-      display: inline-block;
-      width: 8px;
-      height: 12px;
-      background: #6c63ff;
-      animation: cursor-blink 1s infinite;
-      margin-left: 2px;
-      border-radius: 1px;
-      vertical-align: baseline;
-    }
-    
-    @keyframes cursor-blink {
-      0%, 50% { opacity: 1; }
-      51%, 100% { opacity: 0.2; }
-    }
-    
-    .streaming-char {
-      opacity: 0;
-      display: inline;
-      animation: char-appear 0.05s ease-out forwards;
-    }
-    
-    @keyframes char-appear {
-      from { 
-        opacity: 0;
-        transform: translateY(2px);
-      }
-      to { 
-        opacity: 1;
-        transform: translateY(0);
-      }
     }
     
     /* Адаптивные размеры сообщений (компактные) */
@@ -1135,11 +1098,12 @@
   <div class="container">
     <div class="header-compact">
       <div class="left-section">
-        <img src="attached_assets/1746346330.jpg" alt="BOOOMERANGS Logo" class="logo-image">
+        <img src="booomerangs-logo.jpg" alt="BOOOMERANGS Logo" class="logo-image">
         <h1 class="tagline">BOOOMERANGS AI</h1>
       </div>
       <nav class="navigation">
         <a href="/smart-chat" class="nav-button active">Чат</a>
+        <a href="/image-generator" class="nav-button">Генератор</a>
       </nav>
     </div>
     
@@ -1273,12 +1237,8 @@
             const data = await response.json();
             if (data.success && data.messages) {
               data.messages.forEach(msg => {
-                addMessage(msg.content || msg.text, msg.sender === 'user', {
-                  provider: msg.provider,
-                  category: msg.category
-                });
+                displayMessage(msg.text, msg.sender === 'user' ? 'user' : 'ai', msg.provider);
               });
-              console.log(`✅ Восстановлено ${data.messages.length} сообщений`);
             }
           }
         } catch (error) {
@@ -1301,32 +1261,20 @@
         if (!confirm('Удалить эту беседу?')) return;
         
         try {
-          console.log('Удаляем сессию:', sessionId);
-          
           const response = await fetch(`/api/chat/sessions/${sessionId}`, {
             method: 'DELETE'
           });
           
-          console.log('Статус удаления:', response.status);
-          
           if (response.ok) {
-            console.log('✅ Сессия успешно удалена');
-            
             if (sessionId === currentSessionId) {
               // Если удаляем текущую сессию, создаем новую
               await createNewChat();
-              chatMessages.innerHTML = '';
+            } else {
+              loadChatSessions();
             }
-            
-            // Обновляем список сессий
-            loadChatSessions();
-          } else {
-            console.error('Ошибка при удалении сессии:', response.statusText);
-            alert('Не удалось удалить беседу. Попробуйте еще раз.');
           }
         } catch (error) {
           console.error('Ошибка удаления сессии:', error);
-          alert('Произошла ошибка при удалении беседы.');
         }
       }
       
@@ -1360,27 +1308,18 @@
         }
         
         try {
-          console.log(`💾 Сохраняем сообщение в сессию ${currentSessionId}:`, { content, sender, provider });
-          
-          const response = await fetch('/api/chat/messages', {
+          await fetch(`/api/chat/sessions/${currentSessionId}/messages`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              sessionId: currentSessionId,
               content,
               sender,
               provider,
               category
             })
           });
-          
-          if (response.ok) {
-            console.log('✅ Сообщение успешно сохранено в базу данных');
-          } else {
-            console.error('❌ Ошибка при сохранении:', response.status);
-          }
         } catch (error) {
           console.error('Ошибка сохранения сообщения:', error);
         }
@@ -1547,21 +1486,21 @@
       
       // Обработчик отправки сообщения
       async function sendMessage() {
-        const userMessageText = chatInput.value.trim();
+        const messageText = chatInput.value.trim();
         
         // Проверяем, есть ли текст или изображение для отправки
-        if (!userMessageText && !uploadedImageUrl) return;
+        if (!messageText && !uploadedImageUrl) return;
         
-        // Определяем тип операции (без показа статуса)
-        const operationType = detectOperationType(userMessageText);
-        // showStatus(operationType.title, operationType.message); // Отключено
+        // Определяем тип операции и показываем соответствующий статус
+        const operationType = detectOperationType(messageText);
+        showStatus(operationType.title, operationType.message);
         
         // Добавляем сообщение пользователя
-        addMessage(userMessageText, true);
+        addMessage(messageText, true);
         
         // Сохраняем сообщение пользователя в истории
         try {
-          await saveMessageToHistory(userMessageText, 'user');
+          await saveMessageToHistory(messageText, 'user');
           console.log('✅ Сообщение пользователя сохранено');
         } catch (error) {
           console.error('❌ Ошибка сохранения сообщения пользователя:', error);
@@ -1589,150 +1528,69 @@
         }, 3000);
         
         try {
-          // Создаем пустое сообщение для стриминга
-          const aiMessageDiv = document.createElement('div');
-          aiMessageDiv.className = 'message ai';
+          // Отправляем запрос к серверу
+          const response = await fetch('/api/smart/message', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              message: messageText,
+              imageUrl: uploadedImageUrl
+            }),
+          });
           
-          const messageText = document.createElement('p');
-          messageText.textContent = '';
-          aiMessageDiv.appendChild(messageText);
+          if (!response.ok) {
+            throw new Error(`Ошибка сервера: ${response.status}`);
+          }
           
-          // Добавляем индикатор печати
-          const typingIndicator = document.createElement('span');
-          typingIndicator.className = 'typing-indicator';
-          typingIndicator.textContent = '●';
-          messageText.appendChild(typingIndicator);
+          const data = await response.json();
           
-          chatMessages.appendChild(aiMessageDiv);
-          scrollToBottom();
+          // Если есть изображение, сбрасываем его после отправки
+          if (uploadedImageUrl) {
+            resetImageUpload();
+          }
           
-          // Пробуем стриминг сначала
-          let streamingWorked = false;
+          let aiResponse = '';
+          let provider = '';
+          let category = '';
           
-          const eventSource = new EventSource(`/api/streaming/chat?message=${encodeURIComponent(userMessageText)}&provider=auto&imageUrl=${encodeURIComponent(uploadedImageUrl || '')}`);
+          if (data.success) {
+            aiResponse = data.response || 'Ошибка получения ответа';
+            provider = data.provider || 'Неизвестно';
+            category = data.category || 'general';
+          } else {
+            aiResponse = data.error || 'Произошла ошибка при обработке запроса';
+            provider = 'Ошибка';
+          }
           
-          let streamedText = '';
-          let currentProvider = '';
-          let currentCategory = '';
+          // Удаляем "думающее" сообщение
+          chatMessages.removeChild(thinkingDiv);
           
-          eventSource.onmessage = function(event) {
-            streamingWorked = true;
-            console.log('📡 Получены данные стриминга:', event.data);
+          // Скрываем индикатор статуса
+          hideStatus();
+          
+          // Показываем полученный ответ
+          addMessage(aiResponse, false, { provider, category });
+          
+          // Сохраняем ответ AI в истории
+          try {
+            await saveMessageToHistory(aiResponse, 'ai', provider, category);
+            console.log(`✅ Ответ AI сохранен (${provider})`);
             
-            try {
-              const data = JSON.parse(event.data);
-              console.log('🔍 Обработка данных:', data);
-              
-              if (data.type === 'chunk' && data.content) {
-                streamedText += data.content;
-                console.log('📝 Добавлен chunk:', data.content);
-                
-                messageText.innerHTML = streamedText + '<span class="typing-indicator"></span>';
-                scrollToBottom();
-              } else if (data.type === 'info') {
-                currentProvider = data.provider || currentProvider;
-                console.log('🤖 Провайдер:', data.message);
-              } else if (data.type === 'complete') {
-                currentProvider = data.provider || currentProvider;
-                currentCategory = data.category || 'general';
-                console.log('✅ Стриминг завершен, провайдер:', currentProvider);
-                
-                messageText.innerHTML = streamedText;
-                
-                if (currentProvider) {
-                  const metadataDiv = document.createElement('div');
-                  metadataDiv.className = 'message-metadata';
-                  
-                  const providerBadge = document.createElement('span');
-                  providerBadge.className = 'provider-badge';
-                  providerBadge.textContent = currentProvider;
-                  metadataDiv.appendChild(providerBadge);
-                  
-                  if (currentCategory && currentCategory !== 'general') {
-                    const categoryBadge = document.createElement('span');
-                    categoryBadge.className = 'category-badge';
-                    categoryBadge.textContent = currentCategory;
-                    metadataDiv.appendChild(categoryBadge);
-                  }
-                  
-                  aiMessageDiv.appendChild(metadataDiv);
-                }
-                
-                scrollToBottom();
-                eventSource.close();
-                
-                saveMessageToHistory(streamedText, 'ai', currentProvider, currentCategory)
-                  .then(() => console.log('✅ Ответ AI сохранен'))
-                  .catch(error => console.error('❌ Ошибка сохранения ответа AI:', error));
-              }
-            } catch (parseError) {
-              console.error('❌ Ошибка парсинга данных стриминга:', parseError, 'Данные:', event.data);
-            }
-          };
-          
-          // Fallback на обычный запрос если стриминг не работает
-          setTimeout(() => {
-            if (!streamingWorked) {
-              console.log('🔄 Стриминг не отвечает, переключаемся на обычный запрос...');
-              eventSource.close();
-              
-              fetch('/api/smart/message', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: userMessageText, imageUrl: uploadedImageUrl })
-              })
-              .then(response => response.json())
-              .then(data => {
-                if (data.success) {
-                  messageText.innerHTML = data.response || 'Получен ответ от AI';
-                  
-                  // Добавляем метаданные провайдера
-                  const metadataDiv = document.createElement('div');
-                  metadataDiv.className = 'message-metadata';
-                  
-                  const providerBadge = document.createElement('span');
-                  providerBadge.className = 'provider-badge';
-                  providerBadge.textContent = data.provider || 'AI';
-                  metadataDiv.appendChild(providerBadge);
-                  
-                  if (data.category && data.category !== 'general') {
-                    const categoryBadge = document.createElement('span');
-                    categoryBadge.className = 'category-badge';
-                    categoryBadge.textContent = data.category;
-                    metadataDiv.appendChild(categoryBadge);
-                  }
-                  
-                  aiMessageDiv.appendChild(metadataDiv);
-                  
-                  // Сохраняем в истории
-                  saveMessageToHistory(data.response, 'ai', data.provider, data.category)
-                    .then(() => console.log('✅ Ответ AI сохранен'))
-                    .catch(error => console.error('❌ Ошибка сохранения ответа AI:', error));
-                } else {
-                  messageText.innerHTML = '❌ Ошибка получения ответа';
-                }
-              })
-              .catch(err => {
-                messageText.innerHTML = '❌ Ошибка подключения к серверу';
-                console.error('Fallback request error:', err);
-              });
-            }
-          }, 5000); // Ждем 5 секунд перед fallback
-          
-          eventSource.onerror = function(error) {
-            console.log('❌ Ошибка стриминга, переключаемся на обычный запрос');
-            eventSource.close();
-          };
+            // Показываем краткое уведомление об успешном сохранении
+            showTemporarySaveNotification();
+          } catch (error) {
+            console.error('❌ Ошибка сохранения ответа AI:', error);
+          }
         } catch (error) {
           console.error('Ошибка при отправке сообщения:', error);
           
-          // Удаляем "думающее" сообщение (если оно существует)
-          if (thinkingDiv && thinkingDiv.parentNode) {
-            chatMessages.removeChild(thinkingDiv);
-          }
+          // Удаляем "думающее" сообщение
+          chatMessages.removeChild(thinkingDiv);
           
-          // Скрываем индикатор статуса (отключено)
-          // hideStatus();
+          // Скрываем индикатор статуса
+          hideStatus();
           
           // Показываем сообщение об ошибке
           addMessage('Произошла ошибка при отправке сообщения. Пожалуйста, попробуйте еще раз.', false, { provider: 'Ошибка', category: 'error' });
