@@ -46,7 +46,7 @@ function Router() {
       {showNavigation && <MainNavigation />}
       <main className={showNavigation ? "pt-2" : ""}>
         <Switch>
-          <Route path="/" component={AuthScreen} />
+          <Route path="/" component={SmartChatPage} />
           <Route path="/new-auth" component={BooomerangsAuth} />
           <Route path="/chat" component={Chat} />
           <Route path="/ai-chat" component={AIChat} />
