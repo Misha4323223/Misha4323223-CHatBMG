@@ -1224,9 +1224,18 @@
         const sessionsContainer = document.getElementById('chat-sessions');
         if (!sessionsContainer) return;
         
+        console.log('📋 Рендерим сессии:', sessions);
         sessionsContainer.innerHTML = '';
         
-        sessions.forEach(session => {
+        // Фильтруем только валидные сессии
+        const validSessions = sessions.filter(session => session && session.id);
+        
+        if (validSessions.length === 0) {
+          sessionsContainer.innerHTML = '<div style="color: #666; text-align: center; padding: 20px;">Нет сохраненных чатов</div>';
+          return;
+        }
+        
+        validSessions.forEach(session => {
           const sessionElement = document.createElement('div');
           sessionElement.className = `chat-session ${session.id === currentSessionId ? 'active' : ''}`;
           sessionElement.onclick = () => switchToSession(session.id);
