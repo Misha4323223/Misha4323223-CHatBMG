@@ -327,7 +327,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Сохранение сообщения с автоматическим AI ответом
+  // Сохранение сообщения в сессию с автоматическим AI ответом
+  app.post('/api/chat/sessions/:sessionId/messages', async (req, res) => {
+    try {
+      const sessionId = parseInt(req.params.sessionId);
+      const messageData = { 
+        ...req.body, 
+        sessionId,
+        timestamp: new Date().toISOString()
+      };
+      
+      console.log('✅ Сообщение пользователя сохранено');
+      const userMessage = await chatHistory.saveMessage(messageData);
+      
+      // Если это сообщение от пользователя, получаем ответ AI
+      if (messageData.sender === 'user') {
+        try {
+          const smartRouter = require('./smart-router');
+          const aiResponse = await smartRouter.getChatResponse(messageData.content, {
+            userId: `session_${sessionId}`
+          });
+          
+          if (aiResponse && aiResponse.response) {
+            // Сохраняем ответ AI в ту же сессию
+            const aiMessageData = {
+              sessionId,
+              content: aiResponse.response,
+              sender: 'ai',
+              provider: aiResponse.provider,
+              timestamp: new Date().toISOString()
+            };
+            
+            await chatHistory.saveMessage(aiMessageData);
+            console.log('✅ Ответ AI сохранен в сессию:', aiResponse.response);
+          }
+        } catch (aiError) {
+          console.error('Ошибка получения ответа AI:', aiError);
+        }
+      }
+      
+      res.json({ success: true, message: userMessage });
+    } catch (error) {
+      console.error('Ошибка сохранения сообщения:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Не удалось сохранить сообщение' 
+      });
+    }
+  });
+
+  // Сохранение сообщения с автоматическим AI ответом (старый путь)
   app.post('/api/chat/messages', async (req, res) => {
     try {
       const messageData = req.body;
