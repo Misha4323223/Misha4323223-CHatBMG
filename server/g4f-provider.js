@@ -247,71 +247,55 @@ async function tryProviderWithRetries(provider, messages, options) {
   throw new Error(`Не удалось получить ответ от провайдера ${provider} после ${maxRetries} попыток: ${error ? error.message : 'неизвестная ошибка'}`);
 }
 
-// Обработчик для Qwen через g4f библиотеку
+// Обработчик для Qwen через новую gpt4free библиотеку
 async function handleQwenProvider(messages, options = {}) {
   try {
-    console.log('🔄 Подключаемся к Qwen через g4f...');
+    console.log('🔄 Подключаемся к Qwen через gpt4free...');
     
-    // Используем g4f для подключения к Qwen
-    const g4f = await import('g4f');
+    // Используем новую gpt4free библиотеку
+    const { G4F } = await import('gpt4free');
     
-    console.log('📦 g4f модуль загружен:', typeof g4f);
+    console.log('📦 gpt4free модуль загружен:', typeof G4F);
     
-    // Пробуем разные Qwen провайдеры через g4f
-    const qwenOptions = [
-      { provider: 'Qwen', model: 'qwen-turbo' },
-      { provider: 'You', model: 'qwen' },
-      { provider: 'GPTalk', model: 'qwen' },
-      { provider: 'FreeChatgpt', model: 'qwen' }
+    // Бесплатные провайдеры для Qwen
+    const qwenProviders = [
+      'Qwen',
+      'ChatGpt',
+      'Bing', 
+      'You',
+      'Gemini',
+      'GPTalk'
     ];
     
-    for (const option of qwenOptions) {
+    for (const provider of qwenProviders) {
       try {
-        console.log(`🔄 Пробуем g4f с провайдером ${option.provider}...`);
+        console.log(`🔄 Пробуем gpt4free с провайдером ${provider}...`);
         
-        const response = await g4f.ChatCompletion.create({
-          model: option.model,
-          messages: messages,
-          provider: option.provider
+        const messages_text = messages.map(m => `${m.role}: ${m.content}`).join('\n');
+        
+        const response = await G4F.chatCompletion([
+          { role: 'user', content: messages[messages.length - 1].content }
+        ], {
+          provider: provider,
+          model: 'qwen-turbo'
         });
         
-        if (response && typeof response === 'string' && response.length > 15) {
-          console.log(`✅ Получен ответ от g4f (${option.provider}):`, response.substring(0, 60));
+        if (response && response.length > 15) {
+          console.log(`✅ Получен ответ от gpt4free (${provider}):`, response.substring(0, 60));
           return {
             response: response,
-            provider: `Qwen AI (g4f-${option.provider})`,
-            model: option.model
+            provider: `Qwen AI (${provider})`,
+            model: 'qwen-turbo'
           };
         }
       } catch (providerError) {
-        console.log(`❌ g4f ${option.provider} ошибка:`, providerError.message);
+        console.log(`❌ gpt4free ${provider} ошибка:`, providerError.message);
         continue;
       }
     }
     
-    // Альтернативный способ без указания провайдера
-    try {
-      console.log('🔄 Пробуем g4f без указания провайдера...');
-      
-      const defaultResponse = await g4f.ChatCompletion.create({
-        model: 'gpt-3.5-turbo',
-        messages: messages
-      });
-      
-      if (defaultResponse && typeof defaultResponse === 'string' && defaultResponse.length > 15) {
-        console.log('✅ Получен ответ от g4f (default)');
-        return {
-          response: defaultResponse,
-          provider: 'Qwen AI (g4f-default)',
-          model: 'gpt-3.5-turbo'
-        };
-      }
-    } catch (defaultError) {
-      console.log('❌ g4f default ошибка:', defaultError.message);
-    }
-    
   } catch (importError) {
-    console.log('❌ Ошибка импорта g4f:', importError.message);
+    console.log('❌ Ошибка импорта gpt4free:', importError.message);
   }
   
   const messageText = messages[messages.length - 1].content;
