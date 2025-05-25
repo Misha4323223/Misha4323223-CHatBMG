@@ -1142,13 +1142,19 @@
             console.log('🌊 Отправка стримингового сообщения:', message);
             
             try {
+                console.log('🌊 Отправляем запрос на стриминг...');
                 const response = await fetch('/api/ai/stream-chat', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Accept': 'text/event-stream',
+                        'Cache-Control': 'no-cache'
                     },
                     body: JSON.stringify({ message, context })
                 });
+                
+                console.log('🌊 Ответ получен. Статус:', response.status);
+                console.log('🌊 Content-Type:', response.headers.get('content-type'));
 
                 if (!response.ok) {
                     throw new Error('Стриминг недоступен');
