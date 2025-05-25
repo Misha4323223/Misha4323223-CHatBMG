@@ -1265,16 +1265,33 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
       let response;
       console.log('🔍 smartRouter properties:', Object.keys(smartRouter));
       
-      if (typeof smartRouter.analyzeMessage === 'function') {
-        response = await smartRouter.analyzeMessage(message as string, {});
-        console.log('✅ Используем smartRouter.analyzeMessage');
-      } else if (typeof smartRouter.getSmartResponse === 'function') {
-        response = await smartRouter.getSmartResponse(message as string, {});
-      } else {
-        // Используем fallback - прямой вызов через direct-ai-provider
-        const directAi = require('./direct-ai-provider');
-        response = await directAi.getChatResponse(message as string, {});
-        console.log('🔄 Используем fallback direct-ai-provider');
+      // Используем рабочий Python G4F провайдер напрямую
+      try {
+        const pythonProvider = require('./python_provider_routes');
+        console.log('🔄 Пробуем Python G4F провайдер...');
+        const result = await fetch('http://localhost:5001/python/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: message, provider: 'auto' })
+        });
+        const data = await result.json();
+        if (data.success) {
+          response = data;
+          console.log('✅ Получен ответ от Python G4F');
+        } else {
+          throw new Error('Python G4F не ответил');
+        }
+      } catch (error) {
+        console.log('❌ Python G4F недоступен, пробуем другие провайдеры...');
+        // Fallback к умному роутеру
+        if (typeof smartRouter.analyzeMessage === 'function') {
+          response = await smartRouter.analyzeMessage(message as string, {});
+          console.log('✅ Используем smartRouter.analyzeMessage');
+        } else {
+          const directAi = require('./direct-ai-provider');
+          response = await directAi.getChatResponse(message as string, {});
+          console.log('🔄 Используем fallback direct-ai-provider');
+        }
       }
       
       if (response.success) {
