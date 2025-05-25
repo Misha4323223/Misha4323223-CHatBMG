@@ -295,50 +295,6 @@ asyncio.run(chatgpt_port3000())
                 error: `EdgeGPT 3000: ${error.message}`
             };
         }
-
-            const process = spawn('python3', ['-c', pythonScript], {
-                stdio: ['pipe', 'pipe', 'pipe']
-            });
-
-            let output = '';
-            
-            process.stdout.on('data', (data) => {
-                output += data.toString();
-            });
-
-            process.on('close', () => {
-                const lines = output.split('\n');
-                
-                for (const line of lines) {
-                    if (line.startsWith('SUCCESS:')) {
-                        const response = line.substring(8);
-                        resolve({
-                            success: true,
-                            response: response,
-                            provider: 'EdgeGPT-Real',
-                            model: 'ChatGPT-EdgeGPT'
-                        });
-                        return;
-                    }
-                }
-
-                resolve({
-                    success: true,
-                    response: `EdgeGPT настроен для аккаунта ${this.email}. Запрос "${message}" готов к обработке.`,
-                    provider: 'EdgeGPT-Configured',
-                    model: 'ChatGPT-Ready'
-                });
-            });
-
-            // Таймаут для EdgeGPT
-            setTimeout(() => {
-                process.kill();
-                resolve({
-                    success: false,
-                    error: 'EdgeGPT timeout'
-                });
-            }, 25000);
-        });
     }
 
     /**
