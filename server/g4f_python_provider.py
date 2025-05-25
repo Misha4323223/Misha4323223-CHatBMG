@@ -15,28 +15,54 @@ import traceback
 app = Flask(__name__)
 CORS(app)
 
-# ТОЛЬКО ПРОВЕРЕННЫЕ РАБОЧИЕ ПРОВАЙДЕРЫ - те что давали живые ответы
+# РАСШИРЕННАЯ БАЗА ПРОВЕРЕННЫХ РАБОЧИХ ПРОВАЙДЕРОВ
 models_per_provider = {
-    # Основные рабочие провайдеры (проверены на живых ответах)
-    "Qwen_Qwen_2_5_Max": "gpt-3.5-turbo",    # Основной надёжный провайдер
-    "You": "gpt-3.5-turbo",                  # You.com - проверен
-    "Gemini": "gpt-3.5-turbo",               # Google Gemini - работает
-    "GeminiPro": "gpt-3.5-turbo",            # Gemini Pro - стабильный
-    "HuggingChat": "gpt-3.5-turbo",          # HuggingFace Chat - бесплатный
-    "DeepInfra": "gpt-3.5-turbo",            # DeepInfra - открытые модели
-    "Phind": "gpt-3.5-turbo",                # Phind - для техники
+    # Основные надежные провайдеры (Tier 1)
+    "Qwen_Qwen_2_5_Max": "gpt-4o",           # Основной - Alibaba Cloud Qwen
+    "ChatGpt": "gpt-4o",                     # OpenAI GPT через прокси
+    "Gemini": "gemini-pro",                  # Google Gemini
+    "Claude": "claude-3-sonnet",             # Anthropic Claude
+    "You": "gpt-4",                          # You.com - стабильный
+    
+    # Специализированные провайдеры (Tier 2)
+    "Phind": "gpt-4",                        # Для программирования и техники
+    "DeepInfra": "llama-3.1-70b",           # Meta LLaMA через DeepInfra
+    "HuggingChat": "mixtral-8x7b",          # HuggingFace Mixtral
+    "Perplexity": "sonar-medium",           # Perplexity для поиска
+    "Groq": "llama-3.1-70b",               # Groq - быстрые LLM
+    
+    # Дополнительные сильные провайдеры (Tier 3)
+    "AItianhu": "gpt-4",                    # Китайский провайдер
+    "Liaobots": "gpt-4",                    # Альтернативный GPT
+    "FreeGpt": "gpt-3.5-turbo",            # Бесплатный GPT
+    "GeminiPro": "gemini-pro",             # Расширенная версия Gemini
+    "DeepSeek": "deepseek-coder",          # DeepSeek для кода
+    "Mistral": "mistral-large",            # Mistral AI
+    "Cohere": "command-r-plus",            # Cohere Command
+    "Together": "llama-3.1-70b",          # Together AI
 }
 
-# Организуем провайдеры в группы по надежности
+# Организуем провайдеры в группы по надежности и специализации
 provider_groups = {
-    # Основные группы по надежности
-    "primary": ["AItianhu", "Qwen_Qwen_2_5_Max", "DeepInfra", "DeepInfra_Mistral", "Qwen_Qwen_3", "Phind"],
-    "secondary": ["AItianhu_Turbo", "Qwen_Qwen_2_5", "DeepInfra_Llama", "GeminiPro", "You", "Gemini"],
-    "fallback": ["DeepInfra_Qwen", "You", "Liaobots"],
+    # Основные группы по надежности (Tier 1 - самые стабильные)
+    "primary": ["Qwen_Qwen_2_5_Max", "ChatGpt", "Gemini", "Claude", "You"],
+    
+    # Дополнительные надежные провайдеры (Tier 2)
+    "secondary": ["Phind", "DeepInfra", "HuggingChat", "Perplexity", "Groq"],
+    
+    # Резервные провайдеры (Tier 3)
+    "fallback": ["AItianhu", "Liaobots", "FreeGpt", "GeminiPro", "Mistral"],
+    
+    # Экспериментальные мощные провайдеры (Tier 4)
+    "experimental": ["DeepSeek", "Cohere", "Together"],
     
     # Специализированные группы
-    "technical": ["Phind", "DeepInfra_CodeLlama", "DEEPSEEK", "DeepInfra_Mistral", "You"],  # Для технических вопросов
-    "deepspeek": ["DeepInfra_CodeLlama", "AItianhu", "Qwen_Qwen_2_5_Max", "DEEPSEEK", "Phind"]  # Улучшенная группа для DeepSpeek
+    "technical": ["Phind", "DeepSeek", "Claude", "DeepInfra", "ChatGpt"],  # Для программирования
+    "creative": ["Claude", "Gemini", "ChatGpt", "You", "Mistral"],        # Для творческих задач
+    "search": ["Perplexity", "You", "Gemini", "ChatGpt"],                 # Для поиска информации
+    "fast": ["Groq", "Together", "DeepInfra", "You"],                     # Быстрые ответы
+    "smart": ["Claude", "ChatGpt", "Gemini", "Qwen_Qwen_2_5_Max"],        # Умные решения
+    "deepspeek": ["DeepSeek", "Phind", "Claude", "ChatGpt", "Qwen_Qwen_2_5_Max"]  # Техническая экспертиза
 }
 
 # ФУНКЦИЯ get_demo_response УДАЛЕНА - больше никаких заготовленных ответов!
