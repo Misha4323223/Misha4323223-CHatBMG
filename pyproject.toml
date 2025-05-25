@@ -15,4 +15,9 @@ dependencies = [
     "httpx==0.23.3",
     "nodriver>=0.46.1",
     "platformdirs>=4.3.8",
+    "beautifulsoup4>=4.13.4",
+    "lxml>=5.4.0",
+    "browser-cookie3>=0.20.1",
+    "selenium>=4.33.0",
+    "undetected-chromedriver>=3.5.5",
 ]
