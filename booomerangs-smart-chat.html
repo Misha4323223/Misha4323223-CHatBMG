@@ -545,6 +545,40 @@
       font-size: 0.8rem;
     }
     
+    /* Анимация стриминга - появление букв по частям */
+    .typing-indicator {
+      display: inline-block;
+      width: 8px;
+      height: 12px;
+      background: #6c63ff;
+      animation: cursor-blink 1s infinite;
+      margin-left: 2px;
+      border-radius: 1px;
+      vertical-align: baseline;
+    }
+    
+    @keyframes cursor-blink {
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0.2; }
+    }
+    
+    .streaming-char {
+      opacity: 0;
+      display: inline;
+      animation: char-appear 0.05s ease-out forwards;
+    }
+    
+    @keyframes char-appear {
+      from { 
+        opacity: 0;
+        transform: translateY(2px);
+      }
+      to { 
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
     /* Адаптивные размеры сообщений (компактные) */
     @media (min-width: 640px) {
       .message {
@@ -1587,8 +1621,18 @@
               const data = JSON.parse(event.data);
               
               if (data.type === 'chunk' && data.content) {
+                // Простая анимация появления текста частями
                 streamedText += data.content;
-                messageText.innerHTML = streamedText + '<span class="typing-indicator">●</span>';
+                
+                // Оборачиваем новый контент в анимированный span
+                const lastChars = data.content.split('').map(char => {
+                  if (char === ' ') return ' ';
+                  if (char === '\n') return '<br>';
+                  return `<span class="streaming-char">${char}</span>`;
+                }).join('');
+                
+                // Обновляем текст с курсором
+                messageText.innerHTML = streamedText.replace(data.content, lastChars) + '<span class="typing-indicator"></span>';
                 scrollToBottom();
               } else if (data.type === 'info') {
                 currentProvider = data.provider || currentProvider;
