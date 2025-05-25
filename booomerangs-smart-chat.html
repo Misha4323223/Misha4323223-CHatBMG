@@ -1256,8 +1256,16 @@
             const data = await response.json();
             if (data.success && data.messages) {
               data.messages.forEach(msg => {
-                displayMessage(msg.content, msg.sender === 'user' ? 'user' : 'ai', msg.provider);
+                addMessage(msg.content, msg.sender === 'user', {
+                  provider: msg.provider,
+                  category: msg.category
+                });
               });
+              
+              // Скролл к последнему сообщению после загрузки
+              setTimeout(() => {
+                scrollToBottom();
+              }, 100);
             }
           }
         } catch (error) {
