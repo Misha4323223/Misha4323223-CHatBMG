@@ -1479,7 +1479,7 @@
             }
             
             try {
-                const response = await fetch(`/api/chat/sessions/${sessionId}`, {
+                const response = await fetch(`/api/chat/sessions/${sessionId}?username=${currentUser}`, {
                     method: 'DELETE'
                 });
                 
