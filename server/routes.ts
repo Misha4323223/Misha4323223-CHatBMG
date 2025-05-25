@@ -1265,10 +1265,11 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
       let response;
       console.log('🔍 smartRouter properties:', Object.keys(smartRouter));
       
-      if (typeof smartRouter.getSmartResponse === 'function') {
+      if (typeof smartRouter.analyzeMessage === 'function') {
+        response = await smartRouter.analyzeMessage(message as string, {});
+        console.log('✅ Используем smartRouter.analyzeMessage');
+      } else if (typeof smartRouter.getSmartResponse === 'function') {
         response = await smartRouter.getSmartResponse(message as string, {});
-      } else if (typeof smartRouter.getResponse === 'function') {
-        response = await smartRouter.getResponse(message as string, {});
       } else {
         // Используем fallback - прямой вызов через direct-ai-provider
         const directAi = require('./direct-ai-provider');
