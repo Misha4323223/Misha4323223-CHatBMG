@@ -223,7 +223,8 @@ async function deleteSession(sessionId) {
   }
 }
 
-module.exports = {
+// ES6 экспорты для совместимости
+export {
   createChatSession,
   getUserChatSessions,
   saveMessage,

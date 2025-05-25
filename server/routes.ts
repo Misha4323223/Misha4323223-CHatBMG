@@ -21,12 +21,12 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const require = createRequire(__filename);
 
-import * as freeImageGenerators from './free-image-generators.js';
+// Временно отключаем проблемные импорты
+// import * as freeImageGenerators from './free-image-generators.js';
 const imageAnalyzer = require('./image-analyzer.js');
-const { getFreeGPT4Response } = require('./gpt4-free-providers.js');
-const EdgeGPTAuthBypass = require('./edgegpt-auth-bypass.js');
-const ChatGPTBrowserBypass = require('./chatgpt-browser-bypass.js');
-const enhancedFreeProviders = require('./enhanced-free-providers.js');
+// const EdgeGPTAuthBypass = require('./edgegpt-auth-bypass.js');
+// const ChatGPTBrowserBypass = require('./chatgpt-browser-bypass.js');
+// const enhancedFreeProviders = require('./enhanced-free-providers.js');
 // PDF обработка будет загружаться динамически
 
 // Настройка multer для загрузки файлов
@@ -37,7 +37,7 @@ const upload = multer({
   }
 });
 
-const g4fHandlers = require('./g4f-handlers');
+// Временно отключаем g4f-handlers
 // FastDirectAI полностью удален - используем только настоящие AI провайдеры
 // Отключаем внешние Python серверы - работаем только на порту 5000
 // const pythonProviderRoutes = require('./python_provider_routes');
@@ -46,11 +46,7 @@ const chatFreeProvider = require('./simple-chatfree');
 const fastAiProviders = require('./fast-ai-providers');
 const speedOptimizedChat = require('./speed-optimized-chat');
 
-// Импортируем единую систему ChatGPT
-import UnifiedChatGPTSystem from './unified-chatgpt-system.js';
-
-// Создаем единую систему ChatGPT
-const unifiedChatGPT = new UnifiedChatGPTSystem();
+// Убираем неиспользуемый импорт unified-chatgpt-system
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Create HTTP server
@@ -77,7 +73,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const success = await chatgptScraper.login(email, password);
+      // Временно отключаем ChatGPT авторизацию
+      const success = false;
       
       res.json({
         success,
@@ -102,7 +99,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Сначала пробуем новый обход
       try {
-        const edgeGPT = new EdgeGPTAuthBypass();
+        // const edgeGPT = new EdgeGPTAuthBypass();
         const result = await edgeGPT.sendMessage(message);
         console.log('✅ EdgeGPT обход успешен!');
         return res.json(result);
@@ -248,8 +245,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`🚀 Запрос к единой системе ChatGPT: "${message}"`);
       
-      // Используем единую систему ChatGPT
-      const result = await unifiedChatGPT.getChatGPTResponse(message);
+      // Временно отключаем единую систему ChatGPT
+      const result = { success: false, error: 'Функция временно недоступна' };
       
       res.json(result);
     } catch (error) {
