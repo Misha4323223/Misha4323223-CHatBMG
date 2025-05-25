@@ -120,34 +120,7 @@ async function checkPythonProvider() {
   }
 }
 
-// Получение демо-ответа, если настоящий сервис недоступен
-function getDemoResponse(message = '') {
-  const messageLower = message.toLowerCase();
-  
-  if (messageLower.includes('привет') || messageLower.includes('здравствуй') || 
-      messageLower.includes('hello') || messageLower.includes('hi')) {
-    return 'Привет! Я BOOOMERANGS AI ассистент. Чем могу помочь вам сегодня?';
-  } else if (messageLower.includes('как дела') || messageLower.includes('как ты') || 
-             messageLower.includes('how are you')) {
-    return 'У меня всё отлично, спасибо что спросили! Как ваши дела?';
-  } else if (messageLower.includes('изображен') || messageLower.includes('картин') || 
-             messageLower.includes('image') || messageLower.includes('picture')) {
-    return 'Вы можете создать изображение, перейдя на вкладку "Генератор изображений". Просто опишите то, что хотите увидеть, и выберите стиль!';
-  } else if (messageLower.includes('booomerangs')) {
-    return 'BOOOMERANGS - это бесплатный мультимодальный AI-сервис для общения и создания изображений. Мы обеспечиваем доступ к возможностям искусственного интеллекта без необходимости платных API ключей!';
-  } else if (demoResponse) {
-    // Если у нас есть сохраненный ответ от предыдущей успешной проверки
-    return demoResponse;
-  } else {
-    const responses = [
-      'Это демо-режим BOOOMERANGS. Я могу отвечать на простые вопросы, но для полноценной работы необходимо подключение к AI-провайдерам.',
-      'BOOOMERANGS использует различные AI-провайдеры, чтобы предоставлять ответы бесплатно. Сейчас вы видите демо-ответ, поскольку провайдеры недоступны.',
-      'В данный момент BOOOMERANGS работает в демо-режиме. Попробуйте перезагрузить страницу или зайти позже для доступа к полной версии.'
-    ];
-    
-    return responses[Math.floor(Math.random() * responses.length)];
-  }
-}
+// ВСЕ ЗАГЛУШКИ УДАЛЕНЫ - система использует только живые AI провайдеры
 
 // Обработка стандартного API запроса
 router.post('/chat', async (req, res) => {
