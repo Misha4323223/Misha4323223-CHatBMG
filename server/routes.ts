@@ -923,11 +923,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Импортируем Python провайдер
       const pythonProviderRoutes = require('./python_provider_routes');
       
+      // 🧠 ДОБАВЛЯЕМ КОНТЕКСТ РАЗГОВОРА
+      const conversationMemory = require('./conversation-memory');
+      const userId = req.body.userId || `session_${req.body.sessionId || 'stream'}`;
+      
+      // Получаем контекст разговора с анализом намерений
+      const contextInfo = conversationMemory.getMessageContext(userId, finalMessage);
+      
+      console.log('🧠 [STREAM] Анализ контекста:', {
+        hasIntent: !!contextInfo.intent,
+        isSearchQuery: contextInfo.intent?.isSearchQuery,
+        location: contextInfo.intent?.location,
+        contextLength: contextInfo.context?.length || 0
+      });
+      
+      // Используем сообщение с контекстом
+      if (contextInfo.context && contextInfo.context.trim()) {
+        finalMessage = contextInfo.context + finalMessage;
+        console.log('🧠 [STREAM] Добавлен контекст к сообщению');
+      }
+      
       // Сначала создаем демо-ответ для запасного варианта
       const demoResponse = generateDemoResponse(finalMessage);
       
       // Определяем, какой провайдер использовать
-      let selectedProvider = provider || 'AItianhu';
+      let selectedProvider = provider || contextInfo.currentProvider || 'AItianhu';
       let base64Image = null;
       
       // Специальная обработка для изображений - используем мультимодальные провайдеры
