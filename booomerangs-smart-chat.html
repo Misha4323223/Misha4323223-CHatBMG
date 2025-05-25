@@ -1261,20 +1261,32 @@
         if (!confirm('Удалить эту беседу?')) return;
         
         try {
+          console.log('Удаляем сессию:', sessionId);
+          
           const response = await fetch(`/api/chat/sessions/${sessionId}`, {
             method: 'DELETE'
           });
           
+          console.log('Статус удаления:', response.status);
+          
           if (response.ok) {
+            console.log('✅ Сессия успешно удалена');
+            
             if (sessionId === currentSessionId) {
               // Если удаляем текущую сессию, создаем новую
               await createNewChat();
-            } else {
-              loadChatSessions();
+              chatMessages.innerHTML = '';
             }
+            
+            // Обновляем список сессий
+            loadChatSessions();
+          } else {
+            console.error('Ошибка при удалении сессии:', response.statusText);
+            alert('Не удалось удалить беседу. Попробуйте еще раз.');
           }
         } catch (error) {
           console.error('Ошибка удаления сессии:', error);
+          alert('Произошла ошибка при удалении беседы.');
         }
       }
       
