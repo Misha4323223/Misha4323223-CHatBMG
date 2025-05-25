@@ -176,7 +176,9 @@ def get_chat_response(message, specific_provider=None, use_stream=False):
         print(f"🔄 Перебор группы провайдеров: {group_name}")
         
         for provider_name in providers:
-            result = try_provider(provider_name, message, timeout=25, use_stream=use_stream)
+            # Для быстрой группы используем меньший таймаут
+            timeout = 10 if group_name == "fast" else 20
+            result = try_provider(provider_name, message, timeout=timeout, use_stream=use_stream)
             if "error" not in result:
                 print(f"✅ Группа {group_name} успешно вернула ответ")
                 return result
@@ -225,6 +227,12 @@ def get_chat_response(message, specific_provider=None, use_stream=False):
         result = try_provider_group("search")
         if result:
             return result
+    
+    # Сначала пробуем быстрых провайдеров для ускорения ответов
+    print(f"⚡ Пробуем быстрых провайдеров для ускорения...")
+    result = try_provider_group("fast")
+    if result:
+        return result
     
     # Перебираем группы провайдеров по порядку надежности
     for group in ["primary", "secondary", "fallback"]:
