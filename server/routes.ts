@@ -419,8 +419,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.sendFile('team-chat.html', { root: '.' });
   });
   
-  // API для работы с G4F провайдерами
-  app.use('/api/g4f', g4fHandlers);
+  // API для работы с G4F провайдерами (временно отключен)
+  // app.use('/api/g4f', g4fHandlers);
   
   // API с прямым доступом к AI провайдерам (более стабильный вариант)
   // FastDirectAI маршрут удален - используем только настоящие AI
@@ -434,19 +434,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/api/streaming', streamingRoutes);
   
   // API для Flask-стриминга (надежный вариант)
-  const flaskStreamBridge = require('./stream-flask-bridge');
-  app.use('/api/flask-stream', flaskStreamBridge);
+  // Временно отключаем stream-flask-bridge
+  // const flaskStreamBridge = require('./stream-flask-bridge');
+  // app.use('/api/flask-stream', flaskStreamBridge);
   
-  // API для DeepSpeek - специализированного AI для технических вопросов
-  const deepspeekRoutes = require('./deepspeek-routes');
-  app.use('/api/deepspeek', deepspeekRoutes);
+  // API для DeepSpeek - специализированного AI для технических вопросов (временно отключен)
+  // const deepspeekRoutes = require('./deepspeek-routes');
+  // app.use('/api/deepspeek', deepspeekRoutes);
   
-  // API для проверки состояния провайдеров
-  const checkProvidersRoutes = require('./check-providers');
-  app.use('/api/providers', checkProvidersRoutes);
+  // API для проверки состояния провайдеров (временно отключен)
+  // const checkProvidersRoutes = require('./check-providers');
+  // app.use('/api/providers', checkProvidersRoutes);
 
-  // API для тестирования скорости провайдеров
-  const providerSpeedTest = require('./provider-speed-test');
+  // API для тестирования скорости провайдеров (временно отключен)
+  // const providerSpeedTest = require('./provider-speed-test');
   
   app.get('/api/test-speed', async (req, res) => {
     try {
@@ -471,33 +472,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // API для Ollama - локальный AI провайдер
-  const ollamaProvider = require('./ollama-provider');
-  app.use('/api/ollama', ollamaProvider);
+  // API для Ollama - локальный AI провайдер (временно отключен)
+  // const ollamaProvider = require('./ollama-provider');
+  // app.use('/api/ollama', ollamaProvider);
   
-  // API для улучшенного ChatFree провайдера
-  const chatFreeImproved = require('./chatfree-improved');
-  app.use('/api/chatfree', chatFreeImproved);
+  // API для улучшенного ChatFree провайдера (временно отключен)
+  // const chatFreeImproved = require('./chatfree-improved');
+  // app.use('/api/chatfree', chatFreeImproved);
   
-  // Прямое подключение к Python G4F - только живые ответы
-  const pythonDirectProvider = require('./python-direct');
-  app.use('/api/python-direct', pythonDirectProvider);
+  // Прямое подключение к Python G4F - только живые ответы (временно отключен)
+  // const pythonDirectProvider = require('./python-direct');
+  // app.use('/api/python-direct', pythonDirectProvider);
   
-  // API для Claude от Anthropic через Python G4F
-  const claudeProvider = require('./claude-provider');
-  app.use('/api/claude', claudeProvider);
+  // API для Claude от Anthropic через Python G4F (временно отключен)
+  // const claudeProvider = require('./claude-provider');
+  // app.use('/api/claude', claudeProvider);
   
-  // API для DeepInfra - высококачественные модели
-  const deepInfraProvider = require('./deepinfra-provider');
-  app.use('/api/deepinfra', deepInfraProvider);
+  // API для DeepInfra - высококачественные модели (временно отключен)
+  // const deepInfraProvider = require('./deepinfra-provider');
+  // app.use('/api/deepinfra', deepInfraProvider);
   
-  // API для мультимодального анализа изображений
-  const multimodalProvider = require('./multimodal-provider');
-  app.use('/api/multimodal', multimodalProvider);
+  // API для мультимодального анализа изображений (временно отключен)
+  // const multimodalProvider = require('./multimodal-provider');
+  // app.use('/api/multimodal', multimodalProvider);
   
-  // API для тестирования провайдеров
-  const providerTestRoute = require('./provider-test-route');
-  app.use('/api/test-providers', providerTestRoute);
+  // API для тестирования провайдеров (временно отключен)
+  // const providerTestRoute = require('./provider-test-route');
+  // app.use('/api/test-providers', providerTestRoute);
   
   // API для умной маршрутизации сообщений к подходящим провайдерам
   const smartRouter = require('./smart-router');

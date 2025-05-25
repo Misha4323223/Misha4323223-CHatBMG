@@ -2,7 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 // Этот импорт вызывает ошибку из-за неверного форматирования в deepspeek-provider.js
 // Отключаем прямой импорт проблемного файла
 process.env.SKIP_DEEPSPEEK_ORIGINAL = 'true';
-import { registerRoutes } from "./routes";
+import { registerRoutes } from "./routes-minimal";
 import { setupVite, serveStatic, log } from "./vite";
 import cors from 'cors';
 
