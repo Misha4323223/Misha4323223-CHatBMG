@@ -42,6 +42,7 @@ const directAiRoutes = require('./direct-ai-routes');
 // const pythonProviderRoutes = require('./python_provider_routes');
 const deepspeekProvider = require('./deepspeek-fixed');
 const chatFreeProvider = require('./simple-chatfree');
+const fastAiProviders = require('./fast-ai-providers');
 
 // Импортируем единую систему ChatGPT
 import UnifiedChatGPTSystem from './unified-chatgpt-system.js';
