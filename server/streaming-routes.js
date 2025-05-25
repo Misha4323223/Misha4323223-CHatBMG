@@ -6,6 +6,12 @@ const { getDemoResponse } = require('./direct-ai-provider');
 
 console.log('🔥 STREAMING-ROUTES.JS ЗАГРУЖЕН!');
 
+// Простой тестовый маршрут для проверки
+router.get('/test', (req, res) => {
+  console.log('🧪 ТЕСТ МАРШРУТ РАБОТАЕТ!');
+  res.json({ success: true, message: 'Streaming routes работают!' });
+});
+
 // Провайдеры, которые поддерживают стриминг
 const STREAMING_PROVIDERS = [
   'Qwen_Max',
