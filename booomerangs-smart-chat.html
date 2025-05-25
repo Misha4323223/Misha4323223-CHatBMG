@@ -1529,7 +1529,7 @@
                     `;
                     addMessage(imageHtml, msg.sender);
                 } else {
-                    addMessage(messageText, msg.sender);
+                    addMessage(messageText, msg.sender, false, msg.provider, msg.model);
                 }
             });
             
