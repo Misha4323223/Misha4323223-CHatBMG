@@ -1552,97 +1552,42 @@
         }, 3000);
         
         try {
-          // Создаем пустое сообщение для стриминга
-          const aiMessageDiv = document.createElement('div');
-          aiMessageDiv.className = 'message ai';
+          // Отправляем запрос к серверу
+          const response = await fetch('/api/smart/message', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              message: userMessageText,
+              imageUrl: uploadedImageUrl
+            }),
+          });
           
-          const messageText = document.createElement('p');
-          messageText.textContent = '';
-          aiMessageDiv.appendChild(messageText);
+          if (!response.ok) {
+            throw new Error(`Ошибка сервера: ${response.status}`);
+          }
           
-          // Добавляем индикатор печати
-          const typingIndicator = document.createElement('span');
-          typingIndicator.className = 'typing-indicator';
-          typingIndicator.textContent = '●';
-          messageText.appendChild(typingIndicator);
+          const data = await response.json();
           
-          chatMessages.appendChild(aiMessageDiv);
-          scrollToBottom();
-          
-          // Используем EventSource для стриминга
-          const eventSource = new EventSource(`/api/streaming/chat?message=${encodeURIComponent(userMessageText)}&provider=auto&imageUrl=${encodeURIComponent(uploadedImageUrl || '')}`);
-          
-          let streamedText = '';
-          let currentProvider = '';
-          let currentCategory = '';
-          
-          eventSource.onmessage = function(event) {
-            try {
-              const data = JSON.parse(event.data);
-              
-              if (data.type === 'chunk' && data.content) {
-                // Добавляем новый фрагмент к существующему тексту
-                streamedText += data.content;
-                messageText.innerHTML = streamedText + '<span class="typing-indicator">●</span>';
-                scrollToBottom();
-              } else if (data.type === 'info') {
-                // Обновляем информацию о провайдере
-                currentProvider = data.provider || currentProvider;
-                console.log('🤖 Провайдер:', data.message);
-              } else if (data.type === 'complete') {
-                // Завершение стриминга
-                currentProvider = data.provider || currentProvider;
-                currentCategory = data.category || 'general';
-                
-                // Убираем индикатор печати
-                messageText.innerHTML = streamedText;
-                
-                // Добавляем метаданные
-                if (currentProvider) {
-                  const metadataDiv = document.createElement('div');
-                  metadataDiv.className = 'message-metadata';
-                  
-                  const providerBadge = document.createElement('span');
-                  providerBadge.className = 'provider-badge';
-                  providerBadge.textContent = currentProvider;
-                  metadataDiv.appendChild(providerBadge);
-                  
-                  if (currentCategory && currentCategory !== 'general') {
-                    const categoryBadge = document.createElement('span');
-                    categoryBadge.className = 'category-badge';
-                    categoryBadge.textContent = currentCategory;
-                    metadataDiv.appendChild(categoryBadge);
-                  }
-                  
-                  aiMessageDiv.appendChild(metadataDiv);
-                }
-                
-                scrollToBottom();
-                eventSource.close();
-                
-                // Сохраняем ответ AI в историю
-                saveMessageToHistory(streamedText, 'ai', currentProvider, currentCategory)
-                  .then(() => console.log('✅ Ответ AI сохранен'))
-                  .catch(error => console.error('❌ Ошибка сохранения ответа AI:', error));
-              } else if (data.type === 'error') {
-                // Обработка ошибки
-                messageText.innerHTML = `❌ Ошибка: ${data.message}`;
-                eventSource.close();
-              }
-            } catch (parseError) {
-              console.error('Ошибка парсинга данных стриминга:', parseError);
-            }
-          };
-          
-          eventSource.onerror = function(error) {
-            console.error('Ошибка стриминга:', error);
-            messageText.innerHTML = streamedText || '❌ Ошибка получения ответа';
-            eventSource.close();
-          };
+          console.log('✅ Получен ответ от AI:', data);
           
           // Если есть изображение, сбрасываем его после отправки
           if (uploadedImageUrl) {
             resetImageUpload();
+          }
+          
+          let aiResponse = '';
+          let provider = '';
+          let category = '';
+          
+          if (data.success) {
+            aiResponse = data.response || data.text || 'Ошибка получения ответа';
+            provider = data.provider || 'AI';
+            category = data.category || 'general';
+          } else {
+            aiResponse = data.error || 'Произошла ошибка при обработке запроса';
+            provider = 'Ошибка';
           }
           
           // Показываем полученный ответ
