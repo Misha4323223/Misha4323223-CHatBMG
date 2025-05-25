@@ -1621,18 +1621,11 @@
               const data = JSON.parse(event.data);
               
               if (data.type === 'chunk' && data.content) {
-                // Простая анимация появления текста частями
+                // Добавляем новый текст
                 streamedText += data.content;
                 
-                // Оборачиваем новый контент в анимированный span
-                const lastChars = data.content.split('').map(char => {
-                  if (char === ' ') return ' ';
-                  if (char === '\n') return '<br>';
-                  return `<span class="streaming-char">${char}</span>`;
-                }).join('');
-                
-                // Обновляем текст с курсором
-                messageText.innerHTML = streamedText.replace(data.content, lastChars) + '<span class="typing-indicator"></span>';
+                // Простое отображение с курсором
+                messageText.innerHTML = streamedText + '<span class="typing-indicator"></span>';
                 scrollToBottom();
               } else if (data.type === 'info') {
                 currentProvider = data.provider || currentProvider;
