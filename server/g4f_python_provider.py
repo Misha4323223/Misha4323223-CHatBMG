@@ -196,8 +196,33 @@ def get_chat_response(message, specific_provider=None, use_stream=False):
     
     # Для технических вопросов сначала пробуем группу technical
     if is_tech_question and not specific_provider:
-        print(f"🔍 Обнаружен технический вопрос, пробуем Phind...")
+        print(f"🔍 Обнаружен технический вопрос, пробуем technical группу...")
         result = try_provider_group("technical")
+        if result:
+            return result
+    
+    # Определяем творческие вопросы
+    is_creative_question = any(keyword in message.lower() for keyword in [
+        "стих", "рассказ", "история", "сказка", "поэзия", "творчество", "креатив",
+        "poem", "story", "creative", "write", "писать", "сочинить", "придумать"
+    ])
+    
+    # Для творческих вопросов используем creative группу
+    if is_creative_question and not specific_provider:
+        print(f"🎨 Обнаружен творческий вопрос, пробуем creative группу...")
+        result = try_provider_group("creative")
+        if result:
+            return result
+    
+    # Для поисковых запросов используем search группу
+    is_search_question = any(keyword in message.lower() for keyword in [
+        "найди", "поиск", "где", "что такое", "кто такой", "информация", "данные",
+        "find", "search", "what is", "who is", "информацию", "расскажи о"
+    ])
+    
+    if is_search_question and not specific_provider:
+        print(f"🔍 Обнаружен поисковый запрос, пробуем search группу...")
+        result = try_provider_group("search")
         if result:
             return result
     
