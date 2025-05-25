@@ -605,12 +605,16 @@
     }
     
     .message p {
-      margin: 0;
-      padding: 0;
-      font-size: 0.95rem;
-      line-height: 1.5;
-      word-wrap: break-word;
-      white-space: pre-wrap;
+      margin: 0 !important;
+      padding: 0 !important;
+      font-size: 0.95rem !important;
+      line-height: 1.5 !important;
+      word-wrap: break-word !important;
+      white-space: pre-wrap !important;
+      color: inherit !important;
+      display: block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
     }
     
     .message-metadata {
@@ -1641,11 +1645,17 @@
       
       // Функция для добавления сообщения в чат
       function addMessage(text, isUser, metadata = {}) {
+        console.log(`Добавляем сообщение: "${text}" от ${isUser ? 'пользователя' : 'AI'}`);
+        
         const messageDiv = document.createElement('div');
         messageDiv.className = `message ${isUser ? 'user' : 'ai'}`;
         
         const messageText = document.createElement('p');
         messageText.textContent = text;
+        messageText.innerHTML = text; // Дублируем для надежности
+        messageText.style.color = isUser ? '#ffffff' : '#ffffff';
+        messageText.style.fontSize = '0.95rem';
+        messageText.style.fontWeight = '400';
         messageDiv.appendChild(messageText);
         
         // Если есть метаданные и это сообщение от AI, добавляем их
