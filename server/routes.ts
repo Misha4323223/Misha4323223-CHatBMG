@@ -1263,13 +1263,17 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
       
       // Исправляем вызов функции
       let response;
+      console.log('🔍 smartRouter properties:', Object.keys(smartRouter));
+      
       if (typeof smartRouter.getSmartResponse === 'function') {
         response = await smartRouter.getSmartResponse(message as string, {});
-      } else if (typeof smartRouter === 'function') {
-        response = await smartRouter(message as string, {});
+      } else if (typeof smartRouter.getResponse === 'function') {
+        response = await smartRouter.getResponse(message as string, {});
       } else {
-        console.error('❌ getSmartResponse не найден в smartRouter');
-        throw new Error('Функция getSmartResponse не найдена');
+        // Используем fallback - прямой вызов через direct-ai-provider
+        const directAi = require('./direct-ai-provider');
+        response = await directAi.getChatResponse(message as string, {});
+        console.log('🔄 Используем fallback direct-ai-provider');
       }
       
       if (response.success) {
