@@ -394,8 +394,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Сохранение сообщения с автоматическим AI ответом (старый путь)
   app.post('/api/chat/messages', async (req, res) => {
+    console.log('🚨 СТАРАЯ СТРАНИЦА ИСПОЛЬЗУЕТ /api/chat/messages');
+    console.log('📝 Данные запроса:', req.body);
     try {
       const messageData = req.body;
+      console.log('💾 Сохраняем сообщение через старый путь:', messageData);
       const message = await chatHistory.saveMessage(messageData);
       
       // Если это сообщение от пользователя, получаем ответ AI
