@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BOOOMERANGS AI Chat - Бесплатный доступ к 172 AI провайдерам</title>
-    <meta name="description" content="Бесплатная платформа для общения с AI через 172 провайдера, включая Qwen 2.5 Max, Claude, Gemini и другие без API ключей">
+    <title>BOOOMERANGS AI Chat</title>
     <style>
         * {
             margin: 0;
@@ -14,112 +13,65 @@
         
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #000;
             min-height: 100vh;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
             color: white;
         }
         
-        .container {
+        .logo-container {
+            margin-bottom: 3rem;
             text-align: center;
-            padding: 2rem;
-            max-width: 600px;
         }
         
-        .logo {
-            font-size: 3rem;
-            font-weight: bold;
-            margin-bottom: 1rem;
-            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        
-        .subtitle {
-            font-size: 1.2rem;
+        .logo-image {
+            max-width: 400px;
+            width: 100%;
+            height: auto;
             margin-bottom: 2rem;
-            opacity: 0.9;
-        }
-        
-        .features {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-        
-        .feature {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 1rem;
-            border-radius: 10px;
-            backdrop-filter: blur(10px);
-        }
-        
-        .feature h3 {
-            margin-bottom: 0.5rem;
-            color: #4ecdc4;
         }
         
         .chat-button {
             display: inline-block;
             background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
             color: white;
-            padding: 15px 30px;
+            padding: 20px 40px;
             text-decoration: none;
-            border-radius: 25px;
+            border-radius: 30px;
             font-weight: bold;
-            font-size: 1.1rem;
-            transition: transform 0.3s ease;
-            margin: 10px;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
         }
         
         .chat-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(255, 107, 107, 0.4);
+            background: linear-gradient(45deg, #ff5252, #26a69a);
         }
         
-        .status {
-            margin-top: 2rem;
-            padding: 1rem;
-            background: rgba(76, 175, 80, 0.1);
-            border-radius: 10px;
-            border-left: 4px solid #4caf50;
+        @media (max-width: 768px) {
+            .logo-image {
+                max-width: 300px;
+            }
+            
+            .chat-button {
+                padding: 15px 30px;
+                font-size: 1.1rem;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="logo">🪃 BOOOMERANGS</div>
-        <div class="subtitle">
-            Бесплатный доступ к 172 AI провайдерам<br>
-            Qwen 2.5 Max • Claude • Gemini • и многие другие
-        </div>
-        
-        <div class="features">
-            <div class="feature">
-                <h3>🤖 172 Провайдера</h3>
-                <p>Доступ к лучшим AI моделям без ограничений</p>
-            </div>
-            <div class="feature">
-                <h3>🚀 Smart Router</h3>
-                <p>Автоматический выбор лучшего провайдера для каждого запроса</p>
-            </div>
-            <div class="feature">
-                <h3>💰 Бесплатно</h3>
-                <p>Никаких API ключей и платных подписок</p>
-            </div>
-        </div>
-        
-        <a href="/booomerangs-smart-chat.html" class="chat-button">
-            🚀 Начать общение с AI
-        </a>
-        
-        <div class="status">
-            ✅ Система активна • Qwen 2.5 Max онлайн • Smart Router работает
-        </div>
+    <div class="logo-container">
+        <img src="/attached_assets/image.jpg" alt="BOOOMERANGS Logo" class="logo-image">
     </div>
+    
+    <a href="/booomerangs-smart-chat.html" class="chat-button">
+        🚀 Начать общение с AI
+    </a>
 </body>
 </html>
