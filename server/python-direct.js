@@ -30,8 +30,8 @@ async function getPythonG4FResponse(message, provider = 'Qwen_Qwen_2_5_Max') {
       return {
         success: true,
         response: response.data.response,
-        provider: response.data.provider || 'Python-G4F',
-        model: response.data.model || provider,
+        provider: response.data.provider || 'G4F-Auto',
+        model: response.data.model || 'gpt-3.5-turbo',
         elapsed: response.data.elapsed || 0
       };
     }
