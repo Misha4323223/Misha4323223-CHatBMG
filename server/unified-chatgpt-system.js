@@ -135,49 +135,74 @@ class UnifiedChatGPTSystem {
     }
 
     /**
-     * EdgeGPT с полной обработкой авторизации
+     * EdgeGPT через наш работающий Python G4F сервер
      */
     async tryEdgeGPT(message) {
-        console.log('🔑 Пробую EdgeGPT с вашими учетными данными...');
+        console.log('🔑 Пробую EdgeGPT через Python G4F сервер...');
         
-        return new Promise((resolve) => {
-            const pythonScript = `
-import asyncio
-import sys
-import os
-from EdgeGPT import Chatbot, ConversationStyle
+        try {
+            // Используем наш работающий Python G4F сервер для EdgeGPT
+            const axios = (await import('axios')).default;
+            
+            // Сначала пробуем прямое подключение к EdgeGPT
+            console.log('🚀 Подключаюсь к EdgeGPT через Python...');
+            
+            const edgeResponse = await axios.post('http://localhost:5001/python/chat', {
+                message: message,
+                provider: 'EdgeGPT',
+                email: this.email,
+                password: this.password
+            }, {
+                timeout: 25000,
+                headers: { 'Content-Type': 'application/json' }
+            });
 
-async def chatgpt_edgegpt():
-    try:
-        print("🚀 EdgeGPT: Создание бота...")
-        bot = await Chatbot.create()
-        
-        message = "${message.replace(/"/g, '\\"')}"
-        print(f"📨 EdgeGPT: Отправка сообщения...")
-        
-        response = await bot.ask(message, conversation_style=ConversationStyle.balanced)
-        
-        if response and 'item' in response:
-            messages = response['item']['messages']
-            for msg in messages:
-                if msg.get('author') == 'bot':
-                    if 'text' in msg and msg['text']:
-                        print("SUCCESS:" + msg['text'])
-                        break
-                    elif 'adaptiveCards' in msg and msg['adaptiveCards']:
-                        if msg['adaptiveCards'][0]['body']:
-                            text = msg['adaptiveCards'][0]['body'][0].get('text', '')
-                            if text:
-                                print("SUCCESS:" + text)
-                                break
-        
-        await bot.close()
-        
-    except Exception as e:
-        print(f"ERROR:{e}")
+            if (edgeResponse.data && edgeResponse.data.response) {
+                console.log('✅ EdgeGPT дал реальный ответ!');
+                return {
+                    success: true,
+                    response: edgeResponse.data.response,
+                    provider: 'EdgeGPT-Real',
+                    model: 'ChatGPT-EdgeGPT',
+                    account: this.email
+                };
+            }
+            
+            // Если EdgeGPT не сработал, пробуем ChatGPT провайдеры через G4F
+            console.log('🔄 EdgeGPT недоступен, пробую ChatGPT провайдеры...');
+            
+            const chatgptProviders = ['ChatGpt', 'OpenaiChat', 'ChatgptFree', 'GPTalk'];
+            
+            for (const provider of chatgptProviders) {
+                try {
+                    console.log(`🎯 Пробую провайдер: ${provider}`);
+                    
+                    const response = await axios.post('http://localhost:5001/python/chat', {
+                        message: message,
+                        provider: provider
+                    }, {
+                        timeout: 15000,
+                        headers: { 'Content-Type': 'application/json' }
+                    });
 
-asyncio.run(chatgpt_edgegpt())
-`;
+                    if (response.data && response.data.response && response.data.response.length > 50) {
+                        console.log(`✅ ${provider} дал качественный ответ!`);
+                        return {
+                            success: true,
+                            response: response.data.response,
+                            provider: `ChatGPT-${provider}`,
+                            model: 'ChatGPT-G4F',
+                            account: this.email
+                        };
+                    }
+                } catch (providerError) {
+                    console.log(`⚠️ ${provider} недоступен`);
+                }
+            }
+            
+        } catch (error) {
+            console.log('❌ Ошибка EdgeGPT:', error.message);
+        }
 
             const process = spawn('python3', ['-c', pythonScript], {
                 stdio: ['pipe', 'pipe', 'pipe']
