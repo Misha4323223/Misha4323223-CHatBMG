@@ -459,8 +459,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('🤖 Получаем ответ AI для сообщения:', messageData.content);
         try {
           const smartRouter = require('./smart-router');
+          const conversationMemory = require('./conversation-memory');
+          
+          // Получаем контекст разговора с анализом намерений
+          const userId = `session_${messageData.sessionId || 'default'}`;
+          const contextInfo = conversationMemory.getMessageContext(userId, messageData.content);
+          
+          console.log('🧠 Анализ контекста:', {
+            hasIntent: !!contextInfo.intent,
+            isSearchQuery: contextInfo.intent?.isSearchQuery,
+            location: contextInfo.intent?.location,
+            contextLength: contextInfo.context?.length || 0
+          });
+          
           const aiResponse = await smartRouter.getChatResponse(messageData.content, {
-            userId: `session_${messageData.sessionId || 'default'}`
+            userId: userId,
+            context: contextInfo.context,
+            preferredProvider: contextInfo.currentProvider
           });
           
           console.log('🎯 AI ответил:', aiResponse);

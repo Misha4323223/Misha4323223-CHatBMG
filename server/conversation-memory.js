@@ -161,12 +161,23 @@ function getMessageContext(userId, newMessage) {
   // Добавляем новое сообщение пользователя
   conversation.addMessage(newMessage, 'user');
   
+  // Анализируем намерения для понимания контекста
+  const intent = conversation.analyzeIntent();
+  
+  let enhancedContext = conversation.getContext();
+  
+  // Если обнаружен запрос на поиск с указанием локации
+  if (intent && intent.isSearchQuery && intent.location) {
+    enhancedContext = `ВАЖНО: ${intent.context}Пользователь НЕ спрашивает про город в общем, а именно ИЩЕТ МАГАЗИНЫ в городе ${intent.location}. Предоставь конкретные адреса магазинов, торговых центров и мест для покупок в этом городе. Не рассказывай про город, а дай практическую информацию где можно что-то купить.\n\n${enhancedContext}`;
+  }
+  
   return {
-    context: conversation.getContext(),
+    context: enhancedContext,
     shouldContinueWithProvider: conversation.shouldContinueWithProvider(),
     currentProvider: conversation.currentProvider,
     currentModel: conversation.currentModel,
-    messageHistory: conversation.messages
+    messageHistory: conversation.messages,
+    intent: intent
   };
 }
 
