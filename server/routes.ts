@@ -1281,8 +1281,17 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
         res.write(`data: ${JSON.stringify({ finished: true, provider: pythonResponse.provider })}\n\n`);
       } else {
         // Fallback ответ
+        console.log('⚠️ [STREAMING] Используем fallback ответ');
         const fallbackText = "Извините, произошла ошибка при генерации ответа.";
-        res.write(`data: ${JSON.stringify({ text: fallbackText })}\n\n`);
+        
+        // Отправляем fallback ответ по частям
+        const words = fallbackText.split(' ');
+        for (let i = 0; i < words.length; i++) {
+          const chunk = i === 0 ? words[i] : ' ' + words[i];
+          res.write(`data: ${JSON.stringify({ text: chunk })}\n\n`);
+          await new Promise(resolve => setTimeout(resolve, 50));
+        }
+        
         res.write(`data: ${JSON.stringify({ finished: true, provider: "Fallback" })}\n\n`);
       }
       
