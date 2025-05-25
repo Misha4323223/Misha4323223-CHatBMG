@@ -366,6 +366,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Логирование всех POST запросов для отладки
+  app.use((req, res, next) => {
+    if (req.method === 'POST') {
+      console.log(`🌐 POST запрос получен: ${req.url}`);
+      console.log(`🌐 Данные запроса:`, req.body);
+    }
+    next();
+  });
+
   // Сохранение нового сообщения в сессию
   app.post('/api/chat/sessions/:sessionId/messages', async (req, res) => {
     try {
