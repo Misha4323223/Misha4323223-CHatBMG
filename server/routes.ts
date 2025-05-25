@@ -445,6 +445,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // API для проверки состояния провайдеров
   const checkProvidersRoutes = require('./check-providers');
   app.use('/api/providers', checkProvidersRoutes);
+
+  // API для тестирования скорости провайдеров
+  const providerSpeedTest = require('./provider-speed-test');
+  
+  app.get('/api/test-speed', async (req, res) => {
+    try {
+      console.log('🚀 Запуск тестирования скорости провайдеров...');
+      const results = await providerSpeedTest.testAllProviders();
+      
+      res.json({
+        success: true,
+        results: results,
+        summary: {
+          total: results.length,
+          working: results.filter(r => r.status === 'success').length,
+          failed: results.filter(r => r.status !== 'success').length
+        }
+      });
+    } catch (error) {
+      console.error('❌ Ошибка тестирования провайдеров:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Ошибка при тестировании провайдеров'
+      });
+    }
+  });
   
   // API для Ollama - локальный AI провайдер
   const ollamaProvider = require('./ollama-provider');
