@@ -12,7 +12,7 @@ class ChatGPTWebScraper {
     constructor() {
         this.baseUrl = 'https://chat.openai.com';
         this.apiUrl = 'https://chat.openai.com/backend-api';
-        this.sessionToken = null;
+        this.sessionToken = process.env.OPENAI_SESSION_TOKEN || null;
         this.accessToken = null;
         this.conversationId = null;
         this.parentMessageId = null;
@@ -20,6 +20,7 @@ class ChatGPTWebScraper {
         this.password = process.env.CHATGPT_PASSWORD;
         this.sessionFile = path.join(process.cwd(), 'chatgpt_session.json');
         
+        console.log('🔑 Session token загружен:', this.sessionToken ? 'ДА' : 'НЕТ');
         this.loadSession();
     }
 
