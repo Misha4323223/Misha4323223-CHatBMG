@@ -38,6 +38,13 @@ function Router() {
     }
   }, [location, setLocation]);
 
+  // Перенаправляем на рабочий чат со старых страниц
+  useEffect(() => {
+    if (location === "/chat" || location === "/ai-chat") {
+      setLocation("/");
+    }
+  }, [location, setLocation]);
+
   // Определяем, нужно ли показывать навигацию
   const showNavigation = location !== "/" && location !== "/new-auth";
 
