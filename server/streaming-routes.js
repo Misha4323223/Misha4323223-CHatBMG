@@ -32,7 +32,8 @@ router.get('/chat', async (req, res) => {
       });
     }
     
-    console.log(`Запрос к стриминг API: ${message.substring(0, 50)}${message.length > 50 ? '...' : ''}`);
+    console.log(`📡 Запрос к стриминг API: ${message.substring(0, 50)}${message.length > 50 ? '...' : ''}`);
+    console.log('🔧 Настройка SSE заголовков...');
     
     // Настраиваем заголовки для SSE
     res.writeHead(200, {
@@ -63,6 +64,7 @@ router.get('/chat', async (req, res) => {
         const sendNextChunk = () => {
           if (currentIndex < fullText.length) {
             const chunk = fullText.slice(currentIndex, currentIndex + chunkSize);
+            console.log(`📤 Отправка chunk [${currentIndex}-${currentIndex + chunkSize}]: "${chunk}"`);
             
             sendEvent('chunk', { 
               content: chunk,
@@ -72,6 +74,7 @@ router.get('/chat', async (req, res) => {
             currentIndex += chunkSize;
             setTimeout(sendNextChunk, 50); // Задержка между chunks
           } else {
+            console.log('✅ Стриминг завершен, отправка complete события');
             // Завершение стриминга
             sendEvent('complete', {
               provider: response.provider,

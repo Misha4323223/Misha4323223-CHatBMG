@@ -1617,14 +1617,16 @@
           
           eventSource.onmessage = function(event) {
             streamingWorked = true;
+            console.log('📡 Получены данные стриминга:', event.data);
+            
             try {
               const data = JSON.parse(event.data);
+              console.log('🔍 Обработка данных:', data);
               
               if (data.type === 'chunk' && data.content) {
-                // Добавляем новый текст
                 streamedText += data.content;
+                console.log('📝 Добавлен chunk:', data.content);
                 
-                // Простое отображение с курсором
                 messageText.innerHTML = streamedText + '<span class="typing-indicator"></span>';
                 scrollToBottom();
               } else if (data.type === 'info') {
@@ -1633,6 +1635,7 @@
               } else if (data.type === 'complete') {
                 currentProvider = data.provider || currentProvider;
                 currentCategory = data.category || 'general';
+                console.log('✅ Стриминг завершен, провайдер:', currentProvider);
                 
                 messageText.innerHTML = streamedText;
                 
@@ -1663,7 +1666,7 @@
                   .catch(error => console.error('❌ Ошибка сохранения ответа AI:', error));
               }
             } catch (parseError) {
-              console.error('Ошибка парсинга данных стриминга:', parseError);
+              console.error('❌ Ошибка парсинга данных стриминга:', parseError, 'Данные:', event.data);
             }
           };
           
