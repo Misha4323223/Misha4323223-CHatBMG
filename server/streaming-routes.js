@@ -15,13 +15,14 @@ const STREAMING_PROVIDERS = [
 ];
 
 // API endpoint для стриминга через SSE (Server-Sent Events)
-router.post('/chat', (req, res) => {
+router.get('/chat', async (req, res) => {
   try {
     const { 
       message, 
-      provider = 'Qwen_Max', // По умолчанию используем Qwen_Max, который хорошо поддерживает стриминг
+      provider = 'auto', // Автоматический выбор провайдера
+      imageUrl,
       timeout = 30000 // 30 секунд таймаут по умолчанию
-    } = req.body;
+    } = req.query;
     
     // Проверяем, что сообщение присутствует
     if (!message) {
@@ -40,35 +41,57 @@ router.post('/chat', (req, res) => {
       'Connection': 'keep-alive'
     });
     
-    // Получаем демо-ответ на случай ошибки
-    const demoResponse = getDemoResponse(message);
-    
     // Функция для отправки SSE событий
-    const sendEvent = (event, data) => {
-      res.write(`event: ${event}\n`);
-      res.write(`data: ${JSON.stringify(data)}\n\n`);
+    const sendEvent = (type, data) => {
+      res.write(`data: ${JSON.stringify({ type, ...data })}\n\n`);
     };
     
-    // Проверяем, поддерживает ли выбранный провайдер стриминг
-    const supportsStreaming = STREAMING_PROVIDERS.includes(provider);
-    if (!supportsStreaming) {
-      console.log(`Провайдер ${provider} не поддерживает стриминг, переключаемся на Qwen_Max`);
-      sendEvent('info', { 
-        message: `Провайдер ${provider} не поддерживает стриминг, переключаемся на Qwen_Max`,
-        provider: 'BOOOMERANGS'
-      });
+    // Используем умную маршрутизацию для получения ответа
+    const smartRouter = require('./smart-router');
+    
+    try {
+      // Отправляем запрос через умную маршрутизацию
+      const response = await smartRouter.getSmartResponse(message, { imageUrl });
+      
+      if (response.success) {
+        const fullText = response.response;
+        
+        // Имитируем стриминг, отправляя текст по частям
+        const chunkSize = 3; // Символов в каждом chunk
+        let currentIndex = 0;
+        
+        const sendNextChunk = () => {
+          if (currentIndex < fullText.length) {
+            const chunk = fullText.slice(currentIndex, currentIndex + chunkSize);
+            
+            sendEvent('chunk', { 
+              content: chunk,
+              provider: response.provider 
+            });
+            
+            currentIndex += chunkSize;
+            setTimeout(sendNextChunk, 50); // Задержка между chunks
+          } else {
+            // Завершение стриминга
+            sendEvent('complete', {
+              provider: response.provider,
+              category: response.category || 'general'
+            });
+            res.end();
+          }
+        };
+        
+        // Начинаем отправку chunks
+        sendNextChunk();
+        
+      } else {
+        sendEvent('error', { message: 'Ошибка получения ответа от AI' });
+        res.end();
+      }
+    } catch (error) {
+      sendEvent('error', { message: 'Ошибка обработки запроса' });
+      res.end();
     }
-    
-    // Используем провайдер, который поддерживает стриминг
-    const actualProvider = supportsStreaming ? provider : 'Qwen_Max';
-    
-    // Запускаем Python скрипт с включенным стримингом
-    const pythonProcess = spawn('python', [
-      'server/g4f_python_provider.py',
-      message,
-      actualProvider,
-      'stream' // Ключевой параметр для активации стриминга
-    ]);
     
     // Создаем флаг для отслеживания завершения
     let isCompleted = false;
