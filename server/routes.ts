@@ -42,6 +42,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create HTTP server
   const httpServer = createServer(app);
   
+  // Логирование всех POST запросов для отладки (ДОЛЖНО БЫТЬ ПЕРВЫМ!)
+  app.use((req, res, next) => {
+    if (req.method === 'POST') {
+      console.log(`🌐 POST запрос получен: ${req.url}`);
+      console.log(`🌐 Данные запроса:`, req.body);
+    }
+    next();
+  });
+  
   // Setup WebSocket server
   setupWebSocket(httpServer, storage);
   
@@ -364,15 +373,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         error: 'Не удалось получить сообщения' 
       });
     }
-  });
-
-  // Логирование всех POST запросов для отладки
-  app.use((req, res, next) => {
-    if (req.method === 'POST') {
-      console.log(`🌐 POST запрос получен: ${req.url}`);
-      console.log(`🌐 Данные запроса:`, req.body);
-    }
-    next();
   });
 
   // Сохранение нового сообщения в сессию
