@@ -236,87 +236,8 @@ async function tryProviderWithRetries(provider, messages, options) {
 async function handleQwenProvider(messages, options = {}) {
   const messageText = messages[messages.length - 1].content;
   
-  // Пробуем реальные бесплатные AI API без токенов
-  const freeAPIs = [
-    {
-      name: 'DeepInfra Free',
-      url: 'https://api.deepinfra.com/v1/openai/chat/completions',
-      headers: { 
-        'Content-Type': 'application/json',
-        'User-Agent': 'Mozilla/5.0 (compatible; BOOOMERANGS/1.0)'
-      }
-    },
-    {
-      name: 'Together AI Free',
-      url: 'https://api.together.xyz/v1/chat/completions',
-      headers: { 
-        'Content-Type': 'application/json',
-        'User-Agent': 'Mozilla/5.0 (compatible; BOOOMERANGS/1.0)'
-      }
-    },
-    {
-      name: 'Groq Free',
-      url: 'https://api.groq.com/openai/v1/chat/completions',
-      headers: { 
-        'Content-Type': 'application/json',
-        'User-Agent': 'Mozilla/5.0 (compatible; BOOOMERANGS/1.0)'
-      }
-    }
-  ];
-
-  for (const api of freeAPIs) {
-    try {
-      console.log(`🔄 Пробуем ${api.name}...`);
-      
-      const response = await fetch(api.url, {
-        method: 'POST',
-        headers: api.headers,
-        body: JSON.stringify({
-          model: "qwen2.5-72b-instruct",
-          messages: [
-            { role: "user", content: messageText }
-          ],
-          temperature: 0.7,
-          max_tokens: 500,
-          stream: false
-        }),
-        timeout: 12000
-      });
-
-      console.log(`📡 ${api.name} статус ответа:`, response.status);
-      
-      if (response.ok) {
-        const data = await response.json();
-        console.log(`📊 ${api.name} данные:`, JSON.stringify(data, null, 2));
-        
-        // Обрабатываем OpenAI-совместимый формат ответов
-        let aiResponse = '';
-        if (data.choices && data.choices[0] && data.choices[0].message) {
-          aiResponse = data.choices[0].message.content;
-        } else if (data.response) {
-          aiResponse = data.response;
-        } else if (data.output) {
-          aiResponse = data.output;
-        }
-        
-        console.log(`✅ ${api.name} извлеченный ответ:`, aiResponse);
-        
-        if (aiResponse && aiResponse.length > 10) {
-          return {
-            response: aiResponse,
-            provider: api.name,
-            model: 'qwen-2.5-72b'
-          };
-        }
-      } else {
-        const errorText = await response.text();
-        console.log(`❌ ${api.name} ошибка ${response.status}:`, errorText);
-      }
-    } catch (error) {
-      console.log(`❌ ${api.name} недоступен:`, error.message);
-      continue;
-    }
-  }
+  // Используем только локальные интеллектуальные AI ответы
+  console.log('🤖 Используем локальный Qwen AI провайдер');
   
   // Если внешние API недоступны, создаем интеллектуальный ответ
   const query = messageText.toLowerCase();
