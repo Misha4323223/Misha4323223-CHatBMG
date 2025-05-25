@@ -91,25 +91,53 @@ async function updateSessionTitle(sessionId, title) {
 async function deleteSession(sessionId) {
   console.log(`🗑️ Начинаем удаление сессии ${sessionId} из БД`);
   
-  // Сначала удаляем все сообщения
-  const deletedMessages = await db
-    .delete(aiMessages)
-    .where(eq(aiMessages.sessionId, sessionId))
-    .returning();
-  
-  console.log(`🗑️ Удалено ${deletedMessages.length} сообщений из сессии ${sessionId}`);
-  
-  // Затем удаляем сессию
-  const deletedSession = await db
-    .delete(chatSessions)
-    .where(eq(chatSessions.id, sessionId))
-    .returning();
-  
-  if (deletedSession.length > 0) {
-    console.log(`✅ Сессия ${sessionId} успешно удалена из БД`);
-    return true;
-  } else {
-    console.log(`⚠️ Сессия ${sessionId} не найдена в БД`);
+  try {
+    // Сначала проверяем, существует ли сессия
+    const existingSessions = await db
+      .select()
+      .from(chatSessions)
+      .where(eq(chatSessions.id, sessionId));
+    
+    console.log(`🔍 Найдено сессий с ID ${sessionId}:`, existingSessions.length);
+    
+    if (existingSessions.length === 0) {
+      console.log(`⚠️ Сессия ${sessionId} уже не существует в БД`);
+      return false;
+    }
+    
+    // Проверяем сколько сообщений в сессии
+    const existingMessages = await db
+      .select()
+      .from(aiMessages)
+      .where(eq(aiMessages.sessionId, sessionId));
+    
+    console.log(`🔍 Найдено ${existingMessages.length} сообщений в сессии ${sessionId}`);
+    
+    // Удаляем все сообщения
+    const deletedMessages = await db
+      .delete(aiMessages)
+      .where(eq(aiMessages.sessionId, sessionId))
+      .returning();
+    
+    console.log(`🗑️ Удалено ${deletedMessages.length} сообщений из сессии ${sessionId}`);
+    
+    // Затем удаляем сессию
+    const deletedSession = await db
+      .delete(chatSessions)
+      .where(eq(chatSessions.id, sessionId))
+      .returning();
+    
+    console.log(`🗑️ Результат удаления сессии:`, deletedSession);
+    
+    if (deletedSession.length > 0) {
+      console.log(`✅ Сессия ${sessionId} успешно удалена из БД`);
+      return true;
+    } else {
+      console.log(`❌ Не удалось удалить сессию ${sessionId} из БД`);
+      return false;
+    }
+  } catch (error) {
+    console.error(`❌ Ошибка при удалении сессии ${sessionId}:`, error);
     return false;
   }
 }
