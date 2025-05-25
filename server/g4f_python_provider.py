@@ -417,11 +417,10 @@ def chat_stream():
                     # Если стриминг не сработал, возвращаем обычный ответ
                     if "error" in result:
                         # Если есть ошибка, возвращаем демо-ответ
-                        demo_response = get_demo_response(message)
                         error_data = {
                             'error': result.get('error'),
-                            'text': demo_response,
-                            'provider': 'BOOOMERANGS-Demo'
+                            'text': 'Провайдер недоступен - живые ответы отключены',
+                            'provider': 'Error-Provider'
                         }
                         yield f"data: {json.dumps(error_data)}\n\n"
                         
@@ -461,8 +460,7 @@ def chat_stream():
                 yield f"data: {json.dumps(error_data)}\n\n"
                 
                 # Отправляем демо-ответ
-                demo_response = get_demo_response(message)
-                text_data = {'text': demo_response, 'provider': 'BOOOMERANGS-Error'}
+                text_data = {'text': 'Провайдер недоступен - только живые ответы', 'provider': 'Error-Provider'}
                 yield f"data: {json.dumps(text_data)}\n\n"
                 
                 # Имитируем завершение
