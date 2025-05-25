@@ -1174,12 +1174,14 @@
                                 const parsed = JSON.parse(data);
                                 console.log('🌊 Парсинг успешен:', parsed);
                                 
-                                if (currentEvent === 'chunk' && parsed.chunk) {
+                                if (currentEvent === 'chunk' && parsed.text) {
                                     // Добавляем новый чанк к существующему тексту
-                                    aiMessage += parsed.chunk;
+                                    aiMessage += parsed.text;
                                     if (aiMessageElement) {
                                         aiMessageElement.innerHTML = `🤖 AI: ${aiMessage}`;
-                                        console.log('🌊 Добавлен чанк:', parsed.chunk);
+                                        console.log('🌊 Добавлен чанк:', parsed.text);
+                                        // Прокрутка к последнему сообщению
+                                        messagesArea.scrollTop = messagesArea.scrollHeight;
                                     }
                                 } else if (currentEvent === 'complete' && parsed.text) {
                                     // Устанавливаем финальный текст
@@ -1187,15 +1189,18 @@
                                     if (aiMessageElement) {
                                         aiMessageElement.innerHTML = `🤖 AI: ${aiMessage}`;
                                         console.log('🌊 Финальный текст установлен');
+                                        // Финальная прокрутка
+                                        messagesArea.scrollTop = messagesArea.scrollHeight;
                                     }
                                     console.log('🌊 Стриминг завершен успешно');
                                     return aiMessage;
-                                } else if (parsed.chunk) {
+                                } else if (parsed.text && !parsed.provider) {
                                     // Fallback для чанков без правильного события
-                                    aiMessage += parsed.chunk;
+                                    aiMessage += parsed.text;
                                     if (aiMessageElement) {
                                         aiMessageElement.innerHTML = `🤖 AI: ${aiMessage}`;
-                                        console.log('🌊 Fallback чанк:', parsed.chunk);
+                                        console.log('🌊 Fallback чанк:', parsed.text);
+                                        messagesArea.scrollTop = messagesArea.scrollHeight;
                                     }
                                 }
                             } catch (e) {
