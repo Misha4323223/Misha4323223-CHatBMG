@@ -1507,9 +1507,9 @@
         // Проверяем, есть ли текст или изображение для отправки
         if (!messageText && !uploadedImageUrl) return;
         
-        // Определяем тип операции и показываем соответствующий статус
+        // Определяем тип операции (без показа статуса)
         const operationType = detectOperationType(messageText);
-        showStatus(operationType.title, operationType.message);
+        // showStatus(operationType.title, operationType.message); // Отключено
         
         // Добавляем сообщение пользователя
         addMessage(messageText, true);
@@ -1587,8 +1587,8 @@
             chatMessages.removeChild(thinkingDiv);
           }
           
-          // Скрываем индикатор статуса
-          hideStatus();
+          // Скрываем индикатор статуса (отключено)
+          // hideStatus();
           
           // Показываем полученный ответ
           addMessage(aiResponse, false, { provider, category });
@@ -1611,8 +1611,8 @@
             chatMessages.removeChild(thinkingDiv);
           }
           
-          // Скрываем индикатор статуса
-          hideStatus();
+          // Скрываем индикатор статуса (отключено)
+          // hideStatus();
           
           // Показываем сообщение об ошибке
           addMessage('Произошла ошибка при отправке сообщения. Пожалуйста, попробуйте еще раз.', false, { provider: 'Ошибка', category: 'error' });
