@@ -1586,8 +1586,10 @@
         } catch (error) {
           console.error('Ошибка при отправке сообщения:', error);
           
-          // Удаляем "думающее" сообщение
-          chatMessages.removeChild(thinkingDiv);
+          // Безопасно удаляем "думающее" сообщение
+          if (thinkingDiv && thinkingDiv.parentNode) {
+            thinkingDiv.parentNode.removeChild(thinkingDiv);
+          }
           
           // Скрываем индикатор статуса
           hideStatus();
