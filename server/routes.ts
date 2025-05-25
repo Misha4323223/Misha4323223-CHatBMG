@@ -369,6 +369,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Сохранение нового сообщения в сессию
   app.post('/api/chat/sessions/:sessionId/messages', async (req, res) => {
+    console.log('🔥 МАРШРУТ ВЫЗВАН! POST /api/chat/sessions/:sessionId/messages');
+    console.log('🔥 Параметры URL:', req.params);
+    console.log('🔥 Body запроса:', req.body);
+    console.log('🔥 Headers:', req.headers);
+    
     try {
       const sessionId = parseInt(req.params.sessionId);
       const { content, sender, provider, category } = req.body;
