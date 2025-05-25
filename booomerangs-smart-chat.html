@@ -1605,41 +1605,6 @@
           if (uploadedImageUrl) {
             resetImageUpload();
           }
-          
-          let aiResponse = '';
-          let provider = '';
-          let category = '';
-          
-          if (data.success) {
-            aiResponse = data.response || 'Ошибка получения ответа';
-            provider = data.provider || 'Неизвестно';
-            category = data.category || 'general';
-          } else {
-            aiResponse = data.error || 'Произошла ошибка при обработке запроса';
-            provider = 'Ошибка';
-          }
-          
-          // Удаляем "думающее" сообщение безопасно
-          if (thinkingDiv && thinkingDiv.parentNode === chatMessages) {
-            chatMessages.removeChild(thinkingDiv);
-          }
-          
-          // Скрываем индикатор статуса
-          hideStatus();
-          
-          // Показываем полученный ответ
-          addMessage(aiResponse, false, { provider, category });
-          
-          // Сохраняем ответ AI в истории
-          try {
-            await saveMessageToHistory(aiResponse, 'ai', provider, category);
-            console.log(`✅ Ответ AI сохранен (${provider})`);
-            
-            // Показываем краткое уведомление об успешном сохранении
-            showTemporarySaveNotification();
-          } catch (error) {
-            console.error('❌ Ошибка сохранения ответа AI:', error);
-          }
         } catch (error) {
           console.error('Ошибка при отправке сообщения:', error);
           
