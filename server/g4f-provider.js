@@ -1,5 +1,5 @@
 // G4F провайдеры для бесплатного доступа к AI моделям
-const fetch = require('node-fetch').default; // Важно использовать .default для совместимости
+import fetch from 'node-fetch';
 
 // Список доступных провайдеров, отсортированных по стабильности
 const PROVIDERS = {
@@ -825,8 +825,19 @@ async function getChatResponse(message, options = {}) {
   return await getResponse(message, options);
 }
 
-// Экспорт функций и констант
-module.exports = {
+// Экспорт функций и констант для ES модулей
+export {
+  getResponse,
+  getChatResponse,
+  getProviders,
+  getModelForProvider,
+  checkProviderAvailability,
+  PROVIDERS,
+  PROVIDER_MODELS,
+  KEY_REQUIRED_PROVIDERS
+};
+
+export default {
   getResponse,
   getChatResponse,
   getProviders,

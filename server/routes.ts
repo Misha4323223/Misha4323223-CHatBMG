@@ -27,15 +27,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`💬 Получено сообщение: ${message?.substring(0, 50)}...`);
       
-      // Используем простой рабочий провайдер
-      console.log('🔄 [ОБЫЧНЫЙ ЧАТ] Используем простой AI провайдер...');
-      const { default: simpleProvider } = await import('./simple-ai-provider.js');
-      console.log('✅ [ОБЫЧНЫЙ ЧАТ] Простой провайдер загружен:', typeof simpleProvider);
+      // Используем настоящий G4F провайдер с AI моделями
+      console.log('🔄 [ОБЫЧНЫЙ ЧАТ] Используем G4F провайдер с настоящими AI...');
+      const { default: g4fProvider } = await import('./g4f-provider.js');
+      console.log('✅ [ОБЫЧНЫЙ ЧАТ] G4F провайдер загружен:', typeof g4fProvider);
       
       let response;
-      console.log('📤 [ОБЫЧНЫЙ ЧАТ] Отправляем сообщение:', message);
-      response = await simpleProvider.getChatResponse(message, { provider: 'auto' });
-      console.log('📨 [ОБЫЧНЫЙ ЧАТ] Получен ответ:', response ? 'есть ответ' : 'нет ответа');
+      console.log('📤 [ОБЫЧНЫЙ ЧАТ] Отправляем сообщение в G4F:', message);
+      response = await g4fProvider.getChatResponse(message, { provider: 'auto' });
+      console.log('📨 [ОБЫЧНЫЙ ЧАТ] Получен ответ от G4F:', response ? 'есть ответ' : 'нет ответа');
       console.log('📊 [ОБЫЧНЫЙ ЧАТ] Детали ответа:', JSON.stringify(response, null, 2));
       
       res.json(response);
@@ -71,17 +71,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         'Access-Control-Allow-Headers': 'Cache-Control'
       });
       
-      // Используем простой рабочий провайдер
-      console.log('🔄 Используем простой AI провайдер...');
-      const { default: simpleProvider } = await import('./simple-ai-provider.js');
-      console.log('✅ Простой провайдер загружен:', typeof simpleProvider);
+      // Используем настоящий G4F провайдер с AI моделями
+      console.log('🔄 [СТРИМИНГ] Используем G4F провайдер с настоящими AI...');
+      const { default: g4fProvider } = await import('./g4f-provider.js');
+      console.log('✅ [СТРИМИНГ] G4F провайдер загружен:', typeof g4fProvider);
       
       let response;
       try {
-        console.log('📤 Отправляем сообщение в простой провайдер:', message);
-        response = await simpleProvider.getChatResponse(message, { provider: 'auto' });
-        console.log('📨 Получен ответ от простого провайдера:', response ? 'есть ответ' : 'нет ответа');
-        console.log('📊 Детали ответа:', JSON.stringify(response, null, 2));
+        console.log('📤 [СТРИМИНГ] Отправляем сообщение в G4F:', message);
+        response = await g4fProvider.getChatResponse(message, { provider: 'auto' });
+        console.log('📨 [СТРИМИНГ] Получен ответ от G4F:', response ? 'есть ответ' : 'нет ответа');
+        console.log('📊 [СТРИМИНГ] Детали ответа:', JSON.stringify(response, null, 2));
       } catch (error) {
         console.error('❌ [СТРИМИНГ] Ошибка G4F провайдера:', error.message);
         console.error('❌ [СТРИМИНГ] Полная ошибка:', error);
