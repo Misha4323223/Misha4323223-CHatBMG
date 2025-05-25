@@ -154,9 +154,18 @@ def python_ai_chat():
         
         print(f"🤖 Обрабатываем запрос через {provider_name}: {message[:50]}...")
         
+        # Выбираем правильную модель для провайдера
+        model = "gpt-4o-mini"  # Универсальная модель для большинства провайдеров
+        if provider_name == "You":
+            model = "gpt-4o"
+        elif provider_name == "Anthropic":
+            model = "claude-3.5-sonnet"
+        elif provider_name == "Gemini":
+            model = "gemini-1-5-flash"
+        
         # Отправляем запрос к провайдеру
         response = g4f.ChatCompletion.create(
-            model="gpt-3.5-turbo",
+            model=model,
             messages=messages,
             provider=provider,
             timeout=30
