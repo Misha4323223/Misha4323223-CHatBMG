@@ -1353,6 +1353,11 @@
               const messagesData = await messagesResponse.json();
               
               if (messagesData && messagesData.success && messagesData.messages && Array.isArray(messagesData.messages) && messagesData.messages.length > 0) {
+                // Очищаем контейнер сообщений перед загрузкой истории
+                if (chatMessages) {
+                  chatMessages.innerHTML = '';
+                }
+                
                 // Восстанавливаем сообщения в интерфейсе
                 messagesData.messages.forEach(msg => {
                   addMessage(msg.content, msg.sender === 'user', {
@@ -1362,6 +1367,12 @@
                 });
                 
                 console.log(`Восстановлена история чата: ${messagesData.messages.length} сообщений`);
+                
+                // Скролл к последнему сообщению после загрузки
+                setTimeout(() => {
+                  scrollToBottom();
+                }, 100);
+                
                 return;
               }
             }
