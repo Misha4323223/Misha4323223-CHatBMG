@@ -4,6 +4,8 @@ const router = express.Router();
 const { spawn } = require('child_process');
 const { getDemoResponse } = require('./direct-ai-provider');
 
+console.log('🔥 STREAMING-ROUTES.JS ЗАГРУЖЕН!');
+
 // Провайдеры, которые поддерживают стриминг
 const STREAMING_PROVIDERS = [
   'Qwen_Max',
