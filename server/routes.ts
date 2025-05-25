@@ -6,6 +6,11 @@ import path from 'path';
 import fs from 'fs';
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  
+  // Главная страница - booomerangs-smart-chat.html
+  app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'booomerangs-smart-chat.html'));
+  });
   // Базовые API для чата
   app.get('/api/chat-sessions/:username', async (req, res) => {
     try {
