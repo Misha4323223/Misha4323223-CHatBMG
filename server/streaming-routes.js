@@ -37,7 +37,11 @@ router.post('/chat', (req, res) => {
     const { analyzeMessage } = require('./smart-router');
     const messageAnalysis = analyzeMessage(message);
     
+    console.log(`🧠 [STREAMING] Сообщение для анализа: "${message}"`);
     console.log(`🧠 [STREAMING] Анализ сообщения:`, messageAnalysis);
+    console.log(`🧠 [STREAMING] Категория: ${messageAnalysis.category}`);
+    console.log(`🧠 [STREAMING] Нужен ли генератор изображений?`, 
+      messageAnalysis.category === 'image_generation' || messageAnalysis.category === 'image_edit');
     
     // Если это запрос на генерацию или редактирование изображения
     if (messageAnalysis.category === 'image_generation' || messageAnalysis.category === 'image_edit') {
