@@ -1490,7 +1490,7 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
         const searchResults = await webSearch.performWebSearch(message);
         if (searchResults.success) {
           const searchInfo = webSearch.formatSearchResultsForAI(searchResults);
-          finalMessage = finalMessage + searchInfo;
+          let finalMessage = message + ' ' + searchInfo;
           console.log('🔍 [STREAM] Веб-поиск успешен! Найдено результатов:', searchResults.results.length);
           
           // Уведомляем о успешном поиске
