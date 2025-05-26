@@ -1477,6 +1477,8 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
     const needsSearch = webSearch.needsWebSearch(message);
     console.log('🔍 [STREAM] Требуется веб-поиск:', needsSearch);
     
+    let finalMessage = message; // Объявляем переменную для использования в веб-поиске
+    
     if (needsSearch) {
       console.log('🔍 [STREAM] Выполняем поиск в интернете...');
       
@@ -1490,7 +1492,7 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
         const searchResults = await webSearch.performWebSearch(message);
         if (searchResults.success) {
           const searchInfo = webSearch.formatSearchResultsForAI(searchResults);
-          let finalMessage = message + ' ' + searchInfo;
+          finalMessage = message + ' ' + searchInfo;
           console.log('🔍 [STREAM] Веб-поиск успешен! Найдено результатов:', searchResults.results.length);
           
           // Уведомляем о успешном поиске
