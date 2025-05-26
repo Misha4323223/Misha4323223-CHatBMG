@@ -246,12 +246,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // API с Python-версией G4F
   app.use('/api/python', pythonProviderRoutes.router);
   
-  // API для стриминга от провайдеров, поддерживающих stream=True
-  const streamingRoutes = require('./streaming-routes');
-  app.use('/api/streaming', streamingRoutes);
-  
-  // Основной API для стриминга (используется frontend)
-  app.use('/api/stream', streamingRoutes);
+  // Основной API для стриминга обрабатывается прямо в routes.ts (строка 1322)
   
   // API для Flask-стриминга (надежный вариант)
   const flaskStreamBridge = require('./stream-flask-bridge');
