@@ -235,9 +235,10 @@ async function performWebSearch(query, options = {}) {
         searchProviders.push(() => searchNews(query));
     }
     
-    // Всегда добавляем основные поисковики
+    // Используем мощную бесплатную систему поиска
+    const { searchRealTimeInfo } = require('./free-web-search');
     searchProviders.push(
-        () => searchDuckDuckGo(query),
+        () => searchRealTimeInfo(query),
         () => searchWikipedia(query)
     );
     
