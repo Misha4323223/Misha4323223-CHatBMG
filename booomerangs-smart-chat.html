@@ -1807,20 +1807,19 @@
                     
                     fullResponse += data.text;
                     
-                    // Проверяем есть ли изображения в ответе и обрабатываем их
+                    // ВАЖНО: Всегда используем innerHTML для корректного отображения
                     console.log(`📝 [STREAMING] Обновляем текст: "${fullResponse}"`);
+                    
+                    // Обрабатываем markdown изображения
+                    let processedText = fullResponse;
                     if (fullResponse.includes('![') && fullResponse.includes('](')) {
                       console.log('🎨 [STREAMING] НАЙДЕНЫ ИЗОБРАЖЕНИЯ В ОТВЕТЕ!');
-                      // Обрабатываем markdown изображения
                       const imageRegex = /!\[([^\]]*)\]\(([^)]+)\)/g;
-                      let processedText = fullResponse;
                       let match;
                       
                       while ((match = imageRegex.exec(fullResponse)) !== null) {
                         const [fullMatch, altText, imageUrl] = match;
                         console.log('🎨 [STREAMING] Обрабатываем изображение:', imageUrl);
-                        console.log('🔤 [STREAMING] Исходный текст ПЕРЕД заменой:', processedText);
-                        console.log('🔗 [STREAMING] Заменяем:', fullMatch);
                         
                         // Создаем HTML для изображения
                         const imageHTML = `
@@ -1834,19 +1833,14 @@
                           </div>
                         `;
                         
-                        console.log('🎨 [STREAMING] HTML для изображения:', imageHTML);
-                        
                         // Заменяем markdown на HTML
                         processedText = processedText.replace(fullMatch, imageHTML);
-                        console.log('🔤 [STREAMING] Текст ПОСЛЕ замены:', processedText);
                       }
-                      
-                      messageElement.innerHTML = processedText;
-                      console.log('✅ [STREAMING] Использован innerHTML для отображения изображений');
-                      console.log('🖥️ [STREAMING] ФИНАЛЬНЫЙ HTML в элементе:', messageElement.innerHTML);
-                    } else {
-                      messageElement.textContent = fullResponse;
                     }
+                    
+                    // ВСЕГДА используем innerHTML (не textContent!)
+                    messageElement.innerHTML = processedText;
+                    console.log('✅ [STREAMING] Обновлен HTML элемент');
                     
                     console.log(`📝 [STREAMING] Текст обновлен: ${fullResponse.length} символов`);
                     scrollToBottom();
