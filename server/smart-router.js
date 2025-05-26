@@ -97,6 +97,18 @@ const PROVIDER_SPECIALTIES = {
       "geometry", "algebra", "statistics", "calculus", "probability", "theorem"
     ]
   },
+  image_generation: {
+    // Генерация изображений, принтов, дизайна
+    providers: ["image_generator"],
+    keywords: [
+      "создай изображение", "нарисуй", "сгенерируй картинку", "создай принт", "дизайн для футболки",
+      "create image", "generate picture", "draw", "design", "artwork", "illustration",
+      "принт", "логотип", "иконка", "графика", "постер", "баннер", "стикер",
+      "print", "logo", "icon", "graphic", "poster", "banner", "sticker", "t-shirt design",
+      "футболка", "одежда", "streetwear", "мерч", "merchandise", "clothing",
+      "visualize", "sketch", "art", "creative", "visual", "picture", "image"
+    ]
+  },
   shopping: {
     // Поиск магазинов, покупки, торговые центры, услуги
     providers: ["You", "PerplexityApi", "Qwen_Qwen_2_5_Max", "Phind"],
@@ -282,6 +294,65 @@ async function routeMessage(message, options = {}) {
   const analysis = analyzeMessage(message);
   console.log(`Категория сообщения: ${analysis.category} (совпадений: ${analysis.matchCount})`);
   console.log(`Рекомендуемые провайдеры: ${analysis.providers.join(', ')}`);
+  
+  // Специальная обработка для генерации изображений
+  if (analysis.category === 'image_generation') {
+    SmartLogger.route('🎨 Обнаружен запрос на генерацию изображения!');
+    try {
+      const imageGenerator = require('./ai-image-generator');
+      
+      // Извлекаем промпт для генерации из сообщения
+      let prompt = message;
+      
+      // Определяем стиль для принтов футболок
+      let style = 'realistic';
+      if (message.toLowerCase().includes('футболка') || 
+          message.toLowerCase().includes('принт') ||
+          message.toLowerCase().includes('t-shirt') ||
+          message.toLowerCase().includes('streetwear')) {
+        style = 'artistic';
+        prompt = `Дизайн принта для футболки: ${prompt}`;
+      }
+      
+      const result = await imageGenerator.generateImage(prompt, style);
+      
+      if (result.success) {
+        // Сохраняем ответ в память разговора
+        if (options.userId) {
+          const conversationMemory = require('./conversation-memory');
+          const response = `🎨 Изображение создано! Вот ваш дизайн:\n![Сгенерированное изображение](${result.imageUrl})`;
+          conversationMemory.addAiResponse(options.userId, response, 'AI_Image_Generator', 'DALL-E_Style');
+        }
+        
+        return {
+          success: true,
+          response: `🎨 Изображение создано! Вот ваш дизайн:\n![Сгенерированное изображение](${result.imageUrl})`,
+          provider: 'AI_Image_Generator',
+          model: 'Multi_Provider_Generator',
+          category: 'image_generation',
+          imageUrl: result.imageUrl,
+          bestProvider: 'Image Generator'
+        };
+      } else {
+        SmartLogger.error('Ошибка генерации изображения:', result.error);
+        return {
+          success: false,
+          response: `😔 Извините, не удалось создать изображение. Попробуйте переформулировать запрос или попросить текстовое описание дизайна.`,
+          provider: 'AI_Image_Generator',
+          error: result.error
+        };
+      }
+    } catch (error) {
+      SmartLogger.error('Критическая ошибка генератора изображений:', error);
+      // Переключаемся на текстовое описание дизайна
+      const analysis = { 
+        category: "creative", 
+        providers: PROVIDER_SPECIALTIES.creative.providers 
+      };
+      const fallbackMessage = `Создай детальное текстовое описание дизайна: ${message}`;
+      return await getResponseFromProviders(fallbackMessage, analysis, options);
+    }
+  }
   
   // Добавляем контекст к сообщению, если есть
   const messageWithContext = options.context ? options.context + message : message;

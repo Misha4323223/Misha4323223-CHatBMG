@@ -38,7 +38,14 @@ function generateId() {
  */
 async function generateImage(prompt, style = 'realistic') {
   try {
-    console.log(`Генерация изображения для запроса: "${prompt}" в стиле ${style}`);
+    // Улучшаем промпт для принтов футболок
+    let enhancedPrompt = prompt;
+    
+    if (style === 'artistic' || prompt.toLowerCase().includes('футболка') || prompt.toLowerCase().includes('принт')) {
+      enhancedPrompt = `High quality t-shirt design, vector style, bold graphics, streetwear aesthetic, clean background, print-ready: ${prompt}`;
+    }
+    
+    console.log(`🎨 Генерация изображения для принта: "${enhancedPrompt}" в стиле ${style}`);
     const imageId = generateId();
     
     // Пробуем разные провайдеры, начиная с самых стабильных
@@ -48,8 +55,8 @@ async function generateImage(prompt, style = 'realistic') {
     // Пробуем Pollinations.ai (не требует API ключа)
     if (!imageUrl) {
       try {
-        imageUrl = await generateWithPollinations(prompt, style, imageId);
-        console.log('Получено изображение от Pollinations.ai');
+        imageUrl = await generateWithPollinations(enhancedPrompt, style, imageId);
+        console.log('🎨 Получено изображение от Pollinations.ai');
       } catch (err) {
         console.error('Ошибка Pollinations.ai:', err.message);
         error = err.message;
