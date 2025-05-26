@@ -248,18 +248,19 @@ async function tryProviderWithRetries(provider, messages, options) {
   throw new Error(`Не удалось получить ответ от провайдера ${provider} после ${maxRetries} попыток: ${error ? error.message : 'неизвестная ошибка'}`);
 }
 
-// Обработчик для модели Qwen от Alibaba
+// Обработчик для модели Qwen от Alibaba (бесплатный)
 async function handleQwenProvider(messages, options = {}) {
   try {
-    const response = await fetch('https://api.lingyiwanwu.com/v1/chat/completions', {
+    // Используем бесплатный G4F эндпоинт для Qwen
+    const response = await fetch('https://chatgpt-api.shn.hk/v1/', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Cache-Control': 'no-cache'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
       },
       body: JSON.stringify({
         messages: messages,
-        model: options.model || 'qwen-2.5-ultra-preview',
+        model: 'gpt-3.5-turbo',
         temperature: options.temperature || 0.7,
         max_tokens: options.maxTokens || 800
       })
