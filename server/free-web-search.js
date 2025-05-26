@@ -3,8 +3,7 @@
  * Использует открытые API и источники данных
  */
 
-const fetchModule = require('node-fetch');
-const fetch = fetchModule.default || fetchModule;
+import fetch from 'node-fetch';
 
 /**
  * Главная функция поиска актуальной информации
@@ -216,7 +215,7 @@ async function searchGeneral(query) {
     }
 }
 
-module.exports = {
+export {
     searchRealTimeInfo,
     searchPlaces,
     searchWeather,

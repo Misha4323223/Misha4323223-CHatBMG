@@ -236,7 +236,7 @@ async function performWebSearch(query, options = {}) {
     }
     
     // Используем мощную бесплатную систему поиска
-    const { searchRealTimeInfo } = require('./free-web-search');
+    const { searchRealTimeInfo } = await import('./free-web-search.js');
     searchProviders.push(
         () => searchRealTimeInfo(query),
         () => searchWikipedia(query)
