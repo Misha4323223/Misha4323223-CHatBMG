@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, varchar } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { relations } from "drizzle-orm";
 import { z } from "zod";
@@ -102,6 +102,42 @@ export const aiMessagesRelations = relations(aiMessages, ({ one }) => ({
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
+
+// База поставщиков уличной одежды
+export const suppliers = pgTable("suppliers", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  category: text("category").notNull(), // streetwear, accessories, shoes, etc.
+  contactPerson: text("contact_person"),
+  phone: text("phone"),
+  email: text("email"),
+  address: text("address"),
+  city: text("city"),
+  country: text("country").default("Россия"),
+  website: text("website"),
+  telegram: text("telegram"),
+  whatsapp: text("whatsapp"),
+  specialization: text("specialization"), // худи, кроссовки, кепки, etc.
+  brands: text("brands").array(), // какие бренды поставляет
+  minOrder: text("min_order"), // минимальный заказ
+  paymentTerms: text("payment_terms"), // условия оплаты
+  deliveryTime: text("delivery_time"), // время доставки
+  notes: text("notes"),
+  rating: text("rating").default("⭐⭐⭐"), // рейтинг поставщика
+  status: text("status").default("active"), // active, inactive
+  userId: integer("user_id").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertSupplierSchema = createInsertSchema(suppliers).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type Supplier = typeof suppliers.$inferSelect;
+export type InsertSupplier = z.infer<typeof insertSupplierSchema>;
 export type InsertMessage = z.infer<typeof insertMessageSchema>;
 export type Message = typeof messages.$inferSelect;
 export type InsertChatSession = z.infer<typeof insertChatSessionSchema>;

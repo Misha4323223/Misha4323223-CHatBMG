@@ -1,4 +1,8 @@
-import { users, type User, type InsertUser, messages, type Message, type InsertMessage } from "@shared/schema";
+import { 
+  users, type User, type InsertUser, 
+  messages, type Message, type InsertMessage,
+  suppliers, type Supplier, type InsertSupplier 
+} from "@shared/schema";
 
 // Extended storage interface with methods for chat application
 export interface IStorage {
