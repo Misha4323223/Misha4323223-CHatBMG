@@ -1841,6 +1841,8 @@
                     // ВСЕГДА используем innerHTML (не textContent!)
                     messageElement.innerHTML = processedText;
                     console.log('✅ [STREAMING] Обновлен HTML элемент');
+                    console.log('🖥️ [STREAMING] ФИНАЛЬНЫЙ HTML:', messageElement.innerHTML);
+                    console.log('📊 [STREAMING] Элемент содержит IMG тегов:', messageElement.querySelectorAll('img').length);
                     
                     console.log(`📝 [STREAMING] Текст обновлен: ${fullResponse.length} символов`);
                     scrollToBottom();
