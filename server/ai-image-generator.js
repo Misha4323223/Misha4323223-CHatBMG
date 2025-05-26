@@ -49,26 +49,35 @@ async function generateImage(prompt, style = 'realistic') {
     console.log(`🎨 Генерация изображения для принта: "${enhancedPrompt}" в стиле ${style}`);
     const imageId = generateId();
     
-    // Пробуем разные провайдеры, начиная с самых стабильных
-    let imageUrl = null;
-    let error = null;
+    // Пробуем разные генераторы по очереди для надежности
+    const generators = [
+      () => generateWithPollinations(enhancedPrompt, imageId),
+      () => generateWithCraiyon(enhancedPrompt, imageId)
+    ];
     
-    // Используем прямой URL генератор - простое и надежное решение
-    try {
-      // Очищаем промпт для URL
-      const cleanPrompt = enhancedPrompt.replace(/[^\w\s\-.,!?]/g, '').trim();
-      
-      // Создаем URL для генерации изображения
-      imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(cleanPrompt)}?width=1024&height=1024&nologo=true&enhance=true&seed=${Date.now()}`;
-      
-      console.log('✅ Изображение создано через Pollinations.ai');
-      console.log('🔗 URL:', imageUrl);
-      
-    } catch (err) {
-      console.error('❌ Ошибка создания изображения:', err.message);
+    let imageUrl = null;
+    let lastError = null;
+    
+    for (const [index, generator] of generators.entries()) {
+      try {
+        imageUrl = await generator();
+        const generatorName = index === 0 ? 'Pollinations.ai' : 'Craiyon (DALL-E Mini)';
+        console.log(`✅ Изображение создано через ${generatorName}`);
+        console.log('🔗 URL:', imageUrl);
+        break;
+      } catch (err) {
+        const generatorName = index === 0 ? 'Pollinations.ai' : 'Craiyon';
+        console.log(`⚠️ ${generatorName} недоступен:`, err.message);
+        lastError = err;
+        continue;
+      }
+    }
+    
+    if (!imageUrl) {
+      console.error('❌ Все генераторы недоступны');
       return { 
         success: false, 
-        error: 'Не удалось создать изображение. Попробуйте другой запрос.' 
+        error: 'Все генераторы изображений временно недоступны. Попробуйте позже.' 
       };
     }
     
@@ -82,28 +91,77 @@ async function generateImage(prompt, style = 'realistic') {
 /**
  * Генерирует изображение с помощью Pollinations.ai API
  * @param {string} prompt - Текстовый запрос
- * @param {string} style - Стиль изображения
  * @param {string} imageId - Уникальный ID изображения
  * @returns {Promise<string>} URL сгенерированного изображения
  */
-async function generateWithPollinations(prompt, style, imageId) {
-  // Создаем URL для генерации изображения
-  // Pollinations.ai использует параметры в URL для генерации изображений
-  const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=512&height=512&nologo=true`;
+async function generateWithPollinations(prompt, imageId) {
+  const cleanPrompt = prompt.replace(/[^\w\s\-.,!?]/g, '').trim();
+  const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(cleanPrompt)}?width=1024&height=1024&nologo=true&enhance=true&seed=${Date.now()}`;
+  return imageUrl;
+}
+
+/**
+ * Генерирует изображение с помощью Craiyon (DALL-E Mini)
+ * @param {string} prompt - Текстовый запрос
+ * @param {string} imageId - Уникальный ID изображения
+ * @returns {Promise<string>} URL сгенерированного изображения
+ */
+async function generateWithCraiyon(prompt, imageId) {
+  const https = require('https');
   
-  // Сохраняем результат в файл
-  const outputPath = path.join(OUTPUT_DIR, `${imageId}-pollinations.jpg`);
-  const response = await fetch(pollinationsUrl);
+  const postData = JSON.stringify({
+    prompt: prompt,
+    version: "35s5hfwn9n78gb06"
+  });
   
-  if (!response.ok) {
-    throw new Error(`Ошибка запроса к Pollinations.ai: ${response.status} ${response.statusText}`);
-  }
+  const options = {
+    hostname: 'backend.craiyon.com',
+    port: 443,
+    path: '/generate',
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Content-Length': postData.length,
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+    }
+  };
   
-  const buffer = await response.buffer();
-  await fs.writeFile(outputPath, buffer);
-  
-  // Возвращаем локальный URL для доступа к изображению
-  return `/output/${imageId}-pollinations.jpg`;
+  return new Promise((resolve, reject) => {
+    const req = https.request(options, (res) => {
+      let data = '';
+      
+      res.on('data', (chunk) => {
+        data += chunk;
+      });
+      
+      res.on('end', () => {
+        try {
+          const response = JSON.parse(data);
+          if (response.images && response.images.length > 0) {
+            const imageData = response.images[0];
+            const imageUrl = `data:image/jpeg;base64,${imageData}`;
+            resolve(imageUrl);
+          } else {
+            reject(new Error('Нет изображений в ответе от Craiyon'));
+          }
+        } catch (error) {
+          reject(new Error(`Ошибка парсинга ответа Craiyon: ${error.message}`));
+        }
+      });
+    });
+    
+    req.on('error', (error) => {
+      reject(new Error(`Ошибка запроса к Craiyon: ${error.message}`));
+    });
+    
+    req.write(postData);
+    req.end();
+    
+    setTimeout(() => {
+      req.destroy();
+      reject(new Error('Таймаут генерации Craiyon'));
+    }, 30000);
+  });
 }
 
 /**
