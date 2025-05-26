@@ -258,26 +258,46 @@ const SmartChat: React.FC = () => {
                     ) : (
                       <div className="whitespace-pre-wrap word-break">
                         {message.text.split('\n').map((line, i) => {
-                          // Проверяем на markdown изображения
-                          const imageMatch = line.match(/!\[([^\]]*)\]\(([^)]+)\)/);
+                          // Ищем markdown изображения более гибко
+                          const imageMatch = line.match(/!\[([^\]]*)\]\(([^)]+)\)/g);
+                          
                           if (imageMatch) {
-                            const [, altText, imageUrl] = imageMatch;
-                            return (
-                              <div key={i} className="my-2">
-                                <img 
-                                  src={imageUrl} 
-                                  alt={altText}
-                                  className="max-w-full h-auto rounded-lg border border-gray-600 shadow-lg"
-                                  style={{ maxHeight: '300px', objectFit: 'contain' }}
-                                  onError={(e) => {
-                                    e.currentTarget.style.display = 'none';
-                                  }}
-                                />
-                                <p className="text-xs text-gray-400 mt-1">{altText}</p>
-                              </div>
-                            );
+                            // Извлекаем данные изображения
+                            const fullMatch = imageMatch[0];
+                            const urlMatch = fullMatch.match(/!\[([^\]]*)\]\(([^)]+)\)/);
+                            if (urlMatch) {
+                              const [, altText, imageUrl] = urlMatch;
+                              
+                              return (
+                                <div key={i} className="my-3">
+                                  {/* Показываем текст до изображения, если есть */}
+                                  {line.replace(fullMatch, '').trim() && (
+                                    <div className="mb-2">{line.replace(fullMatch, '').trim()}</div>
+                                  )}
+                                  
+                                  {/* Отображаем изображение */}
+                                  <div className="bg-gray-700 p-2 rounded-lg">
+                                    <img 
+                                      src={imageUrl} 
+                                      alt={altText || 'Сгенерированное изображение'}
+                                      className="max-w-full h-auto rounded-lg shadow-lg mx-auto block"
+                                      style={{ maxHeight: '400px', objectFit: 'contain' }}
+                                      onLoad={() => console.log('✅ Изображение загружено:', imageUrl)}
+                                      onError={(e) => {
+                                        console.error('❌ Ошибка загрузки изображения:', imageUrl);
+                                        e.currentTarget.style.display = 'none';
+                                      }}
+                                    />
+                                    <p className="text-xs text-gray-400 text-center mt-2">
+                                      {altText || 'Сгенерированное AI изображение'}
+                                    </p>
+                                  </div>
+                                </div>
+                              );
+                            }
                           }
                           
+                          // Обычный текст
                           return (
                             <React.Fragment key={i}>
                               {line}
