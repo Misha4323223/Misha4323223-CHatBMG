@@ -89,6 +89,36 @@ async function generateImage(prompt, style = 'realistic') {
 }
 
 /**
+ * Создает улучшенный промпт для редактирования изображения
+ * @param {string} editRequest - Запрос на редактирование
+ * @param {Object} previousImage - Информация о предыдущем изображении
+ * @param {string} style - Стиль изображения
+ * @returns {string} Улучшенный промпт
+ */
+function enhancePromptForEdit(editRequest, previousImage, style) {
+  // Извлекаем описание из URL предыдущего изображения
+  let baseDescription = "previous image";
+  
+  if (previousImage && previousImage.url) {
+    // Пытаемся извлечь описание из URL Pollinations
+    const urlMatch = previousImage.url.match(/prompt\/([^?]+)/);
+    if (urlMatch) {
+      baseDescription = decodeURIComponent(urlMatch[1]);
+    }
+  }
+  
+  // Создаем новый промпт, объединяя базовое описание с новыми требованиями
+  const combinedPrompt = `${baseDescription}, ${editRequest}`;
+  
+  // Применяем улучшения для принтов
+  if (style === 'artistic' || combinedPrompt.toLowerCase().includes('футболка') || combinedPrompt.toLowerCase().includes('принт')) {
+    return `High quality t-shirt design, vector style, bold graphics, streetwear aesthetic, clean background, print-ready: ${combinedPrompt}`;
+  }
+  
+  return combinedPrompt;
+}
+
+/**
  * Генерирует изображение с помощью Pollinations.ai API
  * @param {string} prompt - Текстовый запрос
  * @param {string} imageId - Уникальный ID изображения
