@@ -1464,9 +1464,33 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
         
         const imageGenerator = require('./ai-image-generator');
         
+        // Получаем контекст для редактирования изображений
+        const conversationMemory = require('./conversation-memory');
+        const userId = `session_${sessionId || 'stream'}`;
+        const contextInfo = conversationMemory.getMessageContext(userId, message);
+        
         // Определяем стиль для принтов футболок
         let style = 'realistic';
         let enhancedPrompt = message;
+        
+        // Проверяем есть ли предыдущее изображение в контексте для редактирования
+        let previousImageInfo = null;
+        if (contextInfo.context) {
+          const imageMatch = contextInfo.context.match(/!\[.*?\]\((https:\/\/[^)]+)\)/);
+          if (imageMatch) {
+            previousImageInfo = {
+              url: imageMatch[1],
+              description: contextInfo.context
+            };
+            console.log('🎨 [STREAM] Найдено предыдущее изображение для редактирования:', previousImageInfo.url);
+            
+            // Для команд редактирования добавляем контекст предыдущего изображения
+            if (/убери|удали|измени|добавь|без/i.test(message)) {
+              enhancedPrompt = `Отредактируй изображение техносамурая: ${message}. Сохрани общий стиль и композицию, но внеси указанные изменения.`;
+              console.log('🎨 [STREAM] Промпт для редактирования:', enhancedPrompt);
+            }
+          }
+        }
         
         if (message.toLowerCase().includes('футболка') || 
             message.toLowerCase().includes('принт') ||
