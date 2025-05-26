@@ -271,17 +271,38 @@ const SmartChat: React.FC = () => {
                           if (imageMatch) {
                             console.log('🎨 НАЙДЕНО ИЗОБРАЖЕНИЕ:', imageMatch);
                             
-                            // Показываем отладочную информацию
-                            return (
-                              <div key={i} className="my-3">
-                                <div className="bg-green-900/50 p-2 mb-2 text-xs">
-                                  ✅ ОБНАРУЖЕН MARKDOWN ИЗОБРАЖЕНИЯ: {line}
-                                </div>
-                            // Извлекаем данные изображения
+                            // Показываем отладочную информацию и изображение
                             const fullMatch = imageMatch[0];
                             const urlMatch = fullMatch.match(/!\[([^\]]*)\]\(([^)]+)\)/);
                             if (urlMatch) {
                               const [, altText, imageUrl] = urlMatch;
+                              
+                              return (
+                                <div key={i} className="my-3">
+                                  <div className="bg-green-900/50 p-2 mb-2 text-xs">
+                                    ✅ ОБНАРУЖЕН MARKDOWN ИЗОБРАЖЕНИЯ: {line}
+                                  </div>
+                                  
+                                  {/* Отображаем изображение */}
+                                  <div className="bg-gray-700 p-2 rounded-lg">
+                                    <img 
+                                      src={imageUrl} 
+                                      alt={altText || 'Сгенерированное изображение'}
+                                      className="max-w-full h-auto rounded-lg shadow-lg mx-auto block"
+                                      style={{ maxHeight: '400px', objectFit: 'contain' }}
+                                      onLoad={() => console.log('✅ Изображение загружено:', imageUrl)}
+                                      onError={(e) => {
+                                        console.error('❌ Ошибка загрузки изображения:', imageUrl);
+                                        e.currentTarget.style.display = 'none';
+                                      }}
+                                    />
+                                    <p className="text-xs text-gray-400 text-center mt-2">
+                                      {altText || 'Сгенерированное AI изображение'}
+                                    </p>
+                                  </div>
+                                </div>
+                              );
+                            }
                               
                               return (
                                 <div key={i} className="my-3">
