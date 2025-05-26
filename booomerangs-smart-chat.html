@@ -100,6 +100,66 @@
       gap: 8px;
     }
     
+    /* Premium gradient header design */
+    .header-gradient {
+      background: linear-gradient(135deg, rgba(147, 51, 234, 0.3) 0%, rgba(59, 130, 246, 0.3) 50%, rgba(139, 69, 196, 0.3) 100%);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(147, 51, 234, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .header-gradient::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(45deg, transparent 40%, rgba(147, 51, 234, 0.1) 50%, transparent 60%);
+      pointer-events: none;
+    }
+    
+    /* Logo container with glow effect */
+    .logo-container {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .logo-glow {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(45deg, #a855f7, #3b82f6);
+      border-radius: 50%;
+      blur: 20px;
+      opacity: 0.3;
+      animation: pulse 2s infinite;
+    }
+    
+    /* Gradient text effect */
+    .gradient-text {
+      background: linear-gradient(135deg, #a855f7 0%, #3b82f6 50%, #c084fc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-weight: bold;
+    }
+    
+    /* Subtitle styling */
+    .subtitle {
+      color: rgba(196, 181, 253, 0.8);
+      font-size: 0.75rem;
+      font-weight: 500;
+      margin-top: 2px;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    }
+    
+    /* Title section layout */
+    .title-section {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    
     /* Адаптивная навигация */
     @media (min-width: 640px) {
       .header-compact {
@@ -109,12 +169,28 @@
         margin-bottom: 12px;
         gap: 0;
       }
+      
+      .subtitle {
+        font-size: 0.875rem;
+      }
+      
+      .left-section {
+        gap: 12px;
+      }
     }
     
     @media (min-width: 768px) {
       .header-compact {
         padding: 16px;
         margin-bottom: 16px;
+      }
+      
+      .subtitle {
+        font-size: 1rem;
+      }
+      
+      .left-section {
+        gap: 16px;
       }
     }
     
@@ -1120,10 +1196,16 @@
   <button class="sidebar-toggle" id="sidebar-toggle" onclick="toggleSidebar()">‹</button>
 
   <div class="container">
-    <div class="header-compact">
+    <div class="header-compact header-gradient">
       <div class="left-section">
-        <img src="booomerangs-logo.jpg" alt="BOOOMERANGS Logo" class="logo-image">
-        <h1 class="tagline">BOOOMERANGS AI</h1>
+        <div class="logo-container">
+          <div class="logo-glow"></div>
+          <img src="booomerangs-logo.jpg" alt="BOOOMERANGS Logo" class="logo-image">
+        </div>
+        <div class="title-section">
+          <h1 class="tagline gradient-text">BOOOMERANGS AI</h1>
+          <p class="subtitle">Мощная AI платформа для бизнеса</p>
+        </div>
       </div>
       <nav class="navigation">
         <a href="/smart-chat" class="nav-button active">Чат</a>
