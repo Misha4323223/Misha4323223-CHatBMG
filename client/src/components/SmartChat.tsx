@@ -257,16 +257,26 @@ const SmartChat: React.FC = () => {
                       </div>
                     ) : (
                       <div className="whitespace-pre-wrap word-break">
+                        {/* ОТЛАДКА: показываем весь текст сообщения */}
+                        {message.text.includes('![') && (
+                          <div className="bg-yellow-900/50 p-2 mb-2 text-xs">
+                            🔍 НАЙДЕН MARKDOWN ИЗОБРАЖЕНИЯ В СООБЩЕНИИ: {message.text.substring(0, 100)}...
+                          </div>
+                        )}
+                        
                         {message.text.split('\n').map((line, i) => {
-                          // Добавляем отладочную информацию
-                          console.log(`🔍 [DEBUG] Проверяем строку ${i}: "${line}"`);
-                          
-                          // Ищем markdown изображения более гибко
+                          // Ищем markdown изображения
                           const imageMatch = line.match(/!\[([^\]]*)\]\(([^)]+)\)/g);
                           
-                          console.log(`🔍 [DEBUG] imageMatch для строки ${i}:`, imageMatch);
-                          
                           if (imageMatch) {
+                            console.log('🎨 НАЙДЕНО ИЗОБРАЖЕНИЕ:', imageMatch);
+                            
+                            // Показываем отладочную информацию
+                            return (
+                              <div key={i} className="my-3">
+                                <div className="bg-green-900/50 p-2 mb-2 text-xs">
+                                  ✅ ОБНАРУЖЕН MARKDOWN ИЗОБРАЖЕНИЯ: {line}
+                                </div>
                             // Извлекаем данные изображения
                             const fullMatch = imageMatch[0];
                             const urlMatch = fullMatch.match(/!\[([^\]]*)\]\(([^)]+)\)/);
