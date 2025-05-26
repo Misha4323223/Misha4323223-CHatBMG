@@ -3,7 +3,8 @@
  * Использует различные свободные API для создания изображений без API ключей
  */
 
-const fetch = require('node-fetch');
+const https = require('https');
+const http = require('http');
 const crypto = require('crypto');
 const fs = require('fs').promises;
 const path = require('path');
@@ -52,44 +53,22 @@ async function generateImage(prompt, style = 'realistic') {
     let imageUrl = null;
     let error = null;
     
-    // Пробуем Pollinations.ai (не требует API ключа)
-    if (!imageUrl) {
-      try {
-        imageUrl = await generateWithPollinations(enhancedPrompt, style, imageId);
-        console.log('🎨 Получено изображение от Pollinations.ai');
-      } catch (err) {
-        console.error('Ошибка Pollinations.ai:', err.message);
-        error = err.message;
-      }
-    }
-    
-    // Пробуем EMG-API (не требует API ключа)
-    if (!imageUrl) {
-      try {
-        imageUrl = await generateWithEMG(prompt, style, imageId);
-        console.log('Получено изображение от EMG-API');
-      } catch (err) {
-        console.error('Ошибка EMG-API:', err.message);
-        error = err.message;
-      }
-    }
-    
-    // Пробуем ProxyAPI (не требует API ключа)
-    if (!imageUrl) {
-      try {
-        imageUrl = await generateWithProxyAPI(prompt, style, imageId);
-        console.log('Получено изображение от ProxyAPI');
-      } catch (err) {
-        console.error('Ошибка ProxyAPI:', err.message);
-        error = err.message;
-      }
-    }
-    
-    // Если ни один из провайдеров не сработал, возвращаем ошибку
-    if (!imageUrl) {
+    // Используем прямой URL генератор - простое и надежное решение
+    try {
+      // Очищаем промпт для URL
+      const cleanPrompt = enhancedPrompt.replace(/[^\w\s\-.,!?]/g, '').trim();
+      
+      // Создаем URL для генерации изображения
+      imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(cleanPrompt)}?width=1024&height=1024&nologo=true&enhance=true&seed=${Date.now()}`;
+      
+      console.log('✅ Изображение создано через Pollinations.ai');
+      console.log('🔗 URL:', imageUrl);
+      
+    } catch (err) {
+      console.error('❌ Ошибка создания изображения:', err.message);
       return { 
         success: false, 
-        error: error || 'Не удалось сгенерировать изображение. Все провайдеры недоступны.' 
+        error: 'Не удалось создать изображение. Попробуйте другой запрос.' 
       };
     }
     
