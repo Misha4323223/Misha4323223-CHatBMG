@@ -222,6 +222,20 @@ def get_chat_response(message, specific_provider=None, use_stream=False):
         "model": "fallback-mode"
     }
 
+def is_coding_question(message):
+    """Определяет, является ли вопрос связанным с программированием"""
+    coding_keywords = [
+        'код', 'программирование', 'javascript', 'python', 'java', 'c++', 'c#',
+        'coding', 'programming', 'code', 'алгоритм', 'algorithm', 'функция', 'function',
+        'api', 'сервер', 'server', 'backend', 'frontend', 'фронтенд', 'бэкенд',
+        'database', 'база данных', 'sql', 'nosql', 'mongodb', 'json', 'html', 'css',
+        'git', 'github', 'docker', 'react', 'node', 'npm', 'typescript', 'как написать',
+        'как создать', 'разработка', 'development', 'библиотека', 'library', 'framework'
+    ]
+    
+    message_lower = message.lower()
+    return any(keyword in message_lower for keyword in coding_keywords)
+
 @app.route('/python/chat', methods=['POST'])
 def chat():
     try:
@@ -229,6 +243,19 @@ def chat():
         message = data.get('message', '')
         provider = data.get('provider')
         timeout = data.get('timeout', 20000) / 1000  # Переводим миллисекунды в секунды
+        
+        # Проверяем, если это вопрос о программировании и не указан конкретный провайдер
+        if not provider and is_coding_question(message):
+            print(f"🔧 Определен вопрос о программировании: {message[:50]}...")
+            # Используем Phind в первую очередь для технических вопросов
+            result = try_provider("Phind", message, timeout=15)
+            if "error" not in result:
+                print(f"✅ Phind успешно ответил на технический вопрос")
+                return jsonify(result)
+            else:
+                print(f"⚠️ Phind недоступен, переключаемся на техническую группу")
+                # Если Phind недоступен, используем техническую группу
+                provider = "technical_group"
         
         # Обработка запросов DeepSpeek
         if provider == 'deepspeek':
