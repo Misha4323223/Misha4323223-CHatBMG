@@ -1323,57 +1323,71 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
     console.log(`🚀 Запуск потоковой генерации для: "${message}"`);
     console.log(`🔥 [DEBUG] Извлеченные параметры: message="${message}", provider="${provider}", sessionId="${sessionId}"`);
     
-    // 🧠 УМНАЯ ПРОВЕРКА НА ГЕНЕРАЦИЮ ИЗОБРАЖЕНИЙ ЧЕРЕЗ AI
-    console.log('🧠 [STREAM] === НАЧАЛО УМНОГО АНАЛИЗА НАМЕРЕНИЙ ===');
-    console.log('🧠 [STREAM] Анализируем сообщение:', message);
+    // 🧠 ПРОСТАЯ И УМНАЯ СИСТЕМА КАК У CHATGPT4
+    console.log('🧠 [SMART] === АНАЛИЗ НАМЕРЕНИЙ ===');
+    console.log('🧠 [SMART] Анализируем сообщение:', message);
     
-    const intentAnalyzer = require('./intent-analyzer');
+    // Получаем контекст для анализа
+    const conversationMemory = require('./conversation-memory');
+    const userId = `session_${sessionId || 'stream'}`;
+    const contextInfo = conversationMemory.getMessageContext(userId, message);
+    const contextText = contextInfo.context ? contextInfo.context.substring(0, 500) : '';
     
-    // Быстрая предварительная проверка
-    const isLikelyImageCommand = intentAnalyzer.isLikelyImageCommand(message);
-    console.log('🧠 [STREAM] Быстрая проверка - возможная команда для изображений:', isLikelyImageCommand);
-    
+    // Простой промпт для анализа намерений
+    const analysisPrompt = `Контекст: ${contextText}
+
+Сообщение пользователя: "${message}"
+
+Ответь ТОЛЬКО одним словом:
+- "ИЗОБРАЖЕНИЕ" - если это команда создания/редактирования изображения, принта, дизайна
+- "ТЕКСТ" - если это обычный вопрос или разговор
+
+Примеры:
+"создай принт" → ИЗОБРАЖЕНИЕ
+"убери меч" → ИЗОБРАЖЕНИЕ  
+"поменяй шлем" → ИЗОБРАЖЕНИЕ
+"что такое AI?" → ТЕКСТ
+"привет" → ТЕКСТ`;
+
     let isImageGeneration = false;
     let enhancedPrompt = message;
     
-    if (isLikelyImageCommand) {
-      console.log('🧠 [STREAM] Запускаем полный AI анализ намерений...');
+    try {
+      console.log('🧠 [SMART] Отправляем на анализ к AI...');
       
-      // Получаем контекст для анализа
-      const conversationMemory = require('./conversation-memory');
-      const userId = `session_${sessionId || 'stream'}`;
-      const contextInfo = conversationMemory.getMessageContext(userId, message);
-      const contextText = contextInfo.context ? contextInfo.context.substring(0, 500) : '';
-      
-      try {
-        const intentResult = await intentAnalyzer.analyzeIntentWithAI(message, contextText);
-        console.log('🧠 [STREAM] Результат AI анализа:', intentResult);
+      const g4fProvider = require('./g4f-provider');
+      const response = await g4fProvider.getResponse(analysisPrompt, {
+        provider: 'Qwen_Qwen_2_5_Max',
+        temperature: 0.1,
+        timeout: 8000
+      });
+
+      if (response.success && response.text) {
+        const aiDecision = response.text.trim().toUpperCase();
+        console.log('🧠 [SMART] AI решение:', aiDecision);
         
-        isImageGeneration = intentResult.isImageCommand;
-        if (intentResult.enhancedPrompt) {
-          enhancedPrompt = intentResult.enhancedPrompt;
+        isImageGeneration = aiDecision.includes('ИЗОБРАЖЕНИЕ');
+        
+        if (isImageGeneration) {
+          // Создаем улучшенный промпт для редактирования
+          if (/убери|удали|измени|поменяй|замени|добавь|без|сделай/i.test(message)) {
+            enhancedPrompt = `Отредактируй изображение техносамурая: ${message}. Сохрани общий стиль и композицию, но внеси указанные изменения.`;
+          }
         }
-        
-        console.log('🧠 [STREAM] Финальное решение - генерация изображения:', isImageGeneration);
-        console.log('🧠 [STREAM] Улучшенный промпт:', enhancedPrompt);
-        
-      } catch (error) {
-        console.error('🧠 [STREAM] Ошибка AI анализа, используем fallback:', error);
-        // Fallback на простые паттерны
-        const imageGenerationPatterns = [
-          /создай.*принт/i, /нарисуй/i, /сгенерируй.*картинк/i,
-          /дизайн.*футболк/i, /принт.*футболк/i, /создай.*изображение/i,
-          /логотип/i, /рисунок/i, /макет/i, /концепт/i,
-          /убери.*мечи/i, /убери.*меч/i, /убери.*шлем/i, /убери.*надпись/i,
-          /удали.*мечи/i, /удали.*меч/i, /удали.*шлем/i, /удали.*текст/i,
-          /измени.*цвет/i, /измени.*шлем/i, /добавь.*на.*фон/i,
-          /добавь.*грибы/i, /добавь.*цветы/i, /без.*мечей/i, /без.*шлема/i
-        ];
-        isImageGeneration = imageGenerationPatterns.some(pattern => pattern.test(message));
       }
+      
+    } catch (error) {
+      console.error('🧠 [SMART] Ошибка анализа, используем простые паттерны:', error);
+      // Простой fallback
+      const imagePatterns = [
+        /создай/i, /нарисуй/i, /сгенерируй/i, /дизайн/i, /принт/i,
+        /убери/i, /удали/i, /добавь/i, /измени/i, /поменяй/i, /замени/i, /без/i
+      ];
+      isImageGeneration = imagePatterns.some(pattern => pattern.test(message));
     }
     
-    console.log('🧠 [STREAM] === КОНЕЦ УМНОГО АНАЛИЗА НАМЕРЕНИЙ ===');
+    console.log('🧠 [SMART] Финальное решение - генерация изображения:', isImageGeneration);
+    console.log('🧠 [SMART] === КОНЕЦ АНАЛИЗА ===');
     
     // Если это генерация изображения - настраиваем заголовки и переключаемся на генератор
     if (isImageGeneration) {
