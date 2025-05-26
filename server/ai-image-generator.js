@@ -125,8 +125,21 @@ function enhancePromptForEdit(editRequest, previousImage, style) {
  * @returns {Promise<string>} URL сгенерированного изображения
  */
 async function generateWithPollinations(prompt, imageId) {
-  const cleanPrompt = prompt.replace(/[^\w\s\-.,!?]/g, '').trim();
+  // Убеждаемся что промпт не пустой
+  if (!prompt || prompt.trim() === '') {
+    throw new Error('Пустой промпт для генерации изображения');
+  }
+  
+  const cleanPrompt = prompt.replace(/[^\w\s\-.,!?а-яА-Я]/g, '').trim();
+  console.log(`🎨 [Pollinations] Обработанный промпт: "${cleanPrompt}"`);
+  
+  if (cleanPrompt.length < 3) {
+    throw new Error('Промпт слишком короткий после очистки');
+  }
+  
   const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(cleanPrompt)}?width=1024&height=1024&nologo=true&enhance=true&seed=${Date.now()}`;
+  console.log(`🔗 [Pollinations] Создан URL: ${imageUrl}`);
+  
   return imageUrl;
 }
 
