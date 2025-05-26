@@ -1323,42 +1323,57 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
     console.log(`🚀 Запуск потоковой генерации для: "${message}"`);
     console.log(`🔥 [DEBUG] Извлеченные параметры: message="${message}", provider="${provider}", sessionId="${sessionId}"`);
     
-    // 🎨 ПРОВЕРЯЕМ НА ГЕНЕРАЦИЮ ИЗОБРАЖЕНИЙ ПЕРЕД ВСЕМ ОСТАЛЬНЫМ!
-    console.log('🎨 [STREAM] === НАЧАЛО ПРОВЕРКИ ПАТТЕРНОВ ===');
-    console.log('🎨 [STREAM] Проверяем сообщение:', message);
-    const imageGenerationPatterns = [
-      /создай.*принт/i,
-      /нарисуй/i,
-      /сгенерируй.*картинк/i,
-      /дизайн.*футболк/i,
-      /принт.*футболк/i,
-      /создай.*изображение/i,
-      /логотип/i,
-      /рисунок/i,
-      /макет/i,
-      /концепт/i,
-      // Команды редактирования изображений
-      /убери.*мечи/i,
-      /убери.*меч/i,
-      /убери.*надпись/i,
-      /убери.*текст/i,
-      /удали.*мечи/i,
-      /удали.*меч/i,
-      /удали.*надпись/i,
-      /удали.*текст/i,
-      /измени.*цвет/i,
-      /измени.*шлем/i,
-      /убери.*шлем/i,
-      /удали.*шлем/i,
-      /добавь.*на.*фон/i,
-      /добавь.*грибы/i,
-      /добавь.*цветы/i,
-      /без.*мечей/i
-    ];
+    // 🧠 УМНАЯ ПРОВЕРКА НА ГЕНЕРАЦИЮ ИЗОБРАЖЕНИЙ ЧЕРЕЗ AI
+    console.log('🧠 [STREAM] === НАЧАЛО УМНОГО АНАЛИЗА НАМЕРЕНИЙ ===');
+    console.log('🧠 [STREAM] Анализируем сообщение:', message);
     
-    const isImageGeneration = imageGenerationPatterns.some(pattern => pattern.test(message));
-    console.log('🎨 [STREAM] Результат проверки паттернов:', isImageGeneration);
-    console.log('🎨 [STREAM] === КОНЕЦ ПРОВЕРКИ ПАТТЕРНОВ ===');
+    const intentAnalyzer = require('./intent-analyzer');
+    
+    // Быстрая предварительная проверка
+    const isLikelyImageCommand = intentAnalyzer.isLikelyImageCommand(message);
+    console.log('🧠 [STREAM] Быстрая проверка - возможная команда для изображений:', isLikelyImageCommand);
+    
+    let isImageGeneration = false;
+    let enhancedPrompt = message;
+    
+    if (isLikelyImageCommand) {
+      console.log('🧠 [STREAM] Запускаем полный AI анализ намерений...');
+      
+      // Получаем контекст для анализа
+      const conversationMemory = require('./conversation-memory');
+      const userId = `session_${sessionId || 'stream'}`;
+      const contextInfo = conversationMemory.getMessageContext(userId, message);
+      const contextText = contextInfo.context ? contextInfo.context.substring(0, 500) : '';
+      
+      try {
+        const intentResult = await intentAnalyzer.analyzeIntentWithAI(message, contextText);
+        console.log('🧠 [STREAM] Результат AI анализа:', intentResult);
+        
+        isImageGeneration = intentResult.isImageCommand;
+        if (intentResult.enhancedPrompt) {
+          enhancedPrompt = intentResult.enhancedPrompt;
+        }
+        
+        console.log('🧠 [STREAM] Финальное решение - генерация изображения:', isImageGeneration);
+        console.log('🧠 [STREAM] Улучшенный промпт:', enhancedPrompt);
+        
+      } catch (error) {
+        console.error('🧠 [STREAM] Ошибка AI анализа, используем fallback:', error);
+        // Fallback на простые паттерны
+        const imageGenerationPatterns = [
+          /создай.*принт/i, /нарисуй/i, /сгенерируй.*картинк/i,
+          /дизайн.*футболк/i, /принт.*футболк/i, /создай.*изображение/i,
+          /логотип/i, /рисунок/i, /макет/i, /концепт/i,
+          /убери.*мечи/i, /убери.*меч/i, /убери.*шлем/i, /убери.*надпись/i,
+          /удали.*мечи/i, /удали.*меч/i, /удали.*шлем/i, /удали.*текст/i,
+          /измени.*цвет/i, /измени.*шлем/i, /добавь.*на.*фон/i,
+          /добавь.*грибы/i, /добавь.*цветы/i, /без.*мечей/i, /без.*шлема/i
+        ];
+        isImageGeneration = imageGenerationPatterns.some(pattern => pattern.test(message));
+      }
+    }
+    
+    console.log('🧠 [STREAM] === КОНЕЦ УМНОГО АНАЛИЗА НАМЕРЕНИЙ ===');
     
     // Если это генерация изображения - настраиваем заголовки и переключаемся на генератор
     if (isImageGeneration) {
@@ -1502,7 +1517,7 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
           enhancedPrompt = `Дизайн принта для футболки: ${message}`;
         }
         
-        const result = await imageGenerator.generateImage(enhancedPrompt, style);
+        const result = await imageGenerator.generateImage(enhancedPrompt, style, previousImageInfo);
         
         if (result.success) {
           res.write(`data: ${JSON.stringify({ 
