@@ -1519,41 +1519,96 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
       // Отправляем информацию о провайдере
       res.write(`data: ${JSON.stringify({ provider: provider })}\n\n`);
       
-      // Используем JavaScript G4F провайдер напрямую  
+      // Используем Python G4F через чистый API без отладки
       try {
-        console.log('🤖 [STREAMING] Используем JavaScript G4F провайдер...');
-        const directProvider = require('./direct-ai-provider');
-        const response = await directProvider.getChatResponse(message);
-        
-        if (response && response.length > 0) {
-          console.log('✅ [STREAMING] G4F провайдер ответил:', {
-            provider: 'DirectAI',
-            textLength: response.length
-          });
+        console.log('🐍 [STREAMING] Используем Python G4F...');
+        const fetch = require('node-fetch');
+        const response = await fetch('http://localhost:5004/python/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            message: message,
+            provider: provider 
+          })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
           
-          const words = response.split(' ');
+          // Извлекаем только чистый ответ AI
+          let cleanResponse = '';
+          
+          if (data.response && typeof data.response === 'string') {
+            // Если есть прямой ответ, используем его
+            cleanResponse = data.response;
+          } else {
+            // Если это отладочная информация, извлекаем финальный ответ
+            const debugText = JSON.stringify(data);
+            
+            // Ищем строку с ответом в формате 'response': 'текст ответа'
+            const responseMatch = debugText.match(/'response':\s*'([^']*(?:\\'[^']*)*)'/);
+            if (responseMatch) {
+              cleanResponse = responseMatch[1].replace(/\\'/g, "'");
+            } else {
+              // Альтернативный поиск без кавычек
+              const altMatch = debugText.match(/"response":\s*"([^"]*(?:\\"[^"]*)*)"/);
+              if (altMatch) {
+                cleanResponse = altMatch[1].replace(/\\"/g, '"');
+              }
+            }
+          }
+          
+          if (cleanResponse) {
+            console.log('✅ [STREAMING] Получен чистый ответ AI:', {
+              provider: provider,
+              textLength: cleanResponse.length
+            });
+            
+            const words = cleanResponse.split(' ');
+            for (let i = 0; i < words.length; i++) {
+              const chunk = i === 0 ? words[i] : ' ' + words[i];
+              res.write(`data: ${JSON.stringify({ text: chunk })}\n\n`);
+              await new Promise(resolve => setTimeout(resolve, 50));
+            }
+            res.write(`data: ${JSON.stringify({ finished: true, provider: provider })}\n\n`);
+          } else {
+            throw new Error('Не удалось извлечь ответ AI');
+          }
+        } else {
+          throw new Error(`Python G4F вернул статус ${response.status}`);
+        }
+      } catch (error) {
+        console.log('⚠️ [STREAMING] Ошибка Python G4F:', error);
+        
+        // Резервный провайдер JavaScript G4F
+        try {
+          console.log('🔄 [STREAMING] Переключаемся на JavaScript G4F...');
+          const directProvider = require('./direct-ai-provider');
+          const response = await directProvider.getChatResponse(message);
+          
+          if (response && response.length > 0) {
+            const words = response.split(' ');
+            for (let i = 0; i < words.length; i++) {
+              const chunk = i === 0 ? words[i] : ' ' + words[i];
+              res.write(`data: ${JSON.stringify({ text: chunk })}\n\n`);
+              await new Promise(resolve => setTimeout(resolve, 50));
+            }
+            res.write(`data: ${JSON.stringify({ finished: true, provider: "JavaScript-G4F" })}\n\n`);
+          } else {
+            throw new Error('Нет ответа от резервного провайдера');
+          }
+        } catch (fallbackError) {
+          // Информативный ответ о доступных функциях
+          const responseText = "Привет! Я готов помочь с вопросами и создать изображения. Попробуйте команды типа 'создай принт самурая' или 'убери шлем'.";
+          
+          const words = responseText.split(' ');
           for (let i = 0; i < words.length; i++) {
             const chunk = i === 0 ? words[i] : ' ' + words[i];
             res.write(`data: ${JSON.stringify({ text: chunk })}\n\n`);
             await new Promise(resolve => setTimeout(resolve, 50));
           }
-          res.write(`data: ${JSON.stringify({ finished: true, provider: "DirectAI" })}\n\n`);
-        } else {
-          throw new Error('Пустой ответ от G4F провайдера');
+          res.write(`data: ${JSON.stringify({ finished: true, provider: "System" })}\n\n`);
         }
-      } catch (error) {
-        console.log('⚠️ [STREAMING] Ошибка G4F провайдера:', error);
-        
-        // Простой информативный ответ
-        const responseText = "Привет! Я готов помочь вам с вопросами и создать изображения по вашим командам. Попробуйте команды типа 'создай принт' или 'убери шлем'.";
-        
-        const words = responseText.split(' ');
-        for (let i = 0; i < words.length; i++) {
-          const chunk = i === 0 ? words[i] : ' ' + words[i];
-          res.write(`data: ${JSON.stringify({ text: chunk })}\n\n`);
-          await new Promise(resolve => setTimeout(resolve, 50));
-        }
-        res.write(`data: ${JSON.stringify({ finished: true, provider: "System" })}\n\n`);
       }
       
       res.end();

@@ -85,8 +85,9 @@ def try_provider(provider_name, message, timeout=15, use_stream=False):
         provider = getattr(g4f.Provider, provider_name)
         model = models_per_provider.get(provider_name, "gpt-3.5-turbo")
         
-        print(f"Попытка использования провайдера {provider_name}...")
-        print(f"  📝 Пробуем модель: {model}, стриминг: {use_stream}")
+        # Отладочная информация только в консоль, не в ответ
+        # print(f"Попытка использования провайдера {provider_name}...")
+        # print(f"  📝 Пробуем модель: {model}, стриминг: {use_stream}")
         
         try:
             # Создаем сообщения с системным промптом
@@ -180,12 +181,9 @@ def get_chat_response(message, specific_provider=None, use_stream=False):
         providers = provider_groups.get(group_name, []).copy()
         random.shuffle(providers)
         
-        print(f"🔄 Перебор группы провайдеров: {group_name}")
-        
         for provider_name in providers:
             result = try_provider(provider_name, message, timeout=25, use_stream=use_stream)
             if "error" not in result:
-                print(f"✅ Группа {group_name} успешно вернула ответ")
                 return result
             elif use_stream and "response_stream" in result:
                 return result
