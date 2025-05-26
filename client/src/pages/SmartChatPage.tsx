@@ -21,7 +21,7 @@ const SmartChatPage: React.FC = () => {
               <img 
                 src="/booomerangs-logo.jpg" 
                 alt="BOOOMERANGS" 
-                className="relative h-12 w-12 sm:h-16 sm:w-16 lg:h-20 lg:w-20 xl:h-24 xl:w-24 object-contain rounded-full shadow-lg ring-2 ring-purple-400/50"
+                className="relative h-8 w-8 sm:h-10 sm:w-10 lg:h-12 lg:w-12 xl:h-14 xl:w-14 object-contain rounded-full shadow-lg ring-2 ring-purple-400/50"
               />
             </div>
             
