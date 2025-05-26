@@ -43,11 +43,21 @@ router.post('/chat', (req, res) => {
     if (messageAnalysis.category === 'image_generation' || messageAnalysis.category === 'image_edit') {
       console.log('🎨 [STREAMING] Обнаружен запрос на изображения - переключаемся на генератор!');
       
+      // Если это редактирование, получаем контекст предыдущего изображения
+      let previousImage = null;
+      if (messageAnalysis.category === 'image_edit') {
+        const { getConversation } = require('./conversation-memory');
+        const userId = `session_${sessionId}`;
+        const conversation = getConversation(userId);
+        previousImage = conversation.getLastImageInfo();
+        console.log('🔄 [STREAMING] Найдено предыдущее изображение для редактирования:', previousImage);
+      }
+      
       // Импортируем генератор изображений
       const { generateImage } = require('./ai-image-generator');
       
       try {
-        const result = await generateImage(message);
+        const result = await generateImage(message, 'realistic', previousImage);
         
         if (result.success) {
           // Отправляем начальное сообщение

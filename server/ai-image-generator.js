@@ -37,19 +37,28 @@ function generateId() {
  * @param {string} style - Стиль изображения (realistic, artistic, etc.)
  * @returns {Promise<{success: boolean, imageUrl: string, error?: string}>}
  */
-async function generateImage(prompt, style = 'realistic') {
+async function generateImage(prompt, style = 'realistic', previousImage = null) {
   try {
     console.log(`🎨 [DEBUG] Получен промпт: "${prompt}"`);
     console.log(`🎨 [DEBUG] Стиль: "${style}"`);
+    console.log(`🎨 [DEBUG] Предыдущее изображение:`, previousImage);
     
-    // Улучшаем промпт для принтов футболок
-    let enhancedPrompt = prompt;
+    // Создаем улучшенный промпт
+    let enhancedPrompt;
     
-    if (style === 'artistic' || prompt.toLowerCase().includes('футболка') || prompt.toLowerCase().includes('принт')) {
-      enhancedPrompt = `High quality t-shirt design, vector style, bold graphics, streetwear aesthetic, clean background, print-ready: ${prompt}`;
+    if (previousImage) {
+      // Это редактирование - используем функцию для улучшения
+      enhancedPrompt = enhancePromptForEdit(prompt, previousImage, style);
+      console.log(`🔄 [DEBUG] Промпт для редактирования: "${enhancedPrompt}"`);
+    } else {
+      // Это новая генерация
+      enhancedPrompt = prompt;
+      if (style === 'artistic' || prompt.toLowerCase().includes('футболка') || prompt.toLowerCase().includes('принт')) {
+        enhancedPrompt = `High quality t-shirt design, vector style, bold graphics, streetwear aesthetic, clean background, print-ready: ${prompt}`;
+      }
+      console.log(`🎨 [DEBUG] Промпт для новой генерации: "${enhancedPrompt}"`);
     }
     
-    console.log(`🎨 [DEBUG] Улучшенный промпт: "${enhancedPrompt}"`);
     const imageId = generateId();
     
     // Пробуем разные генераторы по очереди для надежности
