@@ -1519,10 +1519,13 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
       // Отправляем информацию о провайдере
       res.write(`data: ${JSON.stringify({ provider: provider })}\n\n`);
       
-      // Используем Python G4F через чистый API без отладки
+      // Подключаемся к Python G4F напрямую
       try {
-        console.log('🐍 [STREAMING] Используем Python G4F...');
-        const fetch = (await import('node-fetch')).default;
+        console.log('🐍 [STREAMING] Подключаемся к Python G4F...');
+        
+        // Используем встроенный fetch или node-fetch
+        const fetch = globalThis.fetch || (await import('node-fetch')).default;
+        
         const response = await fetch('http://localhost:5004/python/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -1535,52 +1538,30 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
         if (response.ok) {
           const data = await response.json();
           
-          // Извлекаем только чистый ответ AI
-          let cleanResponse = '';
-          
+          // Извлекаем чистый ответ AI
           if (data.response && typeof data.response === 'string') {
-            // Если есть прямой ответ, используем его
-            cleanResponse = data.response;
-          } else {
-            // Если это отладочная информация, извлекаем финальный ответ
-            const debugText = JSON.stringify(data);
-            
-            // Ищем строку с ответом в формате 'response': 'текст ответа'
-            const responseMatch = debugText.match(/'response':\s*'([^']*(?:\\'[^']*)*)'/);
-            if (responseMatch) {
-              cleanResponse = responseMatch[1].replace(/\\'/g, "'");
-            } else {
-              // Альтернативный поиск без кавычек
-              const altMatch = debugText.match(/"response":\s*"([^"]*(?:\\"[^"]*)*)"/);
-              if (altMatch) {
-                cleanResponse = altMatch[1].replace(/\\"/g, '"');
-              }
-            }
-          }
-          
-          if (cleanResponse) {
-            console.log('✅ [STREAMING] Получен чистый ответ AI:', {
-              provider: provider,
-              textLength: cleanResponse.length
+            console.log('✅ [STREAMING] Python G4F ответил:', {
+              provider: data.provider || provider,
+              textLength: data.response.length
             });
             
-            const words = cleanResponse.split(' ');
+            const words = data.response.split(' ');
             for (let i = 0; i < words.length; i++) {
               const chunk = i === 0 ? words[i] : ' ' + words[i];
               res.write(`data: ${JSON.stringify({ text: chunk })}\n\n`);
               await new Promise(resolve => setTimeout(resolve, 50));
             }
-            res.write(`data: ${JSON.stringify({ finished: true, provider: provider })}\n\n`);
+            res.write(`data: ${JSON.stringify({ finished: true, provider: data.provider || provider })}\n\n`);
           } else {
-            throw new Error('Не удалось извлечь ответ AI');
+            throw new Error('Неожиданный формат ответа от Python G4F');
           }
         } else {
-          throw new Error(`Python G4F вернул статус ${response.status}`);
+          throw new Error(`Python G4F недоступен (статус ${response.status})`);
         }
       } catch (error) {
-        console.log('⚠️ [STREAMING] Ошибка Python G4F:', error);
+        console.log('⚠️ [STREAMING] Python G4F недоступен, используем резервный провайдер');
         
-        // Резервный провайдер JavaScript G4F
+        // Резервный JavaScript G4F провайдер
         try {
           console.log('🔄 [STREAMING] Переключаемся на JavaScript G4F...');
           const directProvider = require('./direct-ai-provider');
@@ -1595,11 +1576,11 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
             }
             res.write(`data: ${JSON.stringify({ finished: true, provider: "JavaScript-G4F" })}\n\n`);
           } else {
-            throw new Error('Нет ответа от резервного провайдера');
+            throw new Error('Резервный провайдер не отвечает');
           }
         } catch (fallbackError) {
-          // Информативный ответ о доступных функциях
-          const responseText = "Привет! Я готов помочь с вопросами и создать изображения. Попробуйте команды типа 'создай принт самурая' или 'убери шлем'.";
+          // Информативный ответ
+          const responseText = "Привет! Система готова помочь с вопросами и создать изображения. Попробуйте команды типа 'создай принт самурая'.";
           
           const words = responseText.split(' ');
           for (let i = 0; i < words.length; i++) {
