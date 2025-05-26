@@ -1874,9 +1874,41 @@
         const messageDiv = document.createElement('div');
         messageDiv.className = `message ${isUser ? 'user' : 'ai'}`;
         
-        const messageText = document.createElement('p');
-        messageText.textContent = text;
-        messageText.innerHTML = text; // Дублируем для надежности
+        const messageText = document.createElement('div');
+        
+        // Проверяем на markdown изображения
+        if (text.includes('![') && text.includes('](')) {
+          // Обрабатываем markdown изображения
+          const imageRegex = /!\[([^\]]*)\]\(([^)]+)\)/g;
+          let processedText = text;
+          let match;
+          
+          while ((match = imageRegex.exec(text)) !== null) {
+            const [fullMatch, altText, imageUrl] = match;
+            console.log('🎨 НАЙДЕНО ИЗОБРАЖЕНИЕ:', imageUrl);
+            
+            // Создаем HTML для изображения
+            const imageHTML = `
+              <div style="margin: 10px 0; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 8px;">
+                <img src="${imageUrl}" 
+                     alt="${altText || 'Сгенерированное изображение'}" 
+                     style="max-width: 100%; height: auto; border-radius: 8px; display: block; margin: 0 auto; max-height: 300px; object-fit: contain;"
+                     onload="console.log('✅ Изображение загружено:', '${imageUrl}')"
+                     onerror="console.error('❌ Ошибка загрузки:', '${imageUrl}'); this.style.display='none';">
+                <p style="text-align: center; margin-top: 8px; font-size: 0.8rem; color: #ccc;">${altText || 'Сгенерированное AI изображение'}</p>
+              </div>
+            `;
+            
+            // Заменяем markdown на HTML
+            processedText = processedText.replace(fullMatch, imageHTML);
+          }
+          
+          messageText.innerHTML = processedText;
+        } else {
+          // Обычный текст
+          messageText.textContent = text;
+        }
+        
         messageText.style.color = isUser ? '#ffffff' : '#ffffff';
         messageText.style.fontSize = '0.95rem';
         messageText.style.fontWeight = '400';
