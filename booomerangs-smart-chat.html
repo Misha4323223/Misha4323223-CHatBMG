@@ -1819,6 +1819,8 @@
                       while ((match = imageRegex.exec(fullResponse)) !== null) {
                         const [fullMatch, altText, imageUrl] = match;
                         console.log('🎨 [STREAMING] Обрабатываем изображение:', imageUrl);
+                        console.log('🔤 [STREAMING] Исходный текст ПЕРЕД заменой:', processedText);
+                        console.log('🔗 [STREAMING] Заменяем:', fullMatch);
                         
                         // Создаем HTML для изображения
                         const imageHTML = `
@@ -1832,8 +1834,11 @@
                           </div>
                         `;
                         
+                        console.log('🎨 [STREAMING] HTML для изображения:', imageHTML);
+                        
                         // Заменяем markdown на HTML
                         processedText = processedText.replace(fullMatch, imageHTML);
+                        console.log('🔤 [STREAMING] Текст ПОСЛЕ замены:', processedText);
                       }
                       
                       messageElement.innerHTML = processedText;
