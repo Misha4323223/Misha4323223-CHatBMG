@@ -130,19 +130,39 @@ router.post('/chat', async (req, res) => {
     // Используем провайдер, который поддерживает стриминг
     const actualProvider = supportsStreaming ? provider : 'Qwen_Max';
     
-    // Запускаем Python скрипт с включенным стримингом
-    const pythonProcess = spawn('python', [
-      'server/g4f_python_provider.py',
-      message,
-      actualProvider,
-      'stream' // Ключевой параметр для активации стриминга
-    ]);
+    // Используем уже запущенный Python G4F сервер через HTTP API
+    // ОТКЛЮЧЕНО: const pythonProcess = spawn('python', [
+    //   'server/g4f_python_provider.py',
+    //   message,
+    //   actualProvider,
+    //   'stream' // Ключевой параметр для активации стриминга
+    // ])
+    
+    // Отправляем запрос к уже запущенному серверу через HTTP API
+    const http = require('http');
+    
+    const requestData = JSON.stringify({
+      message: message,
+      provider: actualProvider
+    });
+    
+    const options = {
+      hostname: 'localhost',
+      port: 5004,
+      path: '/python/chat/stream',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(requestData)
+      }
+    };
     
     // Создаем флаг для отслеживания завершения
     let isCompleted = false;
     
-    // Обрабатываем вывод от скрипта
-    pythonProcess.stdout.on('data', (data) => {
+    const req = http.request(options, (httpRes) => {
+      // Обрабатываем потоковые данные от HTTP API
+      httpRes.on('data', (data) => {
       if (isCompleted) return;
       
       const outputText = data.toString();
