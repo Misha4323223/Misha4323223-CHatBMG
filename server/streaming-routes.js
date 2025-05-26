@@ -15,7 +15,7 @@ const STREAMING_PROVIDERS = [
 ];
 
 // API endpoint для стриминга через SSE (Server-Sent Events)
-router.post('/chat', (req, res) => {
+router.post('/chat', async (req, res) => {
   try {
     const { 
       message, 
@@ -64,31 +64,41 @@ router.post('/chat', (req, res) => {
       // Импортируем генератор изображений
       const { generateImage } = require('./ai-image-generator');
       
-      try {
-        const result = await generateImage(message, 'realistic', previousImage);
-        
-        if (result.success) {
-          // Отправляем начальное сообщение
-          res.write(`data: ${JSON.stringify({
-            text: "🎨 Создаю изображение для вас...",
-            provider: "AI_Image_Generator"
-          })}\n\n`);
-          
-          // Отправляем финальное изображение
-          res.write(`data: ${JSON.stringify({
-            text: `🎨 Изображение создано! Вот ваш дизайн:\n![Сгенерированное изображение](${result.imageUrl})`,
-            provider: "AI_Image_Generator",
-            finished: true
-          })}\n\n`);
-          
-          res.end();
-          return;
-        } else {
-          console.error('Ошибка генерации изображения:', result.error);
-        }
-      } catch (error) {
-        console.error('Ошибка в генераторе изображений:', error);
-      }
+      // Отправляем сообщение что начинаем генерацию
+      res.write(`data: ${JSON.stringify({
+        text: "🎨 Создаю изображение для вас...",
+        provider: "AI_Image_Generator"
+      })}\n\n`);
+      
+      // Запускаем генерацию асинхронно
+      setTimeout(() => {
+        generateImage(message, 'realistic', previousImage)
+          .then(result => {
+            if (result.success) {
+              res.write(`data: ${JSON.stringify({
+                text: `![Generated Image](${result.imageUrl})`,
+                provider: "AI_Image_Generator",
+                finished: true
+              })}\n\n`);
+            } else {
+              res.write(`data: ${JSON.stringify({
+                text: `❌ Ошибка: ${result.error}`,
+                provider: "AI_Image_Generator",
+                finished: true
+              })}\n\n`);
+            }
+            res.end();
+          })
+          .catch(error => {
+            res.write(`data: ${JSON.stringify({
+              text: `❌ Произошла ошибка при генерации`,
+              provider: "AI_Image_Generator",
+              finished: true
+            })}\n\n`);
+            res.end();
+          });
+      }, 100);
+      return;
     }
     
     // Настраиваем заголовки для SSE
