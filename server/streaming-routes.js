@@ -33,6 +33,46 @@ router.post('/chat', (req, res) => {
     
     console.log(`Запрос к стриминг API: ${message.substring(0, 50)}${message.length > 50 ? '...' : ''}`);
     
+    // Проверяем умный роутер - нужен ли генератор изображений
+    const { analyzeMessage } = require('./smart-router');
+    const messageAnalysis = analyzeMessage(message);
+    
+    console.log(`🧠 [STREAMING] Анализ сообщения:`, messageAnalysis);
+    
+    // Если это запрос на генерацию или редактирование изображения
+    if (messageAnalysis.category === 'image_generation' || messageAnalysis.category === 'image_edit') {
+      console.log('🎨 [STREAMING] Обнаружен запрос на изображения - переключаемся на генератор!');
+      
+      // Импортируем генератор изображений
+      const { generateImage } = require('./ai-image-generator');
+      
+      try {
+        const result = await generateImage(message);
+        
+        if (result.success) {
+          // Отправляем начальное сообщение
+          res.write(`data: ${JSON.stringify({
+            text: "🎨 Создаю изображение для вас...",
+            provider: "AI_Image_Generator"
+          })}\n\n`);
+          
+          // Отправляем финальное изображение
+          res.write(`data: ${JSON.stringify({
+            text: `🎨 Изображение создано! Вот ваш дизайн:\n![Сгенерированное изображение](${result.imageUrl})`,
+            provider: "AI_Image_Generator",
+            finished: true
+          })}\n\n`);
+          
+          res.end();
+          return;
+        } else {
+          console.error('Ошибка генерации изображения:', result.error);
+        }
+      } catch (error) {
+        console.error('Ошибка в генераторе изображений:', error);
+      }
+    }
+    
     // Настраиваем заголовки для SSE
     res.writeHead(200, {
       'Content-Type': 'text/event-stream',
