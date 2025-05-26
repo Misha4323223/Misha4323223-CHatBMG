@@ -125,7 +125,8 @@ def try_provider(provider_name, message, timeout=15, use_stream=False):
                     if len(response) < 100:  # Короткие сообщения об ошибках
                         raise Exception(f"Провайдер {provider_name} вернул ошибку: {response}")
                 
-                print(f"✅ {provider_name} (модель {model}) успешно ответил за {time.time() - start_time:.2f} сек")
+                # Логируем только в консоль, не в ответ
+                # print(f"✅ {provider_name} (модель {model}) успешно ответил за {time.time() - start_time:.2f} сек")
                 
                 return {
                     "streaming": False,

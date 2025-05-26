@@ -1522,7 +1522,7 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
       // Используем Python G4F через чистый API без отладки
       try {
         console.log('🐍 [STREAMING] Используем Python G4F...');
-        const fetch = require('node-fetch');
+        const fetch = (await import('node-fetch')).default;
         const response = await fetch('http://localhost:5004/python/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
