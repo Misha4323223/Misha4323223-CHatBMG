@@ -1494,6 +1494,8 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
           const searchInfo = webSearch.formatSearchResultsForAI(searchResults);
           finalMessage = message + ' ' + searchInfo;
           console.log('🔍 [STREAM] Веб-поиск успешен! Найдено результатов:', searchResults.results.length);
+          console.log('🔍 [DEBUG] Найденная информация для AI:', searchInfo.substring(0, 500) + '...');
+          console.log('🔍 [DEBUG] Финальное сообщение для AI:', finalMessage.substring(0, 300) + '...');
           
           // Уведомляем о успешном поиске
           res.write(`data: ${JSON.stringify({ 
@@ -1528,11 +1530,13 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
         // Используем встроенный fetch или node-fetch
         const fetch = globalThis.fetch || (await import('node-fetch')).default;
         
+        console.log('🔍 [DEBUG] Отправляем в Python G4F сообщение:', finalMessage.substring(0, 200) + '...');
+        
         const response = await fetch('http://localhost:5004/python/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
-            message: message,
+            message: finalMessage, // Используем finalMessage с результатами поиска!
             provider: provider 
           })
         });
