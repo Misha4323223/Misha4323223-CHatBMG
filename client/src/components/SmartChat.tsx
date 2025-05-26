@@ -258,8 +258,13 @@ const SmartChat: React.FC = () => {
                     ) : (
                       <div className="whitespace-pre-wrap word-break">
                         {message.text.split('\n').map((line, i) => {
+                          // Добавляем отладочную информацию
+                          console.log(`🔍 [DEBUG] Проверяем строку ${i}: "${line}"`);
+                          
                           // Ищем markdown изображения более гибко
                           const imageMatch = line.match(/!\[([^\]]*)\]\(([^)]+)\)/g);
+                          
+                          console.log(`🔍 [DEBUG] imageMatch для строки ${i}:`, imageMatch);
                           
                           if (imageMatch) {
                             // Извлекаем данные изображения
