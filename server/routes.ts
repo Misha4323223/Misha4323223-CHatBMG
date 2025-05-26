@@ -1519,33 +1519,41 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
       // Отправляем информацию о провайдере
       res.write(`data: ${JSON.stringify({ provider: provider })}\n\n`);
       
-      // Используем тот же Python G4F что работает в обычном API
+      // Используем Python G4F напрямую через HTTP
       try {
-        console.log('🤖 [STREAMING] Вызываем G4F провайдер...');
-        const g4fProvider = require('./g4f-provider');
-        const g4fResponse = await g4fProvider.getResponse(message, {
-          provider: provider,
-          temperature: 0.7
+        console.log('🐍 [STREAMING] Подключаемся к Python G4F...');
+        const fetch = require('node-fetch');
+        const response = await fetch('http://localhost:5004/python/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: message })
         });
+
+        if (response.ok) {
+          const data = await response.json();
+          const g4fResponse = data.response;
         
-        if (g4fResponse.success && g4fResponse.text) {
-          console.log('✅ [STREAMING] G4F ответил:', {
-            provider: g4fResponse.provider || provider,
-            textLength: g4fResponse.text.length
-          });
-          
-          const text = g4fResponse.text;
-          const words = text.split(' ');
-          
-          for (let i = 0; i < words.length; i++) {
-            const chunk = i === 0 ? words[i] : ' ' + words[i];
-            res.write(`data: ${JSON.stringify({ text: chunk })}\n\n`);
-            await new Promise(resolve => setTimeout(resolve, 50));
+          if (g4fResponse && typeof g4fResponse === 'string') {
+            console.log('✅ [STREAMING] Python G4F ответил:', {
+              provider: provider,
+              textLength: g4fResponse.length
+            });
+            
+            const text = g4fResponse;
+            const words = text.split(' ');
+            
+            for (let i = 0; i < words.length; i++) {
+              const chunk = i === 0 ? words[i] : ' ' + words[i];
+              res.write(`data: ${JSON.stringify({ text: chunk })}\n\n`);
+              await new Promise(resolve => setTimeout(resolve, 50));
+            }
+            
+            res.write(`data: ${JSON.stringify({ finished: true, provider: provider })}\n\n`);
+          } else {
+            throw new Error('Нет ответа от Python G4F');
           }
-          
-          res.write(`data: ${JSON.stringify({ finished: true, provider: g4fResponse.provider || provider })}\n\n`);
         } else {
-          throw new Error(g4fResponse.error || 'Нет ответа от G4F');
+          throw new Error(`Python G4F вернул статус ${response.status}`);
         }
       } catch (pythonError) {
         console.log('⚠️ [STREAMING] Ошибка Python G4F, используем fallback');
