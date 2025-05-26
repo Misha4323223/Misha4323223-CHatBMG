@@ -103,10 +103,11 @@ const PROVIDER_SPECIALTIES = {
     keywords: [
       "создай изображение", "нарисуй", "сгенерируй картинку", "создай принт", "дизайн для футболки",
       "create image", "generate picture", "draw", "design", "artwork", "illustration",
-      "принт", "логотип", "иконка", "графика", "постер", "баннер", "стикер",
+      "принт для футболки", "принт на футболку", "логотип", "иконка", "графика", "постер", "баннер", "стикер",
       "print", "logo", "icon", "graphic", "poster", "banner", "sticker", "t-shirt design",
       "футболка", "одежда", "streetwear", "мерч", "merchandise", "clothing",
-      "visualize", "sketch", "art", "creative", "visual", "picture", "image"
+      "visualize", "sketch", "art", "creative", "visual", "picture", "image",
+      "рисунок", "картинка", "изображение", "визуализация", "концепт", "макет"
     ]
   },
   shopping: {
@@ -167,8 +168,42 @@ function analyzeMessage(message) {
   // Массив обнаруженных категорий с количеством совпадений
   const detectedCategories = [];
   
+  // Специальная проверка для генерации изображений с более гибким распознаванием
+  const imageGenerationPatterns = [
+    /создай.*принт/i,
+    /нарисуй/i,
+    /сгенерируй.*картинк/i,
+    /дизайн.*футболк/i,
+    /принт.*футболк/i,
+    /создай.*изображение/i,
+    /логотип/i,
+    /рисунок/i,
+    /макет/i,
+    /концепт/i
+  ];
+  
+  let isImageGeneration = false;
+  for (const pattern of imageGenerationPatterns) {
+    if (pattern.test(message)) {
+      isImageGeneration = true;
+      break;
+    }
+  }
+  
+  if (isImageGeneration) {
+    detectedCategories.push({
+      category: 'image_generation',
+      matchCount: 10, // Высокий приоритет
+      providers: PROVIDER_SPECIALTIES.image_generation.providers
+    });
+  }
+  
   // Проверяем каждую категорию на наличие ключевых слов
   for (const [category, details] of Object.entries(PROVIDER_SPECIALTIES)) {
+    if (category === 'image_generation' && isImageGeneration) {
+      continue; // Уже обработали выше
+    }
+    
     let matchCount = 0;
     
     for (const keyword of details.keywords) {
