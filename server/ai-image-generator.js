@@ -39,6 +39,9 @@ function generateId() {
  */
 async function generateImage(prompt, style = 'realistic') {
   try {
+    console.log(`🎨 [DEBUG] Получен промпт: "${prompt}"`);
+    console.log(`🎨 [DEBUG] Стиль: "${style}"`);
+    
     // Улучшаем промпт для принтов футболок
     let enhancedPrompt = prompt;
     
@@ -46,7 +49,7 @@ async function generateImage(prompt, style = 'realistic') {
       enhancedPrompt = `High quality t-shirt design, vector style, bold graphics, streetwear aesthetic, clean background, print-ready: ${prompt}`;
     }
     
-    console.log(`🎨 Генерация изображения для принта: "${enhancedPrompt}" в стиле ${style}`);
+    console.log(`🎨 [DEBUG] Улучшенный промпт: "${enhancedPrompt}"`);
     const imageId = generateId();
     
     // Пробуем разные генераторы по очереди для надежности
