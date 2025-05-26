@@ -46,6 +46,29 @@ class Conversation {
   }
 
   /**
+   * Извлечение информации о последнем сгенерированном изображении
+   */
+  getLastImageInfo() {
+    // Ищем последнее сообщение AI с изображением
+    for (let i = this.messages.length - 1; i >= 0; i--) {
+      const message = this.messages[i];
+      if (message.sender === 'ai' && message.content.includes('![')) {
+        // Извлекаем URL изображения и описание
+        const imageMatch = message.content.match(/!\[([^\]]*)\]\(([^)]+)\)/);
+        if (imageMatch) {
+          return {
+            description: imageMatch[1] || 'Сгенерированное изображение',
+            url: imageMatch[2],
+            fullContent: message.content,
+            timestamp: message.timestamp
+          };
+        }
+      }
+    }
+    return null;
+  }
+
+  /**
    * Анализ контекста разговора для понимания намерений
    */
   analyzeIntent() {

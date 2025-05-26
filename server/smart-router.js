@@ -198,6 +198,42 @@ function analyzeMessage(message) {
     });
   }
   
+  // Проверка на редактирование изображений
+  const imageEditPatterns = [
+    /добавь.*к.*изображени/i,
+    /измени.*изображени/i,
+    /сделай.*ярче/i,
+    /сделай.*темнее/i,
+    /добавь.*логотип/i,
+    /добавь.*текст/i,
+    /поменяй.*цвет/i,
+    /убери.*фон/i,
+    /добавь.*фон/i,
+    /сделай.*больше/i,
+    /сделай.*меньше/i,
+    /добавь.*к.*этому/i,
+    /измени.*на/i,
+    /переделай/i,
+    /улучши/i,
+    /модифицируй/i
+  ];
+  
+  let isImageEdit = false;
+  for (const pattern of imageEditPatterns) {
+    if (pattern.test(message)) {
+      isImageEdit = true;
+      break;
+    }
+  }
+  
+  if (isImageEdit) {
+    detectedCategories.push({
+      category: 'image_edit',
+      matchCount: 10, // Высокий приоритет
+      providers: PROVIDER_SPECIALTIES.image_generation.providers
+    });
+  }
+  
   // Проверяем каждую категорию на наличие ключевых слов
   for (const [category, details] of Object.entries(PROVIDER_SPECIALTIES)) {
     if (category === 'image_generation' && isImageGeneration) {
