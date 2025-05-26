@@ -1323,15 +1323,17 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
     console.log(`🚀 Запуск потоковой генерации для: "${message}"`);
     console.log(`🔥 [DEBUG] Извлеченные параметры: message="${message}", provider="${provider}", sessionId="${sessionId}"`);
     
-    // 🧠 ПРОСТАЯ И УМНАЯ СИСТЕМА КАК У CHATGPT4
-    console.log('🧠 [SMART] === АНАЛИЗ НАМЕРЕНИЙ ===');
-    console.log('🧠 [SMART] Анализируем сообщение:', message);
+    // 🧠 ДОБАВЛЯЕМ КОНТЕКСТ РАЗГОВОРА
+    console.log('🧠 [STREAM] === НАЧАЛО АНАЛИЗА КОНТЕКСТА ===');
     
-    // Получаем контекст для анализа
     const conversationMemory = require('./conversation-memory');
     const userId = `session_${sessionId || 'stream'}`;
     const contextInfo = conversationMemory.getMessageContext(userId, message);
     const contextText = contextInfo.context ? contextInfo.context.substring(0, 500) : '';
+    
+    // 🧠 ПРОСТАЯ И УМНАЯ СИСТЕМА КАК У CHATGPT4
+    console.log('🧠 [SMART] === АНАЛИЗ НАМЕРЕНИЙ ===');
+    console.log('🧠 [SMART] Анализируем сообщение:', message);
     
     // Простой промпт для анализа намерений
     const analysisPrompt = `Контекст: ${contextText}
@@ -1438,42 +1440,7 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
       }
     }
     
-    // 🧠 ДОБАВЛЯЕМ КОНТЕКСТ РАЗГОВОРА И ВЕБ-ПОИСК
-    console.log('🧠 [STREAM] === НАЧАЛО АНАЛИЗА КОНТЕКСТА ===');
-    console.log('🧠 [STREAM] req.body:', JSON.stringify(req.body, null, 2));
-    
-    const conversationMemory = require('./conversation-memory');
-    const userId = `session_${sessionId || 'stream'}`;
-    console.log('🧠 [STREAM] userId для контекста:', userId);
-    
-    // Получаем контекст разговора с анализом намерений
-    console.log('🧠 [STREAM] Получаем контекст для сообщения:', message);
-    const contextInfo = conversationMemory.getMessageContext(userId, message);
-    
-    console.log('🧠 [STREAM] ДЕТАЛЬНЫЙ анализ контекста:', {
-      hasIntent: !!contextInfo.intent,
-      intent: contextInfo.intent,
-      isSearchQuery: contextInfo.intent?.isSearchQuery,
-      location: contextInfo.intent?.location,
-      contextLength: contextInfo.context?.length || 0,
-      context: contextInfo.context?.substring(0, 200) + '...',
-      messageHistory: contextInfo.messageHistory?.length || 0
-    });
-    
-    // Используем сообщение с контекстом
-    let finalMessage = message;
-    if (contextInfo.context && contextInfo.context.trim()) {
-      finalMessage = contextInfo.context + message;
-      console.log('🧠 [STREAM] КОНТЕКСТ ДОБАВЛЕН!');
-      console.log('🧠 [STREAM] Оригинальное сообщение:', message);
-      console.log('🧠 [STREAM] Сообщение с контекстом:', finalMessage.substring(0, 300) + '...');
-    } else {
-      console.log('🧠 [STREAM] КОНТЕКСТ НЕ ДОБАВЛЕН - нет контекста или пустой');
-    }
-    
-
-    
-    console.log('🧠 [STREAM] === КОНЕЦ АНАЛИЗА КОНТЕКСТА ===');
+    // Продолжаем с веб-поиском...
     
     // Настраиваем заголовки для Server-Sent Events
     res.writeHead(200, {
