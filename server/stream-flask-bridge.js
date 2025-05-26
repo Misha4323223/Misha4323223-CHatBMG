@@ -43,9 +43,10 @@ async function startFlaskServer() {
   if (flaskProcess !== null || flaskStarting) return;
   
   flaskStarting = true;
-  console.log('Запускаем Flask-сервер для стриминга AI...');
+  console.log('⚠️ Stream server отключен - используем только G4F провайдер');
   
-  flaskProcess = spawn('python', ['server/stream_server.py']);
+  // ОТКЛЮЧЕНО: flaskProcess = spawn('python', ['server/stream_server.py']);
+  return; // Не запускаем старый сервер
   
   flaskProcess.stdout.on('data', (data) => {
     console.log(`[Flask] ${data.toString().trim()}`);
