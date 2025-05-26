@@ -1521,12 +1521,11 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
       
       // Используем тот же Python G4F что работает в обычном API
       try {
-        console.log('🐍 [STREAMING] Вызываем Python G4F...');
-        const pythonResponse = await fetch(`http://127.0.0.1:5004/python/chat?provider=${provider}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: finalMessage }),
-          timeout: 10000
+        console.log('🤖 [STREAMING] Вызываем G4F провайдер...');
+        const g4fProvider = require('./g4f-provider');
+        const g4fResponse = await g4fProvider.getResponse(message, {
+          provider: provider,
+          temperature: 0.7
         });
         
         if (pythonResponse.ok) {
