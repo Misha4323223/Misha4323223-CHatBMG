@@ -29,6 +29,21 @@
   }
 }
 
+/* Скрываем боковую панель по умолчанию */
+[data-sidebar="sidebar"] {
+  transform: translateX(-100%);
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s ease-in-out;
+}
+
+/* Показываем панель только когда она открыта */
+[data-sidebar="sidebar"][data-state="expanded"] {
+  transform: translateX(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
 /* Скрытие скроллбара на мобильных */
 @media (max-width: 768px) {
   .hide-scrollbar {
