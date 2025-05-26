@@ -1362,6 +1362,29 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
     
     console.log('🧠 [STREAM] === КОНЕЦ АНАЛИЗА КОНТЕКСТА ===');
     
+    // 🎨 ПРОВЕРЯЕМ НА ГЕНЕРАЦИЮ ИЗОБРАЖЕНИЙ ПЕРЕД СТРИМИНГОМ
+    const imageGenerationPatterns = [
+      /создай.*принт/i,
+      /нарисуй/i,
+      /сгенерируй.*картинк/i,
+      /дизайн.*футболк/i,
+      /принт.*футболк/i,
+      /создай.*изображение/i,
+      /логотип/i,
+      /рисунок/i,
+      /макет/i,
+      /концепт/i
+    ];
+    
+    let isImageGeneration = false;
+    for (const pattern of imageGenerationPatterns) {
+      if (pattern.test(message)) {
+        isImageGeneration = true;
+        console.log('🎨 [STREAM] Обнаружен запрос на генерацию изображения!');
+        break;
+      }
+    }
+    
     // Настраиваем заголовки для Server-Sent Events
     res.writeHead(200, {
       'Content-Type': 'text/event-stream',
@@ -1370,6 +1393,58 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Headers': 'Cache-Control'
     });
+    
+    // Если это запрос на генерацию изображения, переключаемся на генератор
+    if (isImageGeneration) {
+      try {
+        console.log('🎨 [STREAM] Переключаемся на генератор изображений...');
+        res.write(`data: ${JSON.stringify({ 
+          text: '🎨 Создаю изображение для вас...', 
+          provider: 'AI_Image_Generator' 
+        })}\n\n`);
+        
+        const imageGenerator = require('./ai-image-generator');
+        
+        // Определяем стиль для принтов футболок
+        let style = 'realistic';
+        let enhancedPrompt = message;
+        
+        if (message.toLowerCase().includes('футболка') || 
+            message.toLowerCase().includes('принт') ||
+            message.toLowerCase().includes('t-shirt') ||
+            message.toLowerCase().includes('streetwear')) {
+          style = 'artistic';
+          enhancedPrompt = `Дизайн принта для футболки: ${message}`;
+        }
+        
+        const result = await imageGenerator.generateImage(enhancedPrompt, style);
+        
+        if (result.success) {
+          res.write(`data: ${JSON.stringify({ 
+            text: `🎨 Изображение создано! Вот ваш дизайн:\n![Сгенерированное изображение](${result.imageUrl})`,
+            provider: 'AI_Image_Generator',
+            finished: true
+          })}\n\n`);
+        } else {
+          res.write(`data: ${JSON.stringify({ 
+            text: `😔 Извините, не удалось создать изображение. Попробуйте переформулировать запрос.`,
+            provider: 'AI_Image_Generator',
+            finished: true
+          })}\n\n`);
+        }
+        
+        res.end();
+        return;
+        
+      } catch (error) {
+        console.error('🎨 [STREAM] Ошибка генератора изображений:', error);
+        res.write(`data: ${JSON.stringify({ 
+          text: `😔 Произошла ошибка при создании изображения. Давайте попробуем создать текстовое описание дизайна.`,
+          provider: 'AI_Image_Generator'
+        })}\n\n`);
+        // Продолжаем обычную обработку
+      }
+    }
     
     // 🔍 ПРОВЕРЯЕМ НУЖЕН ЛИ ВЕБ-ПОИСК (ПОСЛЕ ЗАГОЛОВКОВ)
     console.log('🔍 [STREAM] Загружаем веб-поиск модуль...');
