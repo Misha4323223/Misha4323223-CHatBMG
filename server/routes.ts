@@ -1528,26 +1528,24 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
           temperature: 0.7
         });
         
-        if (pythonResponse.ok) {
-          const data = await pythonResponse.json();
-          console.log('✅ [STREAMING] Python G4F ответил:', data);
+        if (g4fResponse.success && g4fResponse.text) {
+          console.log('✅ [STREAMING] G4F ответил:', {
+            provider: g4fResponse.provider || provider,
+            textLength: g4fResponse.text.length
+          });
           
-          if (data.response && typeof data.response === 'string') {
-            const text = data.response;
-            const words = text.split(' ');
-            
-            for (let i = 0; i < words.length; i++) {
-              const chunk = i === 0 ? words[i] : ' ' + words[i];
-              res.write(`data: ${JSON.stringify({ text: chunk })}\n\n`);
-              await new Promise(resolve => setTimeout(resolve, 50));
-            }
-            
-            res.write(`data: ${JSON.stringify({ finished: true, provider: data.provider || provider })}\n\n`);
-          } else {
-            throw new Error('Неверный формат ответа от Python G4F');
+          const text = g4fResponse.text;
+          const words = text.split(' ');
+          
+          for (let i = 0; i < words.length; i++) {
+            const chunk = i === 0 ? words[i] : ' ' + words[i];
+            res.write(`data: ${JSON.stringify({ text: chunk })}\n\n`);
+            await new Promise(resolve => setTimeout(resolve, 50));
           }
+          
+          res.write(`data: ${JSON.stringify({ finished: true, provider: g4fResponse.provider || provider })}\n\n`);
         } else {
-          throw new Error(`Python G4F вернул статус ${pythonResponse.status}`);
+          throw new Error(g4fResponse.error || 'Нет ответа от G4F');
         }
       } catch (pythonError) {
         console.log('⚠️ [STREAMING] Ошибка Python G4F, используем fallback');
