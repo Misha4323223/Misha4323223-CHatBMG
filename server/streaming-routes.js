@@ -31,11 +31,15 @@ router.post('/chat', (req, res) => {
       });
     }
     
-    console.log(`Запрос к стриминг API: ${message.substring(0, 50)}${message.length > 50 ? '...' : ''}`);
+    console.log(`🔥 [DEBUG-STREAM] Запрос к стриминг API: ${message.substring(0, 50)}${message.length > 50 ? '...' : ''}`);
+    console.log(`🔥 [DEBUG-STREAM] Полное сообщение: "${message}"`);
     
     // Проверяем умный роутер - нужен ли генератор изображений
+    console.log(`🔥 [DEBUG-STREAM] Загружаем умный роутер...`);
     const { analyzeMessage } = require('./smart-router');
+    console.log(`🔥 [DEBUG-STREAM] Анализируем сообщение через умный роутер...`);
     const messageAnalysis = analyzeMessage(message);
+    console.log(`🔥 [DEBUG-STREAM] Результат анализа получен!`);
     
     console.log(`🧠 [STREAMING] Сообщение для анализа: "${message}"`);
     console.log(`🧠 [STREAMING] Анализ сообщения:`, messageAnalysis);
