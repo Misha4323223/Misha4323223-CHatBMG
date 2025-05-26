@@ -253,26 +253,53 @@ function analyzeMessage(message) {
     });
   }
   
-  // Проверяем каждую категорию на наличие ключевых слов
-  for (const [category, details] of Object.entries(PROVIDER_SPECIALTIES)) {
-    if (category === 'image_generation' && isImageGeneration) {
-      continue; // Уже обработали выше
-    }
+  // СПЕЦИАЛЬНАЯ ПРОВЕРКА НА ВОПРОСЫ О ПРОГРАММИРОВАНИИ - ВСЕГДА ИСПОЛЬЗУЕМ PHIND!
+  const codingKeywords = [
+    'код', 'программирование', 'javascript', 'python', 'java', 'c++', 'c#',
+    'coding', 'programming', 'code', 'алгоритм', 'algorithm', 'функция', 'function',
+    'api', 'сервер', 'server', 'backend', 'frontend', 'фронтенд', 'бэкенд',
+    'database', 'база данных', 'sql', 'nosql', 'mongodb', 'json', 'html', 'css',
+    'git', 'github', 'docker', 'react', 'node', 'npm', 'typescript', 'как написать',
+    'как создать', 'разработка', 'development', 'библиотека', 'library', 'framework'
+  ];
+  
+  const hasCodingKeywords = codingKeywords.some(keyword => 
+    lowerMessage.includes(keyword.toLowerCase())
+  );
+  
+  if (hasCodingKeywords) {
+    SmartLogger.route(`🔧 Обнаружен вопрос о программировании! Используем Phind`, {
+      message: message.substring(0, 50) + '...'
+    });
     
-    let matchCount = 0;
-    
-    for (const keyword of details.keywords) {
-      if (lowerMessage.includes(keyword)) {
-        matchCount++;
+    // Сразу возвращаем Phind для технических вопросов
+    detectedCategories.push({
+      category: 'technical',
+      matchCount: 100, // Максимальный приоритет
+      providers: ["Phind"] // Только Phind для программирования
+    });
+  } else {
+    // Проверяем каждую категорию на наличие ключевых слов
+    for (const [category, details] of Object.entries(PROVIDER_SPECIALTIES)) {
+      if (category === 'image_generation' && isImageGeneration) {
+        continue; // Уже обработали выше
       }
-    }
-    
-    if (matchCount > 0) {
-      detectedCategories.push({
-        category,
-        matchCount,
-        providers: details.providers
-      });
+      
+      let matchCount = 0;
+      
+      for (const keyword of details.keywords) {
+        if (lowerMessage.includes(keyword)) {
+          matchCount++;
+        }
+      }
+      
+      if (matchCount > 0) {
+        detectedCategories.push({
+          category,
+          matchCount,
+          providers: details.providers
+        });
+      }
     }
   }
   
