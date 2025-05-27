@@ -24,6 +24,7 @@ GOOGLE_SECURE_3PSIDTS = "sidts-CjIB5H03Pyxe416Ah3dAKBXEP1CQ3mvo2kz-pK25tCo_rddHr
 GOOGLE_HSID = "ABJ442iT_SQ2WitDg"
 GOOGLE_SSID = "Ay7HZT8yW216dfO_o"
 GOOGLE_APISID = "hYhU04JUR7_X1G4_/AjCPTUbWu4DfW4voM"
+GOOGLE_SAPISID = "sxn8_1EmcYuzKl1I/AR51UEPLAlShAFxbK"
 
 # Справочник моделей для каждого провайдера
 models_per_provider = {
