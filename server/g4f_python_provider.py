@@ -19,6 +19,7 @@ CORS(app)
 # Google cookies для Gemini
 GOOGLE_SECURE_1PSID = "g.a000xAh5kQmBDvMW9rfoBIhFCn1mJQZd0gWxAkhq54JsWVNGhxZEgBoCElTESMNfVrw8yvrLMAACgYKAdUSARUSFQHGX2Mi2JC4RbjuchHhJfSbgEUEqBoVAUF8yKplgTkdDK5p7q6WNJaskCsj0076"
 GOOGLE_SECURE_1PSIDTS = "sidts-CjIB5H03Pyxe416Ah3dAKBXEP1CQ3mvo2kz-pK25tCo_rddHrlWe9AwTtoajWHcgXkuW5BAA"
+GOOGLE_SECURE_3PSID = "g.a000xAh5kQmBDvMW9rfoBIhFCn1mJQZd0gWxAkhq54JsWVNGhxZEgBoCElTESMNfVrw8yvrLMAACgYKAdUSARUSFQHGX2Mi2JC4RbjuchHhJfSbgEUEqBoVAUF8yKplgTkdDK5p7q6WNJaskCsj0076"
 
 # Справочник моделей для каждого провайдера
 models_per_provider = {
@@ -96,7 +97,8 @@ def try_provider(provider_name, message, timeout=15, use_stream=False, custom_mo
         if provider_name == "Gemini":
             auth_cookies = {
                 "__Secure-1PSID": GOOGLE_SECURE_1PSID,
-                "__Secure-1PSIDTS": GOOGLE_SECURE_1PSIDTS
+                "__Secure-1PSIDTS": GOOGLE_SECURE_1PSIDTS,
+                "__Secure-3PSID": GOOGLE_SECURE_3PSID
             }
         
         # Отладочная информация только в консоль, не в ответ
