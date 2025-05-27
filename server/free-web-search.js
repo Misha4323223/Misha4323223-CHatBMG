@@ -19,7 +19,8 @@ async function searchRealTimeInfo(query) {
         // 1. Поиск мест (магазины, рестораны, кафе)
         if (searchTerms.includes('магазин') || searchTerms.includes('ресторан') || 
             searchTerms.includes('кафе') || searchTerms.includes('где') || 
-            searchTerms.includes('адрес')) {
+            searchTerms.includes('адрес') || searchTerms.includes('найди') ||
+            searchTerms.includes('одежда') || searchTerms.includes('торговый')) {
             const placeResults = await searchPlaces(query);
             results.push(...placeResults);
         }
