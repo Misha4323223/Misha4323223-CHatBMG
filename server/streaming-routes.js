@@ -70,9 +70,20 @@ router.post('/chat', async (req, res) => {
         provider: "AI_Image_Generator"
       })}\n\n`);
       
+      // Получаем информацию о предыдущем изображении из памяти разговора
+      const conversationMemory = require('./conversation-memory');
+      const conversation = conversationMemory.getConversation(sessionId || 'anonymous');
+      const lastImageInfo = conversation.getLastImageInfo();
+      
+      console.log('🔍 [STREAM] Информация о последнем изображении:', lastImageInfo ? 'Найдено' : 'Не найдено');
+      if (lastImageInfo) {
+        console.log('🖼️ [STREAM] URL последнего изображения:', lastImageInfo.url);
+        console.log('📝 [STREAM] Описание последнего изображения:', lastImageInfo.description);
+      }
+      
       // Запускаем генерацию асинхронно
       setTimeout(() => {
-        generateImage(message, 'realistic', previousImage)
+        generateImage(message, 'realistic', lastImageInfo)
           .then(result => {
             if (result.success) {
               res.write(`data: ${JSON.stringify({
