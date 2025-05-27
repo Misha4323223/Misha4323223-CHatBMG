@@ -16,17 +16,15 @@ async function searchRealTimeInfo(query) {
         const results = [];
         const searchTerms = query.toLowerCase();
         
-        // 1. Улучшенный поиск мест (магазины, торговые центры)
+        // 1. Универсальный поиск мест и организаций
         if (searchTerms.includes('магазин') || searchTerms.includes('ресторан') || 
             searchTerms.includes('кафе') || searchTerms.includes('где') || 
             searchTerms.includes('адрес') || searchTerms.includes('найди') ||
-            searchTerms.includes('одежда') || searchTerms.includes('торговый')) {
+            searchTerms.includes('одежда') || searchTerms.includes('торговый') ||
+            searchTerms.includes('аптека') || searchTerms.includes('банк') ||
+            searchTerms.includes('салон') || searchTerms.includes('центр')) {
             const placeResults = await searchPlaces(query);
             results.push(...placeResults);
-            
-            // Дополнительный поиск магазинов
-            const storeResults = await searchStoreDetails(query);
-            results.push(...storeResults);
         }
         
         // 2. Поиск погоды
@@ -74,21 +72,9 @@ async function searchPlaces(query) {
     try {
         console.log('🔍 [PLACES] Поиск мест для:', query);
         
-        // Извлекаем город из запроса более точно
-        const cityMatch = query.match(/(в|около|рядом|в городе)\s+([а-яё\w\-\s]+)/i);
-        const city = cityMatch ? cityMatch[2].trim() : '';
-        
-        console.log('🔍 [PLACES] Обнаружен город:', city);
-        
-        // Если город найден, ищем магазины одежды в этом городе
-        let searchQuery = '';
-        if (city) {
-            searchQuery = `shop=clothes ${city} россия`;
-        } else {
-            searchQuery = query;
-        }
-        
-        const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchQuery)}&format=json&limit=15&addressdetails=1&countrycodes=ru&extratags=1`;
+        // Универсальный поиск по всем типам мест и организаций
+        const searchQuery = encodeURIComponent(query);
+        const url = `https://nominatim.openstreetmap.org/search?q=${searchQuery}&format=json&limit=20&addressdetails=1&countrycodes=ru&extratags=1`;
         
         const response = await fetch(url, {
             headers: {
@@ -104,14 +90,8 @@ async function searchPlaces(query) {
         const data = await response.json();
         console.log('🔍 [PLACES] Найдено мест OSM:', data.length);
         
-        // Фильтруем и форматируем результаты для магазинов
-        const storeResults = data.filter(place => {
-            const name = place.display_name.toLowerCase();
-            const type = place.type || '';
-            return name.includes('магазин') || name.includes('одежда') || 
-                   name.includes('торговый') || name.includes('центр') ||
-                   type.includes('shop') || type.includes('mall');
-        }).slice(0, 8).map(place => {
+        // Форматируем все найденные результаты
+        const searchResults = data.slice(0, 8).map(place => {
             const name = place.display_name.split(',')[0];
             const address = place.display_name;
             
@@ -121,16 +101,24 @@ async function searchPlaces(query) {
             if (place.extratags?.website) description += `\n🌐 ${place.extratags.website}`;
             if (place.extratags?.opening_hours) description += `\n🕐 ${place.extratags.opening_hours}`;
             
+            // Определяем тип места для иконки
+            let icon = '📍';
+            if (name.toLowerCase().includes('магазин')) icon = '🏪';
+            else if (name.toLowerCase().includes('ресторан') || name.toLowerCase().includes('кафе')) icon = '🍽️';
+            else if (name.toLowerCase().includes('аптека')) icon = '💊';
+            else if (name.toLowerCase().includes('банк')) icon = '🏦';
+            else if (name.toLowerCase().includes('центр')) icon = '🏢';
+            
             return {
-                title: `🏪 ${name}`,
+                title: `${icon} ${name}`,
                 description: description,
                 url: `https://www.openstreetmap.org/#map=18/${place.lat}/${place.lon}`,
                 source: 'OpenStreetMap'
             };
         });
         
-        console.log(`🔍 [PLACES] Отфильтровано магазинов: ${storeResults.length}`);
-        return storeResults;
+        console.log(`🔍 [PLACES] Найдено результатов: ${searchResults.length}`);
+        return searchResults;
         
     } catch (error) {
         console.log('🔍 [PLACES] Ошибка поиска мест:', error.message);
