@@ -1290,6 +1290,41 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
     console.log(`🚀 Запуск потоковой генерации для: "${message}"`);
     console.log(`🔥 [DEBUG] Извлеченные параметры: message="${message}", provider="${provider}", sessionId="${sessionId}"`);
     
+    // 🔍 ДОБАВЛЯЕМ РЕАЛЬНЫЙ ВЕБ-ПОИСК ПЕРЕД AI
+    console.log('🔥🔥🔥 [ROUTES-DEBUG] НАЧАЛО ПРОВЕРКИ ПОИСКА');
+    let enrichedMessage = message;
+    
+    // Проверяем keywords для поиска
+    const searchKeywords = ['магазин', 'ресторан', 'кафе', 'где', 'адрес', 'найди', 'одежда', 'торговый', 'аптека', 'банк', 'салон', 'центр'];
+    const requiresSearch = searchKeywords.some(keyword => message.toLowerCase().includes(keyword));
+    
+    console.log('🔥🔥🔥 [DEBUG] requiresSearch =', requiresSearch);
+    console.log('🔥🔥🔥 [DEBUG] searchKeywords найдены:', searchKeywords.filter(keyword => message.toLowerCase().includes(keyword)));
+    
+    if (requiresSearch) {
+      console.log('🔥🔥🔥 [ROUTES] ЗАПУСКАЕМ ВЕБ-ПОИСК!!!');
+      try {
+        const { searchRealTimeInfo } = require('./free-web-search');
+        console.log('🔥🔥🔥 [DEBUG] searchRealTimeInfo загружен');
+        const searchResults = await searchRealTimeInfo(message);
+        console.log('🔥🔥🔥 [ROUTES] Результаты поиска получены:', searchResults ? searchResults.length : 'null');
+        
+        if (searchResults && searchResults.length > 0) {
+          let searchInfo = '\n\n🔍 **АКТУАЛЬНАЯ ИНФОРМАЦИЯ ИЗ ИНТЕРНЕТА:**\n\n';
+          searchResults.forEach((result, index) => {
+            searchInfo += `${index + 1}. **${result.title}** (${result.source})\n`;
+            searchInfo += `   ${result.snippet}\n`;
+            searchInfo += `   🔗 ${result.url}\n\n`;
+          });
+          searchInfo += 'Используйте эту актуальную информацию для ответа пользователю.\n\n';
+          enrichedMessage = searchInfo + message;
+          console.log('🔥🔥🔥 [ROUTES] Сообщение обогащено поисковыми данными');
+        }
+      } catch (error) {
+        console.log('🔥🔥🔥 [ROUTES] Ошибка веб-поиска:', error.message);
+      }
+    }
+    
     // 🧠 ПРОСТЫЕ ПАТТЕРНЫ ДЛЯ БЫСТРОЙ ПРОВЕРКИ
     const imagePatterns = [
       /создай/i, /нарисуй/i, /сгенерируй/i, /дизайн/i, /принт/i,
@@ -1437,16 +1472,10 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
       }
     }
     
-    // 🔍 ПРОВЕРЯЕМ НУЖЕН ЛИ ВЕБ-ПОИСК (ПОСЛЕ ЗАГОЛОВКОВ)
-    console.log('🔍 [STREAM] Загружаем веб-поиск модуль...');
-    const webSearch = require('./web-search-provider');
-    console.log('🔍 [STREAM] Проверяем сообщение:', message);
-    const needsSearch = webSearch.needsWebSearch(message);
-    console.log('🔍 [STREAM] Требуется веб-поиск:', needsSearch);
+    // СТАРЫЙ КОД ПОИСКА УДАЛЕН - ИСПОЛЬЗУЕМ НОВЫЙ ВЫШЕ
+    let finalMessage = enrichedMessage; // Используем обогащенное сообщение
     
-    let finalMessage = message; // Объявляем переменную для использования в веб-поиске
-    
-    if (needsSearch) {
+    if (false) { // ОТКЛЮЧАЕМ СТАРЫЙ ПОИСК
       console.log('🔍 [STREAM] Выполняем поиск в интернете...');
       
       // Отправляем индикатор поиска пользователю
