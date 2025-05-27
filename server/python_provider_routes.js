@@ -152,13 +152,20 @@ function getDemoResponse(message = '') {
 // Обработка стандартного API запроса
 router.post('/chat', async (req, res) => {
   try {
-    const { message, provider = 'Qwen_Max', timeout = 20000 } = req.body;
+    const { message, provider = 'Qwen_Max', timeout = 20000, context, sessionId } = req.body;
     
     if (!message) {
       return res.status(400).json({ 
         success: false, 
         error: 'Не указан текст сообщения' 
       });
+    }
+    
+    // Подготавливаем финальное сообщение с контекстом
+    let finalMessage = message;
+    if (context) {
+      finalMessage = `${context}${message}`;
+      console.log(`🧠 [PYTHON-PROVIDER] Добавлен контекст к сообщению: ${context.length} символов`);
     }
     
     // Запускаем Python-сервер, если он не запущен
@@ -171,7 +178,7 @@ router.post('/chat', async (req, res) => {
       // Используем http.request вместо fetch
       const http = require('http');
       
-      const requestData = JSON.stringify({ message, provider, timeout });
+      const requestData = JSON.stringify({ message: finalMessage, provider, timeout });
       
       const data = await new Promise((resolve, reject) => {
         const options = {
