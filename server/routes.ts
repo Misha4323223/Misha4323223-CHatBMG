@@ -1527,7 +1527,9 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
         // Используем встроенный fetch или node-fetch
         const fetch = globalThis.fetch || (await import('node-fetch')).default;
         
-        console.log('🔍 [DEBUG] Отправляем в Python G4F сообщение:', finalMessage.substring(0, 200) + '...');
+        console.log('🔍 [DEBUG] Отправляем в Python G4F ОБОГАЩЕННОЕ сообщение длиной:', finalMessage.length);
+        console.log('🔍 [DEBUG] Содержит поисковые данные:', finalMessage.includes('🔍 **АКТУАЛЬНАЯ ИНФОРМАЦИЯ ИЗ ИНТЕРНЕТА:**'));
+        console.log('🔍 [DEBUG] Первые 300 символов:', finalMessage.substring(0, 300));
         
         const response = await fetch('http://localhost:5004/python/chat', {
           method: 'POST',
