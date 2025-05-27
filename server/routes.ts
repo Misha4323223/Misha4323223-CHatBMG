@@ -1600,9 +1600,10 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
             console.log(`💭 [CONTEXT] 🔍 ЗАПРАШИВАЕМ КОНТЕКСТ для сессии ${sessionId}`);
             console.log(`💭 [CONTEXT] 🔍 Тип sessionId: ${typeof sessionId}, значение: "${sessionId}"`);
             
-            const recentMessages = await storage.getRecentMessages(sessionId, 3);
+            // Используем правильный метод через chatHistory
+            const recentMessages = await chatHistory.getSessionMessages(sessionId, 3);
             
-            console.log(`💭 [CONTEXT] 🔍 ПОЛУЧИЛИ РЕЗУЛЬТАТ ОТ STORAGE:`);
+            console.log(`💭 [CONTEXT] 🔍 ПОЛУЧИЛИ РЕЗУЛЬТАТ ОТ CHAT HISTORY:`);
             console.log(`💭 [CONTEXT] 🔍 Тип результата: ${typeof recentMessages}`);
             console.log(`💭 [CONTEXT] 🔍 Является ли массивом: ${Array.isArray(recentMessages)}`);
             console.log(`💭 [CONTEXT] 🔍 Количество сообщений: ${recentMessages ? recentMessages.length : 0}`);
