@@ -119,8 +119,39 @@ router.post('/chat', async (req, res) => {
       'Connection': 'keep-alive'
     });
     
+    // ДОБАВЛЯЕМ РЕАЛЬНЫЙ ВЕБ-ПОИСК ПЕРЕД AI
+    console.log('🔍 [STREAMING] Проверяем, нужен ли веб-поиск для:', message);
+    let enrichedMessage = message;
+    
+    // Проверяем keywords для поиска
+    const searchKeywords = ['магазин', 'ресторан', 'кафе', 'где', 'адрес', 'найди', 'одежда', 'торговый', 'аптека', 'банк', 'салон', 'центр'];
+    const needsSearch = searchKeywords.some(keyword => message.toLowerCase().includes(keyword));
+    
+    if (needsSearch) {
+      console.log('🔍 [STREAMING] Запускаем веб-поиск...');
+      try {
+        const { searchRealTimeInfo } = require('./free-web-search');
+        const searchResults = await searchRealTimeInfo(message);
+        console.log('🔍 [STREAMING] Результаты поиска получены:', searchResults.length);
+        
+        if (searchResults && searchResults.length > 0) {
+          let searchInfo = '\n\n🔍 **АКТУАЛЬНАЯ ИНФОРМАЦИЯ ИЗ ИНТЕРНЕТА:**\n\n';
+          searchResults.forEach((result, index) => {
+            searchInfo += `${index + 1}. **${result.title}** (${result.source})\n`;
+            searchInfo += `   ${result.snippet}\n`;
+            searchInfo += `   🔗 ${result.url}\n\n`;
+          });
+          searchInfo += 'Используйте эту актуальную информацию для ответа пользователю.\n\n';
+          enrichedMessage = searchInfo + message;
+          console.log('🔍 [STREAMING] Сообщение обогащено поисковыми данными');
+        }
+      } catch (error) {
+        console.log('🔍 [STREAMING] Ошибка веб-поиска:', error.message);
+      }
+    }
+    
     // Получаем демо-ответ на случай ошибки
-    const demoResponse = getDemoResponse(message);
+    const demoResponse = getDemoResponse(enrichedMessage);
     
     // Функция для отправки SSE событий
     const sendEvent = (event, data) => {
@@ -153,7 +184,7 @@ router.post('/chat', async (req, res) => {
     const http = require('http');
     
     const requestData = JSON.stringify({
-      message: message,
+      message: enrichedMessage,
       provider: actualProvider
     });
     
