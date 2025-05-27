@@ -106,14 +106,24 @@ def try_provider(provider_name, message, timeout=15, use_stream=False, custom_mo
                 {"role": "user", "content": message}
             ]
             
-            # Пробуем получить ответ
-            response = g4f.ChatCompletion.create(
-                model=model,
-                messages=messages,
-                provider=provider,
-                stream=use_stream,
-                timeout=timeout
-            )
+            # Пробуем получить ответ с учетом cookies для Gemini
+            if auth_cookies:
+                response = g4f.ChatCompletion.create(
+                    model=model,
+                    messages=messages,
+                    provider=provider,
+                    stream=use_stream,
+                    timeout=timeout,
+                    cookies=auth_cookies
+                )
+            else:
+                response = g4f.ChatCompletion.create(
+                    model=model,
+                    messages=messages,
+                    provider=provider,
+                    stream=use_stream,
+                    timeout=timeout
+                )
             
             # Обработка стриминга (возвращает итератор)
             if use_stream:
