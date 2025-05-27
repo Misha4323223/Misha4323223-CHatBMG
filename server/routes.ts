@@ -1302,12 +1302,12 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
         });
         console.log('💭 [CONTEXT] ✅ Сообщение пользователя успешно сохранено в контекст');
         
-        // Проверяем что сохранилось
-        const savedMessages = await storage.getRecentMessages(sessionId, 1);
-        console.log(`💭 [CONTEXT] Проверка: в контексте теперь ${savedMessages.length} сообщений`);
-        if (savedMessages.length > 0) {
-          console.log(`💭 [CONTEXT] Последнее сообщение: ${savedMessages[0].sender} - "${savedMessages[0].content?.substring(0, 30)}..."`);
-        }
+        // Проверяем что сохранилось (временно отключено для отладки)
+        // const savedMessages = await storage.getRecentMessages(sessionId, 1);
+        // console.log(`💭 [CONTEXT] Проверка: в контексте теперь ${savedMessages.length} сообщений`);
+        // if (savedMessages.length > 0) {
+        //   console.log(`💭 [CONTEXT] Последнее сообщение: ${savedMessages[0].sender} - "${savedMessages[0].content?.substring(0, 30)}..."`);
+        // }
       } catch (e) {
         console.log('💭 [CONTEXT] ❌ Ошибка сохранения контекста:', e);
         console.log('💭 [CONTEXT] Стек ошибки:', e.stack);
@@ -1598,7 +1598,8 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
           console.log(`🔥 [DEBUG] ТОЧКА 4: SessionId существует, получаем контекст`);
           try {
             console.log(`💭 [CONTEXT] Запрашиваем контекст для сессии ${sessionId}`);
-            const recentMessages = await storage.getRecentMessages(sessionId, 3);
+            // ВРЕМЕННО ОТКЛЮЧЕНО: const recentMessages = await storage.getRecentMessages(sessionId, 3);
+            const recentMessages = [];
             console.log(`🔥 [DEBUG] ТОЧКА 5: Получили ответ от storage.getRecentMessages:`, recentMessages);
             console.log(`💭 [CONTEXT] Получено сообщений: ${recentMessages ? recentMessages.length : 0}`);
             
@@ -1738,13 +1739,13 @@ ${finalMessage.includes('🔍 **АКТУАЛЬНАЯ ИНФОРМАЦИЯ ИЗ �
                 });
                 console.log('💭 [CONTEXT] ✅ Ответ AI успешно сохранен в контекст');
                 
-                // Проверяем общее количество сообщений в контексте
-                const allMessages = await storage.getRecentMessages(sessionId, 10);
-                console.log(`💭 [CONTEXT] Итого в контексте: ${allMessages.length} сообщений`);
-                console.log(`💭 [CONTEXT] Последние 3 сообщения:`);
-                allMessages.slice(-3).forEach((msg, index) => {
-                  console.log(`💭 [CONTEXT] ${index + 1}. ${msg.sender}: "${msg.content?.substring(0, 40)}..."`);
-                });
+                // Проверяем общее количество сообщений в контексте (временно отключено)
+                // const allMessages = await storage.getRecentMessages(sessionId, 10);
+                // console.log(`💭 [CONTEXT] Итого в контексте: ${allMessages.length} сообщений`);
+                // console.log(`💭 [CONTEXT] Последние 3 сообщения:`);
+                // allMessages.slice(-3).forEach((msg, index) => {
+                //   console.log(`💭 [CONTEXT] ${index + 1}. ${msg.sender}: "${msg.content?.substring(0, 40)}..."`);
+                // });
               } catch (e) {
                 console.log('💭 [CONTEXT] ❌ Ошибка сохранения ответа AI:', e);
                 console.log('💭 [CONTEXT] Стек ошибки:', e.stack);
