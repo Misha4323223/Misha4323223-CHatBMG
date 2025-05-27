@@ -4,6 +4,7 @@
  */
 
 import fetch from 'node-fetch';
+import { searchRealBusinesses } from './real-web-search.js';
 
 /**
  * Главная функция поиска актуальной информации
@@ -16,15 +17,26 @@ async function searchRealTimeInfo(query) {
         const results = [];
         const searchTerms = query.toLowerCase();
         
-        // 1. Универсальный поиск мест и организаций
+        // 1. НАСТОЯЩИЙ веб-поиск для бизнеса и организаций
         if (searchTerms.includes('магазин') || searchTerms.includes('ресторан') || 
             searchTerms.includes('кафе') || searchTerms.includes('где') || 
             searchTerms.includes('адрес') || searchTerms.includes('найди') ||
             searchTerms.includes('одежда') || searchTerms.includes('торговый') ||
             searchTerms.includes('аптека') || searchTerms.includes('банк') ||
             searchTerms.includes('салон') || searchTerms.includes('центр')) {
-            const placeResults = await searchPlaces(query);
-            results.push(...placeResults);
+            
+            console.log('🔍 [MAIN] Запускаем РЕАЛЬНЫЙ веб-поиск...');
+            const realResults = await searchRealBusinesses(query);
+            results.push(...realResults);
+            
+            // Если реальный поиск дал результаты, используем их
+            if (realResults.length > 0) {
+                console.log(`🔍 [MAIN] Реальный поиск нашел ${realResults.length} результатов!`);
+            } else {
+                // Резервный поиск через OSM
+                const placeResults = await searchPlaces(query);
+                results.push(...placeResults);
+            }
         }
         
         // 2. Поиск погоды
