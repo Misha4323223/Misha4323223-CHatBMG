@@ -1287,9 +1287,12 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
     
     console.log(`🚀 Запуск потоковой генерации для: "${message}"`);
     console.log(`🔥 [DEBUG] Извлеченные параметры: message="${message}", provider="${provider}", sessionId="${sessionId}"`);
+    console.log(`🔥 [DEBUG] SessionId тип: ${typeof sessionId}, значение: ${JSON.stringify(sessionId)}`);
     
     // 💭 СОХРАНЯЕМ СООБЩЕНИЕ ПОЛЬЗОВАТЕЛЯ В КОНТЕКСТ
+    console.log(`🔥 [DEBUG] ТОЧКА 1: Проверяем sessionId перед сохранением: ${sessionId}`);
     if (sessionId) {
+      console.log(`🔥 [DEBUG] ТОЧКА 2: SessionId существует, переходим к сохранению`);
       try {
         console.log(`💭 [CONTEXT] Сохраняем сообщение пользователя в сессию ${sessionId}: "${message.substring(0, 50)}..."`);
         await storage.saveMessageToContext(sessionId, {
@@ -1590,10 +1593,13 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
         searchInfo += `Пользователь спросил: "${message}"\n\n`;
         
         // Добавляем контекст если нужно
+        console.log(`🔥 [DEBUG] ТОЧКА 3: Проверяем sessionId перед получением контекста: ${sessionId}`);
         if (sessionId) {
+          console.log(`🔥 [DEBUG] ТОЧКА 4: SessionId существует, получаем контекст`);
           try {
             console.log(`💭 [CONTEXT] Запрашиваем контекст для сессии ${sessionId}`);
             const recentMessages = await storage.getRecentMessages(sessionId, 3);
+            console.log(`🔥 [DEBUG] ТОЧКА 5: Получили ответ от storage.getRecentMessages:`, recentMessages);
             console.log(`💭 [CONTEXT] Получено сообщений: ${recentMessages ? recentMessages.length : 0}`);
             
             if (recentMessages && recentMessages.length > 0) {
