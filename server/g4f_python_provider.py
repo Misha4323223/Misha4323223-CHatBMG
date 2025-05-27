@@ -11,9 +11,13 @@ import random
 import json
 import re
 import traceback
+import os
 
 app = Flask(__name__)
 CORS(app)
+
+# Google cookies для Gemini
+GOOGLE_SECURE_1PSID = "g.a000xAh5kQmBDvMW9rfoBIhFCn1mJQZd0gWxAkhq54JsWVNGhxZEqm7iILJEex_JWki3X5LfwQACgYKAbcSARUSFQHGX2MiG6KvAna0wSjN2mvhUoOzYBoVAUF8yKoX7dyrKkvcjSwk7PElTUG20076"
 
 # Справочник моделей для каждого провайдера
 models_per_provider = {
