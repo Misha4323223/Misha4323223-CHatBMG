@@ -1521,6 +1521,7 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
       // Подключаемся к Python G4F напрямую
       try {
         console.log('🐍 [STREAMING] Подключаемся к Python G4F...');
+        console.log('🔧 [DEBUG] Проверяем доступность Python G4F на localhost:5004...');
         
         // Используем встроенный fetch или node-fetch
         const fetch = globalThis.fetch || (await import('node-fetch')).default;
@@ -1528,6 +1529,8 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
         console.log('🔍 [DEBUG] Отправляем в Python G4F ОБОГАЩЕННОЕ сообщение длиной:', finalMessage.length);
         console.log('🔍 [DEBUG] Содержит поисковые данные:', finalMessage.includes('🔍 **АКТУАЛЬНАЯ ИНФОРМАЦИЯ ИЗ ИНТЕРНЕТА:**'));
         console.log('🔍 [DEBUG] Первые 300 символов:', finalMessage.substring(0, 300));
+        console.log('🔧 [DEBUG] Отправляем POST запрос на http://localhost:5004/python/chat');
+        console.log('🔧 [DEBUG] Тело запроса:', JSON.stringify({ message: finalMessage.substring(0, 100) + '...', provider: provider }));
         
         const response = await fetch('http://localhost:5004/python/chat', {
           method: 'POST',
@@ -1535,8 +1538,12 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
           body: JSON.stringify({ 
             message: finalMessage, // Используем finalMessage с результатами поиска!
             provider: provider 
-          })
+          }),
+          timeout: 10000 // 10 секунд таймаут
         });
+        
+        console.log('🔧 [DEBUG] Получен ответ от Python G4F. Статус:', response.status);
+        console.log('🔧 [DEBUG] Заголовки ответа:', Object.fromEntries(response.headers.entries()));
 
         if (response.ok) {
           const data = await response.json();
@@ -1562,6 +1569,11 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
           throw new Error(`Python G4F недоступен (статус ${response.status})`);
         }
       } catch (error) {
+        console.log('❌ [STREAMING] ОШИБКА подключения к Python G4F:');
+        console.log('❌ [DEBUG] Тип ошибки:', error.name);
+        console.log('❌ [DEBUG] Сообщение ошибки:', error.message);
+        console.log('❌ [DEBUG] Код ошибки:', error.code);
+        console.log('❌ [DEBUG] Полная ошибка:', error);
         console.log('⚠️ [STREAMING] Python G4F недоступен, используем резервный провайдер');
         
         // Резервный JavaScript G4F провайдер
