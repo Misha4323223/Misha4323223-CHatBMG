@@ -16,27 +16,68 @@ logging.basicConfig(
 
 def get_chat_response(message, specific_provider=None, use_stream=False, timeout=20):
     """
-    Заглушка функции получения ответа от провайдера.
-    Предполагается, что эта функция есть в твоём коде.
+    Реальная функция получения ответа от G4F провайдеров.
     """
-    # Здесь должен быть твой реальный код, взаимодействующий с g4f.Provider
-    # Ниже примерный шаблон возврата
+    import g4f
+    import time
+    from g4f.Provider import Qwen, FreeGpt, Liaobots, AItianhu, ChatgptAi
+    
+    # Настройка провайдеров
+    provider_map = {
+        "Qwen_Max": Qwen,
+        "Qwen_Qwen_2_5_Max": Qwen,
+        "FreeGpt": FreeGpt, 
+        "Liaobots": Liaobots,
+        "AItianhu": AItianhu,
+        "ChatgptAi": ChatgptAi
+    }
+    
     if specific_provider is None:
         specific_provider = "Qwen_Max"
-    if use_stream:
-        return {
-            "streaming": True,
-            "provider": specific_provider,
-            "model": "demo-model",
-            "response_stream": [f"Chunk {i}" for i in range(5)]
-        }
-    else:
+    
+    # Выбираем провайдер
+    selected_provider = provider_map.get(specific_provider, Qwen)
+    
+    try:
+        start_time = time.time()
+        
+        # Создаем запрос к G4F
+        response = g4f.ChatCompletion.create(
+            model="gpt-3.5-turbo",  # Модель для совместимости
+            messages=[{"role": "user", "content": message}],
+            provider=selected_provider,
+            stream=use_stream,
+            timeout=timeout
+        )
+        
+        elapsed = time.time() - start_time
+        
+        if use_stream:
+            return {
+                "streaming": True,
+                "provider": specific_provider,
+                "model": "qwen-max",
+                "response_stream": response,
+                "elapsed": elapsed
+            }
+        else:
+            return {
+                "success": True,
+                "response": str(response),
+                "provider": specific_provider,
+                "model": "qwen-max",
+                "elapsed": elapsed
+            }
+            
+    except Exception as e:
+        print(f"❌ Ошибка G4F провайдера {specific_provider}: {str(e)}")
+        # Fallback на демо-ответ только при ошибке
         return {
             "success": True,
-            "response": f"Ответ от {specific_provider}: {message}",
-            "provider": specific_provider,
-            "model": "demo-model",
-            "elapsed": 1.23
+            "response": f"Извините, возникла проблема с провайдером {specific_provider}. Попробуйте еще раз.",
+            "provider": f"{specific_provider}_fallback",
+            "model": "fallback",
+            "elapsed": 0.1
         }
 
 def get_demo_response(message):
