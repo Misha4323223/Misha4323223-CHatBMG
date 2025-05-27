@@ -24,9 +24,9 @@ async function searchRealTimeInfo(query) {
             const placeResults = await searchPlaces(query);
             results.push(...placeResults);
             
-            // Дополнительный поиск через 2GIS API (бесплатные запросы)
-            const gisResults = await search2GIS(query);
-            results.push(...gisResults);
+            // Дополнительный поиск магазинов
+            const storeResults = await searchStoreDetails(query);
+            results.push(...storeResults);
         }
         
         // 2. Поиск погоды
@@ -216,6 +216,85 @@ async function searchGeneral(query) {
         
     } catch (error) {
         console.log('🔍 [GENERAL] Ошибка общего поиска:', error.message);
+        return [];
+    }
+}
+
+/**
+ * Детальный поиск магазинов с контактной информацией
+ */
+async function searchStoreDetails(query) {
+    try {
+        console.log('🔍 [STORES] Детальный поиск магазинов для:', query);
+        
+        // Извлекаем город из запроса
+        const cityMatch = query.match(/(в|около|рядом)\s+([а-яё\s\-]+)/i);
+        const city = cityMatch ? cityMatch[2].trim().toLowerCase() : '';
+        
+        const results = [];
+        
+        // Улучшенный поиск через OpenStreetMap с фокусом на магазины одежды
+        if (city) {
+            const searches = [
+                `магазин одежды ${city}`,
+                `торговый центр ${city}`,
+                `shopping mall ${city}`,
+                `clothing store ${city}`
+            ];
+            
+            for (const searchTerm of searches) {
+                try {
+                    const osmUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchTerm)}&limit=8&addressdetails=1&countrycodes=ru&extratags=1`;
+                    
+                    const response = await fetch(osmUrl, {
+                        headers: { 'User-Agent': 'BOOOMERANGS-Business-Search/1.0' }
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        console.log(`🔍 [STORES] OSM "${searchTerm}": ${data.length} результатов`);
+                        
+                        data.forEach(place => {
+                            const name = place.display_name.split(',')[0];
+                            const fullAddress = place.display_name;
+                            
+                            // Формируем описание с контактной информацией
+                            let description = `📍 ${fullAddress}`;
+                            
+                            if (place.extratags?.phone) {
+                                description += `\n📞 ${place.extratags.phone}`;
+                            }
+                            if (place.extratags?.website) {
+                                description += `\n🌐 ${place.extratags.website}`;
+                            }
+                            if (place.extratags?.opening_hours) {
+                                description += `\n🕐 ${place.extratags.opening_hours}`;
+                            }
+                            
+                            results.push({
+                                title: `🏪 ${name}`,
+                                description: description,
+                                url: `https://www.openstreetmap.org/?mlat=${place.lat}&mlon=${place.lon}&zoom=16`,
+                                source: 'OpenStreetMap Business'
+                            });
+                        });
+                    }
+                } catch (error) {
+                    console.log(`🔍 [STORES] Ошибка поиска "${searchTerm}":`, error.message);
+                }
+            }
+        }
+        
+        // Убираем дубликаты по названию
+        const uniqueResults = results.filter((item, index, self) => 
+            index === self.findIndex(t => t.title === item.title)
+        );
+        
+        console.log(`🔍 [STORES] Найдено уникальных магазинов: ${uniqueResults.length}`);
+        return uniqueResults.slice(0, 10);
+        
+    } catch (error) {
+        console.log('🔍 [STORES] Ошибка детального поиска:', error.message);
         return [];
     }
 }
