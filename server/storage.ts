@@ -18,6 +18,11 @@ export interface IStorage {
   createMessage(message: InsertMessage): Promise<Message>;
   getMessageById(id: number): Promise<Message | undefined>;
   getMessagesBetweenUsers(userId1: number, userId2: number): Promise<Message[]>;
+  
+  // Context methods
+  saveMessageToContext(sessionId: number, message: any): Promise<void>;
+  getRecentMessages(sessionId: number, limit?: number): Promise<any[]>;
+  clearContext(sessionId: number): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
