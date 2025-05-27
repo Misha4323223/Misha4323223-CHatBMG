@@ -1306,8 +1306,9 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
       try {
         const { searchRealTimeInfo } = require('./free-web-search');
         console.log('🔥🔥🔥 [DEBUG] searchRealTimeInfo загружен');
-        const searchResults = await searchRealTimeInfo(message);
-        console.log('🔥🔥🔥 [ROUTES] Результаты поиска получены:', searchResults ? searchResults.length : 'null');
+        const searchResponse = await searchRealTimeInfo(message);
+        console.log('🔥🔥🔥 [ROUTES] Результаты поиска получены:', searchResponse);
+        const searchResults = searchResponse?.results || [];
         
         if (searchResults && searchResults.length > 0) {
           let searchInfo = '\n\n🔍 **АКТУАЛЬНАЯ ИНФОРМАЦИЯ ИЗ ИНТЕРНЕТА:**\n\n';
