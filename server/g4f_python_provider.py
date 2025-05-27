@@ -512,6 +512,21 @@ def chat():
         provider = data.get('provider')
         timeout = data.get('timeout', 20000) / 1000  # Переводим миллисекунды в секунды
         
+        print(f"🔥🔥🔥 [PYTHON G4F] ПОЛУЧЕН ЗАПРОС:")
+        print(f"🔥🔥🔥 [PYTHON G4F] Длина сообщения: {len(message)}")
+        print(f"🔥🔥🔥 [PYTHON G4F] Первые 200 символов: {message[:200]}")
+        print(f"🔥🔥🔥 [PYTHON G4F] Содержит маркер поиска: {'🔍 **АКТУАЛЬНАЯ ИНФОРМАЦИЯ ИЗ ИНТЕРНЕТА:**' in message}")
+        
+        # Сначала проверяем демо-режим
+        demo_response = get_demo_response(message)
+        if demo_response:
+            print(f"🔥🔥🔥 [PYTHON G4F] ВОЗВРАЩАЕМ ДЕМО-ОТВЕТ")
+            return jsonify({
+                "response": demo_response,
+                "provider": "BOOOMERANGS-Demo",
+                "model": "demo-mode"
+            })
+        
         # Проверяем, если это вопрос о программировании и не указан конкретный провайдер
         if not provider and is_coding_question(message):
             print(f"🔧 Определен вопрос о программировании: {message[:50]}...")
