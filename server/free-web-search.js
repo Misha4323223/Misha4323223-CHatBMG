@@ -18,13 +18,9 @@ async function searchRealTimeInfo(query) {
         const searchTerms = query.toLowerCase();
         console.log('🔍 [SEARCH] Обработанные ключевые слова:', searchTerms);
         
-        // 1. НАСТОЯЩИЙ веб-поиск для бизнеса и организаций
-        if (searchTerms.includes('магазин') || searchTerms.includes('ресторан') || 
-            searchTerms.includes('кафе') || searchTerms.includes('где') || 
-            searchTerms.includes('адрес') || searchTerms.includes('найди') ||
-            searchTerms.includes('одежда') || searchTerms.includes('торговый') ||
-            searchTerms.includes('аптека') || searchTerms.includes('банк') ||
-            searchTerms.includes('салон') || searchTerms.includes('центр')) {
+        // УНИВЕРСАЛЬНЫЙ поиск для ЛЮБЫХ запросов
+        console.log('🔍 [UNIVERSAL] Запускаем поиск для любого запроса');
+        if (true) { // Всегда выполняем поиск
             
             console.log('🔍 [MAIN] Запускаем улучшенный веб-поиск...');
             
