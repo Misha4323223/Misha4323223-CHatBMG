@@ -27,13 +27,26 @@ async function searchRealTimeInfo(query) {
             console.log('🔍 [MAIN] Запускаем улучшенный веб-поиск...');
             
             // Комбинированный поиск через разные источники
-            const placeResults = await searchPlaces(query);
-            const ddgResults = await searchDuckDuckGo(query);
-            const russianResults = await searchRussianServices(query);
+            try {
+                const placeResults = await searchPlaces(query);
+                results.push(...placeResults);
+            } catch (error) {
+                console.log('🔍 [MAIN] Ошибка searchPlaces:', error.message);
+            }
             
-            results.push(...placeResults);
-            results.push(...ddgResults);
-            results.push(...russianResults);
+            try {
+                const ddgResults = await searchDuckDuckGoInternal(query);
+                results.push(...ddgResults);
+            } catch (error) {
+                console.log('🔍 [MAIN] Ошибка DuckDuckGo:', error.message);
+            }
+            
+            try {
+                const russianResults = await searchRussianServicesInternal(query);
+                results.push(...russianResults);
+            } catch (error) {
+                console.log('🔍 [MAIN] Ошибка российских сервисов:', error.message);
+            }
             
             console.log(`🔍 [MAIN] Найдено результатов: ${results.length}`);
         }
@@ -347,7 +360,7 @@ async function searchStoreDetails(query) {
 /**
  * Поиск через DuckDuckGo API (бесплатно)
  */
-async function searchDuckDuckGo(query) {
+async function searchDuckDuckGoInternal(query) {
     try {
         const searchQuery = encodeURIComponent(query);
         const url = `https://api.duckduckgo.com/?q=${searchQuery}&format=json&no_redirect=1&no_html=1&skip_disambig=1`;
@@ -404,7 +417,7 @@ async function searchDuckDuckGo(query) {
 /**
  * Поиск через российские сервисы
  */
-async function searchRussianServices(query) {
+async function searchRussianServicesInternal(query) {
     try {
         console.log('🔍 [RUS] Создаем ссылки на российские сервисы...');
         
