@@ -19,10 +19,8 @@ export interface IStorage {
   getMessageById(id: number): Promise<Message | undefined>;
   getMessagesBetweenUsers(userId1: number, userId2: number): Promise<Message[]>;
   
-  // Context methods
-  saveMessageToContext(sessionId: number, message: any): Promise<void>;
-  getRecentMessages(sessionId: number, limit?: number): Promise<any[]>;
-  clearContext(sessionId: number): Promise<void>;
+  // Context methods - УДАЛЕНЫ, используем chatHistory
+  // saveMessageToContext, getRecentMessages, clearContext перенесены в chat-history.ts
 }
 
 export class MemStorage implements IStorage {
@@ -155,44 +153,7 @@ export class MemStorage implements IStorage {
     console.log(`💾 [STORAGE] ✅ Сообщение успешно сохранено в сессию ${sessionId}`);
   }
 
-  async getRecentMessages(sessionId: number, limit: number = 5): Promise<any[]> {
-    console.log(`📤 [STORAGE] 🔍 getRecentMessages вызван для сессии ${sessionId}, лимит: ${limit}`);
-    console.log(`📤 [STORAGE] 🔍 Тип sessionId: ${typeof sessionId}, значение: "${sessionId}"`);
-    console.log(`📤 [STORAGE] 🔍 Всего сессий в памяти: ${this.conversations.size}`);
-    console.log(`📤 [STORAGE] 🔍 Доступные сессии:`, Array.from(this.conversations.keys()));
-    
-    const conversation = this.conversations.get(sessionId);
-    console.log(`📤 [STORAGE] 🔍 РЕЗУЛЬТАТ ПОИСКА СЕССИИ:`);
-    console.log(`📤 [STORAGE] 🔍   - Найдена: ${conversation ? 'ДА' : 'НЕТ'}`);
-    console.log(`📤 [STORAGE] 🔍   - Количество сообщений: ${conversation ? conversation.length : 0}`);
-    
-    if (!conversation || conversation.length === 0) {
-      console.log(`📤 [STORAGE] 🔍 СЕССИЯ ПУСТА ИЛИ НЕ НАЙДЕНА`);
-      console.log(`📤 [STORAGE] Возвращаем пустой массив для сессии ${sessionId}`);
-      return [];
-    }
-    
-    console.log(`📤 [STORAGE] 🔍 ДЕТАЛИ ВСЕХ СООБЩЕНИЙ В СЕССИИ:`);
-    conversation.forEach((msg, index) => {
-      console.log(`📤 [STORAGE] 🔍   ${index + 1}. ${msg.sender}: "${msg.content?.substring(0, 50)}..." (${msg.timestamp})`);
-    });
-    
-    // Возвращаем последние сообщения
-    const recentMessages = conversation.slice(-limit);
-    console.log(`📤 [STORAGE] 🔍 ИЗВЛЕКАЕМ ПОСЛЕДНИЕ ${limit} СООБЩЕНИЙ`);
-    console.log(`📤 [STORAGE] Возвращаем ${recentMessages.length} последних сообщений для сессии ${sessionId}`);
-    
-    console.log(`📤 [STORAGE] 🔍 ВОЗВРАЩАЕМЫЕ СООБЩЕНИЯ:`);
-    recentMessages.forEach((msg, index) => {
-      console.log(`📤 [STORAGE] 🔍   ВОЗВРАТ ${index + 1}: ${msg.sender} - "${msg.content?.substring(0, 50)}..."`);
-    });
-    
-    return recentMessages;
-  }
-
-  async clearContext(sessionId: number): Promise<void> {
-    this.conversations.delete(sessionId);
-  }
+  // Все методы контекста перенесены в chat-history.ts
 }
 
 export const storage = new MemStorage();

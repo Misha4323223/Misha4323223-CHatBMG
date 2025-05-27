@@ -1063,7 +1063,8 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
         // Пытаемся получить ответ от Python провайдера с использованием callPythonAI
         console.log(`Пробуем использовать Python провайдер ${selectedProvider}...`);
         
-        // Используем нашу новую функцию callPythonAI
+        // Импортируем и используем Python провайдер
+        const pythonProviderRoutes = require('./python_provider_routes');
         const aiResponse = await pythonProviderRoutes.callPythonAI(message, selectedProvider);
         
         if (aiResponse) {
