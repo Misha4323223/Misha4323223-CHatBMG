@@ -72,9 +72,19 @@ async function searchPlaces(query) {
     try {
         console.log('🔍 [PLACES] Поиск мест для:', query);
         
-        // Универсальный поиск по всем типам мест и организаций
-        const searchQuery = encodeURIComponent(query);
-        const url = `https://nominatim.openstreetmap.org/search?q=${searchQuery}&format=json&limit=20&addressdetails=1&countrycodes=ru&extratags=1`;
+        // Более специфичный поиск для лучших результатов
+        let searchQuery = query;
+        
+        // Если запрос про магазины, делаем его более точным
+        if (query.toLowerCase().includes('магазин')) {
+            const cityMatch = query.match(/(в|около|рядом)\s+([а-яё\s\-]+)/i);
+            if (cityMatch) {
+                const city = cityMatch[2].trim();
+                searchQuery = `shop=clothes ${city} россия`;
+            }
+        }
+        
+        const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchQuery)}&format=json&limit=20&addressdetails=1&countrycodes=ru&extratags=1&amenity=shop`;
         
         const response = await fetch(url, {
             headers: {
@@ -89,6 +99,12 @@ async function searchPlaces(query) {
         
         const data = await response.json();
         console.log('🔍 [PLACES] Найдено мест OSM:', data.length);
+        console.log('🔍 [PLACES] URL запроса:', url);
+        if (data.length > 0) {
+            console.log('🔍 [PLACES] Первый результат:', data[0]);
+        } else {
+            console.log('🔍 [PLACES] Результатов нет - возможно проблема с запросом');
+        }
         
         // Форматируем все найденные результаты
         const searchResults = data.slice(0, 8).map(place => {
