@@ -120,6 +120,7 @@ router.post('/chat', async (req, res) => {
     });
     
     // ДОБАВЛЯЕМ РЕАЛЬНЫЙ ВЕБ-ПОИСК ПЕРЕД AI
+    console.log('🔥🔥🔥 [STREAMING-DEBUG] НАЧАЛО ПРОВЕРКИ ПОИСКА');
     console.log('🔍 [STREAMING] Проверяем, нужен ли веб-поиск для:', message);
     let enrichedMessage = message;
     
@@ -127,12 +128,16 @@ router.post('/chat', async (req, res) => {
     const searchKeywords = ['магазин', 'ресторан', 'кафе', 'где', 'адрес', 'найди', 'одежда', 'торговый', 'аптека', 'банк', 'салон', 'центр'];
     const needsSearch = searchKeywords.some(keyword => message.toLowerCase().includes(keyword));
     
+    console.log('🔥🔥🔥 [DEBUG] needsSearch =', needsSearch);
+    console.log('🔥🔥🔥 [DEBUG] searchKeywords найдены:', searchKeywords.filter(keyword => message.toLowerCase().includes(keyword)));
+    
     if (needsSearch) {
-      console.log('🔍 [STREAMING] Запускаем веб-поиск...');
+      console.log('🔥🔥🔥 [STREAMING] ЗАПУСКАЕМ ВЕБ-ПОИСК!!!');
       try {
         const { searchRealTimeInfo } = require('./free-web-search');
+        console.log('🔥🔥🔥 [DEBUG] searchRealTimeInfo загружен');
         const searchResults = await searchRealTimeInfo(message);
-        console.log('🔍 [STREAMING] Результаты поиска получены:', searchResults.length);
+        console.log('🔥🔥🔥 [STREAMING] Результаты поиска получены:', searchResults ? searchResults.length : 'null');
         
         if (searchResults && searchResults.length > 0) {
           let searchInfo = '\n\n🔍 **АКТУАЛЬНАЯ ИНФОРМАЦИЯ ИЗ ИНТЕРНЕТА:**\n\n';
