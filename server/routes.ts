@@ -1598,8 +1598,7 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
           console.log(`🔥 [DEBUG] ТОЧКА 4: SessionId существует, получаем контекст`);
           try {
             console.log(`💭 [CONTEXT] Запрашиваем контекст для сессии ${sessionId}`);
-            // ВРЕМЕННО ОТКЛЮЧЕНО: const recentMessages = await storage.getRecentMessages(sessionId, 3);
-            const recentMessages = [];
+            const recentMessages = await storage.getRecentMessages(sessionId, 3);
             console.log(`🔥 [DEBUG] ТОЧКА 5: Получили ответ от storage.getRecentMessages:`, recentMessages);
             console.log(`💭 [CONTEXT] Получено сообщений: ${recentMessages ? recentMessages.length : 0}`);
             
