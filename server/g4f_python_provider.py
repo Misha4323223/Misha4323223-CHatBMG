@@ -17,7 +17,8 @@ app = Flask(__name__)
 CORS(app)
 
 # Google cookies для Gemini
-GOOGLE_SECURE_1PSID = "g.a000xAh5kQmBDvMW9rfoBIhFCn1mJQZd0gWxAkhq54JsWVNGhxZEqm7iILJEex_JWki3X5LfwQACgYKAbcSARUSFQHGX2MiG6KvAna0wSjN2mvhUoOzYBoVAUF8yKoX7dyrKkvcjSwk7PElTUG20076"
+GOOGLE_SECURE_1PSID = "g.a000xAh5kQmBDvMW9rfoBIhFCn1mJQZd0gWxAkhq54JsWVNGhxZEgBoCElTESMNfVrw8yvrLMAACgYKAdUSARUSFQHGX2Mi2JC4RbjuchHhJfSbgEUEqBoVAUF8yKplgTkdDK5p7q6WNJaskCsj0076"
+GOOGLE_SECURE_1PSIDTS = "sidts-CjIB5H03Pyxe416Ah3dAKBXEP1CQ3mvo2kz-pK25tCo_rddHrlWe9AwTtoajWHcgXkuW5BAA"
 
 # Справочник моделей для каждого провайдера
 models_per_provider = {
@@ -93,7 +94,10 @@ def try_provider(provider_name, message, timeout=15, use_stream=False, custom_mo
         # Специальная настройка для Gemini с cookies
         auth_cookies = None
         if provider_name == "Gemini":
-            auth_cookies = {"__Secure-1PSID": GOOGLE_SECURE_1PSID}
+            auth_cookies = {
+                "__Secure-1PSID": GOOGLE_SECURE_1PSID,
+                "__Secure-1PSIDTS": GOOGLE_SECURE_1PSIDTS
+            }
         
         # Отладочная информация только в консоль, не в ответ
         # print(f"Попытка использования провайдера {provider_name}...")
