@@ -506,6 +506,7 @@ def is_coding_question(message):
 
 @app.route('/python/chat', methods=['POST'])
 def chat():
+    print("🚨🚨🚨 [PYTHON G4F] ФУНКЦИЯ CHAT ВЫЗВАНА!")
     try:
         data = request.json
         message = data.get('message', '')
