@@ -1519,44 +1519,20 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
         }, 15000);
       });
       
+      // Парсим результаты поиска
       let searchResults = [];
       
-      if (ddgResponse.ok) {
-        const ddgData = await ddgResponse.json();
-        console.log('🔍 [DDG] Ответ DuckDuckGo получен');
-        
-        // Собираем результаты из разных секций
-        if (ddgData.AbstractText) {
-          searchResults.push({
-            title: ddgData.AbstractSource || 'Информация',
-            description: ddgData.AbstractText,
-            url: ddgData.AbstractURL || '',
-            source: 'DuckDuckGo Abstract'
-          });
-        }
-        
-        // Добавляем связанные темы
-        if (ddgData.RelatedTopics && ddgData.RelatedTopics.length > 0) {
-          ddgData.RelatedTopics.slice(0, 3).forEach(topic => {
-            if (topic.Text) {
-              searchResults.push({
-                title: topic.FirstURL ? topic.FirstURL.split('/').pop() : 'Связанная тема',
-                description: topic.Text,
-                url: topic.FirstURL || '',
-                source: 'DuckDuckGo Related'
-              });
-            }
-          });
-        }
-        
-        // Добавляем мгновенные ответы
-        if (ddgData.Answer) {
-          searchResults.push({
-            title: 'Мгновенный ответ',
-            description: ddgData.Answer,
-            url: '',
-            source: 'DuckDuckGo Instant'
-          });
+      if (searchData.trim()) {
+        try {
+          const parsedData = JSON.parse(searchData);
+          console.log('🔍 [REAL_SEARCH] Получены результаты:', parsedData);
+          
+          if (parsedData.success && parsedData.results) {
+            searchResults = parsedData.results;
+            console.log('🔍 [REAL_SEARCH] Обработано результатов:', searchResults.length);
+          }
+        } catch (e) {
+          console.error('🚨 [REAL_SEARCH] Ошибка парсинга JSON:', e.message);
         }
       }
       
@@ -1605,33 +1581,39 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
         }
       }
       
-      // Формируем финальную информацию для AI
+      // Формируем подробную информацию для AI
       if (searchResults.length > 0) {
-        let searchInfo = '\n\n🔍 **АКТУАЛЬНАЯ ИНФОРМАЦИЯ ИЗ ИНТЕРНЕТА:**\n\n';
+        let searchInfo = `\n\n🔍 **НАЙДЕНА АКТУАЛЬНАЯ ИНФОРМАЦИЯ:**\n\n`;
+        searchInfo += `Пользователь спросил: "${message}"\n\n`;
+        searchInfo += `КОНКРЕТНЫЕ РЕЗУЛЬТАТЫ ИЗ ИНТЕРНЕТА:\n\n`;
         
         searchResults.forEach((result, index) => {
           searchInfo += `${index + 1}. **${result.title}**\n`;
-          if (result.description) searchInfo += `   ${result.description}\n`;
-          if (result.temperature) searchInfo += `   🌡️ Температура: ${result.temperature}\n`;
-          if (result.weather) searchInfo += `   ☁️ Погода: ${result.weather}\n`;
-          if (result.url) searchInfo += `   🔗 Источник: ${result.url}\n`;
-          searchInfo += `   📊 Источник данных: ${result.source}\n\n`;
+          if (result.description) {
+            searchInfo += `   Описание: ${result.description}\n`;
+          }
+          if (result.url && result.url !== '') {
+            searchInfo += `   Сайт: ${result.url}\n`;
+          }
+          searchInfo += `   Источник: ${result.source}\n\n`;
         });
         
+        searchInfo += `\nИНСТРУКЦИЯ ДЛЯ AI: Используй ТОЛЬКО эту актуальную информацию из интернета. НЕ давай общие ссылки на Яндекс.Карты или 2ГИС. Предоставь пользователю конкретные названия магазинов, адреса и контакты из найденных результатов.\n\n`;
+        
         finalMessage = searchInfo;
-        console.log('🔍 [SEARCH] Поиск успешен! Найдено результатов:', searchResults.length);
-        console.log('🔍 [SEARCH] Информация для AI:', searchInfo.substring(0, 500) + '...');
+        console.log('🔍 [REAL_SEARCH] Успешно найдено результатов:', searchResults.length);
+        console.log('🔍 [REAL_SEARCH] Передаем AI конкретные данные:', searchInfo.length, 'символов');
         
         res.write(`data: ${JSON.stringify({ 
           searchStatus: 'found', 
-          message: `Найдено ${searchResults.length} результатов в интернете`,
+          message: `Найдено ${searchResults.length} конкретных результатов`,
           resultsCount: searchResults.length
         })}\n\n`);
       } else {
-        console.log('🔍 [SEARCH] Поиск не дал результатов');
+        console.log('🔍 [REAL_SEARCH] Поиск не дал результатов');
         res.write(`data: ${JSON.stringify({ 
           searchStatus: 'no_results', 
-          message: 'Информация в интернете не найдена' 
+          message: 'Поиск в интернете не дал результатов' 
         })}\n\n`);
       }
       
