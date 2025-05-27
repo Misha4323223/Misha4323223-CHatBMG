@@ -1474,44 +1474,58 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
     // СТАРЫЙ КОД ПОИСКА УДАЛЕН - ИСПОЛЬЗУЕМ НОВЫЙ ВЫШЕ
     let finalMessage = enrichedMessage; // Используем обогащенное сообщение
     
-    if (false) { // ОТКЛЮЧАЕМ СТАРЫЙ ПОИСК
-      console.log('🔍 [STREAM] Выполняем поиск в интернете...');
+    // ВКЛЮЧАЕМ УНИВЕРСАЛЬНЫЙ ПОИСК ДЛЯ ВСЕХ ЗАПРОСОВ
+    console.log('🔍 [UNIVERSAL] Запускаем универсальный поиск в интернете...');
+    console.log('🔍 [UNIVERSAL] Запрос пользователя:', message);
       
-      // Отправляем индикатор поиска пользователю
-      res.write(`data: ${JSON.stringify({ 
-        searchStatus: 'searching', 
-        message: 'Ищу актуальную информацию в интернете...' 
-      })}\n\n`);
+    // Отправляем индикатор поиска пользователю
+    res.write(`data: ${JSON.stringify({ 
+      searchStatus: 'searching', 
+      message: 'Ищу актуальную информацию в интернете...' 
+    })}\n\n`);
+    
+    try {
+      // Используем нашу собственную систему поиска для ЛЮБЫХ запросов
+      const freeWebSearch = require('./free-web-search');
+      const searchResults = await freeWebSearch.searchRealTimeInfo(message);
       
-      try {
-        const searchResults = await webSearch.performWebSearch(message);
-        if (searchResults.success) {
-          const searchInfo = webSearch.formatSearchResultsForAI(searchResults);
-          finalMessage = message + ' ' + searchInfo;
-          console.log('🔍 [STREAM] Веб-поиск успешен! Найдено результатов:', searchResults.results.length);
-          console.log('🔍 [DEBUG] Найденная информация для AI:', searchInfo.substring(0, 500) + '...');
-          console.log('🔍 [DEBUG] Финальное сообщение для AI:', finalMessage.substring(0, 300) + '...');
-          
-          // Уведомляем о успешном поиске
-          res.write(`data: ${JSON.stringify({ 
-            searchStatus: 'found', 
-            message: `Найдено ${searchResults.results.length} результатов`,
-            resultsCount: searchResults.results.length
-          })}\n\n`);
-        } else {
-          console.log('🔍 [STREAM] Веб-поиск не дал результатов');
-          res.write(`data: ${JSON.stringify({ 
-            searchStatus: 'no_results', 
-            message: 'Поиск в интернете не дал результатов' 
-          })}\n\n`);
-        }
-      } catch (error) {
-        console.error('🔍 [STREAM] Ошибка веб-поиска:', error.message);
+      if (searchResults && searchResults.length > 0) {
+        // Формируем детальную информацию для AI
+        let searchInfo = '\n\n🔍 **АКТУАЛЬНАЯ ИНФОРМАЦИЯ ИЗ ИНТЕРНЕТА:**\n\n';
+        
+        searchResults.forEach((result, index) => {
+          searchInfo += `${index + 1}. **${result.title || result.name || 'Информация'}**\n`;
+          if (result.description) searchInfo += `   Описание: ${result.description}\n`;
+          if (result.address) searchInfo += `   📍 Адрес: ${result.address}\n`;
+          if (result.phone) searchInfo += `   📞 Телефон: ${result.phone}\n`;
+          if (result.hours) searchInfo += `   🕐 Часы работы: ${result.hours}\n`;
+          if (result.url) searchInfo += `   🔗 Сайт: ${result.url}\n`;
+          searchInfo += '\n';
+        });
+        
+        finalMessage = searchInfo;
+        console.log('🔍 [UNIVERSAL] Поиск успешен! Найдено результатов:', searchResults.length);
+        console.log('🔍 [UNIVERSAL] Информация для AI:', searchInfo.substring(0, 500) + '...');
+        
+        // Уведомляем о успешном поиске
         res.write(`data: ${JSON.stringify({ 
-          searchStatus: 'error', 
-          message: 'Ошибка поиска в интернете' 
+          searchStatus: 'found', 
+          message: `Найдено ${searchResults.length} результатов из интернета`,
+          resultsCount: searchResults.length
+        })}\n\n`);
+      } else {
+        console.log('🔍 [UNIVERSAL] Поиск не дал результатов, используем обычный режим');
+        res.write(`data: ${JSON.stringify({ 
+          searchStatus: 'no_results', 
+          message: 'Отвечаю на основе базовых знаний' 
         })}\n\n`);
       }
+    } catch (error) {
+      console.error('🔍 [UNIVERSAL] Ошибка поиска:', error.message);
+      res.write(`data: ${JSON.stringify({ 
+        searchStatus: 'error', 
+        message: 'Отвечаю на основе базовых знаний' 
+      })}\n\n`);
     }
     
     try {
