@@ -74,12 +74,21 @@ async function searchPlaces(query) {
     try {
         console.log('🔍 [PLACES] Поиск мест для:', query);
         
-        // Извлекаем город из запроса
-        const cityMatch = query.match(/(в|около|рядом|в городе)\s+([а-яё\w]+)/i);
-        const city = cityMatch ? cityMatch[2] : 'Москва';
+        // Извлекаем город из запроса более точно
+        const cityMatch = query.match(/(в|около|рядом|в городе)\s+([а-яё\w\-\s]+)/i);
+        const city = cityMatch ? cityMatch[2].trim() : '';
         
-        const searchQuery = encodeURIComponent(`${query} ${city}`);
-        const url = `https://nominatim.openstreetmap.org/search?q=${searchQuery}&format=json&limit=5&addressdetails=1`;
+        console.log('🔍 [PLACES] Обнаружен город:', city);
+        
+        // Если город найден, ищем магазины одежды в этом городе
+        let searchQuery = '';
+        if (city) {
+            searchQuery = `shop=clothes ${city} россия`;
+        } else {
+            searchQuery = query;
+        }
+        
+        const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchQuery)}&format=json&limit=15&addressdetails=1&countrycodes=ru&extratags=1`;
         
         const response = await fetch(url, {
             headers: {
@@ -95,12 +104,33 @@ async function searchPlaces(query) {
         const data = await response.json();
         console.log('🔍 [PLACES] Найдено мест OSM:', data.length);
         
-        return data.slice(0, 3).map(place => ({
-            title: place.display_name.split(',')[0],
-            snippet: `📍 ${place.display_name}`,
-            url: `https://www.openstreetmap.org/#map=18/${place.lat}/${place.lon}`,
-            source: 'OpenStreetMap'
-        }));
+        // Фильтруем и форматируем результаты для магазинов
+        const storeResults = data.filter(place => {
+            const name = place.display_name.toLowerCase();
+            const type = place.type || '';
+            return name.includes('магазин') || name.includes('одежда') || 
+                   name.includes('торговый') || name.includes('центр') ||
+                   type.includes('shop') || type.includes('mall');
+        }).slice(0, 8).map(place => {
+            const name = place.display_name.split(',')[0];
+            const address = place.display_name;
+            
+            // Создаем описание с дополнительной информацией
+            let description = `📍 ${address}`;
+            if (place.extratags?.phone) description += `\n📞 ${place.extratags.phone}`;
+            if (place.extratags?.website) description += `\n🌐 ${place.extratags.website}`;
+            if (place.extratags?.opening_hours) description += `\n🕐 ${place.extratags.opening_hours}`;
+            
+            return {
+                title: `🏪 ${name}`,
+                description: description,
+                url: `https://www.openstreetmap.org/#map=18/${place.lat}/${place.lon}`,
+                source: 'OpenStreetMap'
+            };
+        });
+        
+        console.log(`🔍 [PLACES] Отфильтровано магазинов: ${storeResults.length}`);
+        return storeResults;
         
     } catch (error) {
         console.log('🔍 [PLACES] Ошибка поиска мест:', error.message);
