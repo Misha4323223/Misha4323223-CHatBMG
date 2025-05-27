@@ -370,8 +370,7 @@ async function searchDuckDuckGoInternal(query) {
         const response = await fetch(url, {
             headers: {
                 'User-Agent': 'BOOOMERANGS-Search/1.0'
-            },
-            timeout: 5000
+            }
         });
         
         if (!response.ok) {
