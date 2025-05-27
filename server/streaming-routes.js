@@ -1,348 +1,162 @@
-// Маршруты для стриминга от провайдеров AI, которые поддерживают stream=True
-const express = require('express');
-const router = express.Router();
-const { spawn } = require('child_process');
-const { getDemoResponse } = require('./direct-ai-provider');
+const { analyzeMessage } = require('./smart-router'); // Импортируем в начале файла
+const { generateImage } = require('./ai-image-generator');
+const { getConversation } = require('./conversation-memory');
 
-// Провайдеры, которые поддерживают стриминг
-const STREAMING_PROVIDERS = [
-  'Qwen_Max',
-  'Qwen_3',
-  'DeepInfra',
-  'Gemini',
-  'GeminiPro',
-  'You'
-];
+const demoDelay = 1500;
 
-// API endpoint для стриминга через SSE (Server-Sent Events)
-router.post('/chat', async (req, res) => {
+module.exports = async function apiChatStream(req, res) {
   try {
-    const { 
-      message, 
-      provider = 'Qwen_Max', // По умолчанию используем Qwen_Max, который хорошо поддерживает стриминг
-      timeout = 30000 // 30 секунд таймаут по умолчанию
-    } = req.body;
-    
-    // Проверяем, что сообщение присутствует
-    if (!message) {
-      return res.status(400).json({ 
-        success: false, 
-        error: 'Сообщение не может быть пустым' 
-      });
+    // Получаем sessionId из тела запроса (или заголовков, если нужно)
+    const { sessionId } = req.body || {};
+    if (!sessionId) {
+      res.status(400).json({ error: 'sessionId is required' });
+      return;
     }
-    
-    console.log(`Запрос к стриминг API: ${message.substring(0, 50)}${message.length > 50 ? '...' : ''}`);
-    
-    // Проверяем умный роутер - нужен ли генератор изображений
-    const { analyzeMessage } = require('./smart-router');
-    const messageAnalysis = analyzeMessage(message);
-    
-    console.log(`🧠 [STREAMING] Анализ сообщения:`, messageAnalysis);
-    
-    // Если это запрос на генерацию или редактирование изображения
-    if (messageAnalysis.category === 'image_generation' || messageAnalysis.category === 'image_edit') {
-      console.log('🎨 [STREAMING] Обнаружен запрос на изображения - переключаемся на генератор!');
-      
-      // Если это редактирование, получаем контекст предыдущего изображения
-      let previousImage = null;
-      if (messageAnalysis.category === 'image_edit') {
-        const { getConversation } = require('./conversation-memory');
-        const userId = `session_${sessionId}`;
-        const conversation = getConversation(userId);
-        previousImage = conversation.getLastImageInfo();
-        console.log('🔄 [STREAMING] Найдено предыдущее изображение для редактирования:', previousImage);
-      }
-      
-      // Импортируем генератор изображений
-      const { generateImage } = require('./ai-image-generator');
-      
-      try {
-        const result = await generateImage(message, 'realistic', previousImage);
-        
-        if (result.success) {
-          // Отправляем начальное сообщение
-          res.write(`data: ${JSON.stringify({
-            text: "🎨 Создаю изображение для вас...",
-            provider: "AI_Image_Generator"
-          })}\n\n`);
-          
-          // Отправляем финальное изображение
-          res.write(`data: ${JSON.stringify({
-            text: `🎨 Изображение создано! Вот ваш дизайн:\n![Сгенерированное изображение](${result.imageUrl})`,
-            provider: "AI_Image_Generator",
-            finished: true
-          })}\n\n`);
-          
-          res.end();
-          return;
-        } else {
-          console.error('Ошибка генерации изображения:', result.error);
-        }
-      } catch (error) {
-        console.error('Ошибка в генераторе изображений:', error);
-      }
-    }
-    
-    // Настраиваем заголовки для SSE
+
     res.writeHead(200, {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
-      'Connection': 'keep-alive'
+      'Connection': 'keep-alive',
+      'Access-Control-Allow-Origin': '*', // CORS-заголовок для запросов из браузера
+      'X-Accel-Buffering': 'no'
     });
-    
-    // Получаем демо-ответ на случай ошибки
-    const demoResponse = getDemoResponse(message);
-    
-    // Функция для отправки SSE событий
-    const sendEvent = (event, data) => {
-      res.write(`event: ${event}\n`);
-      res.write(`data: ${JSON.stringify(data)}\n\n`);
-    };
-    
-    // Проверяем, поддерживает ли выбранный провайдер стриминг
-    const supportsStreaming = STREAMING_PROVIDERS.includes(provider);
-    if (!supportsStreaming) {
-      console.log(`Провайдер ${provider} не поддерживает стриминг, переключаемся на Qwen_Max`);
-      sendEvent('info', { 
-        message: `Провайдер ${provider} не поддерживает стриминг, переключаемся на Qwen_Max`,
-        provider: 'BOOOMERANGS'
-      });
+
+    res.flushHeaders();
+
+    // Обрабатываем анализ сообщения
+    const messageAnalysis = analyzeMessage(req.body);
+
+    // Ищем предыдущее изображение, если запрос — редактирование картинки
+    let previousImage = null;
+    if (messageAnalysis.category === 'image_edit') {
+      const userId = `session_${sessionId}`;
+      const conversation = getConversation(userId);
+      previousImage = conversation.getLastImageInfo();
+      console.log('🔄 [STREAMING] Найдено предыдущее изображение для редактирования:', previousImage);
     }
-    
-    // Используем провайдер, который поддерживает стриминг
-    const actualProvider = supportsStreaming ? provider : 'Qwen_Max';
-    
-    // Запускаем Python скрипт с включенным стримингом
-    const pythonProcess = spawn('python', [
-      'server/g4f_python_provider.py',
-      message,
-      actualProvider,
-      'stream' // Ключевой параметр для активации стриминга
-    ]);
-    
-    // Создаем флаг для отслеживания завершения
-    let isCompleted = false;
-    
-    // Обрабатываем вывод от скрипта
-    pythonProcess.stdout.on('data', (data) => {
-      if (isCompleted) return;
-      
-      const outputText = data.toString();
-      console.log(`Python streaming: ${outputText.substring(0, 50)}${outputText.length > 50 ? '...' : ''}`);
-      
-      // Ищем все JSON объекты в выводе
-      const jsonObjects = outputText.match(/{[^{}]*}/g);
-      
-      if (jsonObjects) {
-        for (const jsonStr of jsonObjects) {
-          try {
-            const jsonData = JSON.parse(jsonStr);
-            
-            // Обрабатываем разные типы данных стриминга
-            if (jsonData.streaming) {
-              if (jsonData.starting) {
-                // Начало стриминга
-                sendEvent('info', {
-                  message: `Начинаем стриминг от ${jsonData.provider || 'AI'}`,
-                  provider: jsonData.provider,
-                  model: jsonData.model
-                });
-              } else if (jsonData.chunk) {
-                // Отправляем чанк текста
-                sendEvent('update', {
-                  chunk: jsonData.chunk,
-                  done: false,
-                  provider: jsonData.provider,
-                  model: jsonData.model
-                });
-              } else if (jsonData.complete) {
-                // Завершение стриминга
-                sendEvent('complete', {
-                  message: 'Генерация текста завершена',
-                  provider: jsonData.provider,
-                  model: jsonData.model
-                });
-                
-                // Устанавливаем флаг завершения
-                isCompleted = true;
-              } else if (jsonData.error) {
-                // Ошибка в процессе стриминга
-                sendEvent('error', {
-                  message: jsonData.error,
-                  provider: jsonData.provider || 'BOOOMERANGS'
-                });
-              }
-            } else {
-              // Обычный ответ (не от стриминга) - разбиваем на куски
-              if (jsonData.response) {
-                const words = jsonData.response.split(' ');
-                let position = 0;
-                
-                // Отправляем слова порциями для имитации стриминга
-                const interval = setInterval(() => {
-                  if (position < words.length) {
-                    const chunk = words.slice(position, position + 3).join(' ');
-                    position += 3;
-                    
-                    sendEvent('update', {
-                      chunk,
-                      done: position >= words.length,
-                      provider: jsonData.provider || 'BOOOMERANGS',
-                      model: jsonData.model || 'fallback'
-                    });
-                    
-                    if (position >= words.length) {
-                      clearInterval(interval);
-                      
-                      // Отправляем событие завершения
-                      sendEvent('complete', {
-                        message: 'Генерация завершена',
-                        provider: jsonData.provider || 'BOOOMERANGS',
-                        model: jsonData.model || 'fallback'
-                      });
-                      
-                      isCompleted = true;
-                    }
-                  } else {
-                    clearInterval(interval);
-                  }
-                }, 100);
-              }
-            }
-          } catch (parseError) {
-            console.error('Ошибка при обработке JSON:', parseError);
-            sendEvent('log', { message: jsonStr });
-          }
-        }
-      } else {
-        // Отправляем сырой вывод как лог
-        sendEvent('log', { message: outputText });
-      }
-    });
-    
-    // Обрабатываем ошибки
-    pythonProcess.stderr.on('data', (data) => {
-      const errorText = data.toString();
-      console.error(`Streaming Python ошибка: ${errorText}`);
-      
-      // Отправляем ошибку клиенту
-      if (!isCompleted) {
-        sendEvent('error', { message: errorText });
-      }
-    });
-    
-    // Устанавливаем таймаут для демо-ответа
-    const demoDelay = Math.min(5000, timeout / 4);
-    const demoTimeout = setTimeout(() => {
-      if (!isCompleted) {
-        console.log(`Запуск демо-ответа через ${demoDelay}мс`);
-        
-        // Отправляем уведомление о переключении на демо-режим
-        sendEvent('info', {
-          message: 'AI провайдер не отвечает, переключаемся на демо-режим',
-          provider: 'BOOOMERANGS-Live'
+
+    // Генерируем изображение, если нужно
+    if (messageAnalysis.category === 'image_create' || messageAnalysis.category === 'image_edit') {
+      try {
+        const imageUrl = await generateImage({
+          prompt: messageAnalysis.prompt,
+          previousImage
         });
-        
-        // Отправляем демо-ответ по частям
-        const demoWords = demoResponse.split(' ');
-        let sentWords = 0;
-        
-        const demoInterval = setInterval(() => {
-          if (sentWords < demoWords.length && !isCompleted) {
-            const chunk = demoWords.slice(sentWords, sentWords + 3).join(' ');
-            sentWords += 3;
-            
-            sendEvent('update', {
-              chunk,
-              done: sentWords >= demoWords.length,
-              provider: 'BOOOMERANGS-Live',
-              model: 'demo-mode'
-            });
-            
-            if (sentWords >= demoWords.length) {
-              clearInterval(demoInterval);
-              
-              // Отправляем событие завершения
-              sendEvent('complete', {
-                message: 'Демо-режим завершен',
-                provider: 'BOOOMERANGS-Live',
-                model: 'demo-mode'
-              });
-              
-              isCompleted = true;
-            }
-          } else {
-            clearInterval(demoInterval);
-          }
-        }, 100);
+        res.write(`event: image\n`);
+        res.write(`data: ${JSON.stringify({ imageUrl })}\n\n`);
+      } catch (imageError) {
+        console.error('Ошибка генерации изображения:', imageError);
+        res.write(`event: error\n`);
+        res.write(`data: ${JSON.stringify({ error: 'Ошибка генерации изображения' })}\n\n`);
+      }
+      res.end();
+      return; // Заканчиваем работу, если это была генерация изображения
+    }
+
+    // Запускаем Python-процесс (например, для анализа или генерации текста)
+    const pythonProcess = startPythonProcess(req.body);
+
+    let isCompleted = false;
+    let demoSent = false;
+
+    // Таймаут для отправки демо-ответа, если Python долго не отвечает
+    const demoTimeout = setTimeout(() => {
+      if (!isCompleted && !demoSent) {
+        demoSent = true;
+        res.write(`event: message\n`);
+        res.write(`data: ${JSON.stringify({
+          role: 'assistant',
+          content: 'Демо-ответ: ваш запрос обрабатывается, пожалуйста, подождите...'
+        })}\n\n`);
       }
     }, demoDelay);
-    
-    // Обрабатываем завершение процесса
-    pythonProcess.on('close', (code) => {
-      clearTimeout(demoTimeout);
-      
-      if (!isCompleted) {
-        if (code !== 0) {
-          console.error(`Python стриминг процесс завершился с кодом ${code}`);
-          
-          // Отправляем информацию об ошибке
-          sendEvent('error', { 
-            message: `Python процесс завершился с кодом ${code}` 
-          });
-          
-          // Отправляем демо-ответ после ошибки
-          sendEvent('update', {
-            chunk: demoResponse,
-            done: true,
-            provider: 'BOOOMERANGS-Fallback',
-            model: 'error-recovery'
-          });
-          
-          // Отправляем событие завершения
-          sendEvent('complete', {
-            message: 'Генерация завершена (после ошибки)',
-            provider: 'BOOOMERANGS-Fallback',
-            model: 'error-recovery'
-          });
-        } else {
-          // Процесс завершился успешно, но мы не получили complete событие
-          sendEvent('complete', {
-            message: 'Генерация завершена',
-            provider: 'BOOOMERANGS',
-            model: 'streaming-complete'
-          });
+
+    pythonProcess.stdout.on('data', (chunk) => {
+      try {
+        const outputText = chunk.toString();
+        console.log('Получен фрагмент от Python:', outputText);
+
+        // Ищем все JSON-объекты на отдельной строке
+        const lines = outputText.split('\n').filter(Boolean);
+        for (const line of lines) {
+          try {
+            const json = JSON.parse(line);
+
+            // Проверяем, не завершен ли ответ
+            if (json.done) {
+              isCompleted = true;
+              clearTimeout(demoTimeout);
+              res.write(`event: done\n`);
+              res.write(`data: {}\n\n`);
+              if (!res.writableEnded) res.end();
+              return;
+            }
+
+            // Отправляем данные клиенту
+            res.write(`event: message\n`);
+            res.write(`data: ${JSON.stringify(json)}\n\n`);
+          } catch (parseErr) {
+            console.warn('Ошибка парсинга JSON из строки:', line);
+          }
         }
-        
-        isCompleted = true;
+      } catch (err) {
+        console.error('Ошибка обработки данных Python:', err);
       }
     });
-    
-    // Обрабатываем закрытие соединения клиентом
-    req.on('close', () => {
-      // Убиваем процесс Python, если он еще запущен
-      if (pythonProcess && !pythonProcess.killed) {
-        pythonProcess.kill();
-      }
-      
-      // Очищаем таймер демо-ответа
+
+    pythonProcess.on('close', (code) => {
+      isCompleted = true;
       clearTimeout(demoTimeout);
-      
-      console.log('Клиент отключился');
+      if (!res.writableEnded) {
+        res.write(`event: done\n`);
+        res.write(`data: {}\n\n`);
+        res.end();
+      }
+      console.log(`Python-процесс завершился с кодом ${code}`);
     });
-    
+
+    req.on('close', () => {
+      console.log('Клиент закрыл соединение');
+      if (!res.writableEnded) res.end();
+      pythonProcess.kill();
+    });
+
   } catch (error) {
-    console.error('Ошибка при обработке запроса стриминга:', error);
-    
-    // Если соединение еще не начато, отправляем обычный JSON ответ с ошибкой
+    console.error('Ошибка в apiChatStream:', error);
     if (!res.headersSent) {
-      return res.status(500).json({
-        success: false, 
-        error: 'Ошибка при обработке запроса',
-        message: error.message
-      });
+      res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+    } else if (!res.writableEnded) {
+      res.write(`event: error\n`);
+      res.write(`data: ${JSON.stringify({ error: 'Внутренняя ошибка сервера' })}\n\n`);
+      res.end();
     }
   }
-});
+};
 
-module.exports = router;
+
+// Заглушка функции запуска Python-процесса
+function startPythonProcess(body) {
+  // Здесь запускается python process, например через child_process.spawn
+  // Пример:
+  // const { spawn } = require('child_process');
+  // const py = spawn('python3', ['script.py']);
+  // py.stdin.write(JSON.stringify(body));
+  // py.stdin.end();
+  // return py;
+
+  // Для примера вернем EventEmitter заглушку (замени на реальный процесс)
+  const { EventEmitter } = require('events');
+  const emitter = new EventEmitter();
+
+  // Через 2 секунды отправим "завершение"
+  setTimeout(() => {
+    emitter.emit('close', 0);
+  }, 2000);
+
+  // Имитация данных — отправим JSON-строки через setTimeout
+  setTimeout(() => {
+    emitter.emit('data', Buffer.from(JSON.stringify({ role: 'assistant', content: 'Привет от Python!' }) + '\n'));
+  }, 500);
+
+  return emitter;
+}
