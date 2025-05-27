@@ -36,7 +36,7 @@ models_per_provider = {
     "You": "claude-3.5-sonnet",  # Обновлено: используем Claude 3.5 Sonnet через You.com
     "Phind": "phind-70b",        # Устарел: провайдер не работает
     "GeminiPro": "gemini-pro",
-    "Liaobots": "claude-3-7-sonnet-20250219",
+
     "Gemini": "gemini-pro",
     "DEEPSEEK": "deepseek-chat"           # Специализированная модель DeepSeek для технических вопросов
 }
@@ -46,7 +46,7 @@ provider_groups = {
     # Основные группы по надежности
     "primary": ["AItianhu", "Qwen_Qwen_2_5_Max", "DeepInfra", "DeepInfra_Mistral", "Qwen_Qwen_3", "Phind"],
     "secondary": ["AItianhu_Turbo", "Qwen_Qwen_2_5", "DeepInfra_Llama", "GeminiPro", "You", "Gemini"],
-    "fallback": ["DeepInfra_Qwen", "You", "Liaobots"],
+    "fallback": ["DeepInfra_Qwen", "You"],
     
     # Специализированные группы
     "technical": ["You", "DeepInfra_CodeLlama", "DEEPSEEK", "DeepInfra_Mistral", "Qwen_Qwen_2_5_Max"],  # Обновлено: You с Claude 3.5 Sonnet первый
