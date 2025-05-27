@@ -1487,6 +1487,7 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
     try {
       // МОЩНЫЙ ПОИСК В ИНТЕРНЕТЕ ЧЕРЕЗ PYTHON
       console.log('🔍 [REAL_SEARCH] Запускаем реальный поиск для:', message);
+      console.log('🔍 [REAL_SEARCH] Команда: python server/real_web_search.py', message);
       
       const { spawn } = require('child_process');
       const searchProcess = spawn('python', ['server/real_web_search.py', message]);
@@ -1522,6 +1523,9 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
       // Парсим результаты поиска
       let searchResults = [];
       
+      console.log('🔍 [REAL_SEARCH] Данные от Python поиска:', searchData.length, 'символов');
+      console.log('🔍 [REAL_SEARCH] Первые 200 символов:', searchData.substring(0, 200));
+      
       if (searchData.trim()) {
         try {
           const parsedData = JSON.parse(searchData);
@@ -1530,10 +1534,16 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
           if (parsedData.success && parsedData.results) {
             searchResults = parsedData.results;
             console.log('🔍 [REAL_SEARCH] Обработано результатов:', searchResults.length);
+            console.log('🔍 [REAL_SEARCH] Первый результат:', searchResults[0]);
+          } else {
+            console.log('🚨 [REAL_SEARCH] Поиск не успешен или нет результатов');
           }
         } catch (e) {
           console.error('🚨 [REAL_SEARCH] Ошибка парсинга JSON:', e.message);
+          console.error('🚨 [REAL_SEARCH] Полученные данные:', searchData);
         }
+      } else {
+        console.log('🚨 [REAL_SEARCH] Пустые данные от Python поиска');
       }
       
       // Если это запрос о погоде - добавляем погодные данные
