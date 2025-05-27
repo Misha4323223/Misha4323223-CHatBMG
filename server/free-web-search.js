@@ -331,7 +331,7 @@ async function searchStoreDetails(query) {
                             
                             results.push({
                                 title: `🏪 ${name}`,
-                                description: description,
+                                snippet: description,
                                 url: `https://www.openstreetmap.org/?mlat=${place.lat}&mlon=${place.lon}&zoom=16`,
                                 source: 'OpenStreetMap Business'
                             });
