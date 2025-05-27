@@ -40,6 +40,12 @@ Gemini.cookies = {
     "SAPISID": GOOGLE_SAPISID
 }
 
+# Инициализируем auth_cookies для всех провайдеров
+auth_cookies = {
+    "__Secure-1PSID": GOOGLE_SECURE_1PSID,
+    "__Secure-1PSIDTS": GOOGLE_SECURE_1PSIDTS,
+}
+
 # Справочник моделей для каждого провайдера
 models_per_provider = {
     # Qwen модели - наиболее стабильные и поддерживающие русский язык
