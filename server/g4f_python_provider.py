@@ -6,6 +6,8 @@ BOOOMERANGS G4F Python Provider
 from flask import Flask, request, jsonify, Response
 from flask_cors import CORS
 import g4f
+from g4f.client import Client
+from g4f.Provider import Gemini
 import time
 import random
 import json
@@ -25,6 +27,18 @@ GOOGLE_HSID = "ABJ442iT_SQ2WitDg"
 GOOGLE_SSID = "Ay7HZT8yW216dfO_o"
 GOOGLE_APISID = "hYhU04JUR7_X1G4_/AjCPTUbWu4DfW4voM"
 GOOGLE_SAPISID = "sxn8_1EmcYuzKl1I/AR51UEPLAlShAFxbK"
+
+# Настраиваем cookies для Gemini провайдера согласно правильной структуре G4F
+Gemini.cookies = {
+    "__Secure-1PSID": GOOGLE_SECURE_1PSID,
+    "__Secure-1PSIDTS": GOOGLE_SECURE_1PSIDTS,
+    "__Secure-3PSID": GOOGLE_SECURE_3PSID,
+    "__Secure-3PSIDTS": GOOGLE_SECURE_3PSIDTS,
+    "HSID": GOOGLE_HSID,
+    "SSID": GOOGLE_SSID,
+    "APISID": GOOGLE_APISID,
+    "SAPISID": GOOGLE_SAPISID
+}
 
 # Справочник моделей для каждого провайдера
 models_per_provider = {
@@ -97,19 +111,31 @@ def try_provider(provider_name, message, timeout=15, use_stream=False, custom_mo
         # Используем переданную модель или дефолтную для провайдера
         model = custom_model or models_per_provider.get(provider_name, "gpt-3.5-turbo")
         
-        # Специальная настройка для Gemini с cookies
-        auth_cookies = None
+        # Специальная обработка для Gemini с правильной структурой G4F
         if provider_name == "Gemini":
-            auth_cookies = {
-                "__Secure-1PSID": GOOGLE_SECURE_1PSID,
-                "__Secure-1PSIDTS": GOOGLE_SECURE_1PSIDTS,
-                "__Secure-3PSID": GOOGLE_SECURE_3PSID,
-                "__Secure-3PSIDTS": GOOGLE_SECURE_3PSIDTS,
-                "HSID": GOOGLE_HSID,
-                "SSID": GOOGLE_SSID,
-                "APISID": GOOGLE_APISID,
-                "SAPISID": GOOGLE_SAPISID
-            }
+            try:
+                # Используем G4F Client для Gemini с предустановленными cookies
+                client = Client()
+                response = client.chat.completions.create(
+                    model="gemini-pro",
+                    provider=Gemini,
+                    messages=[
+                        {"role": "system", "content": "Вы AI-ассистент BOOOMERANGS. Отвечайте по-русски, если вопрос на русском. Давайте краткие и полезные ответы."},
+                        {"role": "user", "content": message}
+                    ]
+                )
+                return {
+                    "response": response.choices[0].message.content,
+                    "provider": provider_name,
+                    "model": "gemini-pro"
+                }
+            except Exception as e:
+                return {
+                    "error": f"Ошибка провайдера {provider_name}: {str(e)}",
+                    "provider": provider_name,
+                    "model": "gemini-pro",
+                    "response": f"Ошибка провайдера {provider_name}: {str(e)}"
+                }
         
         # Отладочная информация только в консоль, не в ответ
         # print(f"Попытка использования провайдера {provider_name}...")
