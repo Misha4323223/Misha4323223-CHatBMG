@@ -23,6 +23,7 @@ GOOGLE_SECURE_3PSID = "g.a000xAh5kQmBDvMW9rfoBIhFCn1mJQZd0gWxAkhq54JsWVNGhxZEgBo
 GOOGLE_SECURE_3PSIDTS = "sidts-CjIB5H03Pyxe416Ah3dAKBXEP1CQ3mvo2kz-pK25tCo_rddHrlWe9AwTtoajWHcgXkuW5BAA"
 GOOGLE_HSID = "ABJ442iT_SQ2WitDg"
 GOOGLE_SSID = "Ay7HZT8yW216dfO_o"
+GOOGLE_APISID = "hYhU04JUR7_X1G4_/AjCPTUbWu4DfW4voM"
 
 # Справочник моделей для каждого провайдера
 models_per_provider = {
@@ -104,7 +105,8 @@ def try_provider(provider_name, message, timeout=15, use_stream=False, custom_mo
                 "__Secure-3PSID": GOOGLE_SECURE_3PSID,
                 "__Secure-3PSIDTS": GOOGLE_SECURE_3PSIDTS,
                 "HSID": GOOGLE_HSID,
-                "SSID": GOOGLE_SSID
+                "SSID": GOOGLE_SSID,
+                "APISID": GOOGLE_APISID
             }
         
         # Отладочная информация только в консоль, не в ответ
