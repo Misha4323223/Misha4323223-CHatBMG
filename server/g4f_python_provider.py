@@ -506,9 +506,13 @@ def is_coding_question(message):
 
 @app.route('/python/chat', methods=['POST'])
 def chat():
-    print("🚨🚨🚨 [PYTHON G4F] ФУНКЦИЯ CHAT ВЫЗВАНА!")
+    import sys
+    print("🚨🚨🚨 [PYTHON G4F] ФУНКЦИЯ CHAT ВЫЗВАНА!", flush=True)
+    sys.stderr.write("🚨🚨🚨 [PYTHON G4F] ФУНКЦИЯ CHAT ВЫЗВАНА!\n")
+    sys.stderr.flush()
     try:
         data = request.json
+        print(f"🚨🚨🚨 [PYTHON G4F] JSON: {data}", flush=True)
         message = data.get('message', '')
         provider = data.get('provider')
         timeout = data.get('timeout', 20000) / 1000  # Переводим миллисекунды в секунды
@@ -518,15 +522,22 @@ def chat():
         print(f"🔥🔥🔥 [PYTHON G4F] Первые 200 символов: {message[:200]}")
         print(f"🔥🔥🔥 [PYTHON G4F] Содержит маркер поиска: {'🔍 **АКТУАЛЬНАЯ ИНФОРМАЦИЯ ИЗ ИНТЕРНЕТА:**' in message}")
         
-        # Сначала проверяем демо-режим
-        demo_response = get_demo_response(message)
-        if demo_response:
-            print(f"🔥🔥🔥 [PYTHON G4F] ВОЗВРАЩАЕМ ДЕМО-ОТВЕТ")
-            return jsonify({
-                "response": demo_response,
-                "provider": "BOOOMERANGS-Demo",
-                "model": "demo-mode"
-            })
+        # Проверяем, есть ли поисковые данные - если да, используем настоящий AI
+        has_search_data = "🔍 **АКТУАЛЬНАЯ ИНФОРМАЦИЯ ИЗ ИНТЕРНЕТА:**" in message
+        print(f"🔥🔥🔥 [PYTHON G4F] Обнаружены поисковые данные: {has_search_data}")
+        
+        if not has_search_data:
+            # Только если НЕТ поисковых данных, используем демо-режим
+            demo_response = get_demo_response(message)
+            if demo_response:
+                print(f"🔥🔥🔥 [PYTHON G4F] ВОЗВРАЩАЕМ ДЕМО-ОТВЕТ")
+                return jsonify({
+                    "response": demo_response,
+                    "provider": "BOOOMERANGS-Demo",
+                    "model": "demo-mode"
+                })
+        else:
+            print(f"🔥🔥🔥 [PYTHON G4F] ЕСТЬ ПОИСКОВЫЕ ДАННЫЕ - ИСПОЛЬЗУЕМ НАСТОЯЩИЙ AI")
         
         # Проверяем, если это вопрос о программировании и не указан конкретный провайдер
         if not provider and is_coding_question(message):
