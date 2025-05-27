@@ -1485,9 +1485,53 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
     })}\n\n`);
     
     try {
-      // Используем нашу собственную систему поиска для ЛЮБЫХ запросов
-      const freeWebSearch = require('./free-web-search');
-      const searchResults = await freeWebSearch.searchRealTimeInfo(message);
+      // Простая проверка на запросы о погоде
+      if (message.toLowerCase().includes('погода')) {
+        console.log('🔍 [DIRECT] Прямой поиск погоды...');
+        // Извлекаем город из запроса
+        const cityMatch = message.match(/в\s+([а-яё]+)/i);
+        const city = cityMatch ? cityMatch[1] : 'Новомосковск';
+        
+        const weatherResponse = await fetch(`https://wttr.in/${encodeURIComponent(city)}?format=j1`);
+        if (weatherResponse.ok) {
+          const weatherData = await weatherResponse.json();
+          const current = weatherData.current_condition[0];
+          const today = weatherData.weather[0];
+          
+          const searchResults = [{
+            title: `🌤️ Погода в ${city}`,
+            description: `Сейчас: ${current.temp_C}°C, ${current.weatherDesc[0].value}. Макс: ${today.maxtempC}°C, мин: ${today.mintempC}°C. Влажность: ${current.humidity}%, ветер: ${current.windspeedKmph} км/ч`,
+            temperature: `${current.temp_C}°C`,
+            weather: current.weatherDesc[0].value,
+            source: 'wttr.in'
+          }];
+          
+          console.log('🔍 [DIRECT] Найдена погода:', searchResults[0].description);
+          
+          // Формируем информацию для AI
+          let searchInfo = '\n\n🔍 **АКТУАЛЬНАЯ ИНФОРМАЦИЯ О ПОГОДЕ:**\n\n';
+          searchInfo += `**Погода в ${city} сейчас:**\n`;
+          searchInfo += `🌡️ Температура: ${current.temp_C}°C\n`;
+          searchInfo += `☁️ Состояние: ${current.weatherDesc[0].value}\n`;
+          searchInfo += `📈 Максимум сегодня: ${today.maxtempC}°C\n`;
+          searchInfo += `📉 Минимум сегодня: ${today.mintempC}°C\n`;
+          searchInfo += `💧 Влажность: ${current.humidity}%\n`;
+          searchInfo += `💨 Ветер: ${current.windspeedKmph} км/ч\n\n`;
+          
+          finalMessage = searchInfo;
+          
+          res.write(`data: ${JSON.stringify({ 
+            searchStatus: 'found', 
+            message: `Найдена актуальная погода в ${city}`,
+            resultsCount: 1
+          })}\n\n`);
+        } else {
+          throw new Error('Сервис погоды недоступен');
+        }
+      } else {
+        // Используем нашу собственную систему поиска для других запросов
+        const freeWebSearch = require('./free-web-search');
+        const searchResults = await freeWebSearch.searchRealTimeInfo(message);
       
       if (searchResults && searchResults.length > 0) {
         // Формируем детальную информацию для AI
