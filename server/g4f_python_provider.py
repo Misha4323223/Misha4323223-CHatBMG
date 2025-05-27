@@ -33,8 +33,8 @@ models_per_provider = {
     "DeepInfra_CodeLlama": "codellama-34b-instruct", # CodeLlama для программирования
     
     # Другие провайдеры и модели
-    "You": "you-chat",
-    "Phind": "phind-70b",
+    "You": "claude-3.5-sonnet",  # Обновлено: используем Claude 3.5 Sonnet через You.com
+    "Phind": "phind-70b",        # Устарел: провайдер не работает
     "GeminiPro": "gemini-pro",
     "Liaobots": "llama-3-70b",
     "Gemini": "gemini-pro",
@@ -49,8 +49,8 @@ provider_groups = {
     "fallback": ["DeepInfra_Qwen", "You", "Liaobots"],
     
     # Специализированные группы
-    "technical": ["Phind", "DeepInfra_CodeLlama", "DEEPSEEK", "DeepInfra_Mistral", "You"],  # Для технических вопросов
-    "deepspeek": ["DeepInfra_CodeLlama", "AItianhu", "Qwen_Qwen_2_5_Max", "DEEPSEEK", "Phind"]  # Улучшенная группа для DeepSpeek
+    "technical": ["You", "DeepInfra_CodeLlama", "DEEPSEEK", "DeepInfra_Mistral", "Qwen_Qwen_2_5_Max"],  # Обновлено: You с Claude 3.5 Sonnet первый
+    "deepspeek": ["You", "DeepInfra_CodeLlama", "AItianhu", "Qwen_Qwen_2_5_Max", "DEEPSEEK"]  # Обновлено: заменен Phind на You
 }
 
 def get_demo_response(message):
