@@ -36,7 +36,7 @@ models_per_provider = {
     "You": "claude-3.5-sonnet",  # Обновлено: используем Claude 3.5 Sonnet через You.com
     "Phind": "phind-70b",        # Устарел: провайдер не работает
     "GeminiPro": "gemini-pro",
-    "Liaobots": "llama-3-70b",
+    "Liaobots": "claude-3-7-sonnet-20250219",
     "Gemini": "gemini-pro",
     "DEEPSEEK": "deepseek-chat"           # Специализированная модель DeepSeek для технических вопросов
 }
@@ -73,7 +73,7 @@ def get_demo_response(message):
         ]
         return random.choice(random_responses)
 
-def try_provider(provider_name, message, timeout=15, use_stream=False):
+def try_provider(provider_name, message, timeout=15, use_stream=False, custom_model=None):
     """Попытка получить ответ от провайдера с обработкой ошибок и системой резервных моделей"""
     start_time = time.time()
     success = False
@@ -83,7 +83,8 @@ def try_provider(provider_name, message, timeout=15, use_stream=False):
     # Получаем провайдер по имени
     if hasattr(g4f.Provider, provider_name):
         provider = getattr(g4f.Provider, provider_name)
-        model = models_per_provider.get(provider_name, "gpt-3.5-turbo")
+        # Используем переданную модель или дефолтную для провайдера
+        model = custom_model or models_per_provider.get(provider_name, "gpt-3.5-turbo")
         
         # Отладочная информация только в консоль, не в ответ
         # print(f"Попытка использования провайдера {provider_name}...")
@@ -328,8 +329,9 @@ def direct_provider():
         # Получаем провайдер напрямую из g4f
         if hasattr(g4f.Provider, provider_name):
             provider = getattr(g4f.Provider, provider_name)
-            # Выбираем подходящую модель
-            model = models_per_provider.get(provider_name, "gpt-3.5-turbo")
+            # Используем переданную модель или дефолтную для провайдера
+            requested_model = data.get('model')
+            model = requested_model or models_per_provider.get(provider_name, "gpt-3.5-turbo")
             
             print(f"📝 Используем модель {model} для провайдера {provider_name}")
             
