@@ -107,7 +107,8 @@ def try_provider(provider_name, message, timeout=15, use_stream=False, custom_mo
                 "__Secure-3PSIDTS": GOOGLE_SECURE_3PSIDTS,
                 "HSID": GOOGLE_HSID,
                 "SSID": GOOGLE_SSID,
-                "APISID": GOOGLE_APISID
+                "APISID": GOOGLE_APISID,
+                "SAPISID": GOOGLE_SAPISID
             }
         
         # Отладочная информация только в консоль, не в ответ
