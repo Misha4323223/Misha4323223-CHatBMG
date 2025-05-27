@@ -90,6 +90,11 @@ def try_provider(provider_name, message, timeout=15, use_stream=False, custom_mo
         # Используем переданную модель или дефолтную для провайдера
         model = custom_model or models_per_provider.get(provider_name, "gpt-3.5-turbo")
         
+        # Специальная настройка для Gemini с cookies
+        auth_cookies = None
+        if provider_name == "Gemini":
+            auth_cookies = {"__Secure-1PSID": GOOGLE_SECURE_1PSID}
+        
         # Отладочная информация только в консоль, не в ответ
         # print(f"Попытка использования провайдера {provider_name}...")
         # print(f"  📝 Пробуем модель: {model}, стриминг: {use_stream}")
