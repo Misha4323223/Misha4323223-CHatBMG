@@ -10,4 +10,5 @@ dependencies = [
     "numpy>=2.2.6",
     "pillow>=11.2.1",
     "requests>=2.32.3",
+    "duckduckgo-search>=8.0.2",
 ]

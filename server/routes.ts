@@ -1485,12 +1485,39 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
     })}\n\n`);
     
     try {
-      // УНИВЕРСАЛЬНЫЙ ПОИСК В ИНТЕРНЕТЕ ДЛЯ ЛЮБЫХ ЗАПРОСОВ
-      console.log('🔍 [UNIVERSAL] Выполняем поиск в интернете для:', message);
+      // МОЩНЫЙ ПОИСК В ИНТЕРНЕТЕ ЧЕРЕЗ PYTHON
+      console.log('🔍 [REAL_SEARCH] Запускаем реальный поиск для:', message);
       
-      // Используем DuckDuckGo для поиска
-      const searchQuery = encodeURIComponent(message);
-      const ddgResponse = await fetch(`https://api.duckduckgo.com/?q=${searchQuery}&format=json&no_html=1&skip_disambig=1`);
+      const { spawn } = require('child_process');
+      const searchProcess = spawn('python', ['server/real_web_search.py', message]);
+      
+      let searchData = '';
+      let searchError = '';
+      
+      await new Promise((resolve, reject) => {
+        searchProcess.stdout.on('data', (data) => {
+          searchData += data.toString();
+        });
+        
+        searchProcess.stderr.on('data', (data) => {
+          searchError += data.toString();
+          console.log('🔍 [PYTHON_SEARCH]', data.toString().trim());
+        });
+        
+        searchProcess.on('close', (code) => {
+          if (code === 0) {
+            resolve(searchData);
+          } else {
+            reject(new Error(`Поиск завершился с кодом ${code}: ${searchError}`));
+          }
+        });
+        
+        // Таймаут 15 секунд
+        setTimeout(() => {
+          searchProcess.kill();
+          reject(new Error('Таймаут поиска'));
+        }, 15000);
+      });
       
       let searchResults = [];
       
