@@ -12,9 +12,11 @@ async function searchRealTimeInfo(query) {
     try {
         console.log('🔍 [SEARCH] === НАЧИНАЕМ РЕАЛЬНЫЙ ПОИСК ===');
         console.log('🔍 [SEARCH] Запрос:', query);
+        console.log('🔍 [SEARCH] Время начала:', new Date().toISOString());
         
         const results = [];
         const searchTerms = query.toLowerCase();
+        console.log('🔍 [SEARCH] Обработанные ключевые слова:', searchTerms);
         
         // 1. НАСТОЯЩИЙ веб-поиск для бизнеса и организаций
         if (searchTerms.includes('магазин') || searchTerms.includes('ресторан') || 
@@ -28,31 +30,72 @@ async function searchRealTimeInfo(query) {
             
             // Комбинированный поиск через разные источники
             try {
-                console.log('🔍 [DEBUG] Вызываем searchPlaces с запросом:', query);
+                console.log('🔍 [PLACES] === ПОИСК МЕСТ И ОРГАНИЗАЦИЙ ===');
+                console.log('🔍 [PLACES] Запрос к searchPlaces:', query);
+                const startTime = Date.now();
+                
                 const placeResults = await searchPlaces(query);
-                console.log('🔍 [DEBUG] searchPlaces вернул:', JSON.stringify(placeResults, null, 2));
+                const endTime = Date.now();
+                
+                console.log('🔍 [PLACES] Время выполнения:', (endTime - startTime) + 'мс');
+                console.log('🔍 [PLACES] Количество результатов:', placeResults?.length || 0);
+                
                 if (placeResults && placeResults.length > 0) {
                     results.push(...placeResults);
-                    console.log('🔍 [DEBUG] Добавлено результатов в массив:', placeResults.length);
+                    console.log('🔍 [PLACES] ✅ Успешно добавлено результатов:', placeResults.length);
+                    placeResults.forEach((result, index) => {
+                        console.log(`🔍 [PLACES] ${index + 1}. ${result.title || result.name || 'Без названия'}`);
+                        console.log(`   📍 Адрес: ${result.address || result.location || 'Не указан'}`);
+                        console.log(`   🔗 Ссылка: ${result.url || 'Нет ссылки'}`);
+                    });
                 } else {
-                    console.log('🔍 [DEBUG] searchPlaces не вернул результаты');
+                    console.log('🔍 [PLACES] ❌ Результаты не найдены');
                 }
             } catch (error) {
-                console.log('🔍 [MAIN] Ошибка searchPlaces:', error.message);
+                console.log('🔍 [PLACES] 💥 Ошибка поиска мест:', error.message);
+                console.log('🔍 [PLACES] Stack trace:', error.stack);
             }
             
             try {
+                console.log('🔍 [DDG] === ПОИСК ЧЕРЕЗ DUCKDUCKGO ===');
+                console.log('🔍 [DDG] Запрос к DuckDuckGo:', query);
+                const startTimeDDG = Date.now();
+                
                 const ddgResults = await searchDuckDuckGoInternal(query);
-                results.push(...ddgResults);
+                const endTimeDDG = Date.now();
+                
+                console.log('🔍 [DDG] Время выполнения:', (endTimeDDG - startTimeDDG) + 'мс');
+                console.log('🔍 [DDG] Количество результатов:', ddgResults?.length || 0);
+                
+                if (ddgResults && ddgResults.length > 0) {
+                    results.push(...ddgResults);
+                    console.log('🔍 [DDG] ✅ Успешно добавлено результатов:', ddgResults.length);
+                } else {
+                    console.log('🔍 [DDG] ❌ Результаты не найдены');
+                }
             } catch (error) {
-                console.log('🔍 [MAIN] Ошибка DuckDuckGo:', error.message);
+                console.log('🔍 [DDG] 💥 Ошибка DuckDuckGo поиска:', error.message);
             }
             
             try {
+                console.log('🔍 [RU] === ПОИСК ЧЕРЕЗ РОССИЙСКИЕ СЕРВИСЫ ===');
+                console.log('🔍 [RU] Запрос к российским сервисам:', query);
+                const startTimeRU = Date.now();
+                
                 const russianResults = await searchRussianServicesInternal(query);
-                results.push(...russianResults);
+                const endTimeRU = Date.now();
+                
+                console.log('🔍 [RU] Время выполнения:', (endTimeRU - startTimeRU) + 'мс');
+                console.log('🔍 [RU] Количество результатов:', russianResults?.length || 0);
+                
+                if (russianResults && russianResults.length > 0) {
+                    results.push(...russianResults);
+                    console.log('🔍 [RU] ✅ Успешно добавлено результатов:', russianResults.length);
+                } else {
+                    console.log('🔍 [RU] ❌ Результаты не найдены');
+                }
             } catch (error) {
-                console.log('🔍 [MAIN] Ошибка российских сервисов:', error.message);
+                console.log('🔍 [RU] 💥 Ошибка российских сервисов:', error.message);
             }
             
             console.log(`🔍 [MAIN] Найдено результатов: ${results.length}`);
