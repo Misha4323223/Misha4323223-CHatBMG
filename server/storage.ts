@@ -127,30 +127,53 @@ export class MemStorage implements IStorage {
 
   // Методы для работы с контекстом разговора
   async saveMessageToContext(sessionId: number, message: any): Promise<void> {
+    console.log(`💾 [STORAGE] saveMessageToContext вызван для сессии ${sessionId}`);
+    console.log(`💾 [STORAGE] Сообщение для сохранения:`, { sender: message.sender, contentLength: message.content?.length });
+    
     if (!this.conversations.has(sessionId)) {
+      console.log(`💾 [STORAGE] Создаем новую сессию ${sessionId}`);
       this.conversations.set(sessionId, []);
     }
     
     const conversation = this.conversations.get(sessionId)!;
-    conversation.push({
+    const messageToSave = {
       ...message,
       timestamp: new Date().toISOString()
-    });
+    };
+    
+    console.log(`💾 [STORAGE] Добавляем сообщение в сессию ${sessionId}. Было: ${conversation.length} сообщений`);
+    conversation.push(messageToSave);
+    console.log(`💾 [STORAGE] Стало: ${conversation.length} сообщений`);
     
     // Оставляем только последние 20 сообщений
     if (conversation.length > 20) {
-      conversation.splice(0, conversation.length - 20);
+      const removedCount = conversation.length - 20;
+      conversation.splice(0, removedCount);
+      console.log(`💾 [STORAGE] Удалено ${removedCount} старых сообщений, осталось ${conversation.length}`);
     }
+    
+    console.log(`💾 [STORAGE] ✅ Сообщение успешно сохранено в сессию ${sessionId}`);
   }
 
   async getRecentMessages(sessionId: number, limit: number = 5): Promise<any[]> {
+    console.log(`📤 [STORAGE] getRecentMessages вызван для сессии ${sessionId}, лимит: ${limit}`);
+    
     const conversation = this.conversations.get(sessionId);
+    console.log(`📤 [STORAGE] Найдена сессия ${sessionId}:`, conversation ? `${conversation.length} сообщений` : 'сессия не найдена');
+    
     if (!conversation || conversation.length === 0) {
+      console.log(`📤 [STORAGE] Возвращаем пустой массив для сессии ${sessionId}`);
       return [];
     }
     
     // Возвращаем последние сообщения
-    return conversation.slice(-limit);
+    const recentMessages = conversation.slice(-limit);
+    console.log(`📤 [STORAGE] Возвращаем ${recentMessages.length} последних сообщений для сессии ${sessionId}`);
+    recentMessages.forEach((msg, index) => {
+      console.log(`📤 [STORAGE] Сообщение ${index + 1}: ${msg.sender} - "${msg.content?.substring(0, 30)}..."`);
+    });
+    
+    return recentMessages;
   }
 
   async clearContext(sessionId: number): Promise<void> {
