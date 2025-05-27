@@ -28,8 +28,15 @@ async function searchRealTimeInfo(query) {
             
             // Комбинированный поиск через разные источники
             try {
+                console.log('🔍 [DEBUG] Вызываем searchPlaces с запросом:', query);
                 const placeResults = await searchPlaces(query);
-                results.push(...placeResults);
+                console.log('🔍 [DEBUG] searchPlaces вернул:', JSON.stringify(placeResults, null, 2));
+                if (placeResults && placeResults.length > 0) {
+                    results.push(...placeResults);
+                    console.log('🔍 [DEBUG] Добавлено результатов в массив:', placeResults.length);
+                } else {
+                    console.log('🔍 [DEBUG] searchPlaces не вернул результаты');
+                }
             } catch (error) {
                 console.log('🔍 [MAIN] Ошибка searchPlaces:', error.message);
             }
@@ -349,6 +356,7 @@ async function searchStoreDetails(query) {
         );
         
         console.log(`🔍 [STORES] Найдено уникальных магазинов: ${uniqueResults.length}`);
+        console.log(`🔍 [DEBUG] Результаты searchPlaces:`, JSON.stringify(uniqueResults.slice(0, 3), null, 2));
         return uniqueResults.slice(0, 10);
         
     } catch (error) {
