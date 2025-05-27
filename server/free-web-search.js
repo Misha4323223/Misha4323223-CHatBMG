@@ -16,13 +16,17 @@ async function searchRealTimeInfo(query) {
         const results = [];
         const searchTerms = query.toLowerCase();
         
-        // 1. Поиск мест (магазины, рестораны, кафе)
+        // 1. Улучшенный поиск мест (магазины, торговые центры)
         if (searchTerms.includes('магазин') || searchTerms.includes('ресторан') || 
             searchTerms.includes('кафе') || searchTerms.includes('где') || 
             searchTerms.includes('адрес') || searchTerms.includes('найди') ||
             searchTerms.includes('одежда') || searchTerms.includes('торговый')) {
             const placeResults = await searchPlaces(query);
             results.push(...placeResults);
+            
+            // Дополнительный поиск через 2GIS API (бесплатные запросы)
+            const gisResults = await search2GIS(query);
+            results.push(...gisResults);
         }
         
         // 2. Поиск погоды
