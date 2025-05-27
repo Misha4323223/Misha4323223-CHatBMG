@@ -151,7 +151,7 @@ async function searchPlaces(query) {
             
             return {
                 title: `${icon} ${name}`,
-                description: description,
+                snippet: description,
                 url: `https://www.openstreetmap.org/#map=18/${place.lat}/${place.lon}`,
                 source: 'OpenStreetMap'
             };
@@ -384,7 +384,7 @@ async function searchDuckDuckGoInternal(query) {
         if (data.Answer) {
             results.push({
                 title: '🔍 Быстрый ответ',
-                description: data.Answer,
+                snippet: data.Answer,
                 url: data.AbstractURL || `https://duckduckgo.com/?q=${searchQuery}`,
                 source: 'DuckDuckGo'
             });
@@ -396,7 +396,7 @@ async function searchDuckDuckGoInternal(query) {
                 if (topic.Text && topic.FirstURL) {
                     results.push({
                         title: '📄 ' + topic.Text.split(' - ')[0],
-                        description: topic.Text,
+                        snippet: topic.Text,
                         url: topic.FirstURL,
                         source: 'DuckDuckGo'
                     });
@@ -426,13 +426,13 @@ async function searchRussianServicesInternal(query) {
         const results = [
             {
                 title: `🗺️ Яндекс Карты: магазины в ${city}`,
-                description: `Найдите актуальные магазины одежды в ${city} с адресами, телефонами и отзывами`,
+                snippet: `Найдите актуальные магазины одежды в ${city} с адресами, телефонами и отзывами`,
                 url: `https://yandex.ru/maps/?text=${encodeURIComponent(query)}`,
                 source: 'Yandex Maps'
             },
             {
                 title: `🏪 2ГИС: торговые точки в ${city}`,
-                description: `Подробная информация о магазинах одежды в ${city} - адреса, контакты, часы работы`,
+                snippet: `Подробная информация о магазинах одежды в ${city} - адреса, контакты, часы работы`,
                 url: `https://2gis.ru/search/${encodeURIComponent(query)}`,
                 source: '2GIS'
             }
