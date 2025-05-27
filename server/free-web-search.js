@@ -4,7 +4,6 @@
  */
 
 import fetch from 'node-fetch';
-import { searchRealBusinesses } from './real-web-search.js';
 
 /**
  * Главная функция поиска актуальной информации
@@ -25,18 +24,18 @@ async function searchRealTimeInfo(query) {
             searchTerms.includes('аптека') || searchTerms.includes('банк') ||
             searchTerms.includes('салон') || searchTerms.includes('центр')) {
             
-            console.log('🔍 [MAIN] Запускаем РЕАЛЬНЫЙ веб-поиск...');
-            const realResults = await searchRealBusinesses(query);
-            results.push(...realResults);
+            console.log('🔍 [MAIN] Запускаем улучшенный веб-поиск...');
             
-            // Если реальный поиск дал результаты, используем их
-            if (realResults.length > 0) {
-                console.log(`🔍 [MAIN] Реальный поиск нашел ${realResults.length} результатов!`);
-            } else {
-                // Резервный поиск через OSM
-                const placeResults = await searchPlaces(query);
-                results.push(...placeResults);
-            }
+            // Комбинированный поиск через разные источники
+            const placeResults = await searchPlaces(query);
+            const ddgResults = await searchDuckDuckGo(query);
+            const russianResults = await searchRussianServices(query);
+            
+            results.push(...placeResults);
+            results.push(...ddgResults);
+            results.push(...russianResults);
+            
+            console.log(`🔍 [MAIN] Найдено результатов: ${results.length}`);
         }
         
         // 2. Поиск погоды
@@ -341,6 +340,97 @@ async function searchStoreDetails(query) {
         
     } catch (error) {
         console.log('🔍 [STORES] Ошибка детального поиска:', error.message);
+        return [];
+    }
+}
+
+/**
+ * Поиск через DuckDuckGo API (бесплатно)
+ */
+async function searchDuckDuckGo(query) {
+    try {
+        const searchQuery = encodeURIComponent(query);
+        const url = `https://api.duckduckgo.com/?q=${searchQuery}&format=json&no_redirect=1&no_html=1&skip_disambig=1`;
+        
+        console.log('🔍 [DDG] Поиск через DuckDuckGo...');
+        
+        const response = await fetch(url, {
+            headers: {
+                'User-Agent': 'BOOOMERANGS-Search/1.0'
+            },
+            timeout: 5000
+        });
+        
+        if (!response.ok) {
+            throw new Error('DuckDuckGo недоступен');
+        }
+        
+        const data = await response.json();
+        const results = [];
+        
+        // Обрабатываем мгновенные ответы
+        if (data.Answer) {
+            results.push({
+                title: '🔍 Быстрый ответ',
+                description: data.Answer,
+                url: data.AbstractURL || `https://duckduckgo.com/?q=${searchQuery}`,
+                source: 'DuckDuckGo'
+            });
+        }
+        
+        // Обрабатываем связанные темы
+        if (data.RelatedTopics && data.RelatedTopics.length > 0) {
+            data.RelatedTopics.slice(0, 3).forEach(topic => {
+                if (topic.Text && topic.FirstURL) {
+                    results.push({
+                        title: '📄 ' + topic.Text.split(' - ')[0],
+                        description: topic.Text,
+                        url: topic.FirstURL,
+                        source: 'DuckDuckGo'
+                    });
+                }
+            });
+        }
+        
+        console.log(`🔍 [DDG] Найдено результатов: ${results.length}`);
+        return results;
+        
+    } catch (error) {
+        console.log('🔍 [DDG] Ошибка:', error.message);
+        return [];
+    }
+}
+
+/**
+ * Поиск через российские сервисы
+ */
+async function searchRussianServices(query) {
+    try {
+        console.log('🔍 [RUS] Создаем ссылки на российские сервисы...');
+        
+        const cityMatch = query.match(/(в|около|рядом)\s+([а-яё\s\-]+)/i);
+        const city = cityMatch ? cityMatch[2].trim() : 'России';
+        
+        const results = [
+            {
+                title: `🗺️ Яндекс Карты: магазины в ${city}`,
+                description: `Найдите актуальные магазины одежды в ${city} с адресами, телефонами и отзывами`,
+                url: `https://yandex.ru/maps/?text=${encodeURIComponent(query)}`,
+                source: 'Yandex Maps'
+            },
+            {
+                title: `🏪 2ГИС: торговые точки в ${city}`,
+                description: `Подробная информация о магазинах одежды в ${city} - адреса, контакты, часы работы`,
+                url: `https://2gis.ru/search/${encodeURIComponent(query)}`,
+                source: '2GIS'
+            }
+        ];
+        
+        console.log(`🔍 [RUS] Создано ссылок: ${results.length}`);
+        return results;
+        
+    } catch (error) {
+        console.log('🔍 [RUS] Ошибка:', error.message);
         return [];
     }
 }
