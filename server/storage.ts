@@ -25,10 +25,12 @@ export class MemStorage implements IStorage {
   private messages: Map<number, Message>;
   private userIdCounter: number;
   private messageIdCounter: number;
+  private conversations: Map<number, any[]>; // Для хранения истории чата по сессиям
 
   constructor() {
     this.users = new Map();
     this.messages = new Map();
+    this.conversations = new Map();
     this.userIdCounter = 1;
     this.messageIdCounter = 1;
     
@@ -116,6 +118,38 @@ export class MemStorage implements IStorage {
       if (a.timestamp > b.timestamp) return 1;
       return 0;
     });
+  }
+
+  // Методы для работы с контекстом разговора
+  async saveMessageToContext(sessionId: number, message: any): Promise<void> {
+    if (!this.conversations.has(sessionId)) {
+      this.conversations.set(sessionId, []);
+    }
+    
+    const conversation = this.conversations.get(sessionId)!;
+    conversation.push({
+      ...message,
+      timestamp: new Date().toISOString()
+    });
+    
+    // Оставляем только последние 20 сообщений
+    if (conversation.length > 20) {
+      conversation.splice(0, conversation.length - 20);
+    }
+  }
+
+  async getRecentMessages(sessionId: number, limit: number = 5): Promise<any[]> {
+    const conversation = this.conversations.get(sessionId);
+    if (!conversation || conversation.length === 0) {
+      return [];
+    }
+    
+    // Возвращаем последние сообщения
+    return conversation.slice(-limit);
+  }
+
+  async clearContext(sessionId: number): Promise<void> {
+    this.conversations.delete(sessionId);
   }
 }
 

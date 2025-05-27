@@ -1288,6 +1288,20 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
     console.log(`🚀 Запуск потоковой генерации для: "${message}"`);
     console.log(`🔥 [DEBUG] Извлеченные параметры: message="${message}", provider="${provider}", sessionId="${sessionId}"`);
     
+    // 💭 СОХРАНЯЕМ СООБЩЕНИЕ ПОЛЬЗОВАТЕЛЯ В КОНТЕКСТ
+    if (sessionId) {
+      try {
+        await storage.saveMessageToContext(sessionId, {
+          sender: 'user',
+          content: message,
+          provider: null
+        });
+        console.log('💭 [CONTEXT] Сообщение пользователя сохранено в контекст');
+      } catch (e) {
+        console.log('💭 [CONTEXT] Ошибка сохранения контекста:', e.message);
+      }
+    }
+    
     // ОТКЛЮЧАЕМ СТАРЫЙ ПОИСК - ИСПОЛЬЗУЕМ ТОЛЬКО НОВЫЙ PYTHON ПОИСКОВИК
     console.log('🔥 [DEBUG] Старый поиск отключен, используем новый Python поисковик');
     let enrichedMessage = message;
@@ -1681,6 +1695,20 @@ ${finalMessage.includes('🔍 **АКТУАЛЬНАЯ ИНФОРМАЦИЯ ИЗ �
               await new Promise(resolve => setTimeout(resolve, 50));
             }
             res.write(`data: ${JSON.stringify({ finished: true, provider: data.provider || provider })}\n\n`);
+            
+            // 💭 СОХРАНЯЕМ ОТВЕТ AI В КОНТЕКСТ
+            if (sessionId) {
+              try {
+                await storage.saveMessageToContext(sessionId, {
+                  sender: 'ai',
+                  content: data.response,
+                  provider: data.provider || provider
+                });
+                console.log('💭 [CONTEXT] Ответ AI сохранен в контекст');
+              } catch (e) {
+                console.log('💭 [CONTEXT] Ошибка сохранения ответа AI:', e.message);
+              }
+            }
           } else {
             throw new Error('Неожиданный формат ответа от Python G4F');
           }
