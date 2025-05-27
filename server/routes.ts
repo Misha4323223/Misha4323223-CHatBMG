@@ -58,7 +58,6 @@ const upload = multer({
 const svgGenerator = require('./svg-generator');
 const g4fHandlers = require('./g4f-handlers');
 const directAiRoutes = require('./direct-ai-routes');
-const pythonProviderRoutes = require('./python_provider_routes');
 const deepspeekProvider = require('./deepspeek-provider');
 const chatFreeProvider = require('./chatfree-provider');
 
@@ -243,8 +242,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // API с прямым доступом к AI провайдерам (более стабильный вариант)
   app.use('/api/direct-ai', directAiRoutes);
   
-  // API с Python-версией G4F
-  app.use('/api/python', pythonProviderRoutes.router);
+  // API с Python-версией G4F отключен - используем умный роутер
   
   // Основной API для стриминга обрабатывается прямо в routes.ts (строка 1322)
   
@@ -781,8 +779,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else if (provider === 'ollama') {
         // Используем Ollama через Python G4F
         try {
-          console.log(`Пробуем использовать Ollama через Python G4F...`);
-          const ollamaResponse = await pythonProviderRoutes.callPythonAI(message, 'Ollama');
+          console.log(`Ollama через Python G4F отключен - используем smart-router`);
+          const ollamaResponse = null; // Отключено
           
           if (ollamaResponse) {
             return {
