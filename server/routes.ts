@@ -1485,7 +1485,55 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
     })}\n\n`);
     
     try {
-      // Простая проверка на запросы о погоде
+      // УНИВЕРСАЛЬНЫЙ ПОИСК В ИНТЕРНЕТЕ ДЛЯ ЛЮБЫХ ЗАПРОСОВ
+      console.log('🔍 [UNIVERSAL] Выполняем поиск в интернете для:', message);
+      
+      // Используем DuckDuckGo для поиска
+      const searchQuery = encodeURIComponent(message);
+      const ddgResponse = await fetch(`https://api.duckduckgo.com/?q=${searchQuery}&format=json&no_html=1&skip_disambig=1`);
+      
+      let searchResults = [];
+      
+      if (ddgResponse.ok) {
+        const ddgData = await ddgResponse.json();
+        console.log('🔍 [DDG] Ответ DuckDuckGo получен');
+        
+        // Собираем результаты из разных секций
+        if (ddgData.AbstractText) {
+          searchResults.push({
+            title: ddgData.AbstractSource || 'Информация',
+            description: ddgData.AbstractText,
+            url: ddgData.AbstractURL || '',
+            source: 'DuckDuckGo Abstract'
+          });
+        }
+        
+        // Добавляем связанные темы
+        if (ddgData.RelatedTopics && ddgData.RelatedTopics.length > 0) {
+          ddgData.RelatedTopics.slice(0, 3).forEach(topic => {
+            if (topic.Text) {
+              searchResults.push({
+                title: topic.FirstURL ? topic.FirstURL.split('/').pop() : 'Связанная тема',
+                description: topic.Text,
+                url: topic.FirstURL || '',
+                source: 'DuckDuckGo Related'
+              });
+            }
+          });
+        }
+        
+        // Добавляем мгновенные ответы
+        if (ddgData.Answer) {
+          searchResults.push({
+            title: 'Мгновенный ответ',
+            description: ddgData.Answer,
+            url: '',
+            source: 'DuckDuckGo Instant'
+          });
+        }
+      }
+      
+      // Если это запрос о погоде - добавляем погодные данные
       if (message.toLowerCase().includes('погода')) {
         console.log('🔍 [DIRECT] Прямой поиск погоды...');
         // Извлекаем город из запроса
@@ -1528,47 +1576,43 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
         } else {
           throw new Error('Сервис погоды недоступен');
         }
-      } else {
-        // Используем нашу собственную систему поиска для других запросов
-        const freeWebSearch = require('./free-web-search');
-        const searchResults = await freeWebSearch.searchRealTimeInfo(message);
+      }
       
-      if (searchResults && searchResults.length > 0) {
-        // Формируем детальную информацию для AI
+      // Формируем финальную информацию для AI
+      if (searchResults.length > 0) {
         let searchInfo = '\n\n🔍 **АКТУАЛЬНАЯ ИНФОРМАЦИЯ ИЗ ИНТЕРНЕТА:**\n\n';
         
         searchResults.forEach((result, index) => {
-          searchInfo += `${index + 1}. **${result.title || result.name || 'Информация'}**\n`;
-          if (result.description) searchInfo += `   Описание: ${result.description}\n`;
-          if (result.address) searchInfo += `   📍 Адрес: ${result.address}\n`;
-          if (result.phone) searchInfo += `   📞 Телефон: ${result.phone}\n`;
-          if (result.hours) searchInfo += `   🕐 Часы работы: ${result.hours}\n`;
-          if (result.url) searchInfo += `   🔗 Сайт: ${result.url}\n`;
-          searchInfo += '\n';
+          searchInfo += `${index + 1}. **${result.title}**\n`;
+          if (result.description) searchInfo += `   ${result.description}\n`;
+          if (result.temperature) searchInfo += `   🌡️ Температура: ${result.temperature}\n`;
+          if (result.weather) searchInfo += `   ☁️ Погода: ${result.weather}\n`;
+          if (result.url) searchInfo += `   🔗 Источник: ${result.url}\n`;
+          searchInfo += `   📊 Источник данных: ${result.source}\n\n`;
         });
         
         finalMessage = searchInfo;
-        console.log('🔍 [UNIVERSAL] Поиск успешен! Найдено результатов:', searchResults.length);
-        console.log('🔍 [UNIVERSAL] Информация для AI:', searchInfo.substring(0, 500) + '...');
+        console.log('🔍 [SEARCH] Поиск успешен! Найдено результатов:', searchResults.length);
+        console.log('🔍 [SEARCH] Информация для AI:', searchInfo.substring(0, 500) + '...');
         
-        // Уведомляем о успешном поиске
         res.write(`data: ${JSON.stringify({ 
           searchStatus: 'found', 
-          message: `Найдено ${searchResults.length} результатов из интернета`,
+          message: `Найдено ${searchResults.length} результатов в интернете`,
           resultsCount: searchResults.length
         })}\n\n`);
       } else {
-        console.log('🔍 [UNIVERSAL] Поиск не дал результатов, используем обычный режим');
+        console.log('🔍 [SEARCH] Поиск не дал результатов');
         res.write(`data: ${JSON.stringify({ 
           searchStatus: 'no_results', 
-          message: 'Отвечаю на основе базовых знаний' 
+          message: 'Информация в интернете не найдена' 
         })}\n\n`);
       }
+      
     } catch (error) {
-      console.error('🔍 [UNIVERSAL] Ошибка поиска:', error.message);
+      console.error('🔍 [SEARCH] Ошибка поиска:', error.message);
       res.write(`data: ${JSON.stringify({ 
         searchStatus: 'error', 
-        message: 'Отвечаю на основе базовых знаний' 
+        message: 'Ошибка поиска в интернете' 
       })}\n\n`);
     }
     
