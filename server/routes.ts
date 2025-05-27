@@ -1498,10 +1498,15 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
       // Используем тот же Python G4F что работает в обычном API
       try {
         console.log('🐍 [STREAMING] Вызываем Python G4F...');
+        console.log('🧠 [STREAMING] Передаем finalMessage с контекстом:', finalMessage.substring(0, 200) + '...');
         const pythonResponse = await fetch(`http://127.0.0.1:5004/python/chat?provider=${provider}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: finalMessage }),
+          body: JSON.stringify({ 
+            message: finalMessage,
+            context: contextInfo.context,
+            sessionId: sessionId
+          }),
           timeout: 10000
         });
         
