@@ -1597,9 +1597,28 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
         if (sessionId) {
           console.log(`🔥 [DEBUG] ТОЧКА 4: SessionId существует, получаем контекст`);
           try {
-            console.log(`💭 [CONTEXT] Запрашиваем контекст для сессии ${sessionId}`);
+            console.log(`💭 [CONTEXT] 🔍 ЗАПРАШИВАЕМ КОНТЕКСТ для сессии ${sessionId}`);
+            console.log(`💭 [CONTEXT] 🔍 Тип sessionId: ${typeof sessionId}, значение: "${sessionId}"`);
+            
             const recentMessages = await storage.getRecentMessages(sessionId, 3);
-            console.log(`🔥 [DEBUG] ТОЧКА 5: Получили ответ от storage.getRecentMessages:`, recentMessages);
+            
+            console.log(`💭 [CONTEXT] 🔍 ПОЛУЧИЛИ РЕЗУЛЬТАТ ОТ STORAGE:`);
+            console.log(`💭 [CONTEXT] 🔍 Тип результата: ${typeof recentMessages}`);
+            console.log(`💭 [CONTEXT] 🔍 Является ли массивом: ${Array.isArray(recentMessages)}`);
+            console.log(`💭 [CONTEXT] 🔍 Количество сообщений: ${recentMessages ? recentMessages.length : 0}`);
+            
+            if (recentMessages && recentMessages.length > 0) {
+              console.log(`💭 [CONTEXT] 🔍 ДЕТАЛИ СООБЩЕНИЙ:`);
+              recentMessages.forEach((msg, index) => {
+                console.log(`💭 [CONTEXT] 🔍 Сообщение ${index + 1}:`);
+                console.log(`💭 [CONTEXT] 🔍   - sender: "${msg.sender}"`);
+                console.log(`💭 [CONTEXT] 🔍   - content: "${msg.content?.substring(0, 100)}..."`);
+                console.log(`💭 [CONTEXT] 🔍   - timestamp: ${msg.timestamp}`);
+              });
+            } else {
+              console.log(`💭 [CONTEXT] 🔍 СООБЩЕНИЯ ОТСУТСТВУЮТ ИЛИ ПУСТОЙ МАССИВ`);
+            }
+            
             console.log(`💭 [CONTEXT] Получено сообщений: ${recentMessages ? recentMessages.length : 0}`);
             
             if (recentMessages && recentMessages.length > 0) {
@@ -1609,14 +1628,24 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
               });
               
               searchInfo += `КОНТЕКСТ РАЗГОВОРА:\n`;
-              recentMessages.reverse().forEach(msg => {
+              console.log(`💭 [CONTEXT] 🔍 НАЧИНАЕМ ДОБАВЛЕНИЕ КОНТЕКСТА В ПРОМПТ`);
+              
+              recentMessages.reverse().forEach((msg, index) => {
                 if (msg.sender === 'user') {
-                  searchInfo += `Пользователь: ${msg.content.substring(0, 100)}\n`;
+                  const userText = `Пользователь: ${msg.content.substring(0, 100)}\n`;
+                  searchInfo += userText;
+                  console.log(`💭 [CONTEXT] 🔍 Добавлен в промпт ПОЛЬЗОВАТЕЛЬ ${index + 1}: "${msg.content.substring(0, 50)}..."`);
                 } else if (msg.sender === 'ai') {
-                  searchInfo += `AI: ${msg.content.substring(0, 100)}\n`;
+                  const aiText = `AI: ${msg.content.substring(0, 100)}\n`;
+                  searchInfo += aiText;
+                  console.log(`💭 [CONTEXT] 🔍 Добавлен в промпт AI ${index + 1}: "${msg.content.substring(0, 50)}..."`);
                 }
               });
               searchInfo += `\n`;
+              
+              console.log(`💭 [CONTEXT] 🔍 КОНТЕКСТ УСПЕШНО ДОБАВЛЕН В ПРОМПТ`);
+              console.log(`💭 [CONTEXT] 🔍 Размер промпта с контекстом: ${searchInfo.length} символов`);
+              console.log(`💭 [CONTEXT] 🔍 Фрагмент промпта с контекстом: "${searchInfo.substring(0, 200)}..."`);
               console.log(`💭 [CONTEXT] Контекст добавлен в промпт для AI`);
             } else {
               console.log(`💭 [CONTEXT] Контекст пуст для сессии ${sessionId}`);

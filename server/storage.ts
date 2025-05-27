@@ -156,21 +156,35 @@ export class MemStorage implements IStorage {
   }
 
   async getRecentMessages(sessionId: number, limit: number = 5): Promise<any[]> {
-    console.log(`📤 [STORAGE] getRecentMessages вызван для сессии ${sessionId}, лимит: ${limit}`);
+    console.log(`📤 [STORAGE] 🔍 getRecentMessages вызван для сессии ${sessionId}, лимит: ${limit}`);
+    console.log(`📤 [STORAGE] 🔍 Тип sessionId: ${typeof sessionId}, значение: "${sessionId}"`);
+    console.log(`📤 [STORAGE] 🔍 Всего сессий в памяти: ${this.conversations.size}`);
+    console.log(`📤 [STORAGE] 🔍 Доступные сессии:`, Array.from(this.conversations.keys()));
     
     const conversation = this.conversations.get(sessionId);
-    console.log(`📤 [STORAGE] Найдена сессия ${sessionId}:`, conversation ? `${conversation.length} сообщений` : 'сессия не найдена');
+    console.log(`📤 [STORAGE] 🔍 РЕЗУЛЬТАТ ПОИСКА СЕССИИ:`);
+    console.log(`📤 [STORAGE] 🔍   - Найдена: ${conversation ? 'ДА' : 'НЕТ'}`);
+    console.log(`📤 [STORAGE] 🔍   - Количество сообщений: ${conversation ? conversation.length : 0}`);
     
     if (!conversation || conversation.length === 0) {
+      console.log(`📤 [STORAGE] 🔍 СЕССИЯ ПУСТА ИЛИ НЕ НАЙДЕНА`);
       console.log(`📤 [STORAGE] Возвращаем пустой массив для сессии ${sessionId}`);
       return [];
     }
     
+    console.log(`📤 [STORAGE] 🔍 ДЕТАЛИ ВСЕХ СООБЩЕНИЙ В СЕССИИ:`);
+    conversation.forEach((msg, index) => {
+      console.log(`📤 [STORAGE] 🔍   ${index + 1}. ${msg.sender}: "${msg.content?.substring(0, 50)}..." (${msg.timestamp})`);
+    });
+    
     // Возвращаем последние сообщения
     const recentMessages = conversation.slice(-limit);
+    console.log(`📤 [STORAGE] 🔍 ИЗВЛЕКАЕМ ПОСЛЕДНИЕ ${limit} СООБЩЕНИЙ`);
     console.log(`📤 [STORAGE] Возвращаем ${recentMessages.length} последних сообщений для сессии ${sessionId}`);
+    
+    console.log(`📤 [STORAGE] 🔍 ВОЗВРАЩАЕМЫЕ СООБЩЕНИЯ:`);
     recentMessages.forEach((msg, index) => {
-      console.log(`📤 [STORAGE] Сообщение ${index + 1}: ${msg.sender} - "${msg.content?.substring(0, 30)}..."`);
+      console.log(`📤 [STORAGE] 🔍   ВОЗВРАТ ${index + 1}: ${msg.sender} - "${msg.content?.substring(0, 50)}..."`);
     });
     
     return recentMessages;
