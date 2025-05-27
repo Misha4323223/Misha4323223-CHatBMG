@@ -15,7 +15,7 @@ const STREAMING_PROVIDERS = [
 ];
 
 // API endpoint для стриминга через SSE (Server-Sent Events)
-router.post('/chat', (req, res) => {
+router.post('/chat', async (req, res) => {
   try {
     const { 
       message, 
