@@ -114,6 +114,15 @@ def try_provider(provider_name, message, timeout=15, use_stream=False, custom_mo
         # Специальная обработка для Gemini с правильной структурой G4F
         if provider_name == "Gemini":
             try:
+                # Настраиваем правильные заголовки для Gemini
+                import requests
+                session = requests.Session()
+                session.headers.update({
+                    'Origin': 'https://gemini.google.com',
+                    'Referer': 'https://gemini.google.com/',
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                })
+                
                 # Используем G4F Client для Gemini с предустановленными cookies
                 client = Client()
                 response = client.chat.completions.create(
