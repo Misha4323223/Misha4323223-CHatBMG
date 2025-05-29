@@ -157,6 +157,65 @@ function createModifiedDescription(originalKeywords, objectToRemove, imageStyle)
 }
 
 /**
+ * Создание нового описания на основе локального анализа
+ */
+function createModifiedDescriptionFromAnalysis(analysis, objectToRemove) {
+  // Удаляем указанный объект из списка аксессуаров
+  const filteredAccessories = analysis.accessories.filter(accessory => {
+    const lowerAccessory = accessory.toLowerCase();
+    const lowerRemove = objectToRemove.toLowerCase();
+    
+    // Проверяем различные формы слова
+    return !lowerAccessory.includes(lowerRemove) && 
+           !lowerRemove.includes(lowerAccessory) &&
+           !areRelatedWords(lowerAccessory, lowerRemove);
+  });
+  
+  // Создаем новое описание
+  let newDescription = analysis.mainSubject;
+  
+  if (filteredAccessories.length > 0) {
+    newDescription += ` в ${filteredAccessories.join(', ')}`;
+  }
+  
+  // Добавляем стиль
+  newDescription += `, ${analysis.style}`;
+  
+  // Добавляем качественные модификаторы
+  newDescription += ', high quality, detailed, professional';
+  
+  console.log(`🔄 [REGENERATOR] Удаляем "${objectToRemove}" из "${analysis.accessories.join(', ')}"`);
+  console.log(`✅ [REGENERATOR] Остаются: "${filteredAccessories.join(', ')}"`);
+  
+  return newDescription;
+}
+
+/**
+ * Проверка родственных слов
+ */
+function areRelatedWords(word1, word2) {
+  const related = {
+    'сапоги': ['обувь', 'ботинки', 'туфли'],
+    'шляпа': ['головной убор', 'кепка', 'шапка'],
+    'куртка': ['пиджак', 'жакет', 'одежда'],
+    'очки': ['линзы', 'оправа']
+  };
+  
+  for (const [key, synonyms] of Object.entries(related)) {
+    if ((word1.includes(key) || key.includes(word1)) && 
+        (synonyms.some(s => word2.includes(s) || s.includes(word2)))) {
+      return true;
+    }
+    if ((word2.includes(key) || key.includes(word2)) && 
+        (synonyms.some(s => word1.includes(s) || s.includes(word1)))) {
+      return true;
+    }
+  }
+  
+  return false;
+}
+
+/**
  * Основная функция умной регенерации
  */
 async function regenerateImageWithoutObject(imageUrl, objectToRemove) {
@@ -168,18 +227,17 @@ async function regenerateImageWithoutObject(imageUrl, objectToRemove) {
     const imageUtils = require('./image-utils');
     const imageBuffer = await imageUtils.loadImageFromUrl(imageUrl);
     
-    // Анализируем цвета и стиль
-    const colors = await analyzeImageColors(imageBuffer);
-    const style = determineImageStyle(colors);
+    // Используем локальный анализатор изображений
+    const localVision = require('./local-vision-analyzer');
+    const analysis = await localVision.createImageDescription(imageBuffer);
     
-    console.log(`🎨 [REGENERATOR] Стиль изображения: ${style}`);
+    console.log(`🎨 [REGENERATOR] Анализ изображения:`, analysis);
+    console.log(`📝 [REGENERATOR] Описание: ${analysis.description}`);
+    console.log(`🎯 [REGENERATOR] Главный объект: ${analysis.mainSubject}`);
+    console.log(`👕 [REGENERATOR] Аксессуары: ${analysis.accessories.join(', ')}`);
     
-    // Извлекаем ключевые слова из URL
-    const keywords = extractKeywordsFromUrl(imageUrl);
-    console.log(`🔤 [REGENERATOR] Ключевые слова: ${keywords.join(', ')}`);
-    
-    // Создаем новое описание
-    const newDescription = createModifiedDescription(keywords, objectToRemove, style);
+    // Создаем новое описание без указанного объекта
+    const newDescription = createModifiedDescriptionFromAnalysis(analysis, objectToRemove);
     console.log(`📝 [REGENERATOR] Новое описание: ${newDescription}`);
     
     // Генерируем новое изображение
@@ -190,10 +248,10 @@ async function regenerateImageWithoutObject(imageUrl, objectToRemove) {
       return {
         success: true,
         imageUrl: result.imageUrl,
-        message: `Создано новое изображение без "${objectToRemove}", сохранив основные характеристики оригинала`,
-        originalKeywords: keywords,
+        message: `Создано новое изображение без "${objectToRemove}", сохранив ${analysis.mainSubject} и стиль`,
+        originalDescription: analysis.description,
         newDescription: newDescription,
-        style: style
+        removedObject: objectToRemove
       };
     } else {
       throw new Error('Не удалось сгенерировать новое изображение');
