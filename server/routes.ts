@@ -1403,12 +1403,37 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
       /макет/i,
       /концепт/i
     ];
+
+    // 🖼️ ПРОВЕРЯЕМ НА РЕДАКТИРОВАНИЕ ИЗОБРАЖЕНИЙ
+    const imageEditPatterns = [
+      /удали фон/i,
+      /убери фон/i,
+      /без фона/i,
+      /замени фон/i,
+      /поменяй фон/i,
+      /новый фон/i,
+      /измени.*изображение/i,
+      /отредактируй.*изображение/i,
+      /добавь.*к.*изображени/i,
+      /редактируй/i,
+      /фон.*на/i
+    ];
     
     let isImageGeneration = false;
+    let isImageEdit = false;
+    
     for (const pattern of imageGenerationPatterns) {
       if (pattern.test(message)) {
         isImageGeneration = true;
         console.log('🎨 [STREAM] Обнаружен запрос на генерацию изображения!');
+        break;
+      }
+    }
+
+    for (const pattern of imageEditPatterns) {
+      if (pattern.test(message)) {
+        isImageEdit = true;
+        console.log('🖼️ [STREAM] Обнаружен запрос на редактирование изображения!');
         break;
       }
     }
@@ -1421,6 +1446,95 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Headers': 'Cache-Control'
     });
+    
+    // Если это запрос на редактирование изображения, переключаемся на редактор
+    if (isImageEdit) {
+      try {
+        console.log('🖼️ [STREAM] Переключаемся на редактор изображений...');
+        res.write(`data: ${JSON.stringify({ 
+          text: '🖼️ Редактирую изображение для вас...', 
+          provider: 'AI_Image_Editor' 
+        })}\n\n`);
+        
+        const imageEditor = require('./image-editor');
+        const conversationMemory = require('./conversation-memory');
+        
+        // Получаем информацию о последнем изображении из контекста
+        const conversation = conversationMemory.getConversation(`session_${sessionId}`);
+        const lastImageInfo = conversation.getLastImageInfo();
+        
+        if (!lastImageInfo) {
+          res.write(`data: ${JSON.stringify({ 
+            text: '😔 Не найдено изображение для редактирования. Сначала создайте изображение, а затем попросите его отредактировать.',
+            provider: 'AI_Image_Editor',
+            finished: true
+          })}\n\n`);
+        } else {
+          // Определяем тип редактирования
+          const editRequest = imageEditor.parseEditRequest(message);
+          let result;
+          
+          switch (editRequest.type) {
+            case 'remove_background':
+              result = await imageEditor.removeBackground(lastImageInfo.url);
+              break;
+            case 'replace_background':
+              result = await imageEditor.replaceBackground(lastImageInfo.url, editRequest.newBackground);
+              break;
+            case 'edit_part':
+              result = await imageEditor.editImagePart(lastImageInfo.url, editRequest.editPrompt);
+              break;
+            default:
+              result = {
+                success: false,
+                message: 'Неизвестный тип редактирования. Попробуйте: "удали фон", "замени фон на пляж" или "добавь солнце"'
+              };
+          }
+          
+          if (result.success) {
+            let responseText = `🖼️ ${result.message}`;
+            
+            if (result.imageUrl) {
+              responseText += `\n![Отредактированное изображение](${result.imageUrl})`;
+            }
+            
+            if (result.originalWithoutBg && result.newBackground) {
+              responseText += `\n\n🔗 Объект без фона: ![Без фона](${result.originalWithoutBg})`;
+              responseText += `\n🌄 Новый фон: ![Новый фон](${result.newBackground})`;
+            }
+            
+            if (result.instructions) {
+              responseText += `\n\n💡 ${result.instructions}`;
+            }
+            
+            res.write(`data: ${JSON.stringify({ 
+              text: responseText,
+              provider: 'AI_Image_Editor',
+              finished: true
+            })}\n\n`);
+          } else {
+            res.write(`data: ${JSON.stringify({ 
+              text: `😔 ${result.message}`,
+              provider: 'AI_Image_Editor',
+              finished: true
+            })}\n\n`);
+          }
+        }
+        
+        res.end();
+        return;
+        
+      } catch (error) {
+        console.error('🖼️ [STREAM] Ошибка редактора изображений:', error);
+        res.write(`data: ${JSON.stringify({ 
+          text: `😔 Произошла ошибка при редактировании изображения. Попробуйте еще раз.`,
+          provider: 'AI_Image_Editor',
+          finished: true
+        })}\n\n`);
+        res.end();
+        return;
+      }
+    }
     
     // Если это запрос на генерацию изображения, переключаемся на генератор
     if (isImageGeneration) {
