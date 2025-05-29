@@ -64,52 +64,66 @@ async function removeBackgroundHuggingFace(imageUrl) {
       };
     }
     
+    // Список доступных моделей для удаления фона
+    const models = [
+      'briaai/RMBG-1.4',
+      'ZhengPeng7/BiRefNet',
+      'schirrmacher/birefnet-general',
+      'Xenova/modnet'
+    ];
+    
     // Загружаем изображение
     const imageResponse = await fetch(imageUrl);
     const imageBuffer = await imageResponse.buffer();
     
-    // Отправляем на Hugging Face (используем более популярную модель)
-    const response = await fetch('https://api-inference.huggingface.co/models/briaai/RMBG-1.4', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.HUGGINGFACE_API_KEY}`,
-        'Content-Type': 'application/octet-stream',
-        'x-wait-for-model': 'true'
-      },
-      body: imageBuffer
-    });
+    // Пробуем каждую модель по очереди
+    for (const model of models) {
+      try {
+        console.log(`🔄 [EDITOR] Пробуем модель: ${model}`);
+        
+        const response = await fetch(`https://api-inference.huggingface.co/models/${model}`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${process.env.HUGGINGFACE_API_KEY}`,
+            'Content-Type': 'application/octet-stream',
+            'x-wait-for-model': 'true'
+          },
+          body: imageBuffer
+        });
 
-    if (response.ok) {
-      const resultBuffer = await response.buffer();
-      const timestamp = Date.now();
-      const outputPath = `./uploads/no-bg-hf-${timestamp}.png`;
-      fs.writeFileSync(outputPath, resultBuffer);
-      
-      return {
-        success: true,
-        imageUrl: `/uploads/no-bg-hf-${timestamp}.png`,
-        message: 'Фон успешно удален'
-      };
-    } else {
-      const errorText = await response.text();
-      console.error('❌ [EDITOR] Ошибка Hugging Face API:', errorText);
-      
-      if (response.status === 401) {
-        return {
-          success: false,
-          error: 'Неверный API ключ',
-          message: 'Проверьте правильность Hugging Face API ключа'
-        };
+        if (response.ok) {
+          const resultBuffer = await response.buffer();
+          const timestamp = Date.now();
+          const outputPath = `./uploads/no-bg-hf-${timestamp}.png`;
+          fs.writeFileSync(outputPath, resultBuffer);
+          
+          console.log(`✅ [EDITOR] Успешно использована модель: ${model}`);
+          return {
+            success: true,
+            imageUrl: `/uploads/no-bg-hf-${timestamp}.png`,
+            message: 'Фон успешно удален',
+            model: model
+          };
+        } else {
+          const errorText = await response.text();
+          console.log(`⚠️ [EDITOR] Модель ${model} недоступна: ${response.status} - ${errorText}`);
+          continue;
+        }
+      } catch (modelError) {
+        console.log(`⚠️ [EDITOR] Ошибка модели ${model}:`, modelError.message);
+        continue;
       }
-      
-      return {
-        success: false,
-        error: 'Ошибка API',
-        message: 'Hugging Face API временно недоступен, попробуйте позже'
-      };
     }
+    
+    // Если все модели не сработали
+    return {
+      success: false,
+      error: 'Все модели недоступны',
+      message: 'Сервис удаления фона временно недоступен, попробуйте позже'
+    };
+    
   } catch (error) {
-    console.error('❌ [EDITOR] Ошибка Hugging Face:', error);
+    console.error('❌ [EDITOR] Общая ошибка Hugging Face:', error);
     return {
       success: false,
       error: 'Сетевая ошибка',
