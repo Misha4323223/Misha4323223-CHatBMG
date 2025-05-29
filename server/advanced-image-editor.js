@@ -106,46 +106,20 @@ async function removeAreaFromImage(imageUrl, areaDescription) {
     
     console.log(`🔍 [DETECTOR] Результат поиска объекта "${areaDescription}":`, detectionResult);
     
-    if (detectionResult.found && detectionResult.areas.length > 0) {
-      // Найден конкретный объект - используем умное удаление
-      console.log(`✅ [DETECTOR] Найден объект типа "${detectionResult.objectType}", удаляем точно`);
-      
-      const smartRemoval = await smartDetector.removeDetectedObject(
-        validatedBuffer, 
-        detectionResult.areas, 
-        detectionResult.objectType
-      );
-      
-      if (smartRemoval.success) {
-        const timestamp = Date.now();
-        const outputPath = `./uploads/smart-removed-${timestamp}.png`;
-        
-        await sharp(smartRemoval.processedImage).png().toFile(outputPath);
-        
-        return {
-          success: true,
-          imageUrl: `/uploads/smart-removed-${timestamp}.png`,
-          message: `Объект "${areaDescription}" найден и удален (${smartRemoval.removedAreas} областей)`,
-          type: 'smart_object_removal',
-          confidence: detectionResult.confidence
-        };
-      }
-    } else {
-      // Объект не найден локально - используем умную регенерацию
-      console.log(`🔄 [DETECTOR] Объект не найден локально, пробуем умную регенерацию`);
-      
-      const smartRegenerator = require('./smart-image-regenerator');
-      const regenerationResult = await smartRegenerator.regenerateImageWithoutObject(imageUrl, areaDescription);
-      
-      if (regenerationResult.success) {
-        return {
-          success: true,
-          imageUrl: regenerationResult.imageUrl,
-          message: regenerationResult.message,
-          type: 'smart_regeneration',
-          details: `Сохранены: ${regenerationResult.originalKeywords.join(', ')}`
-        };
-      }
+    // Всегда используем умную регенерацию для получения лучших результатов
+    console.log(`🔄 [DETECTOR] Используем умную регенерацию для точного результата`);
+    
+    const smartRegenerator = require('./smart-image-regenerator');
+    const regenerationResult = await smartRegenerator.regenerateImageWithoutObject(imageUrl, areaDescription);
+    
+    if (regenerationResult.success) {
+      return {
+        success: true,
+        imageUrl: regenerationResult.imageUrl,
+        message: regenerationResult.message,
+        type: 'smart_regeneration',
+        details: `Сохранены: ${regenerationResult.originalKeywords.join(', ')}`
+      };
     }
     
     // Если объект не найден, используем простое удаление областей
