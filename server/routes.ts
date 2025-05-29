@@ -1441,9 +1441,21 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              message: `Создай короткий английский промпт для генерации изображения: "${message}". Отвечай только промптом без лишних слов.`,
+              message: `Ты эксперт по созданию промптов для AI генераторов изображений. Пользователь просит: "${message}". 
+
+Создай детальный английский промпт для высококачественного изображения. Включи:
+- Описание объекта/сцены
+- Стиль и качество (photorealistic, high quality, detailed, 4k)
+- Освещение и цвета
+- Композицию
+
+Отвечай ТОЛЬКО промптом на английском, без объяснений.
+
+Примеры:
+Запрос: "кот" → "photorealistic cat portrait, fluffy fur texture, bright green eyes, natural lighting, high quality, detailed"
+Запрос: "самурай" → "traditional japanese samurai warrior, detailed armor, katana sword, dramatic lighting, ancient temple background, cinematic composition, photorealistic, 4k quality"`,
               provider: 'Qwen_Qwen_2_72B',
-              timeout: 5000
+              timeout: 10000
             })
           });
 

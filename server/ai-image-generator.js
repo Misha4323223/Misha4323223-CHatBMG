@@ -158,26 +158,71 @@ function enhancePromptWithAI(prompt, style) {
 function enhanceRussianPromptBasic(prompt, style) {
   const originalPrompt = prompt.trim();
   
-  // Определяем тип изображения по ключевым словам
-  const isCharacter = /самурай|воин|человек|персонаж|герой|девушка|парень/i.test(originalPrompt);
-  const isTshirtDesign = /футболка|принт|дизайн|печать/i.test(originalPrompt);
-  const isNature = /природа|лес|море|горы|пейзаж|цветы|животные/i.test(originalPrompt);
-  const isAbstract = /абстракт|геометрия|узор|паттерн/i.test(originalPrompt);
-  const isCyberpunk = /техно|кибер|неон|киберпанк|футуристик/i.test(originalPrompt);
+  // Словарь переводов ключевых слов
+  const translations = {
+    'кот': 'cat',
+    'собака': 'dog',
+    'самурай': 'samurai warrior',
+    'воин': 'warrior',
+    'человек': 'person',
+    'девушка': 'girl',
+    'парень': 'boy',
+    'дракон': 'dragon',
+    'принцесса': 'princess',
+    'рыцарь': 'knight',
+    'робот': 'robot',
+    'машина': 'car',
+    'дом': 'house',
+    'замок': 'castle',
+    'лес': 'forest',
+    'море': 'ocean',
+    'горы': 'mountains',
+    'цветы': 'flowers',
+    'закат': 'sunset',
+    'луна': 'moon',
+    'звезды': 'stars',
+    'футболка': 't-shirt',
+    'принт': 'print design',
+    'дизайн': 'design',
+    'красивый': 'beautiful',
+    'большой': 'large',
+    'маленький': 'small',
+    'яркий': 'bright',
+    'темный': 'dark',
+    'магический': 'magical',
+    'фантастический': 'fantasy'
+  };
   
-  let enhancedPrompt = originalPrompt;
+  // Переводим русские слова на английский
+  let translatedPrompt = originalPrompt;
+  Object.keys(translations).forEach(ru => {
+    const regex = new RegExp(`\\b${ru}\\b`, 'gi');
+    translatedPrompt = translatedPrompt.replace(regex, translations[ru]);
+  });
+  
+  // Определяем тип изображения по ключевым словам
+  const isCharacter = /самурай|воин|человек|персонаж|герой|девушка|парень|рыцарь|принцесса/i.test(originalPrompt);
+  const isTshirtDesign = /футболка|принт|дизайн|печать/i.test(originalPrompt);
+  const isNature = /природа|лес|море|горы|пейзаж|цветы|животные|закат|луна/i.test(originalPrompt);
+  const isAbstract = /абстракт|геометрия|узор|паттерн/i.test(originalPrompt);
+  const isCyberpunk = /техно|кибер|неон|киберпанк|футуристик|робот/i.test(originalPrompt);
+  const isAnimal = /кот|собака|дракон|животн/i.test(originalPrompt);
+  
+  let enhancedPrompt = translatedPrompt;
   
   // Добавляем качественные характеристики в зависимости от типа
   if (isTshirtDesign) {
-    enhancedPrompt = `high quality t-shirt design, vector style, bold graphics, clean background, print-ready, ${originalPrompt}`;
+    enhancedPrompt = `high quality t-shirt design, vector style, bold graphics, clean background, print-ready, ${translatedPrompt}`;
   } else if (isCharacter && isCyberpunk) {
-    enhancedPrompt = `highly detailed cyberpunk character, neon lighting, futuristic, digital art, 4k quality, ${originalPrompt}`;
+    enhancedPrompt = `highly detailed cyberpunk character, neon lighting, futuristic, digital art, 4k quality, ${translatedPrompt}`;
   } else if (isCharacter) {
-    enhancedPrompt = `highly detailed character portrait, professional digital art, cinematic lighting, 4k quality, ${originalPrompt}`;
+    enhancedPrompt = `highly detailed character portrait, professional digital art, cinematic lighting, 4k quality, ${translatedPrompt}`;
+  } else if (isAnimal) {
+    enhancedPrompt = `photorealistic animal portrait, detailed fur texture, natural lighting, high quality, professional photography, ${translatedPrompt}`;
   } else if (isNature) {
-    enhancedPrompt = `beautiful nature photography style, high resolution, vivid colors, professional quality, ${originalPrompt}`;
+    enhancedPrompt = `beautiful nature photography style, high resolution, vivid colors, professional quality, ${translatedPrompt}`;
   } else if (isAbstract) {
-    enhancedPrompt = `modern abstract art, vibrant colors, high contrast, artistic composition, ${originalPrompt}`;
+    enhancedPrompt = `modern abstract art, vibrant colors, high contrast, artistic composition, ${translatedPrompt}`;
   } else {
     enhancedPrompt = `high quality digital art, detailed, professional, ${originalPrompt}`;
   }
