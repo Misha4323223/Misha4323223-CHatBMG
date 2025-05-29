@@ -13,4 +13,5 @@ dependencies = [
     "beautifulsoup4>=4.13.4",
     "lxml>=5.4.0",
     "duckduckgo-search>=8.0.2",
+    "python-dotenv>=1.1.0",
 ]

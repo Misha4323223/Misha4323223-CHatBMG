@@ -20,15 +20,14 @@ def get_chat_response(message, specific_provider=None, use_stream=False, timeout
     """
     import g4f
     import time
-    from g4f.Provider import Qwen, FreeGpt, Liaobots, AItianhu, ChatgptAi
+    from g4f.Provider import FreeGpt, Liaobots, ChatgptAi, DeepInfra, HuggingChat
     
     # Настройка провайдеров
     provider_map = {
-        "Qwen_Max": Qwen,
-        "Qwen_Qwen_2_5_Max": Qwen,
+        "DeepInfra": DeepInfra,
+        "HuggingChat": HuggingChat,
         "FreeGpt": FreeGpt, 
         "Liaobots": Liaobots,
-        "AItianhu": AItianhu,
         "ChatgptAi": ChatgptAi
     }
     
