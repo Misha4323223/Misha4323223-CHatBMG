@@ -220,51 +220,31 @@ function areRelatedWords(word1, word2) {
  */
 async function analyzeImageWithPython(imageUrl) {
   try {
-    const { spawn } = require('child_process');
+    const { analyzeImageLocally } = require('./free-vision-analyzer');
     
-    return new Promise((resolve, reject) => {
-      const python = spawn('python3', ['./server/huggingface-vision.py', imageUrl]);
+    console.log('🔍 [FREE-ANALYZER] Начинаю локальный анализ изображения');
+    const analysis = await analyzeImageLocally(imageUrl);
+    
+    if (analysis.success) {
+      // Адаптируем результат к ожидаемому формату
+      const adaptedAnalysis = {
+        description: analysis.description || 'изображение',
+        mainSubject: analysis.image_type || 'объект',
+        accessories: analysis.objects || [],
+        style: analysis.style || 'натуральный стиль',
+        colors: analysis.colors || [],
+        fullAnalysis: analysis
+      };
       
-      let output = '';
-      let error = '';
-      
-      python.stdout.on('data', (data) => {
-        output += data.toString();
-      });
-      
-      python.stderr.on('data', (data) => {
-        error += data.toString();
-      });
-      
-      python.on('close', (code) => {
-        if (code === 0) {
-          try {
-            const analysis = JSON.parse(output);
-            
-            // Адаптируем результат к ожидаемому формату
-            const adaptedAnalysis = {
-              description: analysis.description || 'изображение',
-              mainSubject: analysis.image_type || 'объект',
-              accessories: analysis.objects || [],
-              style: analysis.style || 'нейтральное освещение',
-              colors: analysis.colors || [],
-              fullAnalysis: analysis
-            };
-            
-            resolve(adaptedAnalysis);
-          } catch (parseError) {
-            console.error('❌ [PYTHON-ANALYZER] Ошибка парсинга:', parseError);
-            resolve(getFallbackAnalysis(imageUrl));
-          }
-        } else {
-          console.error('❌ [PYTHON-ANALYZER] Ошибка выполнения:', error);
-          resolve(getFallbackAnalysis(imageUrl));
-        }
-      });
-    });
+      console.log('✅ [FREE-ANALYZER] Анализ успешно завершен');
+      return adaptedAnalysis;
+    } else {
+      console.error('❌ [FREE-ANALYZER] Ошибка анализа:', analysis.error);
+      return getFallbackAnalysis(imageUrl);
+    }
     
   } catch (error) {
-    console.error('❌ [PYTHON-ANALYZER] Ошибка запуска:', error);
+    console.error('❌ [FREE-ANALYZER] Общая ошибка:', error);
     return getFallbackAnalysis(imageUrl);
   }
 }
