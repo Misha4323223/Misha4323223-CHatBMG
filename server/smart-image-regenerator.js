@@ -288,20 +288,36 @@ function getFallbackAnalysis(imageUrl) {
  */
 async function regenerateImageWithoutObject(imageUrl, objectToRemove) {
   try {
-    console.log(`🔄 [REGENERATOR] Начинаем умную регенерацию`);
+    console.log(`🔄 [REGENERATOR] Начинаем обработку изображения`);
     console.log(`🎯 [REGENERATOR] Убираем объект: ${objectToRemove}`);
     
-    // Загружаем и анализируем изображение
-    const imageUtils = require('./image-utils');
-    const imageBuffer = await imageUtils.loadImageFromUrl(imageUrl);
-    
-    // Используем улучшенный анализатор изображений
+    // Анализируем изображение
     const analysis = await analyzeImageWithPython(imageUrl);
     
     console.log(`🎨 [REGENERATOR] Анализ изображения:`, analysis);
     console.log(`📝 [REGENERATOR] Описание: ${analysis.description}`);
     console.log(`🎯 [REGENERATOR] Главный объект: ${analysis.mainSubject}`);
     console.log(`👕 [REGENERATOR] Аксессуары: ${analysis.accessories.join(', ')}`);
+    
+    // Сначала пытаемся реальное редактирование
+    const { editImageReally } = require('./real-image-editor.cjs');
+    const realEditResult = await editImageReally(imageUrl, `убери ${objectToRemove}`, analysis);
+    
+    if (realEditResult.success) {
+      console.log('✅ [REGENERATOR] Реальное редактирование успешно');
+      
+      return {
+        success: true,
+        imageUrl: `http://localhost:5000${realEditResult.imageUrl}`,
+        message: `Удален "${objectToRemove}" с исходного изображения`,
+        originalDescription: analysis.description,
+        editType: 'real_edit',
+        removedObject: objectToRemove
+      };
+    }
+    
+    // Если реальное редактирование не удалось, используем генерацию
+    console.log('🔄 [REGENERATOR] Переключаюсь на генерацию нового изображения');
     
     // Создаем новое описание без указанного объекта
     const newDescription = createModifiedDescriptionFromAnalysis(analysis, objectToRemove);
@@ -318,6 +334,7 @@ async function regenerateImageWithoutObject(imageUrl, objectToRemove) {
         message: `Создано новое изображение без "${objectToRemove}", сохранив ${analysis.mainSubject} и стиль`,
         originalDescription: analysis.description,
         newDescription: newDescription,
+        editType: 'regeneration',
         removedObject: objectToRemove
       };
     } else {
@@ -325,11 +342,11 @@ async function regenerateImageWithoutObject(imageUrl, objectToRemove) {
     }
     
   } catch (error) {
-    console.error('❌ [REGENERATOR] Ошибка регенерации:', error);
+    console.error('❌ [REGENERATOR] Ошибка обработки:', error);
     return {
       success: false,
       error: error.message,
-      message: 'Не удалось создать новое изображение без указанного объекта'
+      message: 'Не удалось обработать изображение'
     };
   }
 }
