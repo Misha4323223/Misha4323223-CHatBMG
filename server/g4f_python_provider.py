@@ -138,6 +138,31 @@ def stream_response_generator(message, provider, timeout):
         yield f"data: {json.dumps(text_data)}\n\n"
         yield f"data: {json.dumps({'status': 'done', 'full_text': demo_response, 'provider': 'BOOOMERANGS-Error', 'model': 'error-mode', 'elapsed': time.time() - start_time})}\n\n"
 
+@app.route('/python/chat', methods=['POST'])
+def chat():
+    """
+    Основной эндпоинт для чата с AI провайдерами.
+    Ожидает JSON с полями: message, provider (необязательно).
+    """
+    try:
+        data = request.json or {}
+        message = data.get('message', '')
+        provider_name = data.get('provider', 'FreeGpt')
+        
+        if not message:
+            return jsonify({"error": "Отсутствует сообщение"}), 400
+        
+        result = get_chat_response(message, provider_name)
+        return jsonify(result)
+        
+    except Exception as e:
+        logging.error(f"Ошибка в основном чате: {str(e)}", exc_info=True)
+        return jsonify({
+            "error": str(e),
+            "response": f"Ошибка AI провайдера: {str(e)}",
+            "provider": "error"
+        }), 500
+
 @app.route('/python/chat/direct', methods=['POST'])
 def chat_direct():
     """
