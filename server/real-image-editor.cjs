@@ -78,10 +78,14 @@ async function editImageReally(imageUrl, editRequest, analysisData) {
     
     console.log('✅ [REAL-EDITOR] Редактирование завершено');
     
+    // Копируем в public для доступности браузером
+    const publicPath = path.join(process.cwd(), 'public', path.basename(outputPath));
+    await image.toFile(publicPath);
+    
     return {
       success: true,
       imagePath: outputPath,
-      imageUrl: `/uploads/${path.basename(outputPath)}`,
+      imageUrl: `/${path.basename(outputPath)}`,
       editType: editType.action,
       description: generateEditDescription(editType, editRequest)
     };
