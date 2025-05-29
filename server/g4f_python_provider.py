@@ -37,10 +37,10 @@ def get_chat_response(message, specific_provider=None, use_stream=False, timeout
     }
     
     if specific_provider is None:
-        specific_provider = "Qwen_Qwen_2_5_Max"
+        specific_provider = "Qwen_Qwen_2_72B"
     
     # Выбираем провайдер
-    selected_provider = provider_map.get(specific_provider, Qwen_Qwen_2_5_Max)
+    selected_provider = provider_map.get(specific_provider, Qwen_Qwen_2_72B)
     
     # Выбираем правильную модель для провайдера
     if specific_provider == "Qwen_Qwen_2_5_Max":
@@ -95,7 +95,7 @@ def get_chat_response(message, specific_provider=None, use_stream=False, timeout
         print(f"❌ Ошибка G4F провайдера {specific_provider}: {str(e)}")
         
         # Автоматическое переключение на другие рабочие провайдеры
-        backup_providers = ["Qwen_Qwen_2_5_Max", "Qwen_Qwen_2_5", "Qwen_Qwen_2_5M", "Qwen_Qwen_2_72B"]
+        backup_providers = ["Qwen_Qwen_2_72B", "Qwen_Qwen_2_5_Max", "Qwen_Qwen_2_5", "Qwen_Qwen_2_5M"]
         
         for backup_provider in backup_providers:
             if backup_provider != specific_provider:
