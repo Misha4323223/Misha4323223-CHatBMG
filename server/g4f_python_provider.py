@@ -20,11 +20,12 @@ def get_chat_response(message, specific_provider=None, use_stream=False, timeout
     """
     import g4f
     import time
-    # Импортируем только проверенные работающие провайдеры
-    from g4f.Provider import FreeGpt, Liaobots, HuggingChat, DeepInfra, You
+    # Импортируем проверенные работающие провайдеры
+    from g4f.Provider import FreeGpt, Liaobots, HuggingChat, DeepInfra, You, Qwen_Qwen_2_5_Max
     
     # Настройка провайдеров (только проверенные работающие)
     provider_map = {
+        "Qwen_Qwen_2_5_Max": Qwen_Qwen_2_5_Max,
         "FreeGpt": FreeGpt,
         "Liaobots": Liaobots,
         "HuggingChat": HuggingChat,
@@ -33,13 +34,15 @@ def get_chat_response(message, specific_provider=None, use_stream=False, timeout
     }
     
     if specific_provider is None:
-        specific_provider = "FreeGpt"
+        specific_provider = "Qwen_Qwen_2_5_Max"
     
     # Выбираем провайдер
     selected_provider = provider_map.get(specific_provider, FreeGpt)
     
     # Выбираем правильную модель для провайдера
-    if specific_provider == "You":
+    if specific_provider == "Qwen_Qwen_2_5_Max":
+        model = "qwen-max"
+    elif specific_provider == "You":
         model = "gpt-4o-mini"
     elif specific_provider == "HuggingChat":
         model = "llama-3.1-70b"
