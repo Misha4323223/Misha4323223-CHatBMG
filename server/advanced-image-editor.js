@@ -144,16 +144,65 @@ async function removeAreaFromImage(imageUrl, areaDescription) {
     let maskArea = { x: 0, y: 0, width: width, height: height };
     
     if (areaDescription.includes('фон') || areaDescription.includes('background')) {
-      // Удаляем фон - заменяем белым цветом
+      // Более точное удаление фона с сохранением основного объекта
+      // Применяем маску только к краям изображения
+      const borderSize = Math.min(width, height) * 0.15; // 15% от размера
+      
+      // Создаем белую рамку вокруг изображения
+      const border = sharp({
+        create: {
+          width: Math.round(borderSize),
+          height: height,
+          channels: 3,
+          background: { r: 255, g: 255, b: 255 }
+        }
+      }).png();
+      
+      const borderBuffer = await border.toBuffer();
+      
+      // Накладываем белые полосы по краям
       await image
-        .flatten({ background: '#FFFFFF' })
+        .composite([
+          // Левый край
+          { input: borderBuffer, left: 0, top: 0, blend: 'over' },
+          // Правый край  
+          { input: borderBuffer, left: width - Math.round(borderSize), top: 0, blend: 'over' },
+          // Верхний край
+          { 
+            input: await sharp({
+              create: {
+                width: width,
+                height: Math.round(borderSize),
+                channels: 3,
+                background: { r: 255, g: 255, b: 255 }
+              }
+            }).png().toBuffer(),
+            left: 0, 
+            top: 0, 
+            blend: 'over' 
+          },
+          // Нижний край
+          { 
+            input: await sharp({
+              create: {
+                width: width,
+                height: Math.round(borderSize),
+                channels: 3,
+                background: { r: 255, g: 255, b: 255 }
+              }
+            }).png().toBuffer(),
+            left: 0, 
+            top: height - Math.round(borderSize), 
+            blend: 'over' 
+          }
+        ])
         .png()
         .toFile(outputPath);
       
       return {
         success: true,
         imageUrl: `/uploads/removed-area-${timestamp}.png`,
-        message: `Фон удален и заменен белым`,
+        message: `Фон частично заменен белым, основной объект сохранен`,
         type: 'background_removal'
       };
     }
