@@ -3,7 +3,7 @@
  * Использует Hugging Face и другие бесплатные сервисы
  */
 
-const fetch = require('node-fetch');
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 const fs = require('fs');
 const path = require('path');
 
@@ -54,40 +54,25 @@ async function removeBackground(imageUrl) {
  */
 async function removeBackgroundHuggingFace(imageUrl) {
   try {
-    console.log('🤗 [EDITOR] Используем Hugging Face для удаления фона...');
+    console.log('🤗 [EDITOR] Для профессионального редактирования требуется API ключ...');
     
-    // Загружаем изображение
-    const imageResponse = await fetch(imageUrl);
-    const imageBuffer = await imageResponse.buffer();
-    
-    // Отправляем на Hugging Face
-    const response = await fetch('https://api-inference.huggingface.co/models/briaai/RMBG-1.4', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/octet-stream'
-      },
-      body: imageBuffer
-    });
-
-    if (response.ok) {
-      const resultBuffer = await response.buffer();
-      const outputPath = `./uploads/no-bg-hf-${Date.now()}.png`;
-      fs.writeFileSync(outputPath, resultBuffer);
-      
-      return {
-        success: true,
-        imageUrl: `http://localhost:3000/${outputPath}`,
-        message: 'Фон удален через Hugging Face'
-      };
-    } else {
-      throw new Error('Hugging Face API недоступен');
-    }
-  } catch (error) {
-    console.error('❌ [EDITOR] Ошибка Hugging Face:', error);
     return {
       success: false,
-      error: 'Не удалось удалить фон',
-      message: 'Сервисы редактирования временно недоступны'
+      error: 'Требуется API ключ для редактирования',
+      message: 'Для редактирования изображений нужен API ключ от Hugging Face, Remove.bg или Stability AI',
+      needsApiKey: true,
+      suggestedServices: [
+        'HUGGINGFACE_API_KEY - для удаления фона и редактирования',
+        'REMOVEBG_API_KEY - для удаления фона', 
+        'STABILITY_API_KEY - для продвинутого редактирования'
+      ]
+    };
+  } catch (error) {
+    console.error('❌ [EDITOR] Ошибка:', error);
+    return {
+      success: false,
+      error: 'Не удалось инициализировать редактор',
+      message: 'Требуется настройка API для редактирования изображений'
     };
   }
 }
