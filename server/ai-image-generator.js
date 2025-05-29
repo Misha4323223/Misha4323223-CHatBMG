@@ -51,8 +51,8 @@ async function generateImage(prompt, style = 'realistic', previousImage = null) 
       enhancedPrompt = enhancePromptForEdit(prompt, previousImage, style);
       console.log(`🔄 [DEBUG] Промпт для редактирования: "${enhancedPrompt}"`);
     } else {
-      // Это новая генерация - улучшаем промпт в зависимости от содержания
-      enhancedPrompt = enhanceRussianPrompt(prompt, style);
+      // Это новая генерация - используем AI для улучшения промпта
+      enhancedPrompt = await enhancePromptWithAI(prompt, style);
       console.log(`🎨 [DEBUG] Промпт для новой генерации: "${enhancedPrompt}"`);
     }
     
@@ -98,12 +98,69 @@ async function generateImage(prompt, style = 'realistic', previousImage = null) 
 }
 
 /**
- * Улучшает русскоязычные промпты для лучшего качества генерации
+ * Использует AI для улучшения промптов генерации изображений
+ * @param {string} prompt - Исходный промпт
+ * @param {string} style - Стиль изображения
+ * @returns {Promise<string>} Улучшенный промпт
+ */
+async function enhancePromptWithAI(prompt, style) {
+  try {
+    console.log(`🤖 [AI-ENHANCE] Улучшаем промпт с помощью AI: "${prompt}"`);
+    
+    const enhanceSystemPrompt = `Ты эксперт по созданию промптов для генерации изображений. 
+Твоя задача - взять простое описание на русском языке и превратить его в детальный английский промпт для AI-генератора изображений.
+
+Правила:
+1. Отвечай ТОЛЬКО улучшенным промптом на английском языке
+2. Добавляй детали о стиле, освещении, композиции, качестве
+3. Сохраняй основную идею пользователя
+4. Делай промпт конкретным и визуально богатым
+5. Добавляй технические характеристики для качества (4k, detailed, professional, etc.)
+
+Примеры:
+"кот" -> "beautiful fluffy cat, professional pet photography, soft natural lighting, high resolution, detailed fur texture"
+"самурай" -> "legendary samurai warrior, traditional Japanese armor, katana sword, dramatic lighting, cinematic composition, highly detailed, 4k quality"
+"техносамурай с грибами" -> "cyberpunk samurai warrior surrounded by glowing neon mushrooms, futuristic armor with bio-tech elements, dramatic neon lighting, digital art style, highly detailed, 4k quality"`;
+
+    const response = await fetch('http://127.0.0.1:5004/python/chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        message: `Улучши этот промпт для генерации изображения: "${prompt}"`,
+        provider: 'Qwen_Qwen_2_72B',
+        system_prompt: enhanceSystemPrompt,
+        timeout: 15000
+      })
+    });
+
+    if (response.ok) {
+      const aiResult = await response.json();
+      if (aiResult.success && aiResult.response) {
+        const enhancedPrompt = aiResult.response.trim();
+        console.log(`✅ [AI-ENHANCE] AI улучшил промпт: "${enhancedPrompt}"`);
+        return enhancedPrompt;
+      }
+    }
+    
+    // Если AI не сработал, используем базовое улучшение
+    console.log(`⚠️ [AI-ENHANCE] AI не сработал, используем базовое улучшение`);
+    return enhanceRussianPromptBasic(prompt, style);
+    
+  } catch (error) {
+    console.log(`❌ [AI-ENHANCE] Ошибка AI улучшения: ${error.message}`);
+    return enhanceRussianPromptBasic(prompt, style);
+  }
+}
+
+/**
+ * Базовое улучшение русскоязычных промптов (fallback)
  * @param {string} prompt - Исходный промпт
  * @param {string} style - Стиль изображения
  * @returns {string} Улучшенный промпт
  */
-function enhanceRussianPrompt(prompt, style) {
+function enhanceRussianPromptBasic(prompt, style) {
   const originalPrompt = prompt.trim();
   
   // Определяем тип изображения по ключевым словам
