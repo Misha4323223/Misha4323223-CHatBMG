@@ -59,7 +59,7 @@ const PROVIDER_SPECIALTIES = {
   },
   analytical: {
     // Аналитические вопросы, требующие глубоких рассуждений
-    providers: ["Claude", "DeepInfra_Mixtral", "GeminiPro", "Qwen_Qwen_2_5_Max"],
+    providers: ["Qwen_Qwen_2_72B", "Claude", "DeepInfra_Mixtral", "GeminiPro", "Qwen_Qwen_2_5_Max"],
     keywords: [
       "анализ", "объясни", "почему", "сравни", "логика", "философия", "размышление",
       "докажи", "опровергни", "дилемма", "аргумент", "точка зрения", "критика",
@@ -70,7 +70,7 @@ const PROVIDER_SPECIALTIES = {
   },
   factual: {
     // Фактические вопросы, требующие точной информации
-    providers: ["You", "Phind", "Qwen_Qwen_2_5_Max", "PerplexityApi"],
+    providers: ["Qwen_Qwen_2_72B", "You", "Phind", "Qwen_Qwen_2_5_Max", "PerplexityApi"],
     keywords: [
       "факт", "информация", "статистика", "данные", "история", "событие", "дата",
       "кто", "что", "где", "когда", "fact", "information", "statistics", "data",
@@ -80,7 +80,7 @@ const PROVIDER_SPECIALTIES = {
   },
   current: {
     // Вопросы о текущих событиях, новостях
-    providers: ["You", "PerplexityApi", "Qwen_Qwen_2_5_Max"],
+    providers: ["Qwen_Qwen_2_72B", "You", "PerplexityApi", "Qwen_Qwen_2_5_Max"],
     keywords: [
       "новости", "актуальный", "последний", "текущий", "событие", "сегодня", "вчера",
       "новость", "news", "recent", "current", "latest", "today", "yesterday", "update",
