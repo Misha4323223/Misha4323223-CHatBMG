@@ -308,7 +308,7 @@ async function regenerateImageWithoutObject(imageUrl, objectToRemove) {
       
       return {
         success: true,
-        imageUrl: `http://localhost:5000${realEditResult.imageUrl}`,
+        imageUrl: realEditResult.imageUrl,
         message: `Удален "${objectToRemove}" с исходного изображения`,
         originalDescription: analysis.description,
         editType: 'real_edit',
