@@ -11,6 +11,9 @@ app.use(cors()); // Разрешаем CORS для всех маршрутов
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// Статическая раздача загруженных файлов
+app.use('/uploads', express.static('uploads'));
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;

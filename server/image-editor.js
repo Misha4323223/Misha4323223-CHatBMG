@@ -54,25 +54,65 @@ async function removeBackground(imageUrl) {
  */
 async function removeBackgroundHuggingFace(imageUrl) {
   try {
-    console.log('🤗 [EDITOR] Для профессионального редактирования требуется API ключ...');
+    console.log('🤗 [EDITOR] Используем Hugging Face для удаления фона...');
     
-    return {
-      success: false,
-      error: 'Требуется API ключ для редактирования',
-      message: 'Для редактирования изображений нужен API ключ от Hugging Face, Remove.bg или Stability AI',
-      needsApiKey: true,
-      suggestedServices: [
-        'HUGGINGFACE_API_KEY - для удаления фона и редактирования',
-        'REMOVEBG_API_KEY - для удаления фона', 
-        'STABILITY_API_KEY - для продвинутого редактирования'
-      ]
-    };
+    if (!process.env.HUGGINGFACE_API_KEY) {
+      return {
+        success: false,
+        error: 'API ключ не найден',
+        message: 'Hugging Face API ключ не настроен'
+      };
+    }
+    
+    // Загружаем изображение
+    const imageResponse = await fetch(imageUrl);
+    const imageBuffer = await imageResponse.buffer();
+    
+    // Отправляем на Hugging Face
+    const response = await fetch('https://api-inference.huggingface.co/models/briaai/RMBG-1.4', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.HUGGINGFACE_API_KEY}`,
+        'Content-Type': 'application/octet-stream'
+      },
+      body: imageBuffer
+    });
+
+    if (response.ok) {
+      const resultBuffer = await response.buffer();
+      const timestamp = Date.now();
+      const outputPath = `./uploads/no-bg-hf-${timestamp}.png`;
+      fs.writeFileSync(outputPath, resultBuffer);
+      
+      return {
+        success: true,
+        imageUrl: `/uploads/no-bg-hf-${timestamp}.png`,
+        message: 'Фон успешно удален'
+      };
+    } else {
+      const errorText = await response.text();
+      console.error('❌ [EDITOR] Ошибка Hugging Face API:', errorText);
+      
+      if (response.status === 401) {
+        return {
+          success: false,
+          error: 'Неверный API ключ',
+          message: 'Проверьте правильность Hugging Face API ключа'
+        };
+      }
+      
+      return {
+        success: false,
+        error: 'Ошибка API',
+        message: 'Hugging Face API временно недоступен, попробуйте позже'
+      };
+    }
   } catch (error) {
-    console.error('❌ [EDITOR] Ошибка:', error);
+    console.error('❌ [EDITOR] Ошибка Hugging Face:', error);
     return {
       success: false,
-      error: 'Не удалось инициализировать редактор',
-      message: 'Требуется настройка API для редактирования изображений'
+      error: 'Сетевая ошибка',
+      message: 'Не удалось подключиться к сервису редактирования'
     };
   }
 }
