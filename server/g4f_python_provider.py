@@ -20,19 +20,41 @@ def get_chat_response(message, specific_provider=None, use_stream=False, timeout
     """
     import g4f
     import time
-    from g4f.Provider import FreeGpt, Liaobots, DeepInfra, HuggingChat
+    from g4f.Provider import (
+        FreeGpt, Liaobots, HuggingChat, DeepInfra, You, Gemini, 
+        Anthropic, Blackbox, ChatGpt, AiChats, Poe, DDG, 
+        DuckDuckGo, AIChatFree, ChatGptEs, Phind, Groq, 
+        OpenaiChat, GeekGpt, FastGpt
+    )
     
     # Настройка провайдеров
     provider_map = {
-        "DeepInfra": DeepInfra,
-        "HuggingChat": HuggingChat,
-        "FreeGpt": FreeGpt, 
+        "FreeGpt": FreeGpt,
         "Liaobots": Liaobots,
-
+        "HuggingChat": HuggingChat,
+        "DeepInfra": DeepInfra,
+        "You": You,
+        "Gemini": Gemini,
+        "Anthropic": Anthropic,
+        "Blackbox": Blackbox,
+        "ChatGpt": ChatGpt,
+        "AiChats": AiChats,
+        "Poe": Poe,
+        "DDG": DDG,
+        "DuckDuckGo": DuckDuckGo,
+        "AIChatFree": AIChatFree,
+        "ChatGptEs": ChatGptEs,
+        "Phind": Phind,
+        "Groq": Groq,
+        "OpenaiChat": OpenaiChat,
+        "GeekGpt": GeekGpt,
+        "FastGpt": FastGpt
     }
     
     if specific_provider is None:
-        specific_provider = "DeepInfra"
+        # Приоритетный список наиболее стабильных провайдеров
+        priority_providers = ["FreeGpt", "HuggingChat", "You", "Liaobots", "DeepInfra"]
+        specific_provider = priority_providers[0]
     
     # Выбираем провайдер
     selected_provider = provider_map.get(specific_provider, DeepInfra)
