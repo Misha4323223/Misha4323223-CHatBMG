@@ -960,8 +960,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Сначала создаем демо-ответ для запасного варианта
       const demoResponse = generateDemoResponse(finalMessage);
       
-      // Определяем, какой провайдер использовать (приоритет нашим настройкам)
-      let selectedProvider = provider || 'Qwen_Qwen_2_72B';
+      // Определяем, какой провайдер использовать (всегда начинаем с лучшего)
+      let selectedProvider = 'Qwen_Qwen_2_72B'; // Принудительно используем лучший провайдер
       let base64Image = null;
       
       // Специальная обработка для изображений - используем мультимодальные провайдеры
