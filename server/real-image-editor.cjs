@@ -80,12 +80,27 @@ async function editImageReally(imageUrl, editRequest, analysisData) {
     
     // Копируем в public для доступности браузером
     const publicPath = path.join(process.cwd(), 'public', path.basename(outputPath));
-    await image.toFile(publicPath);
+    console.log('📂 [REAL-EDITOR] Сохраняю файл:');
+    console.log('  - uploads путь:', outputPath);
+    console.log('  - public путь:', publicPath);
+    
+    await editedImage.toFile(publicPath);
+    
+    const finalUrl = `/${path.basename(outputPath)}`;
+    console.log('🔗 [REAL-EDITOR] Финальный URL:', finalUrl);
+    
+    // Проверяем что файл создан
+    const fs = require('fs');
+    const uploadExists = fs.existsSync(outputPath);
+    const publicExists = fs.existsSync(publicPath);
+    console.log('📋 [REAL-EDITOR] Статус файлов:');
+    console.log('  - uploads файл существует:', uploadExists);
+    console.log('  - public файл существует:', publicExists);
     
     return {
       success: true,
       imagePath: outputPath,
-      imageUrl: `/${path.basename(outputPath)}`,
+      imageUrl: finalUrl,
       editType: editType.action,
       description: generateEditDescription(editType, editRequest)
     };
