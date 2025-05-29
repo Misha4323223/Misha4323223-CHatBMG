@@ -1433,32 +1433,82 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
         
         const imageGenerator = require('./ai-image-generator');
         
-        // Определяем стиль для принтов футболок
-        let style = 'realistic';
-        let enhancedPrompt = message;
+        // Сначала улучшаем промпт через AI
+        console.log('🤖 [AI-IMAGE] Запрашиваем улучшение промпта у AI...');
         
-        if (message.toLowerCase().includes('футболка') || 
-            message.toLowerCase().includes('принт') ||
-            message.toLowerCase().includes('t-shirt') ||
-            message.toLowerCase().includes('streetwear')) {
-          style = 'artistic';
-          enhancedPrompt = `Дизайн принта для футболки: ${message}`;
-        }
-        
-        const result = await imageGenerator.generateImage(enhancedPrompt, style);
-        
-        if (result.success) {
-          res.write(`data: ${JSON.stringify({ 
-            text: `🎨 Изображение создано! Вот ваш дизайн:\n![Сгенерированное изображение](${result.imageUrl})`,
-            provider: 'AI_Image_Generator',
-            finished: true
-          })}\n\n`);
-        } else {
-          res.write(`data: ${JSON.stringify({ 
-            text: `😔 Извините, не удалось создать изображение. Попробуйте переформулировать запрос.`,
-            provider: 'AI_Image_Generator',
-            finished: true
-          })}\n\n`);
+        try {
+          const aiResponse = await fetch('http://127.0.0.1:5004/python/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              message: `Создай короткий английский промпт для генерации изображения: "${message}". Отвечай только промптом без лишних слов.`,
+              provider: 'Qwen_Qwen_2_72B',
+              timeout: 5000
+            })
+          });
+
+          let enhancedPrompt = message;
+          let style = 'realistic';
+
+          if (aiResponse.ok) {
+            const aiResult = await aiResponse.json();
+            if (aiResult.success && aiResult.response) {
+              enhancedPrompt = aiResult.response.trim();
+              console.log('✅ [AI-IMAGE] AI улучшил промпт:', enhancedPrompt);
+            }
+          }
+
+          // Определяем стиль
+          if (message.toLowerCase().includes('футболка') || 
+              message.toLowerCase().includes('принт') ||
+              message.toLowerCase().includes('t-shirt') ||
+              message.toLowerCase().includes('streetwear')) {
+            style = 'artistic';
+            enhancedPrompt = `t-shirt design, ${enhancedPrompt}`;
+          }
+
+          const result = await imageGenerator.generateImage(enhancedPrompt, style);
+          
+          if (result.success) {
+            res.write(`data: ${JSON.stringify({ 
+              text: `🎨 Изображение создано! Вот ваш дизайн:\n![Сгенерированное изображение](${result.imageUrl})`,
+              provider: 'AI_Image_Generator',
+              finished: true
+            })}\n\n`);
+          } else {
+            res.write(`data: ${JSON.stringify({ 
+              text: `😔 Извините, не удалось создать изображение. Попробуйте переформулировать запрос.`,
+              provider: 'AI_Image_Generator',
+              finished: true
+            })}\n\n`);
+          }
+          
+        } catch (aiError) {
+          console.log('⚠️ [AI-IMAGE] AI недоступен, используем базовый промпт');
+          let style = 'realistic';
+          let enhancedPrompt = message;
+          
+          if (message.toLowerCase().includes('футболка') || 
+              message.toLowerCase().includes('принт')) {
+            style = 'artistic';
+            enhancedPrompt = `t-shirt design: ${message}`;
+          }
+          
+          const result = await imageGenerator.generateImage(enhancedPrompt, style);
+          
+          if (result.success) {
+            res.write(`data: ${JSON.stringify({ 
+              text: `🎨 Изображение создано! Вот ваш дизайн:\n![Сгенерированное изображение](${result.imageUrl})`,
+              provider: 'AI_Image_Generator',
+              finished: true
+            })}\n\n`);
+          } else {
+            res.write(`data: ${JSON.stringify({ 
+              text: `😔 Извините, не удалось создать изображение. Попробуйте переформулировать запрос.`,
+              provider: 'AI_Image_Generator',
+              finished: true
+            })}\n\n`);
+          }
         }
         
         res.end();
