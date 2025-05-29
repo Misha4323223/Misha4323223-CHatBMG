@@ -68,12 +68,13 @@ async function removeBackgroundHuggingFace(imageUrl) {
     const imageResponse = await fetch(imageUrl);
     const imageBuffer = await imageResponse.buffer();
     
-    // Отправляем на Hugging Face
+    // Отправляем на Hugging Face (используем более популярную модель)
     const response = await fetch('https://api-inference.huggingface.co/models/briaai/RMBG-1.4', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${process.env.HUGGINGFACE_API_KEY}`,
-        'Content-Type': 'application/octet-stream'
+        'Content-Type': 'application/octet-stream',
+        'x-wait-for-model': 'true'
       },
       body: imageBuffer
     });
