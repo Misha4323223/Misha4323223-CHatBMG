@@ -962,6 +962,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Определяем, какой провайдер использовать (всегда начинаем с лучшего)
       let selectedProvider = 'Qwen_Qwen_2_72B'; // Принудительно используем лучший провайдер
+      
+      console.log(`🔧 [PROVIDER] Исходный provider из запроса: "${provider}"`);
+      console.log(`🔧 [PROVIDER] Наш selectedProvider: "${selectedProvider}"`);
+      console.log(`🔧 [PROVIDER] Принудительно переопределяем на лучший провайдер!`);
       let base64Image = null;
       
       // Специальная обработка для изображений - используем мультимодальные провайдеры
@@ -1320,7 +1324,8 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
     console.log('🔥 [DEBUG] НАЧАЛО /api/stream');
     console.log('🔥 [DEBUG] req.body ПОЛНОСТЬЮ:', JSON.stringify(req.body, null, 2));
     
-    const { message, provider = 'Qwen_Qwen_2_72B', sessionId } = req.body;
+    const { message, provider: requestedProvider, sessionId } = req.body;
+    const provider = 'Qwen_Qwen_2_72B'; // Принудительно используем лучший провайдер
     
     console.log(`🚀 Запуск потоковой генерации для: "${message}"`);
     console.log(`🔥 [DEBUG] Извлеченные параметры: message="${message}", provider="${provider}", sessionId="${sessionId}"`);
@@ -1512,15 +1517,18 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
       }
     }
     
+    console.log(`🔧 [STREAMING] Используем провайдер: ${provider}`);
+    console.log(`🔧 [STREAMING] Запрошенный провайдер: ${requestedProvider}`);
+    
     try {
       // Отправляем информацию о провайдере
-      res.write(`data: ${JSON.stringify({ provider: selectedProvider })}\n\n`);
+      res.write(`data: ${JSON.stringify({ provider: provider })}\n\n`);
       
       // Используем тот же Python G4F что работает в обычном API
       try {
         console.log('🐍 [STREAMING] Вызываем Python G4F...');
         console.log('🧠 [STREAMING] Передаем finalMessage с контекстом:', finalMessage.substring(0, 200) + '...');
-        const pythonResponse = await fetch(`http://127.0.0.1:5004/python/chat?provider=${selectedProvider}`, {
+        const pythonResponse = await fetch(`http://127.0.0.1:5004/python/chat?provider=${provider}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
