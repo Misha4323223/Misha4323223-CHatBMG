@@ -102,28 +102,69 @@ async function removeAreaFromImage(imageUrl, areaDescription) {
     const image = sharp(imageBuffer);
     const { width, height } = await image.metadata();
     
-    // Создаем простую маску для "удаления" области
-    // В реальности применяем размытие к центральной части
     const timestamp = Date.now();
     const outputPath = `./uploads/removed-area-${timestamp}.png`;
     
-    // Применяем размытие к центральной области как имитацию удаления
-    const maskSize = Math.min(width, height) * 0.3;
-    const x = Math.round((width - maskSize) / 2);
-    const y = Math.round((height - maskSize) / 2);
+    // Определяем область для удаления в зависимости от описания
+    let maskArea = { x: 0, y: 0, width: width, height: height };
     
-    // Создаем размытую версию
-    const blurredImage = await sharp(imageBuffer)
-      .blur(20)
-      .toBuffer();
+    if (areaDescription.includes('фон') || areaDescription.includes('background')) {
+      // Удаляем фон - заменяем белым цветом
+      await image
+        .flatten({ background: '#FFFFFF' })
+        .png()
+        .toFile(outputPath);
+      
+      return {
+        success: true,
+        imageUrl: `/uploads/removed-area-${timestamp}.png`,
+        message: `Фон удален и заменен белым`,
+        type: 'background_removal'
+      };
+    }
     
-    // Накладываем размытую область на оригинал
+    if (areaDescription.includes('верх') || areaDescription.includes('top')) {
+      // Удаляем верхнюю часть
+      maskArea = { x: 0, y: 0, width: width, height: Math.round(height * 0.3) };
+    } else if (areaDescription.includes('низ') || areaDescription.includes('bottom')) {
+      // Удаляем нижнюю часть
+      maskArea = { x: 0, y: Math.round(height * 0.7), width: width, height: Math.round(height * 0.3) };
+    } else if (areaDescription.includes('лев') || areaDescription.includes('left')) {
+      // Удаляем левую часть
+      maskArea = { x: 0, y: 0, width: Math.round(width * 0.3), height: height };
+    } else if (areaDescription.includes('прав') || areaDescription.includes('right')) {
+      // Удаляем правую часть
+      maskArea = { x: Math.round(width * 0.7), y: 0, width: Math.round(width * 0.3), height: height };
+    } else {
+      // Удаляем центральную область по умолчанию
+      const maskSize = Math.min(width, height) * 0.2;
+      maskArea = { 
+        x: Math.round((width - maskSize) / 2), 
+        y: Math.round((height - maskSize) / 2), 
+        width: maskSize, 
+        height: maskSize 
+      };
+    }
+    
+    // Создаем белую маску для "удаления"
+    const whiteMask = sharp({
+      create: {
+        width: Math.round(maskArea.width),
+        height: Math.round(maskArea.height),
+        channels: 3,
+        background: { r: 255, g: 255, b: 255 }
+      }
+    }).png();
+    
+    const maskBuffer = await whiteMask.toBuffer();
+    
+    // Накладываем белую маску на область
     await image
       .composite([{
-        input: blurredImage,
-        left: x,
-        top: y,
-        blend: 'overlay'
+        input: maskBuffer,
+        left: Math.round(maskArea.x),
+        top: Math.round(maskArea.y),
+        blend: 'over'
       }])
       .png()
       .toFile(outputPath);
@@ -131,7 +172,7 @@ async function removeAreaFromImage(imageUrl, areaDescription) {
     return {
       success: true,
       imageUrl: `/uploads/removed-area-${timestamp}.png`,
-      message: `Область "${areaDescription}" обработана (применено размытие)`,
+      message: `Удалена область: ${areaDescription}`,
       type: 'area_removal'
     };
     
