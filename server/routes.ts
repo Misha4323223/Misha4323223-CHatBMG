@@ -1457,6 +1457,7 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
         })}\n\n`);
         
         const imageEditor = require('./image-editor');
+        const simpleProcessor = require('./simple-image-processor');
         const conversationMemory = require('./conversation-memory');
         
         // Получаем информацию о последнем изображении из контекста
@@ -1474,25 +1475,12 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
           const editRequest = imageEditor.parseEditRequest(message);
           let result;
           
-          switch (editRequest.type) {
-            case 'remove_background':
-              console.log('🖼️ [EDITOR] Удаляем фон с изображения...');
-              console.log('🔗 [EDITOR] URL изображения:', lastImageInfo.url);
-              result = await imageEditor.removeBackground(lastImageInfo.url);
-              console.log('📊 [EDITOR] Результат удаления фона:', result);
-              break;
-            case 'replace_background':
-              result = await imageEditor.replaceBackground(lastImageInfo.url, editRequest.newBackground);
-              break;
-            case 'edit_part':
-              result = await imageEditor.editImagePart(lastImageInfo.url, editRequest.editPrompt);
-              break;
-            default:
-              result = {
-                success: false,
-                message: 'Неизвестный тип редактирования. Попробуйте: "удали фон", "замени фон на пляж" или "добавь солнце"'
-              };
-          }
+          // Используем простую систему обработки изображений
+          console.log('🖼️ [EDITOR] Используем встроенную систему обработки...');
+          console.log('🔗 [EDITOR] URL изображения:', lastImageInfo.url);
+          
+          result = await simpleProcessor.processImage(lastImageInfo.url, message);
+          console.log('📊 [EDITOR] Результат обработки:', result);
           
           if (result.success) {
             let responseText = `🖼️ ${result.message}`;
