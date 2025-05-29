@@ -51,8 +51,8 @@ async function generateImage(prompt, style = 'realistic', previousImage = null) 
       enhancedPrompt = enhancePromptForEdit(prompt, previousImage, style);
       console.log(`🔄 [DEBUG] Промпт для редактирования: "${enhancedPrompt}"`);
     } else {
-      // Это новая генерация - используем AI для улучшения промпта
-      enhancedPrompt = await enhancePromptWithAI(prompt, style);
+      // Это новая генерация - быстро улучшаем промпт
+      enhancedPrompt = enhancePromptWithAI(prompt, style);
       console.log(`🎨 [DEBUG] Промпт для новой генерации: "${enhancedPrompt}"`);
     }
     
@@ -98,62 +98,55 @@ async function generateImage(prompt, style = 'realistic', previousImage = null) 
 }
 
 /**
- * База готовых промптов для быстрого перевода
+ * Простой словарь для перевода ключевых слов
  */
-const PROMPT_TEMPLATES = {
-  'кибер кот': 'cyberpunk cat with neon implants, futuristic design, glowing eyes, high tech collar, digital art style, detailed, 4k quality',
-  'техносамурай': 'cyberpunk samurai warrior, futuristic armor, katana sword, neon lighting, dramatic composition, highly detailed, 4k quality',
-  'принт': 'high quality t-shirt design, vector style, bold graphics, clean background, print-ready',
-  'кот': 'beautiful cat, professional photography, soft lighting, detailed fur texture, high resolution',
-  'самурай': 'legendary samurai warrior, traditional armor, katana sword, dramatic lighting, cinematic composition, detailed',
-  'дракон': 'majestic dragon, fantasy art style, detailed scales, dramatic lighting, epic composition, 4k quality',
-  'робот': 'futuristic robot, mechanical details, metallic surface, sci-fi design, high tech, detailed, 4k quality'
+const SIMPLE_TRANSLATE = {
+  'кот': 'cat',
+  'кота': 'cat', 
+  'кибер': 'cyber',
+  'техно': 'techno',
+  'самурай': 'samurai',
+  'принт': 'print design',
+  'футболка': 't-shirt',
+  'дракон': 'dragon',
+  'робот': 'robot',
+  'собака': 'dog',
+  'машина': 'car',
+  'дом': 'house',
+  'природа': 'nature',
+  'город': 'city',
+  'космос': 'space',
+  'создай': 'create',
+  'нарисуй': 'draw',
+  'сделай': 'make'
 };
 
 /**
- * Быстрое улучшение промптов с использованием готовых шаблонов
+ * Быстрый перевод и улучшение промптов
  * @param {string} prompt - Исходный промпт
  * @param {string} style - Стиль изображения
- * @returns {Promise<string>} Улучшенный промпт
+ * @returns {string} Улучшенный промпт
  */
-async function enhancePromptWithAI(prompt, style) {
-  console.log(`🚀 [FAST-ENHANCE] Быстрое улучшение промпта: "${prompt}"`);
+function enhancePromptWithAI(prompt, style) {
+  console.log(`🔧 [SIMPLE] Простое улучшение: "${prompt}"`);
   
-  const lowerPrompt = prompt.toLowerCase().trim();
+  let englishPrompt = prompt.toLowerCase();
   
-  // Ищем точные совпадения в базе шаблонов
-  for (const [key, template] of Object.entries(PROMPT_TEMPLATES)) {
-    if (lowerPrompt.includes(key)) {
-      console.log(`✅ [FAST-ENHANCE] Найден шаблон для "${key}": "${template}"`);
-      
-      // Если это принт, добавляем характеристики принта
-      if (lowerPrompt.includes('принт') || lowerPrompt.includes('футболка')) {
-        return `high quality t-shirt design, vector style, bold graphics, clean background, print-ready, ${template}`;
-      }
-      
-      return template;
-    }
+  // Переводим ключевые слова
+  for (const [russian, english] of Object.entries(SIMPLE_TRANSLATE)) {
+    englishPrompt = englishPrompt.replace(new RegExp(russian, 'g'), english);
   }
   
-  // Если точного совпадения нет, пробуем комбинированные запросы
-  let combinedPrompt = '';
-  let foundTemplates = [];
+  // Добавляем базовые характеристики качества
+  englishPrompt = `high quality ${englishPrompt}, detailed, professional`;
   
-  for (const [key, template] of Object.entries(PROMPT_TEMPLATES)) {
-    if (lowerPrompt.includes(key)) {
-      foundTemplates.push(template);
-    }
+  // Если это принт, добавляем специфические характеристики
+  if (prompt.toLowerCase().includes('принт') || prompt.toLowerCase().includes('футболка')) {
+    englishPrompt = `t-shirt design, vector style, ${englishPrompt}`;
   }
   
-  if (foundTemplates.length > 0) {
-    combinedPrompt = foundTemplates.join(', ');
-    console.log(`✅ [FAST-ENHANCE] Комбинированный промпт: "${combinedPrompt}"`);
-    return combinedPrompt;
-  }
-  
-  // Если ничего не найдено, используем базовое улучшение
-  console.log(`⚠️ [FAST-ENHANCE] Шаблон не найден, используем базовое улучшение`);
-  return enhanceRussianPromptBasic(prompt, style);
+  console.log(`✅ [SIMPLE] Результат: "${englishPrompt}"`);
+  return englishPrompt;
 }
 
 /**
