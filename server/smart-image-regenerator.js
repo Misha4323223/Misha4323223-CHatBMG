@@ -223,7 +223,7 @@ async function analyzeImageWithPython(imageUrl) {
     const { spawn } = require('child_process');
     
     return new Promise((resolve, reject) => {
-      const python = spawn('python3', ['./server/llava-vision-analyzer.py', imageUrl]);
+      const python = spawn('python3', ['./server/huggingface-vision.py', imageUrl]);
       
       let output = '';
       let error = '';
@@ -245,9 +245,9 @@ async function analyzeImageWithPython(imageUrl) {
             const adaptedAnalysis = {
               description: analysis.description || 'изображение',
               mainSubject: analysis.image_type || 'объект',
-              accessories: extractAccessories(analysis.description),
-              style: analysis.lighting || 'нейтральное освещение',
-              colors: analysis.main_colors || [],
+              accessories: analysis.objects || [],
+              style: analysis.style || 'нейтральное освещение',
+              colors: analysis.colors || [],
               fullAnalysis: analysis
             };
             
