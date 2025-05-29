@@ -16,11 +16,11 @@ async function addObjectToImage(imageUrl, objectDescription) {
   try {
     console.log(`➕ [ADV-EDITOR] Добавляем объект: ${objectDescription}`);
     
-    const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
-    const imageResponse = await fetch(imageUrl);
-    const imageBuffer = await imageResponse.buffer();
+    const imageUtils = require('./image-utils');
+    const imageBuffer = await imageUtils.loadImageFromUrl(imageUrl);
+    const validatedBuffer = await imageUtils.ensurePngFormat(imageBuffer);
     
-    const image = sharp(imageBuffer);
+    const image = sharp(validatedBuffer);
     const { width, height } = await image.metadata();
     
     // Создаем простую "накладку" объекта (в данном случае - цветную фигуру)
@@ -95,13 +95,14 @@ async function removeAreaFromImage(imageUrl, areaDescription) {
   try {
     console.log(`🗑️ [ADV-EDITOR] Удаляем область: ${areaDescription}`);
     
-    const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
-    const imageResponse = await fetch(imageUrl);
-    const imageBuffer = await imageResponse.buffer();
+    // Используем утилиты для безопасной загрузки изображения
+    const imageUtils = require('./image-utils');
+    const imageBuffer = await imageUtils.loadImageFromUrl(imageUrl);
+    const validatedBuffer = await imageUtils.ensurePngFormat(imageBuffer);
     
     // Используем умную систему для поиска конкретных объектов
     const smartDetector = require('./smart-object-detector');
-    const detectionResult = await smartDetector.findObjectInImage(imageBuffer, areaDescription);
+    const detectionResult = await smartDetector.findObjectInImage(validatedBuffer, areaDescription);
     
     console.log(`🔍 [DETECTOR] Результат поиска объекта "${areaDescription}":`, detectionResult);
     
@@ -110,7 +111,7 @@ async function removeAreaFromImage(imageUrl, areaDescription) {
       console.log(`✅ [DETECTOR] Найден объект типа "${detectionResult.objectType}", удаляем точно`);
       
       const smartRemoval = await smartDetector.removeDetectedObject(
-        imageBuffer, 
+        validatedBuffer, 
         detectionResult.areas, 
         detectionResult.objectType
       );
@@ -133,7 +134,7 @@ async function removeAreaFromImage(imageUrl, areaDescription) {
     
     // Если объект не найден, используем простое удаление областей
     
-    const image = sharp(imageBuffer);
+    const image = sharp(validatedBuffer);
     const { width, height } = await image.metadata();
     
     const timestamp = Date.now();
