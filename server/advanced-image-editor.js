@@ -118,7 +118,7 @@ async function removeAreaFromImage(imageUrl, areaDescription) {
         imageUrl: regenerationResult.imageUrl,
         message: regenerationResult.message,
         type: 'smart_regeneration',
-        details: `Сохранены: ${regenerationResult.originalKeywords.join(', ')}`
+        details: regenerationResult.originalDescription || 'Обработано успешно'
       };
     }
     
