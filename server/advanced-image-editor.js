@@ -313,12 +313,90 @@ async function changeObjectColor(imageUrl, colorChange) {
 }
 
 /**
+ * Добавление текста на изображение
+ * @param {string} imageUrl - URL исходного изображения
+ * @param {string} text - Текст для добавления
+ * @returns {Promise<Object>} Результат обработки
+ */
+async function addTextToImage(imageUrl, text) {
+  try {
+    console.log(`📝 [ADV-EDITOR] Добавляем текст: ${text}`);
+    
+    const imageUtils = require('./image-utils');
+    const imageBuffer = await imageUtils.loadImageFromUrl(imageUrl);
+    const validatedBuffer = await imageUtils.ensurePngFormat(imageBuffer);
+    
+    const image = sharp(validatedBuffer);
+    const { width, height } = await image.metadata();
+    
+    // Создаем SVG с текстом
+    const fontSize = Math.max(24, Math.min(width / 15, 72));
+    const textSvg = `
+      <svg width="${width}" height="${height}">
+        <text x="50%" y="90%" 
+              text-anchor="middle" 
+              font-family="Arial, sans-serif" 
+              font-size="${fontSize}" 
+              font-weight="bold"
+              fill="white" 
+              stroke="black" 
+              stroke-width="2">
+          ${text}
+        </text>
+      </svg>
+    `;
+    
+    const textBuffer = Buffer.from(textSvg);
+    const timestamp = Date.now();
+    const outputPath = `./uploads/text-added-${timestamp}.png`;
+    
+    // Накладываем текст на изображение
+    await image
+      .composite([{
+        input: textBuffer,
+        top: 0,
+        left: 0
+      }])
+      .png()
+      .toFile(outputPath);
+    
+    return {
+      success: true,
+      imageUrl: `/uploads/text-added-${timestamp}.png`,
+      message: `Текст "${text}" добавлен на изображение`,
+      type: 'text_addition'
+    };
+    
+  } catch (error) {
+    console.error('❌ [ADV-EDITOR] Ошибка добавления текста:', error);
+    return {
+      success: false,
+      error: 'Ошибка добавления текста',
+      message: 'Не удалось добавить текст на изображение'
+    };
+  }
+}
+
+/**
  * Анализ запроса для определения типа продвинутого редактирования
  * @param {string} request - Запрос пользователя
  * @returns {Object} Тип операции и параметры
  */
 function parseAdvancedEditRequest(request) {
   const lowerRequest = request.toLowerCase();
+  
+  // Добавление текста/надписей
+  if (lowerRequest.includes('добавь надпись') || lowerRequest.includes('добавь текст') || lowerRequest.includes('напиши')) {
+    const textMatch = request.match(/добавь\s+(?:надпись|текст)\s+(.+?)(?:\.|$|,)/i) || 
+                     request.match(/напиши\s+(.+?)(?:\.|$|,)/i);
+    const textToAdd = textMatch ? textMatch[1] : 'текст';
+    
+    return {
+      type: 'add_text',
+      text: textToAdd,
+      description: `Добавление текста: ${textToAdd}`
+    };
+  }
   
   // Добавление объектов
   if (lowerRequest.includes('добавь') || lowerRequest.includes('нарисуй') || lowerRequest.includes('поставь')) {
@@ -378,6 +456,9 @@ async function processAdvancedEdit(imageUrl, editRequest) {
   console.log(`🔧 [ADV-EDITOR] Продвинутое редактирование: ${request.description}`);
   
   switch (request.type) {
+    case 'add_text':
+      return await addTextToImage(imageUrl, request.text);
+      
     case 'add_object':
       return await addObjectToImage(imageUrl, request.object);
       
@@ -399,6 +480,7 @@ async function processAdvancedEdit(imageUrl, editRequest) {
 module.exports = {
   processAdvancedEdit,
   addObjectToImage,
+  addTextToImage,
   removeAreaFromImage,
   changeObjectColor,
   parseAdvancedEditRequest
