@@ -154,7 +154,7 @@ const PROVIDER_SPECIALTIES = {
 };
 
 // Провайдеры по умолчанию
-const DEFAULT_PROVIDERS = ["Qwen_Qwen_2_5_Max", "AItianhu", "Phind", "GeminiPro", "Claude"];
+const DEFAULT_PROVIDERS = ["FreeGpt", "Liaobots", "HuggingChat", "DeepInfra", "You"];
 
 /**
  * Анализирует запрос и определяет его тематику

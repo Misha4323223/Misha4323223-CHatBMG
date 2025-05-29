@@ -52,7 +52,7 @@ async function checkPythonProvider() {
     return new Promise((resolve, reject) => {
       const testData = JSON.stringify({
         message: 'hi',
-        provider: 'Qwen_Max',
+        provider: 'FreeGpt',
         timeout: 5000
       });
       
@@ -152,7 +152,7 @@ function getDemoResponse(message = '') {
 // Обработка стандартного API запроса
 router.post('/chat', async (req, res) => {
   try {
-    const { message, provider = 'Qwen_Max', timeout = 20000, context, sessionId } = req.body;
+    const { message, provider = 'FreeGpt', timeout = 20000, context, sessionId } = req.body;
     
     if (!message) {
       return res.status(400).json({ 
@@ -250,7 +250,7 @@ router.post('/chat', async (req, res) => {
 // Потоковый API для вывода данных в режиме реального времени
 router.post('/chat/stream', async (req, res) => {
   try {
-    const { message, provider = 'Qwen_Max', timeout = 20000 } = req.body;
+    const { message, provider = 'FreeGpt', timeout = 20000 } = req.body;
     
     if (!message) {
       return res.status(400).json({ 

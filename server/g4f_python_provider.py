@@ -20,35 +20,16 @@ def get_chat_response(message, specific_provider=None, use_stream=False, timeout
     """
     import g4f
     import time
-    from g4f.Provider import (
-        FreeGpt, Liaobots, HuggingChat, DeepInfra, You, Gemini, 
-        Anthropic, Blackbox, ChatGpt, AiChats, Poe, DDG, 
-        DuckDuckGo, AIChatFree, ChatGptEs, Phind, Groq, 
-        OpenaiChat, GeekGpt, FastGpt
-    )
+    # Импортируем только проверенные работающие провайдеры
+    from g4f.Provider import FreeGpt, Liaobots, HuggingChat, DeepInfra, You
     
-    # Настройка провайдеров
+    # Настройка провайдеров (только проверенные работающие)
     provider_map = {
         "FreeGpt": FreeGpt,
         "Liaobots": Liaobots,
         "HuggingChat": HuggingChat,
         "DeepInfra": DeepInfra,
-        "You": You,
-        "Gemini": Gemini,
-        "Anthropic": Anthropic,
-        "Blackbox": Blackbox,
-        "ChatGpt": ChatGpt,
-        "AiChats": AiChats,
-        "Poe": Poe,
-        "DDG": DDG,
-        "DuckDuckGo": DuckDuckGo,
-        "AIChatFree": AIChatFree,
-        "ChatGptEs": ChatGptEs,
-        "Phind": Phind,
-        "Groq": Groq,
-        "OpenaiChat": OpenaiChat,
-        "GeekGpt": GeekGpt,
-        "FastGpt": FastGpt
+        "You": You
     }
     
     if specific_provider is None:
