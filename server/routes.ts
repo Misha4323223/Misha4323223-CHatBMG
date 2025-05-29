@@ -1458,6 +1458,7 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
         
         const imageEditor = require('./image-editor');
         const simpleProcessor = require('./simple-image-processor');
+        const advancedEditor = require('./advanced-image-editor');
         const conversationMemory = require('./conversation-memory');
         
         // Получаем информацию о последнем изображении из контекста
@@ -1475,11 +1476,20 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
           const editRequest = imageEditor.parseEditRequest(message);
           let result;
           
-          // Используем простую систему обработки изображений
-          console.log('🖼️ [EDITOR] Используем встроенную систему обработки...');
+          // Определяем тип редактирования
+          const advancedRequest = advancedEditor.parseAdvancedEditRequest(message);
+          console.log('🖼️ [EDITOR] Тип операции:', advancedRequest.type);
           console.log('🔗 [EDITOR] URL изображения:', lastImageInfo.url);
           
-          result = await simpleProcessor.processImage(lastImageInfo.url, message);
+          if (advancedRequest.type !== 'unknown') {
+            // Используем продвинутую систему для добавления/удаления деталей
+            console.log('⚡ [EDITOR] Используем продвинутое редактирование...');
+            result = await advancedEditor.processAdvancedEdit(lastImageInfo.url, message);
+          } else {
+            // Используем простую систему для фильтров и эффектов
+            console.log('🔧 [EDITOR] Используем простую обработку...');
+            result = await simpleProcessor.processImage(lastImageInfo.url, message);
+          }
           console.log('📊 [EDITOR] Результат обработки:', result);
           
           if (result.success) {
