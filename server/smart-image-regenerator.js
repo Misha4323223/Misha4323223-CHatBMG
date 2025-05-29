@@ -216,6 +216,89 @@ function areRelatedWords(word1, word2) {
 }
 
 /**
+ * Анализ изображения с помощью Python скрипта
+ */
+async function analyzeImageWithPython(imageUrl) {
+  try {
+    const { spawn } = require('child_process');
+    
+    return new Promise((resolve, reject) => {
+      const python = spawn('python3', ['./server/llava-vision-analyzer.py', imageUrl]);
+      
+      let output = '';
+      let error = '';
+      
+      python.stdout.on('data', (data) => {
+        output += data.toString();
+      });
+      
+      python.stderr.on('data', (data) => {
+        error += data.toString();
+      });
+      
+      python.on('close', (code) => {
+        if (code === 0) {
+          try {
+            const analysis = JSON.parse(output);
+            
+            // Адаптируем результат к ожидаемому формату
+            const adaptedAnalysis = {
+              description: analysis.description || 'изображение',
+              mainSubject: analysis.image_type || 'объект',
+              accessories: extractAccessories(analysis.description),
+              style: analysis.lighting || 'нейтральное освещение',
+              colors: analysis.main_colors || [],
+              fullAnalysis: analysis
+            };
+            
+            resolve(adaptedAnalysis);
+          } catch (parseError) {
+            console.error('❌ [PYTHON-ANALYZER] Ошибка парсинга:', parseError);
+            resolve(getFallbackAnalysis(imageUrl));
+          }
+        } else {
+          console.error('❌ [PYTHON-ANALYZER] Ошибка выполнения:', error);
+          resolve(getFallbackAnalysis(imageUrl));
+        }
+      });
+    });
+    
+  } catch (error) {
+    console.error('❌ [PYTHON-ANALYZER] Ошибка запуска:', error);
+    return getFallbackAnalysis(imageUrl);
+  }
+}
+
+/**
+ * Извлечение аксессуаров из описания
+ */
+function extractAccessories(description) {
+  const accessories = [];
+  const lowerDesc = description.toLowerCase();
+  
+  if (lowerDesc.includes('сапог')) accessories.push('сапоги');
+  if (lowerDesc.includes('шляп')) accessories.push('шляпа');
+  if (lowerDesc.includes('очк')) accessories.push('очки');
+  if (lowerDesc.includes('одежд')) accessories.push('одежда');
+  
+  return accessories;
+}
+
+/**
+ * Fallback анализ при ошибках
+ */
+function getFallbackAnalysis(imageUrl) {
+  const keywords = extractKeywordsFromUrl(imageUrl);
+  return {
+    description: keywords.join(' ') || 'изображение',
+    mainSubject: keywords.length > 0 ? keywords[0] : 'объект',
+    accessories: keywords.filter(k => ['сапоги', 'шляпа', 'очки'].includes(k.toLowerCase())),
+    style: 'профессиональное качество',
+    colors: ['смешанные тона']
+  };
+}
+
+/**
  * Основная функция умной регенерации
  */
 async function regenerateImageWithoutObject(imageUrl, objectToRemove) {
@@ -227,9 +310,8 @@ async function regenerateImageWithoutObject(imageUrl, objectToRemove) {
     const imageUtils = require('./image-utils');
     const imageBuffer = await imageUtils.loadImageFromUrl(imageUrl);
     
-    // Используем локальный анализатор изображений
-    const localVision = require('./local-vision-analyzer');
-    const analysis = await localVision.createImageDescription(imageBuffer);
+    // Используем улучшенный анализатор изображений
+    const analysis = await analyzeImageWithPython(imageUrl);
     
     console.log(`🎨 [REGENERATOR] Анализ изображения:`, analysis);
     console.log(`📝 [REGENERATOR] Описание: ${analysis.description}`);
