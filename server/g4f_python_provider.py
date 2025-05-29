@@ -63,6 +63,12 @@ def get_chat_response(message, specific_provider=None, use_stream=False, timeout
     try:
         start_time = time.time()
         
+        # Увеличиваем таймаут для больших моделей
+        if specific_provider == "Qwen_Qwen_2_72B":
+            timeout = max(timeout, 45)  # Минимум 45 секунд для 72B модели
+        elif specific_provider in ["Qwen_Qwen_2_5_Max", "Qwen_Qwen_2_5"]:
+            timeout = max(timeout, 30)  # 30 секунд для других больших моделей
+        
         # Создаем запрос к G4F с правильной моделью
         response = g4f.ChatCompletion.create(
             model=model,

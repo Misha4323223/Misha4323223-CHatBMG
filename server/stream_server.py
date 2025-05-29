@@ -159,7 +159,7 @@ def stream_chat():
         data = request.get_json()
         message = data.get('message', '')
         provider_name = data.get('provider', 'Qwen_Qwen_2_72B')
-        timeout = data.get('timeout', 20000) / 1000  # Переводим миллисекунды в секунды
+        timeout = data.get('timeout', 50000) / 1000  # Переводим миллисекунды в секунды (увеличено до 50 сек)
         
         if not message:
             return Response('Не указано сообщение', status=400)
