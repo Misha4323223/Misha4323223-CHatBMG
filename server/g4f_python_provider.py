@@ -37,7 +37,7 @@ def get_chat_response(message, specific_provider=None, use_stream=False, timeout
         specific_provider = "Qwen_Qwen_2_5_Max"
     
     # Выбираем провайдер
-    selected_provider = provider_map.get(specific_provider, FreeGpt)
+    selected_provider = provider_map.get(specific_provider, Qwen_Qwen_2_5_Max)
     
     # Выбираем правильную модель для провайдера
     if specific_provider == "Qwen_Qwen_2_5_Max":
