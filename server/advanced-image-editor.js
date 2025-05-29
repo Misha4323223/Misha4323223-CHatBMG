@@ -130,6 +130,22 @@ async function removeAreaFromImage(imageUrl, areaDescription) {
           confidence: detectionResult.confidence
         };
       }
+    } else {
+      // Объект не найден локально - используем умную регенерацию
+      console.log(`🔄 [DETECTOR] Объект не найден локально, пробуем умную регенерацию`);
+      
+      const smartRegenerator = require('./smart-image-regenerator');
+      const regenerationResult = await smartRegenerator.regenerateImageWithoutObject(imageUrl, areaDescription);
+      
+      if (regenerationResult.success) {
+        return {
+          success: true,
+          imageUrl: regenerationResult.imageUrl,
+          message: regenerationResult.message,
+          type: 'smart_regeneration',
+          details: `Сохранены: ${regenerationResult.originalKeywords.join(', ')}`
+        };
+      }
     }
     
     // Если объект не найден, используем простое удаление областей
