@@ -220,19 +220,24 @@ function areRelatedWords(word1, word2) {
  */
 async function analyzeImageWithPython(imageUrl) {
   try {
-    const { analyzeImageLocally } = require('./free-vision-analyzer.cjs');
+    const { analyzeImageAdvanced } = require('./advanced-free-vision.cjs');
     
-    console.log('🔍 [FREE-ANALYZER] Начинаю локальный анализ изображения');
-    const analysis = await analyzeImageLocally(imageUrl);
+    console.log('🔍 [ADVANCED-ANALYZER] Начинаю продвинутый анализ изображения');
+    const analysis = await analyzeImageAdvanced(imageUrl);
     
     if (analysis.success) {
       // Адаптируем результат к ожидаемому формату
       const adaptedAnalysis = {
         description: analysis.description || 'изображение',
         mainSubject: analysis.image_type || 'объект',
-        accessories: analysis.objects || [],
+        accessories: [...(analysis.accessories || []), ...(analysis.clothing || []), ...(analysis.objects || [])],
         style: analysis.style || 'натуральный стиль',
         colors: analysis.colors || [],
+        people: analysis.people || [],
+        animals: analysis.animals || [],
+        lighting: analysis.lighting || 'естественное',
+        details: analysis.details || {},
+        editingContext: analysis.editingContext || {},
         fullAnalysis: analysis
       };
       
