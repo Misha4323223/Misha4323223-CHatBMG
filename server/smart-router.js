@@ -89,7 +89,7 @@ const PROVIDER_SPECIALTIES = {
   },
   mathematical: {
     // Математические вопросы, вычисления
-    providers: ["Claude", "DeepInfra_Mixtral", "Qwen_Qwen_2_5_Max"],
+    providers: ["Qwen_Qwen_2_72B", "Claude", "DeepInfra_Mixtral", "Qwen_Qwen_2_5_Max"],
     keywords: [
       "математика", "вычисления", "расчет", "формула", "уравнение", "интеграл", 
       "производная", "тригонометрия", "геометрия", "алгебра", "math", "calculation",
@@ -112,7 +112,7 @@ const PROVIDER_SPECIALTIES = {
   },
   shopping: {
     // Поиск магазинов, покупки, торговые центры, услуги
-    providers: ["You", "PerplexityApi", "Qwen_Qwen_2_5_Max", "Phind"],
+    providers: ["Qwen_Qwen_2_72B", "You", "PerplexityApi", "Qwen_Qwen_2_5_Max", "Phind"],
     keywords: [
       "магазин", "магазины", "купить", "где купить", "торговый центр", "тц", "мол", "супермаркет",
       "shop", "store", "shopping", "buy", "purchase", "mall", "supermarket", "market",
@@ -124,7 +124,7 @@ const PROVIDER_SPECIALTIES = {
   },
   business: {
     // Бизнес-вопросы, экономика, финансы
-    providers: ["Claude", "GeminiPro", "Qwen_Qwen_2_5_Max"],
+    providers: ["Qwen_Qwen_2_72B", "Claude", "GeminiPro", "Qwen_Qwen_2_5_Max"],
     keywords: [
       "бизнес", "экономика", "финансы", "маркетинг", "стартап", "инвестиции", "продажи",
       "business", "economy", "finance", "marketing", "startup", "investment", "sales",
@@ -134,7 +134,7 @@ const PROVIDER_SPECIALTIES = {
   },
   translation: {
     // Перевод текста, языковые вопросы
-    providers: ["Claude", "Qwen_Qwen_2_5_Max", "GeminiPro"],
+    providers: ["Qwen_Qwen_2_72B", "Claude", "Qwen_Qwen_2_5_Max", "GeminiPro"],
     keywords: [
       "перевод", "переведи", "перевести", "язык", "translation", "translate", "language",
       "с русского на", "с английского на", "from english to", "from russian to",
@@ -555,14 +555,14 @@ async function getResponseFromProviders(message, analysis, options = {}) {
     }
   }
   
-  // Если все указанные провайдеры отказали, пробуем Qwen как самый надежный
-  if (!providers.includes("Qwen_Qwen_2_5_Max")) {
+  // Если все указанные провайдеры отказали, пробуем Qwen_Qwen_2_72B как самый надежный
+  if (!providers.includes("Qwen_Qwen_2_72B")) {
     try {
-      console.log(`Пробуем резервный провайдер Qwen_Qwen_2_5_Max...`);
+      console.log(`Пробуем резервный провайдер Qwen_Qwen_2_72B...`);
       
       const pythonResponse = await pythonProviderRoutes.callPythonAI(
         message, 
-        "Qwen_Qwen_2_5_Max", 
+        "Qwen_Qwen_2_72B", 
         systemPrompt
       );
       
@@ -570,9 +570,9 @@ async function getResponseFromProviders(message, analysis, options = {}) {
         return {
           success: true,
           response: pythonResponse,
-          provider: "Qwen_Qwen_2_5_Max (fallback)",
+          provider: "Qwen_Qwen_2_72B (fallback)",
           category,
-          bestProvider: "Qwen_Qwen_2_5_Max"
+          bestProvider: "Qwen_Qwen_2_72B"
         };
       }
     } catch (qwenError) {
