@@ -98,60 +98,62 @@ async function generateImage(prompt, style = 'realistic', previousImage = null) 
 }
 
 /**
- * Использует AI для улучшения промптов генерации изображений
+ * База готовых промптов для быстрого перевода
+ */
+const PROMPT_TEMPLATES = {
+  'кибер кот': 'cyberpunk cat with neon implants, futuristic design, glowing eyes, high tech collar, digital art style, detailed, 4k quality',
+  'техносамурай': 'cyberpunk samurai warrior, futuristic armor, katana sword, neon lighting, dramatic composition, highly detailed, 4k quality',
+  'принт': 'high quality t-shirt design, vector style, bold graphics, clean background, print-ready',
+  'кот': 'beautiful cat, professional photography, soft lighting, detailed fur texture, high resolution',
+  'самурай': 'legendary samurai warrior, traditional armor, katana sword, dramatic lighting, cinematic composition, detailed',
+  'дракон': 'majestic dragon, fantasy art style, detailed scales, dramatic lighting, epic composition, 4k quality',
+  'робот': 'futuristic robot, mechanical details, metallic surface, sci-fi design, high tech, detailed, 4k quality'
+};
+
+/**
+ * Быстрое улучшение промптов с использованием готовых шаблонов
  * @param {string} prompt - Исходный промпт
  * @param {string} style - Стиль изображения
  * @returns {Promise<string>} Улучшенный промпт
  */
 async function enhancePromptWithAI(prompt, style) {
-  try {
-    console.log(`🤖 [AI-ENHANCE] Улучшаем промпт с помощью AI: "${prompt}"`);
-    
-    const enhanceSystemPrompt = `Ты эксперт по созданию промптов для генерации изображений. 
-Твоя задача - взять простое описание на русском языке и превратить его в детальный английский промпт для AI-генератора изображений.
-
-Правила:
-1. Отвечай ТОЛЬКО улучшенным промптом на английском языке
-2. Добавляй детали о стиле, освещении, композиции, качестве
-3. Сохраняй основную идею пользователя
-4. Делай промпт конкретным и визуально богатым
-5. Добавляй технические характеристики для качества (4k, detailed, professional, etc.)
-
-Примеры:
-"кот" -> "beautiful fluffy cat, professional pet photography, soft natural lighting, high resolution, detailed fur texture"
-"самурай" -> "legendary samurai warrior, traditional Japanese armor, katana sword, dramatic lighting, cinematic composition, highly detailed, 4k quality"
-"техносамурай с грибами" -> "cyberpunk samurai warrior surrounded by glowing neon mushrooms, futuristic armor with bio-tech elements, dramatic neon lighting, digital art style, highly detailed, 4k quality"`;
-
-    const response = await fetch('http://127.0.0.1:5004/python/chat', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        message: `Улучши этот промпт для генерации изображения: "${prompt}"`,
-        provider: 'Qwen_Qwen_2_72B',
-        system_prompt: enhanceSystemPrompt,
-        timeout: 15000
-      })
-    });
-
-    if (response.ok) {
-      const aiResult = await response.json();
-      if (aiResult.success && aiResult.response) {
-        const enhancedPrompt = aiResult.response.trim();
-        console.log(`✅ [AI-ENHANCE] AI улучшил промпт: "${enhancedPrompt}"`);
-        return enhancedPrompt;
+  console.log(`🚀 [FAST-ENHANCE] Быстрое улучшение промпта: "${prompt}"`);
+  
+  const lowerPrompt = prompt.toLowerCase().trim();
+  
+  // Ищем точные совпадения в базе шаблонов
+  for (const [key, template] of Object.entries(PROMPT_TEMPLATES)) {
+    if (lowerPrompt.includes(key)) {
+      console.log(`✅ [FAST-ENHANCE] Найден шаблон для "${key}": "${template}"`);
+      
+      // Если это принт, добавляем характеристики принта
+      if (lowerPrompt.includes('принт') || lowerPrompt.includes('футболка')) {
+        return `high quality t-shirt design, vector style, bold graphics, clean background, print-ready, ${template}`;
       }
+      
+      return template;
     }
-    
-    // Если AI не сработал, используем базовое улучшение
-    console.log(`⚠️ [AI-ENHANCE] AI не сработал, используем базовое улучшение`);
-    return enhanceRussianPromptBasic(prompt, style);
-    
-  } catch (error) {
-    console.log(`❌ [AI-ENHANCE] Ошибка AI улучшения: ${error.message}`);
-    return enhanceRussianPromptBasic(prompt, style);
   }
+  
+  // Если точного совпадения нет, пробуем комбинированные запросы
+  let combinedPrompt = '';
+  let foundTemplates = [];
+  
+  for (const [key, template] of Object.entries(PROMPT_TEMPLATES)) {
+    if (lowerPrompt.includes(key)) {
+      foundTemplates.push(template);
+    }
+  }
+  
+  if (foundTemplates.length > 0) {
+    combinedPrompt = foundTemplates.join(', ');
+    console.log(`✅ [FAST-ENHANCE] Комбинированный промпт: "${combinedPrompt}"`);
+    return combinedPrompt;
+  }
+  
+  // Если ничего не найдено, используем базовое улучшение
+  console.log(`⚠️ [FAST-ENHANCE] Шаблон не найден, используем базовое улучшение`);
+  return enhanceRussianPromptBasic(prompt, style);
 }
 
 /**
