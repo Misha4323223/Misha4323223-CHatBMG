@@ -1476,7 +1476,10 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
           
           switch (editRequest.type) {
             case 'remove_background':
+              console.log('🖼️ [EDITOR] Удаляем фон с изображения...');
+              console.log('🔗 [EDITOR] URL изображения:', lastImageInfo.url);
               result = await imageEditor.removeBackground(lastImageInfo.url);
+              console.log('📊 [EDITOR] Результат удаления фона:', result);
               break;
             case 'replace_background':
               result = await imageEditor.replaceBackground(lastImageInfo.url, editRequest.newBackground);
