@@ -1465,6 +1465,10 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
         const conversation = conversationMemory.getConversation(`session_${sessionId}`);
         const lastImageInfo = conversation.getLastImageInfo();
         
+        console.log('🔍 [DEBUG] SessionId:', sessionId);
+        console.log('🔍 [DEBUG] Conversation messages count:', conversation.messages.length);
+        console.log('🔍 [DEBUG] Last image info:', lastImageInfo);
+        
         if (!lastImageInfo) {
           res.write(`data: ${JSON.stringify({ 
             text: '😔 Не найдено изображение для редактирования. Сначала создайте изображение, а затем попросите его отредактировать.',
