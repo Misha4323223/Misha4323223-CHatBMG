@@ -86,7 +86,7 @@ async function editImageReally(imageUrl, editRequest, analysisData) {
     
     await editedImage.toFile(publicPath);
     
-    const finalUrl = `/${path.basename(outputPath)}`;
+    const finalUrl = `/public/${path.basename(outputPath)}`;
     console.log('🔗 [REAL-EDITOR] Финальный URL:', finalUrl);
     
     // Проверяем что файл создан
