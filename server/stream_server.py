@@ -21,8 +21,8 @@ def get_provider(name):
         return None
 
 providers = {}
-# Добавляем Llama 3 в список провайдеров
-for name in ["FreeGpt", "Liaobots", "HuggingChat", "DeepInfra", "You", "Gemini", "Phind", "Anthropic", "Blackbox", "ChatGpt"]:
+# Добавляем провайдеры в приоритетном порядке - Qwen_Qwen_2_5_Max первым
+for name in ["Qwen_Qwen_2_5_Max", "FreeGpt", "Liaobots", "HuggingChat", "DeepInfra", "You", "Gemini", "Phind", "Anthropic", "Blackbox", "ChatGpt"]:
     provider = get_provider(name)
     if provider:
         providers[name] = provider

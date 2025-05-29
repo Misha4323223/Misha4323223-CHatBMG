@@ -158,7 +158,7 @@ def chat():
     try:
         data = request.json or {}
         message = data.get('message', '')
-        provider_name = data.get('provider', 'FreeGpt')
+        provider_name = data.get('provider', 'Qwen_Qwen_2_5_Max')
         
         if not message:
             return jsonify({"error": "Отсутствует сообщение"}), 400
