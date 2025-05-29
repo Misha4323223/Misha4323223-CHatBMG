@@ -93,7 +93,55 @@ def get_chat_response(message, specific_provider=None, use_stream=False, timeout
             
     except Exception as e:
         print(f"❌ Ошибка G4F провайдера {specific_provider}: {str(e)}")
-        # Fallback на демо-ответ только при ошибке
+        
+        # Автоматическое переключение на другие рабочие провайдеры
+        backup_providers = ["Qwen_Qwen_2_5_Max", "Qwen_Qwen_2_5", "Qwen_Qwen_2_5M", "Qwen_Qwen_2_72B"]
+        
+        for backup_provider in backup_providers:
+            if backup_provider != specific_provider:
+                try:
+                    print(f"🔄 Пробуем резервный провайдер: {backup_provider}")
+                    backup_selected = provider_map.get(backup_provider)
+                    
+                    if backup_provider == "Qwen_Qwen_2_5_Max":
+                        backup_model = "qwen-max"
+                    elif backup_provider == "Qwen_Qwen_2_72B":
+                        backup_model = "qwen-2.5-72b"
+                    else:
+                        backup_model = "qwen-2.5"
+                    
+                    backup_response = g4f.ChatCompletion.create(
+                        model=backup_model,
+                        messages=[{"role": "user", "content": message}],
+                        provider=backup_selected,
+                        stream=use_stream,
+                        timeout=timeout
+                    )
+                    
+                    print(f"✅ Резервный провайдер {backup_provider} сработал!")
+                    
+                    if use_stream:
+                        return {
+                            "streaming": True,
+                            "provider": backup_provider,
+                            "model": backup_model,
+                            "response_stream": backup_response,
+                            "elapsed": time.time() - start_time
+                        }
+                    else:
+                        return {
+                            "success": True,
+                            "response": str(backup_response),
+                            "provider": backup_provider,
+                            "model": backup_model,
+                            "elapsed": time.time() - start_time
+                        }
+                        
+                except Exception as backup_error:
+                    print(f"❌ Резервный провайдер {backup_provider}: {str(backup_error)}")
+                    continue
+        
+        # Если все провайдеры не сработали
         return {
             "success": True,
             "response": f"Извините, возникла проблема с провайдером {specific_provider}. Попробуйте еще раз.",
