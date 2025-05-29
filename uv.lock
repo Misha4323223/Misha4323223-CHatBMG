@@ -373,7 +373,7 @@ wheels = [
 
 [[package]]
 name = "g4f"
-version = "0.5.2.9"
+version = "0.5.3.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
@@ -382,9 +382,9 @@ dependencies = [
     { name = "pycryptodome" },
     { name = "requests" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/6f/5c/9db8491fc4176a5f03b377263deb24705e91c98ba19b41a3544f87b7224c/g4f-0.5.2.9.tar.gz", hash = "sha256:3c0477d5da2d2c4f095b409f14f425c0438ff93d2f980522d9e34a52884aa979", size = 388124 }
+sdist = { url = "https://files.pythonhosted.org/packages/73/98/4b499e2b45f82cd288383fa056ec340e0d8de29ccfcd4c5f1ede4fa367ba/g4f-0.5.3.1.tar.gz", hash = "sha256:d02482b289e4d92fa80167d6bcdc3b9983f6507edb4885f14c00c196f23dfef4", size = 387594 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/da/62/ff7382df58036a7d78add83c1eb3656fd0265443070af9c3ea51e904a109/g4f-0.5.2.9-py3-none-any.whl", hash = "sha256:dbb187a62068b62d2ffd32578e684834a34f960bfba5249f9c22461ebb71f3ed", size = 505378 },
+    { url = "https://files.pythonhosted.org/packages/7a/e4/cefa6c2f707c6ab9448ec21f496646152a2412b5fba8a3fd5effd0efde4b/g4f-0.5.3.1-py3-none-any.whl", hash = "sha256:b4ae39fbb266c2cae89be9cdc7e594919144bd2aea9cad8d15cde9535113db82", size = 504857 },
 ]
 
 [[package]]
@@ -870,7 +870,7 @@ requires-dist = [
     { name = "duckduckgo-search", specifier = ">=8.0.2" },
     { name = "flask", specifier = ">=3.1.1" },
     { name = "flask-cors", specifier = ">=6.0.0" },
-    { name = "g4f", specifier = "==0.5.2.9" },
+    { name = "g4f", specifier = "==0.5.3.1" },
     { name = "lxml", specifier = ">=5.4.0" },
     { name = "numpy", specifier = ">=2.2.6" },
     { name = "pillow", specifier = ">=11.2.1" },

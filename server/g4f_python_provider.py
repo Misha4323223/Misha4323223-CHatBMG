@@ -33,19 +33,27 @@ def get_chat_response(message, specific_provider=None, use_stream=False, timeout
     }
     
     if specific_provider is None:
-        # Приоритетный список наиболее стабильных провайдеров
-        priority_providers = ["FreeGpt", "HuggingChat", "You", "Liaobots", "DeepInfra"]
-        specific_provider = priority_providers[0]
+        specific_provider = "FreeGpt"
     
     # Выбираем провайдер
-    selected_provider = provider_map.get(specific_provider, DeepInfra)
+    selected_provider = provider_map.get(specific_provider, FreeGpt)
+    
+    # Выбираем правильную модель для провайдера
+    if specific_provider == "You":
+        model = "gpt-4o-mini"
+    elif specific_provider == "HuggingChat":
+        model = "llama-3.1-70b"
+    elif specific_provider == "Blackbox":
+        model = "blackbox"
+    else:
+        model = "gpt-4o-mini"
     
     try:
         start_time = time.time()
         
-        # Создаем запрос к G4F
+        # Создаем запрос к G4F с правильной моделью
         response = g4f.ChatCompletion.create(
-            model="gpt-3.5-turbo",  # Модель для совместимости
+            model=model,
             messages=[{"role": "user", "content": message}],
             provider=selected_provider,
             stream=use_stream,
@@ -58,7 +66,7 @@ def get_chat_response(message, specific_provider=None, use_stream=False, timeout
             return {
                 "streaming": True,
                 "provider": specific_provider,
-                "model": "qwen-max",
+                "model": model,
                 "response_stream": response,
                 "elapsed": elapsed
             }
@@ -67,7 +75,7 @@ def get_chat_response(message, specific_provider=None, use_stream=False, timeout
                 "success": True,
                 "response": str(response),
                 "provider": specific_provider,
-                "model": "qwen-max",
+                "model": model,
                 "elapsed": elapsed
             }
             
