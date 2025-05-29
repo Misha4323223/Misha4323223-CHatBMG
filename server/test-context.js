@@ -86,7 +86,7 @@ async function sendMessage(message, sessionId) {
   return new Promise((resolve, reject) => {
     const postData = JSON.stringify({
       message: message,
-      provider: 'Qwen_Qwen_2_5_Max',
+      provider: 'FreeGpt',
       sessionId: sessionId
     });
     

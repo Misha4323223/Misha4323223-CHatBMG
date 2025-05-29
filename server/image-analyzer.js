@@ -65,7 +65,7 @@ async function analyzeWithAIProvider(imageBuffer, filename) {
       },
       body: JSON.stringify({
         message: `Проанализируй это изображение и опиши что на нем изображено. Файл называется ${filename}. Будь максимально подробным в описании объектов, людей, животных, цветов и деталей.`,
-        provider: 'Qwen_Qwen_2_5_Max'
+        provider: 'FreeGpt'
       }),
       timeout: 20000
     });

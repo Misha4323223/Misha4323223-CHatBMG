@@ -223,9 +223,9 @@ async function tryProviderWithRetries(provider, messages, options) {
       handler = handleDeepSpeekProvider;
       break;
     default:
-      // По умолчанию используем Qwen как самый стабильный провайдер
-      console.warn(`Провайдер ${provider} не найден, используем Qwen`);
-      handler = handleQwenProvider;
+      // По умолчанию используем FreeGpt как самый стабильный провайдер
+      console.warn(`Провайдер ${provider} не найден, используем FreeGpt`);
+      handler = handleLiaobotsProvider;
   }
 
   // Попытка получить ответ с ретраями
