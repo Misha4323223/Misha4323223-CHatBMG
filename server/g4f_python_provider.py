@@ -21,11 +21,14 @@ def get_chat_response(message, specific_provider=None, use_stream=False, timeout
     import g4f
     import time
     # Импортируем проверенные работающие провайдеры
-    from g4f.Provider import FreeGpt, Liaobots, HuggingChat, DeepInfra, You, Qwen_Qwen_2_5_Max
+    from g4f.Provider import FreeGpt, Liaobots, HuggingChat, DeepInfra, You, Qwen_Qwen_2_5_Max, Qwen_Qwen_2_5, Qwen_Qwen_2_5M, Qwen_Qwen_2_72B
     
     # Настройка провайдеров (только проверенные работающие)
     provider_map = {
         "Qwen_Qwen_2_5_Max": Qwen_Qwen_2_5_Max,
+        "Qwen_Qwen_2_5": Qwen_Qwen_2_5,
+        "Qwen_Qwen_2_5M": Qwen_Qwen_2_5M,
+        "Qwen_Qwen_2_72B": Qwen_Qwen_2_72B,
         "FreeGpt": FreeGpt,
         "Liaobots": Liaobots,
         "HuggingChat": HuggingChat,
@@ -42,6 +45,12 @@ def get_chat_response(message, specific_provider=None, use_stream=False, timeout
     # Выбираем правильную модель для провайдера
     if specific_provider == "Qwen_Qwen_2_5_Max":
         model = "qwen-max"
+    elif specific_provider == "Qwen_Qwen_2_5":
+        model = "qwen-2.5"
+    elif specific_provider == "Qwen_Qwen_2_5M":
+        model = "qwen-2.5"
+    elif specific_provider == "Qwen_Qwen_2_72B":
+        model = "qwen-2.5-72b"
     elif specific_provider == "You":
         model = "gpt-4o-mini"
     elif specific_provider == "HuggingChat":
