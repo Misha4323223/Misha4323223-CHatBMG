@@ -99,6 +99,40 @@ async function removeAreaFromImage(imageUrl, areaDescription) {
     const imageResponse = await fetch(imageUrl);
     const imageBuffer = await imageResponse.buffer();
     
+    // Используем умную систему для поиска конкретных объектов
+    const smartDetector = require('./smart-object-detector');
+    const detectionResult = await smartDetector.findObjectInImage(imageBuffer, areaDescription);
+    
+    console.log(`🔍 [DETECTOR] Результат поиска объекта "${areaDescription}":`, detectionResult);
+    
+    if (detectionResult.found && detectionResult.areas.length > 0) {
+      // Найден конкретный объект - используем умное удаление
+      console.log(`✅ [DETECTOR] Найден объект типа "${detectionResult.objectType}", удаляем точно`);
+      
+      const smartRemoval = await smartDetector.removeDetectedObject(
+        imageBuffer, 
+        detectionResult.areas, 
+        detectionResult.objectType
+      );
+      
+      if (smartRemoval.success) {
+        const timestamp = Date.now();
+        const outputPath = `./uploads/smart-removed-${timestamp}.png`;
+        
+        await sharp(smartRemoval.processedImage).png().toFile(outputPath);
+        
+        return {
+          success: true,
+          imageUrl: `/uploads/smart-removed-${timestamp}.png`,
+          message: `Объект "${areaDescription}" найден и удален (${smartRemoval.removedAreas} областей)`,
+          type: 'smart_object_removal',
+          confidence: detectionResult.confidence
+        };
+      }
+    }
+    
+    // Если объект не найден, используем простое удаление областей
+    
     const image = sharp(imageBuffer);
     const { width, height } = await image.metadata();
     
