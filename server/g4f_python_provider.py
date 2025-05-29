@@ -20,7 +20,7 @@ def get_chat_response(message, specific_provider=None, use_stream=False, timeout
     """
     import g4f
     import time
-    from g4f.Provider import FreeGpt, Liaobots, ChatgptAi, DeepInfra, HuggingChat
+    from g4f.Provider import FreeGpt, Liaobots, DeepInfra, HuggingChat
     
     # Настройка провайдеров
     provider_map = {
@@ -28,14 +28,14 @@ def get_chat_response(message, specific_provider=None, use_stream=False, timeout
         "HuggingChat": HuggingChat,
         "FreeGpt": FreeGpt, 
         "Liaobots": Liaobots,
-        "ChatgptAi": ChatgptAi
+
     }
     
     if specific_provider is None:
-        specific_provider = "Qwen_Max"
+        specific_provider = "DeepInfra"
     
     # Выбираем провайдер
-    selected_provider = provider_map.get(specific_provider, Qwen)
+    selected_provider = provider_map.get(specific_provider, DeepInfra)
     
     try:
         start_time = time.time()
@@ -198,7 +198,7 @@ def test():
         data = request.json or {}
         message = data.get('message', 'test')
 
-        result = get_chat_response(message, specific_provider="Qwen_Max")
+        result = get_chat_response(message, specific_provider="DeepInfra")
         return jsonify(result)
     except Exception as e:
         logging.error(f"Ошибка при тестировании: {str(e)}", exc_info=True)
