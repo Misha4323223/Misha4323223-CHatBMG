@@ -25,10 +25,10 @@ def get_chat_response(message, specific_provider=None, use_stream=False, timeout
     
     # Настройка провайдеров (только проверенные работающие)
     provider_map = {
+        "Qwen_Qwen_2_72B": Qwen_Qwen_2_72B,
         "Qwen_Qwen_2_5_Max": Qwen_Qwen_2_5_Max,
         "Qwen_Qwen_2_5": Qwen_Qwen_2_5,
         "Qwen_Qwen_2_5M": Qwen_Qwen_2_5M,
-        "Qwen_Qwen_2_72B": Qwen_Qwen_2_72B,
         "FreeGpt": FreeGpt,
         "Liaobots": Liaobots,
         "HuggingChat": HuggingChat,
