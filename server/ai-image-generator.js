@@ -51,11 +51,8 @@ async function generateImage(prompt, style = 'realistic', previousImage = null) 
       enhancedPrompt = enhancePromptForEdit(prompt, previousImage, style);
       console.log(`🔄 [DEBUG] Промпт для редактирования: "${enhancedPrompt}"`);
     } else {
-      // Это новая генерация
-      enhancedPrompt = prompt;
-      if (style === 'artistic' || prompt.toLowerCase().includes('футболка') || prompt.toLowerCase().includes('принт')) {
-        enhancedPrompt = `High quality t-shirt design, vector style, bold graphics, streetwear aesthetic, clean background, print-ready: ${prompt}`;
-      }
+      // Это новая генерация - улучшаем промпт в зависимости от содержания
+      enhancedPrompt = enhanceRussianPrompt(prompt, style);
       console.log(`🎨 [DEBUG] Промпт для новой генерации: "${enhancedPrompt}"`);
     }
     
@@ -98,6 +95,42 @@ async function generateImage(prompt, style = 'realistic', previousImage = null) 
     console.error('Ошибка при генерации изображения:', error);
     return { success: false, error: error.message };
   }
+}
+
+/**
+ * Улучшает русскоязычные промпты для лучшего качества генерации
+ * @param {string} prompt - Исходный промпт
+ * @param {string} style - Стиль изображения
+ * @returns {string} Улучшенный промпт
+ */
+function enhanceRussianPrompt(prompt, style) {
+  const originalPrompt = prompt.trim();
+  
+  // Определяем тип изображения по ключевым словам
+  const isCharacter = /самурай|воин|человек|персонаж|герой|девушка|парень/i.test(originalPrompt);
+  const isTshirtDesign = /футболка|принт|дизайн|печать/i.test(originalPrompt);
+  const isNature = /природа|лес|море|горы|пейзаж|цветы|животные/i.test(originalPrompt);
+  const isAbstract = /абстракт|геометрия|узор|паттерн/i.test(originalPrompt);
+  const isCyberpunk = /техно|кибер|неон|киберпанк|футуристик/i.test(originalPrompt);
+  
+  let enhancedPrompt = originalPrompt;
+  
+  // Добавляем качественные характеристики в зависимости от типа
+  if (isTshirtDesign) {
+    enhancedPrompt = `high quality t-shirt design, vector style, bold graphics, clean background, print-ready, ${originalPrompt}`;
+  } else if (isCharacter && isCyberpunk) {
+    enhancedPrompt = `highly detailed cyberpunk character, neon lighting, futuristic, digital art, 4k quality, ${originalPrompt}`;
+  } else if (isCharacter) {
+    enhancedPrompt = `highly detailed character portrait, professional digital art, cinematic lighting, 4k quality, ${originalPrompt}`;
+  } else if (isNature) {
+    enhancedPrompt = `beautiful nature photography style, high resolution, vivid colors, professional quality, ${originalPrompt}`;
+  } else if (isAbstract) {
+    enhancedPrompt = `modern abstract art, vibrant colors, high contrast, artistic composition, ${originalPrompt}`;
+  } else {
+    enhancedPrompt = `high quality digital art, detailed, professional, ${originalPrompt}`;
+  }
+  
+  return enhancedPrompt;
 }
 
 /**
