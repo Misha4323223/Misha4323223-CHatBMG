@@ -220,7 +220,7 @@ function areRelatedWords(word1, word2) {
  */
 async function analyzeImageWithPython(imageUrl) {
   try {
-    const { analyzeImageLocally } = require('./free-vision-analyzer');
+    const { analyzeImageLocally } = require('./free-vision-analyzer.cjs');
     
     console.log('🔍 [FREE-ANALYZER] Начинаю локальный анализ изображения');
     const analysis = await analyzeImageLocally(imageUrl);
