@@ -221,7 +221,7 @@ def chat():
     try:
         data = request.json or {}
         message = data.get('message', '')
-        provider_name = data.get('provider', 'Qwen_Qwen_2_5_Max')
+        provider_name = data.get('provider', 'Qwen_Qwen_2_72B')
         
         if not message:
             return jsonify({"error": "Отсутствует сообщение"}), 400
