@@ -133,6 +133,25 @@ const SmartChat: React.FC = () => {
                       aiProvider = 'Image Generator';
                       aiCategory = 'image_generation';
                       streamingSuccessful = true;
+                      
+                      // Сразу обновляем сообщение когда получили изображение
+                      setMessages(prevMessages => prevMessages.map(msg => 
+                        msg.id === tempAiMessageId ? {
+                          id: tempAiMessageId,
+                          text: fullResponse,
+                          sender: 'ai',
+                          timestamp: new Date(),
+                          loading: false,
+                          category: aiCategory,
+                          provider: aiProvider,
+                          bestProvider: aiProvider,
+                          error: false,
+                          errorMessage: undefined
+                        } : msg
+                      ));
+                      
+                      // Завершаем обработку стрима после получения изображения
+                      return; // Выходим из функции после получения изображения
                     } else if (data.text) {
                       fullResponse += data.text;
                       if (data.provider) aiProvider = data.provider;
