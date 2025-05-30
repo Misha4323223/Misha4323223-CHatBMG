@@ -201,7 +201,7 @@ async function getAIEnhancedPrompt(prompt, style) {
 Выход: "high quality detailed cat wearing boots, professional photography, realistic style"`;
 
   try {
-    const response = await smartRouter.getSmartResponse(
+    const response = await smartRouter.getChatResponse(
       `${systemPrompt}\n\nЗапрос: "${prompt}"`,
       { 
         systemPrompt,
