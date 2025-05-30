@@ -1813,10 +1813,56 @@
             const lines = chunk.split('\n');
 
             for (const line of lines) {
+              // Обрабатываем события изображений
+              if (line.startsWith('event: image')) {
+                console.log('🎨 [STREAMING] Обнаружено событие изображения!');
+                continue;
+              }
+              
               if (line.startsWith('data: ')) {
                 try {
                   const data = JSON.parse(line.slice(6));
                   console.log(`🔍 [STREAMING] Обработка данных:`, data);
+                  
+                  // Специальная обработка изображений
+                  if (data.imageUrl) {
+                    console.log('🖼️ [STREAMING] Получен URL изображения:', data.imageUrl);
+                    
+                    // Убираем индикатор печатания
+                    if (typingIndicator) {
+                      typingIndicator.remove();
+                    }
+                    
+                    // Создаем markdown для изображения
+                    const imageMarkdown = `🎨 Изображение создано! Вот ваш дизайн:\n![Сгенерированное изображение](${data.imageUrl})`;
+                    fullResponse = imageMarkdown;
+                    
+                    // Обрабатываем markdown и отображаем изображение
+                    let processedText = imageMarkdown;
+                    const imageRegex = /!\[([^\]]*)\]\(([^)]+)\)/g;
+                    const match = imageRegex.exec(imageMarkdown);
+                    
+                    if (match) {
+                      const [fullMatch, altText, imageUrl] = match;
+                      const imageHTML = `
+                        <div style="margin: 10px 0; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 8px;">
+                          <p style="color: #6c63ff; margin-bottom: 10px;">🎨 Изображение создано! Вот ваш дизайн:</p>
+                          <img src="${imageUrl}" 
+                               alt="${altText || 'Сгенерированное изображение'}" 
+                               style="max-width: 100%; height: auto; border-radius: 8px; display: block; margin: 0 auto; max-height: 300px; object-fit: contain;"
+                               onload="console.log('✅ [STREAMING] Изображение загружено:', '${imageUrl}')"
+                               onerror="console.error('❌ [STREAMING] Ошибка загрузки:', '${imageUrl}');">
+                          <p style="text-align: center; margin-top: 8px; font-size: 0.8rem; color: #ccc;">${altText || 'Сгенерированное AI изображение'}</p>
+                        </div>
+                      `;
+                      processedText = processedText.replace(fullMatch, imageHTML);
+                    }
+                    
+                    messageElement.innerHTML = processedText;
+                    await saveMessageToHistory(imageMarkdown, 'ai', 'AI_Image_Generator');
+                    console.log('✅ [STREAMING] Изображение успешно отображено и сохранено');
+                    continue;
+                  }
                   
                   if (data.provider && !currentProvider) {
                     currentProvider = data.provider;
