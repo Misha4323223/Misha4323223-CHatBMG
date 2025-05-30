@@ -49,22 +49,38 @@ class Conversation {
    * Извлечение информации о последнем сгенерированном изображении
    */
   getLastImageInfo() {
+    console.log('🔍 [MEMORY] Ищем последнее изображение в истории...');
+    console.log('📊 [MEMORY] Всего сообщений:', this.messages.length);
+    
     // Ищем последнее сообщение AI с изображением
     for (let i = this.messages.length - 1; i >= 0; i--) {
       const message = this.messages[i];
+      console.log(`📝 [MEMORY] Сообщение ${i}: ${message.sender} - ${message.content.substring(0, 100)}...`);
+      
       if (message.sender === 'ai' && message.content.includes('![')) {
+        console.log('🖼️ [MEMORY] Найдено сообщение с изображением!');
+        
         // Извлекаем URL изображения и описание
         const imageMatch = message.content.match(/!\[([^\]]*)\]\(([^)]+)\)/);
         if (imageMatch) {
-          return {
+          const imageInfo = {
             description: imageMatch[1] || 'Сгенерированное изображение',
             url: imageMatch[2],
             fullContent: message.content,
             timestamp: message.timestamp
           };
+          
+          console.log('✅ [MEMORY] Извлечена информация об изображении:');
+          console.log('  - Описание:', imageInfo.description);
+          console.log('  - URL:', imageInfo.url);
+          console.log('  - Временная метка:', imageInfo.timestamp);
+          
+          return imageInfo;
         }
       }
     }
+    
+    console.log('❌ [MEMORY] Изображения в истории не найдены');
     return null;
   }
 

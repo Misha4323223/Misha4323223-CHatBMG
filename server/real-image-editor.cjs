@@ -38,9 +38,11 @@ async function editImageReally(imageUrl, editRequest, analysisData) {
   try {
     console.log('🎨 [REAL-EDITOR] Начинаю реальное редактирование изображения');
     console.log('📝 [REAL-EDITOR] Запрос:', editRequest);
+    console.log('🔗 [REAL-EDITOR] ИСХОДНОЕ изображение URL:', imageUrl);
     
     // Загружаем исходное изображение
     const imageBuffer = await fetchImage(imageUrl);
+    console.log('📦 [REAL-EDITOR] Размер загруженного буфера:', imageBuffer.length, 'байт');
     const image = sharp(imageBuffer);
     const metadata = await image.metadata();
     
