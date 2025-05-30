@@ -34,17 +34,41 @@ module.exports = async function apiChatStream(req, res) {
     // Ищем предыдущее изображение, если запрос — редактирование картинки
     let previousImage = null;
     if (messageAnalysis.category === 'image_edit') {
-      const userId = `session_${sessionId}`;
-      console.log('🔍 [STREAMING] Ищем предыдущее изображение для userId:', userId);
-      const conversation = getConversation(userId);
-      console.log('💬 [STREAMING] Получена беседа, сообщений в памяти:', conversation?.messages?.length || 0);
-      previousImage = conversation.getLastImageInfo();
-      console.log('🔄 [STREAMING] Найдено предыдущее изображение для редактирования:', previousImage);
+      console.log('🔍 [STREAMING] Ищем предыдущее изображение в сессии:', sessionId);
       
-      if (previousImage) {
-        console.log('✅ [STREAMING] Будем редактировать изображение:', previousImage.url);
-      } else {
-        console.log('❌ [STREAMING] Предыдущее изображение не найдено, будет создано новое');
+      try {
+        // Загружаем историю сообщений из базы данных
+        const { getSessionMessages } = require('./chat-history.ts');
+        const messages = await getSessionMessages(sessionId);
+        console.log('💬 [STREAMING] Загружено сообщений из БД:', messages?.length || 0);
+        
+        // Ищем последнее изображение в истории
+        if (messages && messages.length > 0) {
+          for (let i = messages.length - 1; i >= 0; i--) {
+            const msg = messages[i];
+            if (msg.sender === 'ai' && msg.text && msg.text.includes('![')) {
+              console.log('🖼️ [STREAMING] Найдено сообщение с изображением!');
+              
+              // Извлекаем URL изображения
+              const imageMatch = msg.text.match(/!\[([^\]]*)\]\(([^)]+)\)/);
+              if (imageMatch) {
+                previousImage = {
+                  description: imageMatch[1] || 'Сгенерированное изображение',
+                  url: imageMatch[2],
+                  fullContent: msg.text
+                };
+                console.log('✅ [STREAMING] Найдено изображение для редактирования:', previousImage.url);
+                break;
+              }
+            }
+          }
+        }
+        
+        if (!previousImage) {
+          console.log('❌ [STREAMING] Предыдущее изображение не найдено в истории БД');
+        }
+      } catch (error) {
+        console.error('❌ [STREAMING] Ошибка при поиске изображения в БД:', error);
       }
     }
 
