@@ -131,7 +131,7 @@ module.exports = async function apiChatStream(req, res) {
     req.on('close', () => {
       console.log('Клиент закрыл соединение');
       if (!res.writableEnded) res.end();
-      pythonProcess.kill();
+      // pythonProcess уже завершен в данном контексте
     });
 
   } catch (error) {
