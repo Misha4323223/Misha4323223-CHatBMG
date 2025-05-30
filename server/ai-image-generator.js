@@ -88,7 +88,7 @@ async function generateImage(prompt, style = 'realistic', previousImage = null, 
       const aiStartTime = Date.now();
       
       try {
-        enhancedPrompt = await getAIEnhancedPrompt(prompt, style);
+        enhancedPrompt = enhancePromptWithAI(prompt, style);
         const aiDuration = Date.now() - aiStartTime;
         
         console.log(`🤖 [AI] AI улучшил промпт: "${enhancedPrompt}"`);
