@@ -1,6 +1,6 @@
 const { analyzeMessage } = require('./smart-router'); // Импортируем в начале файла
 const { generateImage } = require('./ai-image-generator');
-const { processImageEdit } = require('./replicate-image-editor');
+// Импорт будет добавлен динамически при необходимости
 const { getConversation } = require('./conversation-memory');
 
 const demoDelay = 1500;
@@ -91,6 +91,8 @@ module.exports = async function apiChatStream(req, res) {
           content: '🎨 Обрабатываю изображение с помощью AI редактирования...' 
         })}\n\n`);
         
+        // Динамический импорт Replicate редактора
+        const { processImageEdit } = await import('./replicate-image-editor.js');
         const result = await processImageEdit(previousImage.url, message);
         
         if (result && result.success) {

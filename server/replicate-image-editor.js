@@ -3,7 +3,7 @@
  * Использует мощные AI модели для удаления объектов, замены фона и других операций
  */
 
-const fetch = require('node-fetch');
+import fetch from 'node-fetch';
 
 const REPLICATE_API_TOKEN = process.env.REPLICATE_API_TOKEN;
 const REPLICATE_API_URL = 'https://api.replicate.com/v1/predictions';
@@ -454,7 +454,7 @@ async function checkReplicateAvailability() {
     }
 }
 
-module.exports = {
+export {
     processImageEdit,
     removeObjectFromImage,
     removeBackground,
