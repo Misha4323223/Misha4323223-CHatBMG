@@ -73,9 +73,9 @@ module.exports = async function apiChatStream(req, res) {
       }
     }
 
-    // Обрабатываем редактирование изображений через Replicate
+    // Обрабатываем редактирование изображений
     if (messageAnalysis.category === 'image_editing') {
-      console.log('🎨 [STREAMING] Запуск Replicate редактирования...');
+      console.log('🎨 [STREAMING] Запуск редактирования изображения...');
       
       if (!previousImage || !previousImage.url) {
         res.write(`event: error\n`);
@@ -88,12 +88,12 @@ module.exports = async function apiChatStream(req, res) {
         res.write(`event: message\n`);
         res.write(`data: ${JSON.stringify({ 
           role: 'assistant', 
-          content: '🎨 Обрабатываю изображение с помощью AI редактирования...' 
+          content: '🎨 Обрабатываю изображение...' 
         })}\n\n`);
         
-        // Динамический импорт Replicate редактора
-        const { processImageEdit } = await import('./replicate-image-editor.js');
-        const result = await processImageEdit(previousImage.url, message);
+        // Используем локальный редактор
+        const { processLocalEdit } = await import('./local-image-editor.js');
+        const result = await processLocalEdit(previousImage.url, message);
         
         if (result && result.success) {
           res.write(`event: image\n`);
@@ -115,7 +115,7 @@ module.exports = async function apiChatStream(req, res) {
       } catch (editError) {
         console.error('Ошибка редактирования изображения:', editError);
         res.write(`event: error\n`);
-        res.write(`data: ${JSON.stringify({ error: 'Ошибка AI редактирования изображения' })}\n\n`);
+        res.write(`data: ${JSON.stringify({ error: 'Ошибка обработки изображения' })}\n\n`);
       }
       res.end();
       return;
