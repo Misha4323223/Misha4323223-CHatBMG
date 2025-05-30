@@ -47,6 +47,30 @@ async function generateImage(prompt, style = 'realistic', previousImage = null, 
         console.log('⚠️ [HYBRID] SD WebUI недоступен, используем резервную систему');
     }
     
+    // Пробуем Replicate API (высокое качество)
+    console.log('🔄 [HYBRID] Проверяем Replicate API...');
+    
+    try {
+        const { generateWithFLUX, checkReplicateAvailability } = await import('./replicate-image-editor.js');
+        const replicateAvailable = await checkReplicateAvailability();
+        
+        if (replicateAvailable.available) {
+            const replicateResult = await generateWithFLUX(prompt);
+            
+            if (replicateResult && replicateResult.success) {
+                console.log('✅ [HYBRID] Изображение создано через Replicate FLUX');
+                return {
+                    success: true,
+                    imageUrl: replicateResult.imageUrl,
+                    provider: 'Replicate_FLUX',
+                    operation: 'generate'
+                };
+            }
+        }
+    } catch (replicateError) {
+        console.log('⚠️ [HYBRID] Replicate недоступен:', replicateError.message);
+    }
+
     // Пробуем Hugging Face API
     console.log('🔄 [HYBRID] Проверяем Hugging Face API...');
     

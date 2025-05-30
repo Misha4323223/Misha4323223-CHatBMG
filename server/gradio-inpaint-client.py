@@ -11,6 +11,16 @@ from PIL import Image
 import requests
 import os
 import tempfile
+from huggingface_hub import login
+
+# Аутентификация с Hugging Face
+hf_token = os.getenv('HUGGINGFACE_API_KEY')
+if hf_token:
+    try:
+        login(token=hf_token)
+        print("✅ Успешная аутентификация с Hugging Face")
+    except Exception as e:
+        print(f"⚠️ Ошибка аутентификации: {e}")
 
 class GradioInpaintClient:
     def __init__(self):
