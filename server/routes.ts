@@ -1343,9 +1343,9 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
     };
   }
 
-  // Streaming API endpoint для потоковой генерации
-  app.post("/api/stream", async (req, res) => {
-    console.log('🔥 [DEBUG] НАЧАЛО /api/stream');
+  // Streaming API endpoint для потоковой генерации - используем streaming-routes.js
+  const streamingHandler = require('./streaming-routes');
+  app.post("/api/stream", streamingHandler);
     console.log('🔥 [DEBUG] req.body ПОЛНОСТЬЮ:', JSON.stringify(req.body, null, 2));
     
     const { message, provider: requestedProvider, sessionId } = req.body;
