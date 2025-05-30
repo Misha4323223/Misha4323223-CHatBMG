@@ -18,6 +18,10 @@ dependencies = [
     "torch>=2.7.0",
     "torchvision>=0.22.0",
     "torchaudio>=2.7.0",
+    "gradio>=5.32.0",
+    "omegaconf>=2.3.0",
+    "einops>=0.8.1",
+    "opencv-python>=4.11.0.86",
 ]
 
 [[tool.uv.index]]
