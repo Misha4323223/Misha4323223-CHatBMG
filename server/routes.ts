@@ -923,7 +923,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Импортируем Python провайдер
       const pythonProviderRoutes = require('./python_provider_routes');
       
-      // 🧠 ДОБАВЛЯЕМ КОНТЕКСТ РАЗГОВОРА
+      // 🧠 ДОБАВЛЯЕМ КОНТЕКСТ РАЗГОВОРА И АНАЛИЗ НАМЕРЕНИЙ
       console.log('🧠 [STREAM] === НАЧАЛО АНАЛИЗА КОНТЕКСТА ===');
       console.log('🧠 [STREAM] req.body:', JSON.stringify(req.body, null, 2));
       
@@ -944,6 +944,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         context: contextInfo.context?.substring(0, 200) + '...',
         messageHistory: contextInfo.messageHistory?.length || 0
       });
+
+      // 🎨 АНАЛИЗ НАМЕРЕНИЙ ДЛЯ РЕДАКТИРОВАНИЯ ИЗОБРАЖЕНИЙ
+      const smartRouter = require('./smart-router');
+      const messageAnalysis = smartRouter.analyzeMessage(finalMessage);
+      
+      console.log('📝 [STREAM] Категория сообщения:', messageAnalysis.category);
+      console.log('📝 [STREAM] Промпт для обработки:', messageAnalysis.prompt);
+
+      // Ищем предыдущее изображение, если запрос — редактирование картинки
+      let previousImage = null;
+      if (messageAnalysis.category === 'image_edit') {
+        console.log('🔍 [STREAM] Ищем предыдущее изображение для userId:', userId);
+        const conversation = conversationMemory.getConversation(userId);
+        console.log('💬 [STREAM] Получена беседа, сообщений в памяти:', conversation?.messages?.length || 0);
+        previousImage = conversation.getLastImageInfo();
+        console.log('🔄 [STREAM] Найдено предыдущее изображение:', previousImage ? 'ДА' : 'НЕТ');
+        
+        if (previousImage) {
+          console.log('🎯 [STREAM] URL предыдущего изображения:', previousImage.url);
+          console.log('🎯 [STREAM] Описание предыдущего изображения:', previousImage.description);
+        } else {
+          console.log('⚠️ [STREAM] Предыдущее изображение НЕ найдено - команда редактирования не может быть выполнена');
+        }
+      }
       
       // Используем сообщение с контекстом
       if (contextInfo.context && contextInfo.context.trim()) {
