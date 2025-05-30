@@ -37,8 +37,16 @@ function generateId() {
  * @param {string} style - Стиль изображения (realistic, artistic, etc.)
  * @returns {Promise<{success: boolean, imageUrl: string, error?: string}>}
  */
-async function generateImage(prompt, style = 'realistic', previousImage = null) {
+async function generateImage(prompt, style = 'realistic', previousImage = null, sessionId = null, userId = null) {
+  const { imageLogger } = require('./logger.js');
+  const startTime = Date.now();
+  
   try {
+    // Логируем получение запроса
+    if (sessionId && userId) {
+      imageLogger.requestReceived(prompt, sessionId, userId);
+    }
+    
     console.log(`🎨 [DEBUG] Получен промпт: "${prompt}"`);
     console.log(`🎨 [DEBUG] Стиль: "${style}"`);
     console.log(`🎨 [DEBUG] Предыдущее изображение:`, previousImage);
@@ -48,16 +56,36 @@ async function generateImage(prompt, style = 'realistic', previousImage = null) 
     
     if (previousImage) {
       // Это редактирование - используем функцию для улучшения
+      if (sessionId) {
+        imageLogger.editingStarted(previousImage.url || previousImage, prompt, sessionId);
+      }
+      
       enhancedPrompt = enhancePromptForEdit(prompt, previousImage, style);
       console.log(`🔄 [DEBUG] Промпт для редактирования: "${enhancedPrompt}"`);
+      
+      if (sessionId) {
+        imageLogger.promptTranslation(prompt, enhancedPrompt, 'EDIT_ENHANCEMENT', sessionId);
+      }
     } else {
       // Это новая генерация - сначала получаем улучшенный промпт от AI
+      const aiStartTime = Date.now();
+      
       try {
         enhancedPrompt = await getAIEnhancedPrompt(prompt, style);
+        const aiDuration = Date.now() - aiStartTime;
+        
         console.log(`🤖 [AI] AI улучшил промпт: "${enhancedPrompt}"`);
+        
+        if (sessionId) {
+          imageLogger.aiEnhancement(prompt, enhancedPrompt, 'Qwen_Qwen_2_72B', aiDuration, sessionId);
+        }
       } catch (error) {
         console.log(`⚠️ [AI] AI недоступен, используем простое улучшение`);
         enhancedPrompt = enhancePromptWithAI(prompt, style);
+        
+        if (sessionId) {
+          imageLogger.promptTranslation(prompt, enhancedPrompt, 'SIMPLE_TRANSLATION', sessionId);
+        }
       }
       console.log(`🎨 [DEBUG] Промпт для новой генерации: "${enhancedPrompt}"`);
     }
@@ -74,15 +102,39 @@ async function generateImage(prompt, style = 'realistic', previousImage = null) 
     let lastError = null;
     
     for (const [index, generator] of generators.entries()) {
+      const generatorName = index === 0 ? 'Pollinations.ai' : 'Craiyon';
+      const genStartTime = Date.now();
+      
       try {
+        if (sessionId) {
+          imageLogger.generationStarted(enhancedPrompt, generatorName, sessionId);
+        }
+        
         imageUrl = await generator();
-        const generatorName = index === 0 ? 'Pollinations.ai' : 'Craiyon (DALL-E Mini)';
+        const genDuration = Date.now() - genStartTime;
+        
         console.log(`✅ Изображение создано через ${generatorName}`);
         console.log('🔗 URL:', imageUrl);
+        
+        if (sessionId) {
+          if (previousImage) {
+            imageLogger.editingCompleted(previousImage.url || previousImage, imageUrl, genDuration, sessionId);
+          } else {
+            imageLogger.generationCompleted(imageUrl, generatorName, genDuration, sessionId);
+          }
+        }
         break;
       } catch (err) {
-        const generatorName = index === 0 ? 'Pollinations.ai' : 'Craiyon';
         console.log(`⚠️ ${generatorName} недоступен:`, err.message);
+        
+        if (sessionId) {
+          if (previousImage) {
+            imageLogger.editingFailed(err.message, sessionId);
+          } else {
+            imageLogger.generationFailed(err.message, generatorName, sessionId);
+          }
+        }
+        
         lastError = err;
         continue;
       }
@@ -90,6 +142,11 @@ async function generateImage(prompt, style = 'realistic', previousImage = null) 
     
     if (!imageUrl) {
       console.error('❌ Все генераторы недоступны');
+      
+      if (sessionId) {
+        imageLogger.generationFailed('Все генераторы недоступны', 'ALL_PROVIDERS', sessionId);
+      }
+      
       return { 
         success: false, 
         error: 'Все генераторы изображений временно недоступны. Попробуйте позже.' 

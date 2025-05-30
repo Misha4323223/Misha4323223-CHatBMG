@@ -6,6 +6,7 @@ import { setupProxyMiddleware } from "./middleware/proxy";
 import { authMiddleware } from "./middleware/auth";
 import { z } from "zod";
 import { authSchema, messageSchema } from "@shared/schema";
+import { logger, chatLogger } from "./logger";
 
 // Система логирования
 const Logger = {
