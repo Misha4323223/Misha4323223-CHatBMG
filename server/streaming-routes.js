@@ -25,6 +25,9 @@ module.exports = async function apiChatStream(req, res) {
 
     // Обрабатываем анализ сообщения
     const messageAnalysis = analyzeMessage(req.body);
+    console.log('🔍 [STREAMING] Анализ сообщения:', messageAnalysis);
+    console.log('📝 [STREAMING] Категория:', messageAnalysis.category);
+    console.log('📝 [STREAMING] Промпт:', messageAnalysis.prompt);
 
     // Ищем предыдущее изображение, если запрос — редактирование картинки
     let previousImage = null;
