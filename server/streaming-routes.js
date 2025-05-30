@@ -30,9 +30,17 @@ module.exports = async function apiChatStream(req, res) {
     let previousImage = null;
     if (messageAnalysis.category === 'image_edit') {
       const userId = `session_${sessionId}`;
+      console.log('🔍 [STREAMING] Ищем предыдущее изображение для userId:', userId);
       const conversation = getConversation(userId);
+      console.log('💬 [STREAMING] Получена беседа, сообщений в памяти:', conversation?.messages?.length || 0);
       previousImage = conversation.getLastImageInfo();
       console.log('🔄 [STREAMING] Найдено предыдущее изображение для редактирования:', previousImage);
+      
+      if (previousImage) {
+        console.log('✅ [STREAMING] Будем редактировать изображение:', previousImage.url);
+      } else {
+        console.log('❌ [STREAMING] Предыдущее изображение не найдено, будет создано новое');
+      }
     }
 
     // Генерируем изображение, если нужно
