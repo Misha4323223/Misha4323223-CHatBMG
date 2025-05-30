@@ -1594,6 +1594,16 @@
         }, 2000);
       }
       
+      // Функция для получения последнего сгенерированного изображения
+      function getLastGeneratedImage() {
+        const messages = document.querySelectorAll('.message.ai img');
+        if (messages.length > 0) {
+          const lastImage = messages[messages.length - 1];
+          return lastImage.src;
+        }
+        return null;
+      }
+      
       // Функция для определения типа операции и показа соответствующего статуса
       function detectOperationType(message) {
         const lowerMessage = message.toLowerCase();
