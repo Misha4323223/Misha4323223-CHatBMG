@@ -110,6 +110,16 @@ const PROVIDER_SPECIALTIES = {
       "рисунок", "картинка", "изображение", "визуализация", "концепт", "макет"
     ]
   },
+  image_editing: {
+    // Редактирование изображений через Replicate AI
+    providers: ["replicate_editor"],
+    keywords: [
+      "убери", "удали", "измени", "замени", "отредактируй", "улучши", "поменяй",
+      "remove", "delete", "edit", "modify", "change", "replace", "enhance", "improve",
+      "фон", "background", "стиль", "style", "качество", "quality", "объект", "object",
+      "редактирование", "editing", "обработка", "processing", "коррекция", "correction"
+    ]
+  },
   shopping: {
     // Поиск магазинов, покупки, торговые центры, услуги
     providers: ["Qwen_Qwen_2_72B", "You", "PerplexityApi", "Qwen_Qwen_2_5_Max", "Phind"],
@@ -182,6 +192,21 @@ function analyzeMessage(message) {
     /концепт/i
   ];
   
+  // Специальная проверка для редактирования изображений
+  const imageEditingPatterns = [
+    /убери.*с.*изображения/i,
+    /удали.*с.*картинки/i,
+    /замени.*фон/i,
+    /поменяй.*фон/i,
+    /отредактируй.*изображение/i,
+    /улучши.*качество/i,
+    /измени.*стиль/i,
+    /remove.*from.*image/i,
+    /edit.*image/i,
+    /change.*background/i,
+    /enhance.*image/i
+  ];
+  
   let isImageGeneration = false;
   for (const pattern of imageGenerationPatterns) {
     if (pattern.test(message)) {
@@ -190,7 +215,21 @@ function analyzeMessage(message) {
     }
   }
   
-  if (isImageGeneration) {
+  let isImageEditing = false;
+  for (const pattern of imageEditingPatterns) {
+    if (pattern.test(message)) {
+      isImageEditing = true;
+      break;
+    }
+  }
+  
+  if (isImageEditing) {
+    detectedCategories.push({
+      category: 'image_editing',
+      matchCount: 15, // Самый высокий приоритет для редактирования
+      providers: PROVIDER_SPECIALTIES.image_editing.providers
+    });
+  } else if (isImageGeneration) {
     detectedCategories.push({
       category: 'image_generation',
       matchCount: 10, // Высокий приоритет

@@ -1,5 +1,6 @@
 const { analyzeMessage } = require('./smart-router'); // Импортируем в начале файла
 const { generateImage } = require('./ai-image-generator');
+const { processImageEdit } = require('./replicate-image-editor');
 const { getConversation } = require('./conversation-memory');
 
 const demoDelay = 1500;
@@ -33,7 +34,7 @@ module.exports = async function apiChatStream(req, res) {
 
     // Ищем предыдущее изображение, если запрос — редактирование картинки
     let previousImage = null;
-    if (messageAnalysis.category === 'image_edit') {
+    if (messageAnalysis.category === 'image_editing' || messageAnalysis.category === 'image_edit') {
       console.log('🔍 [STREAMING] Ищем предыдущее изображение в сессии:', sessionId);
       
       try {
@@ -70,6 +71,52 @@ module.exports = async function apiChatStream(req, res) {
       } catch (error) {
         console.error('❌ [STREAMING] Ошибка при поиске изображения в БД:', error);
       }
+    }
+
+    // Обрабатываем редактирование изображений через Replicate
+    if (messageAnalysis.category === 'image_editing') {
+      console.log('🎨 [STREAMING] Запуск Replicate редактирования...');
+      
+      if (!previousImage || !previousImage.url) {
+        res.write(`event: error\n`);
+        res.write(`data: ${JSON.stringify({ error: 'Для редактирования нужно сначала создать изображение' })}\n\n`);
+        res.end();
+        return;
+      }
+      
+      try {
+        res.write(`event: message\n`);
+        res.write(`data: ${JSON.stringify({ 
+          role: 'assistant', 
+          content: '🎨 Обрабатываю изображение с помощью AI редактирования...' 
+        })}\n\n`);
+        
+        const result = await processImageEdit(previousImage.url, message);
+        
+        if (result && result.success) {
+          res.write(`event: image\n`);
+          res.write(`data: ${JSON.stringify({ 
+            imageUrl: result.imageUrl,
+            description: result.description,
+            operation: result.operation
+          })}\n\n`);
+          
+          res.write(`event: message\n`);
+          res.write(`data: ${JSON.stringify({ 
+            role: 'assistant', 
+            content: `✅ ${result.description}` 
+          })}\n\n`);
+        } else {
+          res.write(`event: error\n`);
+          res.write(`data: ${JSON.stringify({ error: result?.error || 'Ошибка редактирования изображения' })}\n\n`);
+        }
+      } catch (editError) {
+        console.error('Ошибка редактирования изображения:', editError);
+        res.write(`event: error\n`);
+        res.write(`data: ${JSON.stringify({ error: 'Ошибка AI редактирования изображения' })}\n\n`);
+      }
+      res.end();
+      return;
     }
 
     // Генерируем изображение, если нужно
