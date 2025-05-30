@@ -381,7 +381,7 @@ function enhanceRussianPromptBasic(prompt, style) {
  */
 function enhancePromptForEdit(editRequest, previousImage, style) {
   // Извлекаем описание из URL предыдущего изображения
-  let baseDescription = "previous image";
+  let baseDescription = "cat";
   
   if (previousImage && previousImage.url) {
     // Пытаемся извлечь описание из URL Pollinations
@@ -391,15 +391,49 @@ function enhancePromptForEdit(editRequest, previousImage, style) {
     }
   }
   
-  // Создаем новый промпт, объединяя базовое описание с новыми требованиями
-  const combinedPrompt = `${baseDescription}, ${editRequest}`;
+  const editLower = editRequest.toLowerCase();
+  let editedPrompt = baseDescription;
   
-  // Применяем улучшения для принтов
-  if (style === 'artistic' || combinedPrompt.toLowerCase().includes('футболка') || combinedPrompt.toLowerCase().includes('принт')) {
-    return `High quality t-shirt design, vector style, bold graphics, streetwear aesthetic, clean background, print-ready: ${combinedPrompt}`;
+  // Обрабатываем команды удаления объектов
+  if (editLower.includes('убери') || editLower.includes('удали') || editLower.includes('remove')) {
+    // Определяем что нужно убрать
+    if (editLower.includes('сапог') || editLower.includes('boot')) {
+      // Убираем всё связанное с сапогами из промпта
+      editedPrompt = editedPrompt
+        .replace(/wearing boots?/gi, '')
+        .replace(/with boots?/gi, '')
+        .replace(/boots?/gi, '')
+        .replace(/сапог[иа]?/gi, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+      
+      // Добавляем альтернативное описание
+      editedPrompt = editedPrompt + ', without boots, barefoot';
+    } else if (editLower.includes('шляп') || editLower.includes('hat')) {
+      editedPrompt = editedPrompt.replace(/hat|шляп[ауые]?/gi, '').replace(/\s+/g, ' ').trim();
+    } else if (editLower.includes('очк') || editLower.includes('glasses')) {
+      editedPrompt = editedPrompt.replace(/glasses|очк[иа]/gi, '').replace(/\s+/g, ' ').trim();
+    }
+  }
+  // Обрабатываем команды добавления
+  else if (editLower.includes('добавь') || editLower.includes('add')) {
+    editedPrompt = `${baseDescription}, ${editRequest}`;
+  }
+  // Обрабатываем команды изменения цвета
+  else if (editLower.includes('поменяй цвет') || editLower.includes('измени цвет')) {
+    editedPrompt = `${baseDescription}, ${editRequest}`;
+  }
+  else {
+    // Для других команд используем комбинированный подход
+    editedPrompt = `${baseDescription}, ${editRequest}`;
   }
   
-  return combinedPrompt;
+  // Добавляем базовые параметры качества
+  if (!editedPrompt.includes('high quality')) {
+    editedPrompt = `high quality ${editedPrompt}, detailed, professional`;
+  }
+  
+  return editedPrompt;
 }
 
 /**
