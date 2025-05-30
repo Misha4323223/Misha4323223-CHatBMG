@@ -156,60 +156,41 @@ async function editImage(imageUrl, editPrompt, options = {}) {
         }
     }
     
-    // Пробуем Gradio Spaces
-    console.log('🔄 [HYBRID] Проверяем Gradio Spaces для редактирования...');
+    // Пробуем редактирование объектов
+    console.log('🔄 [HYBRID] Проверяем возможности редактирования объектов...');
     
     try {
-        const editType = analyzeEditRequest(editPrompt);
+        const { analyzeObjectEdit, addObjectToImage, removeObjectByMask, changeObjectColor, generateVariation } = await import('./object-manipulation-editor.js');
+        const editAnalysis = analyzeObjectEdit(editPrompt);
         
-        const { spawn } = require('child_process');
-        const pythonProcess = spawn('python', ['-c', `
-import asyncio
-import sys
-sys.path.append('server')
-from gradio_inpaint_client import gradio_client
-
-async def main():
-    try:
-        if '${editType}' == 'remove_background':
-            result = await gradio_client.remove_background('${imageUrl}')
-        elif '${editType}' == 'enhance':
-            result = await gradio_client.enhance_image('${imageUrl}')
-        else:
-            result = await gradio_client.inpaint_image('${imageUrl}', 'auto', '${editPrompt}')
-        print('GRADIO_RESULT:', result)
-    except Exception as e:
-        print('GRADIO_ERROR:', str(e))
-
-asyncio.run(main())
-        `]);
+        let result;
         
-        let gradioOutput = '';
-        pythonProcess.stdout.on('data', (data) => {
-            gradioOutput += data.toString();
-        });
-        
-        await new Promise((resolve) => {
-            pythonProcess.on('close', resolve);
-        });
-        
-        const resultMatch = gradioOutput.match(/GRADIO_RESULT: (.+)/);
-        if (resultMatch) {
-            const result = JSON.parse(resultMatch[1].replace(/'/g, '"'));
-            
-            if (result.success) {
-                console.log('✅ [HYBRID] Изображение отредактировано через Gradio Spaces');
-                return {
-                    success: true,
-                    imageUrl: result.result_url,
-                    provider: 'Gradio_Spaces',
-                    operation: 'edit',
-                    description: `Редактирование через Gradio: ${editPrompt}`
-                };
-            }
+        switch (editAnalysis.operation) {
+            case 'add_object':
+                result = await addObjectToImage(imageUrl, editAnalysis.object);
+                break;
+            case 'remove_object':
+                result = await removeObjectByMask(imageUrl, editAnalysis.object);
+                break;
+            case 'change_color':
+                result = await changeObjectColor(imageUrl, editAnalysis.change);
+                break;
+            default:
+                result = await generateVariation(imageUrl, editAnalysis.change);
         }
-    } catch (gradioError) {
-        console.log('⚠️ [HYBRID] Gradio Spaces недоступен:', gradioError.message);
+        
+        if (result && result.success) {
+            console.log('✅ [HYBRID] Объект отредактирован локально');
+            return {
+                success: true,
+                imageUrl: result.imageUrl,
+                provider: 'Object_Editor',
+                operation: result.operation,
+                description: result.description
+            };
+        }
+    } catch (objectError) {
+        console.log('⚠️ [HYBRID] Редактор объектов недоступен:', objectError.message);
     }
 
     // Fallback на локальный редактор
