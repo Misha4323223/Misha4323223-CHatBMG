@@ -84,7 +84,7 @@ module.exports = async function apiChatStream(req, res) {
       }
     }, demoDelay);
 
-    pythonProcess.stdout.on('data', (chunk) => {
+    pythonProcess.on('data', (chunk) => {
       try {
         const outputText = chunk.toString();
         console.log('Получен фрагмент от Python:', outputText);
