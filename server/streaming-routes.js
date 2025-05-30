@@ -24,10 +24,12 @@ module.exports = async function apiChatStream(req, res) {
     res.flushHeaders();
 
     // Обрабатываем анализ сообщения
-    const messageAnalysis = analyzeMessage(req.body);
-    console.log('🔍 [STREAMING] Анализ сообщения:', messageAnalysis);
+    const message = req.body.message || req.body.text || '';
+    console.log('🔍 [STREAMING] Анализируем сообщение:', message);
+    const messageAnalysis = analyzeMessage(message);
+    console.log('🔍 [STREAMING] Результат анализа:', messageAnalysis);
     console.log('📝 [STREAMING] Категория:', messageAnalysis.category);
-    console.log('📝 [STREAMING] Промпт:', messageAnalysis.prompt);
+    console.log('📝 [STREAMING] Провайдеры:', messageAnalysis.providers);
 
     // Ищем предыдущее изображение, если запрос — редактирование картинки
     let previousImage = null;
