@@ -51,8 +51,14 @@ async function generateImage(prompt, style = 'realistic', previousImage = null) 
       enhancedPrompt = enhancePromptForEdit(prompt, previousImage, style);
       console.log(`🔄 [DEBUG] Промпт для редактирования: "${enhancedPrompt}"`);
     } else {
-      // Это новая генерация - только простой перевод без AI
-      enhancedPrompt = enhancePromptWithAI(prompt, style);
+      // Это новая генерация - сначала получаем улучшенный промпт от AI
+      try {
+        enhancedPrompt = await getAIEnhancedPrompt(prompt, style);
+        console.log(`🤖 [AI] AI улучшил промпт: "${enhancedPrompt}"`);
+      } catch (error) {
+        console.log(`⚠️ [AI] AI недоступен, используем простое улучшение`);
+        enhancedPrompt = enhancePromptWithAI(prompt, style);
+      }
       console.log(`🎨 [DEBUG] Промпт для новой генерации: "${enhancedPrompt}"`);
     }
     
@@ -94,6 +100,58 @@ async function generateImage(prompt, style = 'realistic', previousImage = null) 
   } catch (error) {
     console.error('Ошибка при генерации изображения:', error);
     return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Получение улучшенного промпта от AI-провайдера
+ * @param {string} prompt - Исходный русский промпт
+ * @param {string} style - Стиль изображения
+ * @returns {Promise<string>} Улучшенный английский промпт
+ */
+async function getAIEnhancedPrompt(prompt, style) {
+  const smartRouter = require('./smart-router.js');
+  
+  const systemPrompt = `Ты эксперт по созданию промптов для генерации изображений. 
+Переведи русский запрос на английский и улучши его для качественной генерации изображения.
+
+Правила:
+1. Переводи точно, сохраняя смысл
+2. Добавляй технические детали для качества: "high quality", "detailed", "professional"
+3. Указывай стиль: ${style}
+4. Для персонажей добавляй детали внешности
+5. Отвечай ТОЛЬКО улучшенным английским промптом, без пояснений
+
+Пример:
+Вход: "кот в сапогах"
+Выход: "high quality detailed cat wearing boots, professional photography, realistic style"`;
+
+  try {
+    const response = await smartRouter.getSmartResponse(
+      `${systemPrompt}\n\nЗапрос: "${prompt}"`,
+      { 
+        systemPrompt,
+        preferredProvider: 'Qwen_Qwen_2_72B',
+        maxLength: 200
+      }
+    );
+    
+    if (response && response.response) {
+      // Извлекаем только текст промпта, убираем лишнее
+      let enhancedPrompt = response.response.trim();
+      
+      // Убираем возможные префиксы ответа
+      enhancedPrompt = enhancedPrompt.replace(/^(Выход:|Output:|Result:)/i, '').trim();
+      enhancedPrompt = enhancedPrompt.replace(/^["']|["']$/g, ''); // убираем кавычки
+      
+      return enhancedPrompt;
+    }
+    
+    throw new Error('AI не вернул ответ');
+    
+  } catch (error) {
+    console.log(`⚠️ Ошибка AI улучшения: ${error.message}`);
+    throw error;
   }
 }
 
