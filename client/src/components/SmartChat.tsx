@@ -105,11 +105,19 @@ const SmartChat: React.FC = () => {
       
       // Проверяем успешность ответа
       if (data.success && data.response) {
+        // Формируем текст ответа, включая изображения
+        let responseText = data.response;
+        
+        // Если есть сгенерированное изображение, добавляем его в ответ
+        if (data.imageUrl) {
+          responseText += `\n\n![Сгенерированное изображение](${data.imageUrl})`;
+        }
+        
         // Обновляем временное сообщение реальным ответом
         setMessages(prevMessages => prevMessages.map(msg => 
           msg.id === tempAiMessageId ? {
             id: tempAiMessageId,
-            text: data.response,
+            text: responseText,
             sender: 'ai',
             timestamp: new Date(),
             loading: false,
