@@ -3,8 +3,10 @@
  * Приоритет: SD WebUI -> Pollinations.ai
  */
 
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+
 import { sdClient } from './sd-webui-client.js';
-import { generateImage as pollinationsGenerate } from './ai-image-generator.js';
 
 /**
  * Основная функция генерации изображений
@@ -49,24 +51,46 @@ async function generateImage(prompt, style = 'realistic', previousImage = null, 
     console.log('🔄 [HYBRID] Переключаемся на Pollinations.ai');
     
     try {
-        const result = await pollinationsGenerate(prompt, style, previousImage, sessionId, userId);
+        // Динамический импорт CommonJS модуля
+        const pollinationsModule = await import('./ai-image-generator.js');
+        const pollinationsGenerate = pollinationsModule.generateImage || pollinationsModule.default?.generateImage;
         
-        if (result && result.success) {
-            console.log('✅ [HYBRID] Изображение создано через Pollinations.ai');
-            return {
-                success: true,
-                imageUrl: result.imageUrl,
-                provider: 'Pollinations_AI',
-                operation: 'generate'
-            };
+        if (!pollinationsGenerate) {
+            // Используем require для CommonJS модуля
+            const pollinationsRequire = require('./ai-image-generator.js');
+            const result = await pollinationsRequire.generateImage(prompt, style, previousImage, sessionId, userId);
+            
+            if (result && result.success) {
+                console.log('✅ [HYBRID] Изображение создано через Pollinations.ai');
+                return {
+                    success: true,
+                    imageUrl: result.imageUrl,
+                    provider: 'Pollinations_AI',
+                    operation: 'generate'
+                };
+            } else {
+                throw new Error(result?.error || 'Ошибка генерации изображения');
+            }
         } else {
-            throw new Error(result?.error || 'Неизвестная ошибка Pollinations.ai');
+            const result = await pollinationsGenerate(prompt, style, previousImage, sessionId, userId);
+            
+            if (result && result.success) {
+                console.log('✅ [HYBRID] Изображение создано через Pollinations.ai');
+                return {
+                    success: true,
+                    imageUrl: result.imageUrl,
+                    provider: 'Pollinations_AI',
+                    operation: 'generate'
+                };
+            } else {
+                throw new Error(result?.error || 'Ошибка генерации изображения');
+            }
         }
     } catch (error) {
         console.log('❌ [HYBRID] Ошибка Pollinations.ai:', error.message);
         return {
             success: false,
-            error: 'Все системы генерации изображений недоступны',
+            error: 'Системы генерации изображений недоступны',
             provider: 'none',
             operation: 'generate'
         };
