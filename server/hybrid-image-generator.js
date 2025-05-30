@@ -47,6 +47,26 @@ async function generateImage(prompt, style = 'realistic', previousImage = null, 
         console.log('⚠️ [HYBRID] SD WebUI недоступен, используем резервную систему');
     }
     
+    // Пробуем Hugging Face API
+    console.log('🔄 [HYBRID] Проверяем Hugging Face API...');
+    
+    try {
+        const { generateImageWithHuggingFace } = await import('./huggingface-image-generator.js');
+        const hfResult = await generateImageWithHuggingFace(prompt);
+        
+        if (hfResult && hfResult.success) {
+            console.log('✅ [HYBRID] Изображение создано через Hugging Face');
+            return {
+                success: true,
+                imageUrl: hfResult.imageUrl,
+                provider: 'HuggingFace',
+                operation: 'generate'
+            };
+        }
+    } catch (hfError) {
+        console.log('⚠️ [HYBRID] Hugging Face недоступен:', hfError.message);
+    }
+
     // Fallback на Pollinations.ai
     console.log('🔄 [HYBRID] Переключаемся на Pollinations.ai');
     
