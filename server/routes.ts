@@ -400,12 +400,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           delete require.cache[require.resolve('./smart-router')];
           const smartRouter = require('./smart-router');
           const aiResponse = await smartRouter.getChatResponse(messageData.content, {
-            userId: `session_${sessionId}`
+            userId: `session_${sessionId}`,
+            sessionId: sessionId
           });
           
           console.log('🎯 AI ответил:', aiResponse);
           
-          if (aiResponse && aiResponse.response) {
+          if (aiResponse && aiResponse.success && aiResponse.response) {
             // Сохраняем ответ AI в ту же сессию
             const aiMessageData = {
               sessionId,
