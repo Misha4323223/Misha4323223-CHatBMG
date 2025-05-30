@@ -51,41 +51,18 @@ async function generateImage(prompt, style = 'realistic', previousImage = null, 
     console.log('🔄 [HYBRID] Переключаемся на Pollinations.ai');
     
     try {
-        // Динамический импорт CommonJS модуля
-        const pollinationsModule = await import('./ai-image-generator.js');
-        const pollinationsGenerate = pollinationsModule.generateImage || pollinationsModule.default?.generateImage;
+        // Прямой вызов Pollinations API
+        const enhancedPrompt = `high quality draw ${prompt}, detailed, professional`;
+        const imageId = Date.now();
+        const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?width=1024&height=1024&nologo=true&enhance=true&seed=${imageId}`;
         
-        if (!pollinationsGenerate) {
-            // Используем require для CommonJS модуля
-            const pollinationsRequire = require('./ai-image-generator.js');
-            const result = await pollinationsRequire.generateImage(prompt, style, previousImage, sessionId, userId);
-            
-            if (result && result.success) {
-                console.log('✅ [HYBRID] Изображение создано через Pollinations.ai');
-                return {
-                    success: true,
-                    imageUrl: result.imageUrl,
-                    provider: 'Pollinations_AI',
-                    operation: 'generate'
-                };
-            } else {
-                throw new Error(result?.error || 'Ошибка генерации изображения');
-            }
-        } else {
-            const result = await pollinationsGenerate(prompt, style, previousImage, sessionId, userId);
-            
-            if (result && result.success) {
-                console.log('✅ [HYBRID] Изображение создано через Pollinations.ai');
-                return {
-                    success: true,
-                    imageUrl: result.imageUrl,
-                    provider: 'Pollinations_AI',
-                    operation: 'generate'
-                };
-            } else {
-                throw new Error(result?.error || 'Ошибка генерации изображения');
-            }
-        }
+        console.log('✅ [HYBRID] Изображение создано через Pollinations.ai');
+        return {
+            success: true,
+            imageUrl: imageUrl,
+            provider: 'Pollinations_AI',
+            operation: 'generate'
+        };
     } catch (error) {
         console.log('❌ [HYBRID] Ошибка Pollinations.ai:', error.message);
         return {
