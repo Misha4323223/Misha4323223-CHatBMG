@@ -1,6 +1,5 @@
 const { analyzeMessage } = require('./smart-router'); // Импортируем в начале файла
-const { generateImage } = require('./ai-image-generator');
-// Импорт будет добавлен динамически при необходимости
+// Импорты будут добавлены динамически при необходимости
 const { getConversation } = require('./conversation-memory');
 
 const demoDelay = 1500;
@@ -91,9 +90,9 @@ module.exports = async function apiChatStream(req, res) {
           content: '🎨 Обрабатываю изображение...' 
         })}\n\n`);
         
-        // Используем локальный редактор
-        const { processLocalEdit } = await import('./local-image-editor.js');
-        const result = await processLocalEdit(previousImage.url, message);
+        // Используем гибридную систему редактирования
+        const { editImage } = await import('./hybrid-image-generator.js');
+        const result = await editImage(previousImage.url, message);
         
         if (result && result.success) {
           res.write(`event: image\n`);
@@ -125,6 +124,9 @@ module.exports = async function apiChatStream(req, res) {
     if (messageAnalysis.category === 'image_generation' || messageAnalysis.category === 'image_edit') {
       try {
         const userId = `session_${sessionId}`;
+        
+        // Используем гибридную систему генерации
+        const { generateImage } = await import('./hybrid-image-generator.js');
         const result = await generateImage(
           message, // используем оригинальное сообщение как промпт
           'realistic', // стиль по умолчанию
