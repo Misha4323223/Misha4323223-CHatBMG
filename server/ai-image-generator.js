@@ -410,7 +410,18 @@ function enhancePromptForEdit(editRequest, previousImage, style) {
       // Добавляем альтернативное описание
       editedPrompt = editedPrompt + ', without boots, barefoot';
     } else if (editLower.includes('шляп') || editLower.includes('hat')) {
-      editedPrompt = editedPrompt.replace(/hat|шляп[ауые]?/gi, '').replace(/\s+/g, ' ').trim();
+      // Убираем всё связанное со шляпой
+      editedPrompt = editedPrompt
+        .replace(/wearing hat/gi, '')
+        .replace(/with hat/gi, '')
+        .replace(/hat/gi, '')
+        .replace(/шляп[ауыеой]?/gi, '')
+        .replace(/с\s+шляп[ауыеой]?/gi, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+      
+      // Добавляем альтернативное описание
+      editedPrompt = editedPrompt + ', without hat';
     } else if (editLower.includes('очк') || editLower.includes('glasses')) {
       editedPrompt = editedPrompt.replace(/glasses|очк[иа]/gi, '').replace(/\s+/g, ' ').trim();
     }
