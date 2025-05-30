@@ -150,8 +150,10 @@ const SmartChat: React.FC = () => {
                         } : msg
                       ));
                       
-                      // Завершаем обработку стрима после получения изображения
-                      return; // Выходим из функции после получения изображения
+                      // Изображение получено и отображено, завершаем стрим
+                      console.log('✅ [STREAMING] Изображение получено и отображено');
+                      reader.cancel();
+                      return;
                     } else if (data.text) {
                       fullResponse += data.text;
                       if (data.provider) aiProvider = data.provider;
