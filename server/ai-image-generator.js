@@ -51,7 +51,7 @@ async function generateImage(prompt, style = 'realistic', previousImage = null) 
       enhancedPrompt = enhancePromptForEdit(prompt, previousImage, style);
       console.log(`🔄 [DEBUG] Промпт для редактирования: "${enhancedPrompt}"`);
     } else {
-      // Это новая генерация - быстро улучшаем промпт
+      // Это новая генерация - только простой перевод без AI
       enhancedPrompt = enhancePromptWithAI(prompt, style);
       console.log(`🎨 [DEBUG] Промпт для новой генерации: "${enhancedPrompt}"`);
     }

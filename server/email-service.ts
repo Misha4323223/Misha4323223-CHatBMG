@@ -48,13 +48,16 @@ class EmailService {
       }).returning();
 
       // Отправляем email
-      await this.mailService.send({
+      const mailData: any = {
         to: params.to,
         from: params.from,
         subject: params.subject,
-        text: params.text,
-        html: params.html || undefined,
-      });
+      };
+      
+      if (params.text) mailData.text = params.text;
+      if (params.html) mailData.html = params.html;
+      
+      await this.mailService.send(mailData);
 
       // Обновляем статус
       await db.update(emailNotifications)
@@ -137,7 +140,7 @@ class EmailService {
   }
 
   private getReportTitle(reportType: string): string {
-    const titles = {
+    const titles: Record<string, string> = {
       daily: 'Ежедневный',
       weekly: 'Еженедельный', 
       monthly: 'Ежемесячный',
