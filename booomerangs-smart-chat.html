@@ -1598,6 +1598,21 @@
       function detectOperationType(message) {
         const lowerMessage = message.toLowerCase();
         
+        // Проверяем команды редактирования изображений
+        if (lowerMessage.includes('убери') || lowerMessage.includes('удали') || 
+            lowerMessage.includes('убрать') || lowerMessage.includes('удалить') ||
+            lowerMessage.includes('измени') || lowerMessage.includes('поменяй') ||
+            lowerMessage.includes('добавь') || lowerMessage.includes('сделай')) {
+          // Проверяем, есть ли предыдущее изображение для редактирования
+          const lastImage = getLastGeneratedImage();
+          if (lastImage) {
+            return {
+              title: '✏️ Редактирование изображения',
+              message: 'AI редактирует предыдущее изображение...'
+            };
+          }
+        }
+        
         if (lowerMessage.includes('генерир') || lowerMessage.includes('создай') || 
             lowerMessage.includes('нарисуй') || lowerMessage.includes('изображение')) {
           return {
