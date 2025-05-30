@@ -244,7 +244,8 @@ function parseEditCommand(command) {
         return { type: 'rotate', angle };
     }
     
-    if (lowerCommand.includes('черно-белый') || lowerCommand.includes('grayscale')) {
+    if (lowerCommand.includes('черно-белый') || lowerCommand.includes('черно белый') || 
+        lowerCommand.includes('сделай черно') || lowerCommand.includes('grayscale')) {
         return { type: 'filter', filter: 'grayscale' };
     }
     
