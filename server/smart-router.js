@@ -417,7 +417,7 @@ async function routeMessage(message, options = {}) {
         prompt = `Дизайн принта для футболки: ${prompt}`;
       }
       
-      const result = await imageGenerator.generateImage(prompt, style);
+      const result = await imageGenerator.generateImage(prompt, style, null, options.sessionId, options.userId);
       
       if (result.success) {
         // Сохраняем ответ в память разговора
