@@ -132,6 +132,62 @@ async function editImage(imageUrl, editPrompt, options = {}) {
         }
     }
     
+    // Пробуем Gradio Spaces
+    console.log('🔄 [HYBRID] Проверяем Gradio Spaces для редактирования...');
+    
+    try {
+        const editType = analyzeEditRequest(editPrompt);
+        
+        const { spawn } = require('child_process');
+        const pythonProcess = spawn('python', ['-c', `
+import asyncio
+import sys
+sys.path.append('server')
+from gradio_inpaint_client import gradio_client
+
+async def main():
+    try:
+        if '${editType}' == 'remove_background':
+            result = await gradio_client.remove_background('${imageUrl}')
+        elif '${editType}' == 'enhance':
+            result = await gradio_client.enhance_image('${imageUrl}')
+        else:
+            result = await gradio_client.inpaint_image('${imageUrl}', 'auto', '${editPrompt}')
+        print('GRADIO_RESULT:', result)
+    except Exception as e:
+        print('GRADIO_ERROR:', str(e))
+
+asyncio.run(main())
+        `]);
+        
+        let gradioOutput = '';
+        pythonProcess.stdout.on('data', (data) => {
+            gradioOutput += data.toString();
+        });
+        
+        await new Promise((resolve) => {
+            pythonProcess.on('close', resolve);
+        });
+        
+        const resultMatch = gradioOutput.match(/GRADIO_RESULT: (.+)/);
+        if (resultMatch) {
+            const result = JSON.parse(resultMatch[1].replace(/'/g, '"'));
+            
+            if (result.success) {
+                console.log('✅ [HYBRID] Изображение отредактировано через Gradio Spaces');
+                return {
+                    success: true,
+                    imageUrl: result.result_url,
+                    provider: 'Gradio_Spaces',
+                    operation: 'edit',
+                    description: `Редактирование через Gradio: ${editPrompt}`
+                };
+            }
+        }
+    } catch (gradioError) {
+        console.log('⚠️ [HYBRID] Gradio Spaces недоступен:', gradioError.message);
+    }
+
     // Fallback на локальный редактор
     console.log('🔄 [HYBRID] Используем локальный редактор');
     
@@ -163,6 +219,23 @@ async function editImage(imageUrl, editPrompt, options = {}) {
 }
 
 /**
+ * Анализ запроса редактирования для определения типа операции
+ */
+function analyzeEditRequest(request) {
+    const lowerRequest = request.toLowerCase();
+    
+    if (lowerRequest.includes('удали фон') || lowerRequest.includes('убери фон') || lowerRequest.includes('remove background')) {
+        return 'remove_background';
+    }
+    
+    if (lowerRequest.includes('улучши') || lowerRequest.includes('повыси качество') || lowerRequest.includes('enhance')) {
+        return 'enhance';
+    }
+    
+    return 'inpaint';
+}
+
+/**
  * Получение статуса всех систем
  */
 async function getSystemStatus() {
@@ -173,6 +246,10 @@ async function getSystemStatus() {
         pollinations: {
             status: 'available',
             message: 'Pollinations.ai всегда доступен как резервная система'
+        },
+        gradioSpaces: {
+            status: 'available',
+            message: 'Gradio Spaces доступны для продвинутого редактирования'
         },
         localEditor: {
             status: 'available',
