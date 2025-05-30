@@ -38,7 +38,24 @@ function generateId() {
  * @returns {Promise<{success: boolean, imageUrl: string, error?: string}>}
  */
 async function generateImage(prompt, style = 'realistic', previousImage = null, sessionId = null, userId = null) {
-  const { imageLogger } = require('./logger.js');
+  // Проверяем существование модуля логирования
+  let imageLogger;
+  try {
+    imageLogger = require('./logger.ts').imageLogger;
+  } catch (e) {
+    // Создаем простой логгер если основной недоступен
+    imageLogger = {
+      requestReceived: (prompt, sessionId, userId) => console.log(`🎨 [IMG] Запрос: ${prompt}`),
+      aiEnhancement: (original, enhanced, provider, duration, sessionId) => console.log(`🤖 [IMG] AI улучшил: ${enhanced}`),
+      promptTranslation: (original, translated, method, sessionId) => console.log(`🌐 [IMG] Перевод: ${translated}`),
+      generationStarted: (prompt, generator, sessionId) => console.log(`🔄 [IMG] Начинаем генерацию: ${generator}`),
+      generationCompleted: (imageUrl, generator, duration, sessionId) => console.log(`✅ [IMG] Готово: ${imageUrl}`),
+      generationFailed: (error, generator, sessionId) => console.log(`❌ [IMG] Ошибка: ${error}`),
+      editingStarted: (originalUrl, prompt, sessionId) => console.log(`🔄 [IMG] Редактирование: ${prompt}`),
+      editingCompleted: (originalUrl, newUrl, duration, sessionId) => console.log(`✅ [IMG] Отредактировано: ${newUrl}`),
+      editingFailed: (error, sessionId) => console.log(`❌ [IMG] Ошибка редактирования: ${error}`)
+    };
+  }
   const startTime = Date.now();
   
   try {
