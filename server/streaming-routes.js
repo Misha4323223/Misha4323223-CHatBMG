@@ -49,14 +49,25 @@ module.exports = async function apiChatStream(req, res) {
     }
 
     // Генерируем изображение, если нужно
-    if (messageAnalysis.category === 'image_create' || messageAnalysis.category === 'image_edit') {
+    if (messageAnalysis.category === 'image_generation' || messageAnalysis.category === 'image_edit') {
       try {
-        const imageUrl = await generateImage({
-          prompt: messageAnalysis.prompt,
-          previousImage
-        });
-        res.write(`event: image\n`);
-        res.write(`data: ${JSON.stringify({ imageUrl })}\n\n`);
+        const userId = `session_${sessionId}`;
+        const result = await generateImage(
+          message, // используем оригинальное сообщение как промпт
+          'realistic', // стиль по умолчанию
+          previousImage,
+          sessionId,
+          userId
+        );
+        
+        if (result && result.success) {
+          const imageUrl = result.imageUrl;
+          res.write(`event: image\n`);
+          res.write(`data: ${JSON.stringify({ imageUrl })}\n\n`);
+        } else {
+          res.write(`event: error\n`);
+          res.write(`data: ${JSON.stringify({ error: result?.error || 'Ошибка генерации изображения' })}\n\n`);
+        }
       } catch (imageError) {
         console.error('Ошибка генерации изображения:', imageError);
         res.write(`event: error\n`);
