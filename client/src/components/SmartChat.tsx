@@ -83,53 +83,128 @@ const SmartChat: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // Отправляем запрос к умной маршрутизации
-      const response = await fetch('/api/smart/message', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          message: messageText,
-          userId: 'anonymous',
-          imageUrl: currentImageUrl
-        }),
-      });
+      // Сначала пробуем стриминговый ответ для изображений
+      let streamingSuccessful = false;
+      let fullResponse = '';
+      let aiProvider = '';
+      let aiCategory = '';
+      let imageFound = false;
 
-      if (!response.ok) {
-        throw new Error(`Ошибка: ${response.statusText}`);
+      try {
+        console.log('🚀 [STREAMING] Начинаем потоковую генерацию для сообщения:', messageText);
+        console.log('📡 [STREAMING] Отправляем запрос к /api/stream...');
+        
+        const streamResponse = await fetch('/api/stream', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            message: messageText,
+            sessionId: Date.now()
+          }),
+        });
+
+        if (streamResponse.ok) {
+          console.log('✅ [STREAMING] Получен ответ от сервера, начинаем чтение потока...');
+          const reader = streamResponse.body?.getReader();
+          const decoder = new TextDecoder();
+          let chunkCount = 0;
+
+          if (reader) {
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+
+              chunkCount++;
+              const chunk = decoder.decode(value);
+              console.log(`📥 [STREAMING] Чанк ${chunkCount}:`, chunk.substring(0, 100) + '...');
+
+              const lines = chunk.split('\n');
+              for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                  try {
+                    const data = JSON.parse(line.slice(6));
+                    console.log('🔍 [STREAMING] Обработка данных:', data);
+                    
+                    if (data.imageUrl) {
+                      imageFound = true;
+                      fullResponse = `🎨 Изображение создано! Вот ваш дизайн:\n![Сгенерированное изображение](${data.imageUrl})`;
+                      aiProvider = 'Image Generator';
+                      aiCategory = 'image_generation';
+                      streamingSuccessful = true;
+                    } else if (data.text) {
+                      fullResponse += data.text;
+                      if (data.provider) aiProvider = data.provider;
+                      if (data.category) aiCategory = data.category;
+                      streamingSuccessful = true;
+                    }
+                  } catch (e) {
+                    console.log('⚠️ [STREAMING] Не удалось разобрать JSON:', line);
+                  }
+                }
+              }
+            }
+            console.log(`📤 [STREAMING] Поток завершен. Получено чанков: ${chunkCount}`);
+          }
+        }
+      } catch (streamError) {
+        console.log('❌ [STREAMING] Ошибка потоковой генерации:', streamError);
       }
 
-      const data = await response.json();
-      console.log('Получен ответ от сервера:', data);
-      
-      // Проверяем успешность ответа
-      if (data.success && data.response) {
-        // Формируем текст ответа, включая изображения
-        let responseText = data.response;
+      // Если стриминг не сработал, используем обычный API
+      if (!streamingSuccessful) {
+        console.log('🔄 [FALLBACK] Переключаемся на обычный API...');
         
-        // Если есть сгенерированное изображение, добавляем его в ответ
-        if (data.imageUrl) {
-          responseText += `\n\n![Сгенерированное изображение](${data.imageUrl})`;
+        const response = await fetch('/api/smart/message', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            message: messageText,
+            userId: 'anonymous',
+            imageUrl: currentImageUrl
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Ошибка: ${response.statusText}`);
         }
+
+        const data = await response.json();
+        console.log('Получен ответ от сервера:', data);
         
-        // Обновляем временное сообщение реальным ответом
+        if (data.success && data.response) {
+          fullResponse = data.response;
+          if (data.imageUrl) {
+            fullResponse += `\n\n![Сгенерированное изображение](${data.imageUrl})`;
+          }
+          aiProvider = data.provider || "AI";
+          aiCategory = data.category || "general";
+        } else {
+          throw new Error(data.error || "Сервер вернул неуспешный ответ");
+        }
+      }
+
+      // Обновляем временное сообщение реальным ответом
+      if (fullResponse) {
         setMessages(prevMessages => prevMessages.map(msg => 
           msg.id === tempAiMessageId ? {
             id: tempAiMessageId,
-            text: responseText,
+            text: fullResponse,
             sender: 'ai',
             timestamp: new Date(),
             loading: false,
-            category: data.category || "general",
-            provider: data.provider || "AI",
-            bestProvider: data.bestProvider || data.provider,
+            category: aiCategory,
+            provider: aiProvider,
+            bestProvider: aiProvider,
             error: false,
             errorMessage: undefined
           } : msg
         ));
       } else {
-        throw new Error(data.error || "Сервер вернул неуспешный ответ");
+        throw new Error("Не получен ответ от сервера");
       }
     } catch (error) {
       console.error('Ошибка:', error);
