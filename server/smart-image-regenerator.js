@@ -305,6 +305,9 @@ async function regenerateImageWithoutObject(imageUrl, objectToRemove) {
     
     if (realEditResult.success) {
       console.log('✅ [REGENERATOR] Реальное редактирование успешно');
+      console.log('🔗 [REGENERATOR] URL результата:', realEditResult.imageUrl);
+      console.log('📁 [REGENERATOR] Путь файла:', realEditResult.imagePath);
+      console.log('📊 [REGENERATOR] Полный результат:', realEditResult);
       
       return {
         success: true,
