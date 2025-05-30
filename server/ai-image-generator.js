@@ -101,8 +101,13 @@ async function generateImage(prompt, style = 'realistic', previousImage = null) 
  * Простой словарь для перевода ключевых слов
  */
 const SIMPLE_TRANSLATE = {
+  'кот в сапогах': 'cat wearing boots',
+  'кота в сапогах': 'cat wearing boots',
   'кот': 'cat',
-  'кота': 'cat', 
+  'кота': 'cat',
+  'сапоги': 'boots',
+  'сапогах': 'boots',
+  'в сапогах': 'wearing boots',
   'кибер': 'cyber',
   'техно': 'techno',
   'самурай': 'samurai',
@@ -118,7 +123,9 @@ const SIMPLE_TRANSLATE = {
   'космос': 'space',
   'создай': 'create',
   'нарисуй': 'draw',
-  'сделай': 'make'
+  'сделай': 'make',
+  'убери': 'remove',
+  'удали': 'remove'
 };
 
 /**
@@ -132,8 +139,11 @@ function enhancePromptWithAI(prompt, style) {
   
   let englishPrompt = prompt.toLowerCase();
   
-  // Переводим ключевые слова
-  for (const [russian, english] of Object.entries(SIMPLE_TRANSLATE)) {
+  // Сначала переводим длинные фразы, потом короткие
+  const sortedTranslations = Object.entries(SIMPLE_TRANSLATE)
+    .sort(([a], [b]) => b.length - a.length);
+  
+  for (const [russian, english] of sortedTranslations) {
     englishPrompt = englishPrompt.replace(new RegExp(russian, 'g'), english);
   }
   

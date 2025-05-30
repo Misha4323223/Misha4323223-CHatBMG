@@ -145,6 +145,66 @@ export type ChatSession = typeof chatSessions.$inferSelect;
 export type InsertAiMessage = z.infer<typeof insertAiMessageSchema>;
 export type AiMessage = typeof aiMessages.$inferSelect;
 
+// Система автоматических отчетов
+export const reportTemplates = pgTable("report_templates", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  reportType: text("report_type").notNull(), // "daily", "weekly", "monthly", "usage", "errors"
+  schedule: text("schedule").notNull(), // cron format
+  isActive: boolean("is_active").default(true).notNull(),
+  emailRecipients: text("email_recipients").array(), // список email для отправки
+  lastRun: timestamp("last_run"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const reportLogs = pgTable("report_logs", {
+  id: serial("id").primaryKey(),
+  templateId: integer("template_id").references(() => reportTemplates.id).notNull(),
+  reportData: text("report_data").notNull(), // JSON с данными отчета
+  status: text("status").notNull(), // "success", "failed", "sending"
+  emailsSent: integer("emails_sent").default(0),
+  errorMessage: text("error_message"),
+  generatedAt: timestamp("generated_at").defaultNow().notNull(),
+});
+
+export const emailNotifications = pgTable("email_notifications", {
+  id: serial("id").primaryKey(),
+  type: text("type").notNull(), // "report", "error", "system"
+  recipient: text("recipient").notNull(),
+  subject: text("subject").notNull(),
+  content: text("content").notNull(),
+  status: text("status").notNull().default("pending"), // "pending", "sent", "failed"
+  reportLogId: integer("report_log_id").references(() => reportLogs.id),
+  sentAt: timestamp("sent_at"),
+  errorMessage: text("error_message"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertReportTemplateSchema = createInsertSchema(reportTemplates).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertReportLogSchema = createInsertSchema(reportLogs).omit({
+  id: true,
+  generatedAt: true,
+});
+
+export const insertEmailNotificationSchema = createInsertSchema(emailNotifications).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type ReportTemplate = typeof reportTemplates.$inferSelect;
+export type InsertReportTemplate = z.infer<typeof insertReportTemplateSchema>;
+export type ReportLog = typeof reportLogs.$inferSelect;
+export type InsertReportLog = z.infer<typeof insertReportLogSchema>;
+export type EmailNotification = typeof emailNotifications.$inferSelect;
+export type InsertEmailNotification = z.infer<typeof insertEmailNotificationSchema>;
+
 // Define schemas for API validation
 export const authSchema = z.object({
   token: z.string().min(1, "Access token is required"),
