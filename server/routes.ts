@@ -227,6 +227,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/flask', (req, res) => {
     res.sendFile('booomerangs-flask-stream.html', { root: '.' });
   });
+
+  // Страница просмотра логов системы
+  app.get('/logs', (req, res) => {
+    res.sendFile('logs-viewer.html', { root: '.' });
+  });
   
   // Перенаправляем запрос умного чата на HTML-страницу
   app.get('/smart-chat', (req, res) => {
@@ -1348,6 +1353,57 @@ ${message ? `\n💭 **Ваш запрос:** ${message}` : ''}
   const streamingHandler = require('./streaming-routes');
   app.post("/api/stream", streamingHandler);
 
+  // API для просмотра логов системы
+  app.get('/api/logs/recent', (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 50;
+      const logs = logger.getRecentLogs(limit);
+      res.json({ success: true, logs });
+    } catch (error) {
+      res.status(500).json({ success: false, error: 'Ошибка получения логов' });
+    }
+  });
+
+  app.get('/api/logs/session/:sessionId', (req, res) => {
+    try {
+      const sessionId = parseInt(req.params.sessionId);
+      const logs = logger.getSessionLogs(sessionId);
+      res.json({ success: true, logs, sessionId });
+    } catch (error) {
+      res.status(500).json({ success: false, error: 'Ошибка получения логов сессии' });
+    }
+  });
+
+  app.get('/api/logs/category/:category', (req, res) => {
+    try {
+      const category = req.params.category;
+      const logs = logger.getCategoryLogs(category);
+      res.json({ success: true, logs, category });
+    } catch (error) {
+      res.status(500).json({ success: false, error: 'Ошибка получения логов категории' });
+    }
+  });
+
+  app.get('/api/logs/stats', (req, res) => {
+    try {
+      const stats = logger.getStats();
+      res.json({ success: true, stats });
+    } catch (error) {
+      res.status(500).json({ success: false, error: 'Ошибка получения статистики логов' });
+    }
+  });
+
+  app.delete('/api/logs', (req, res) => {
+    try {
+      logger.clearLogs();
+      res.json({ success: true, message: 'Логи очищены' });
+    } catch (error) {
+      res.status(500).json({ success: false, error: 'Ошибка очистки логов' });
+    }
+  });
+
+  // Обновляем вызовы генерации изображений для передачи sessionId и userId
+  const originalSmartRouter = require('./smart-router');
   
   return httpServer;
 }
