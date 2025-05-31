@@ -14,6 +14,7 @@ app.use(express.urlencoded({ extended: false }));
 // Статическая раздача загруженных файлов
 app.use('/uploads', express.static('uploads'));
 app.use('/public', express.static('public'));
+app.use('/output', express.static('output'));
 
 app.use((req, res, next) => {
   const start = Date.now();
