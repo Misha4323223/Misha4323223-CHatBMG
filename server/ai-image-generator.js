@@ -285,17 +285,17 @@ function enhancePromptWithAI(prompt, style) {
     englishPrompt = englishPrompt.replace(new RegExp(russian, 'g'), english);
   }
   
-  // Добавляем базовые характеристики качества
-  englishPrompt = `high quality ${englishPrompt}, detailed, professional`;
+  // Добавляем базовые характеристики качества с акцентом на реализм
+  englishPrompt = `photorealistic, hyperrealistic, ${englishPrompt}, detailed skin texture, natural proportions, professional portrait photography, studio lighting, authentic materials, lifelike details`;
   
   // Если это принт, добавляем специфические характеристики
   if (prompt.toLowerCase().includes('принт') || prompt.toLowerCase().includes('футболка')) {
-    englishPrompt = `t-shirt design, vector style, ${englishPrompt}`;
+    englishPrompt = `photorealistic t-shirt design, realistic textures, ${englishPrompt}`;
   }
   
-  // Если это техно/кибер дизайн, добавляем соответствующие термины
+  // Если это техно/кибер дизайн, добавляем соответствующие термины с реализмом
   if (prompt.toLowerCase().includes('техно') || prompt.toLowerCase().includes('кибер')) {
-    englishPrompt = `cyberpunk style, futuristic, neon colors, ${englishPrompt}`;
+    englishPrompt = `photorealistic cyberpunk style, realistic futuristic armor, real human features, ${englishPrompt}`;
   }
   
   // Убираем русские символы, которые могли остаться
@@ -370,17 +370,17 @@ function enhanceRussianPromptBasic(prompt, style) {
   if (isTshirtDesign) {
     enhancedPrompt = `high quality t-shirt design, vector style, bold graphics, clean background, print-ready, ${translatedPrompt}`;
   } else if (isCharacter && isCyberpunk) {
-    enhancedPrompt = `highly detailed cyberpunk character, neon lighting, futuristic, digital art, 4k quality, ${translatedPrompt}`;
+    enhancedPrompt = `photorealistic cyberpunk character, real human features, detailed skin texture, realistic futuristic armor, natural proportions, professional portrait photography, ${translatedPrompt}`;
   } else if (isCharacter) {
-    enhancedPrompt = `highly detailed character portrait, professional digital art, cinematic lighting, 4k quality, ${translatedPrompt}`;
+    enhancedPrompt = `photorealistic character portrait, real human anatomy, detailed skin texture, natural proportions, professional portrait photography, studio lighting, ${translatedPrompt}`;
   } else if (isAnimal) {
-    enhancedPrompt = `photorealistic animal portrait, detailed fur texture, natural lighting, high quality, professional photography, ${translatedPrompt}`;
+    enhancedPrompt = `photorealistic animal portrait, detailed fur texture, natural lighting, lifelike details, professional photography, ${translatedPrompt}`;
   } else if (isNature) {
-    enhancedPrompt = `beautiful nature photography style, high resolution, vivid colors, professional quality, ${translatedPrompt}`;
+    enhancedPrompt = `photorealistic nature photography, high resolution, natural lighting, authentic textures, professional quality, ${translatedPrompt}`;
   } else if (isAbstract) {
-    enhancedPrompt = `modern abstract art, vibrant colors, high contrast, artistic composition, ${translatedPrompt}`;
+    enhancedPrompt = `photorealistic abstract art with realistic textures, natural lighting, authentic materials, ${translatedPrompt}`;
   } else {
-    enhancedPrompt = `high quality digital art, detailed, professional, ${originalPrompt}`;
+    enhancedPrompt = `photorealistic, hyperrealistic details, natural lighting, authentic textures, professional photography quality, ${translatedPrompt}`;
   }
   
   return enhancedPrompt;
