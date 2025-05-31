@@ -1997,7 +1997,8 @@
                     }
                     
                     // ВСЕГДА используем innerHTML (не textContent!)
-                    messageElement.innerHTML = processedText;
+                    // Применяем parseMarkdown для сокращения ссылок
+                    messageElement.innerHTML = parseMarkdown(processedText);
                     console.log('✅ [STREAMING] Обновлен HTML элемент');
                     console.log('🖥️ [STREAMING] ФИНАЛЬНЫЙ HTML:', messageElement.innerHTML);
                     console.log('📊 [STREAMING] Элемент содержит IMG тегов:', messageElement.querySelectorAll('img').length);
