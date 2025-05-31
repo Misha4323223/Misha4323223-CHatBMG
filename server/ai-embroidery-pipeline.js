@@ -54,16 +54,16 @@ function extractDesignDescription(message) {
  * Оптимизирует промпт для создания изображений, подходящих для вышивки
  */
 function optimizePromptForEmbroidery(description) {
+  // Проверяем, не содержит ли уже промпт ключевые слова вышивки
+  if (description.includes('simple design') || description.includes('embroidery')) {
+    return description; // Уже оптимизирован
+  }
+  
   // Добавляем ключевые слова для получения четких контуров
   const embroideryOptimizations = [
     'simple design',
     'clear outlines', 
-    'bold lines',
-    'minimal details',
-    'high contrast',
-    'vector style',
-    'clean design',
-    'embroidery style'
+    'bold lines'
   ];
   
   // Убираем элементы, которые плохо подходят для вышивки
@@ -81,8 +81,8 @@ function optimizePromptForEmbroidery(description) {
     optimizedPrompt = optimizedPrompt.replace(regex, '');
   });
   
-  // Добавляем оптимизации для вышивки
-  optimizedPrompt += ', ' + embroideryOptimizations.slice(0, 3).join(', ');
+  // Добавляем оптимизации для вышивки только один раз
+  optimizedPrompt += ', ' + embroideryOptimizations.join(', ');
   
   return optimizedPrompt.trim();
 }
