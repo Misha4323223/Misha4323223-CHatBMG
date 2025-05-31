@@ -6,44 +6,59 @@ const { eq, desc } = require("drizzle-orm");
  * Создание новой сессии чата
  */
 async function createChatSession(userId: number, title: string) {
-  const [session] = await db
-    .insert(chatSessions)
-    .values({
-      userId,
-      title,
-    })
-    .returning();
-  
-  return session;
+  try {
+    const [session] = await db
+      .insert(chatSessions)
+      .values({
+        userId,
+        title,
+      })
+      .returning();
+    
+    return session;
+  } catch (error) {
+    console.error('Ошибка создания сессии чата:', error);
+    throw new Error('Не удалось создать сессию чата');
+  }
 }
 
 /**
  * Получение всех сессий пользователя
  */
 async function getUserChatSessions(userId) {
-  return await db
-    .select()
-    .from(chatSessions)
-    .where(eq(chatSessions.userId, userId))
-    .orderBy(desc(chatSessions.updatedAt));
+  try {
+    return await db
+      .select()
+      .from(chatSessions)
+      .where(eq(chatSessions.userId, userId))
+      .orderBy(desc(chatSessions.updatedAt));
+  } catch (error) {
+    console.error('Ошибка получения сессий пользователя:', error);
+    return [];
+  }
 }
 
 /**
  * Сохранение сообщения в чат
  */
 async function saveMessage(messageData) {
-  const [message] = await db
-    .insert(aiMessages)
-    .values(messageData)
-    .returning();
-  
-  // Обновляем время последнего сообщения в сессии
-  await db
-    .update(chatSessions)
-    .set({ updatedAt: new Date() })
-    .where(eq(chatSessions.id, messageData.sessionId));
-  
-  return message;
+  try {
+    const [message] = await db
+      .insert(aiMessages)
+      .values(messageData)
+      .returning();
+    
+    // Обновляем время последнего сообщения в сессии
+    await db
+      .update(chatSessions)
+      .set({ updatedAt: new Date() })
+      .where(eq(chatSessions.id, messageData.sessionId));
+    
+    return message;
+  } catch (error) {
+    console.error('Ошибка сохранения сообщения:', error);
+    throw new Error('Не удалось сохранить сообщение');
+  }
 }
 
 /**
