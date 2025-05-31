@@ -41,12 +41,18 @@ const webSearchProvider = require('./web-search-provider');
  */
 async function getSmartResponse(userQuery) {
   try {
+    SmartLogger.route(`🚀 ВЫЗВАНА УПРОЩЕННАЯ ИНТЕГРАЦИЯ для: "${userQuery}"`);
+    
     // Проверяем, нужен ли поиск
-    if (!webSearchProvider.needsWebSearch(userQuery)) {
+    const searchNeeded = webSearchProvider.needsWebSearch(userQuery);
+    SmartLogger.route(`🔍 Проверка поиска в упрощенной функции: ${searchNeeded}`);
+    
+    if (!searchNeeded) {
+      SmartLogger.route(`❌ Поиск не нужен, выходим`);
       return { success: false, reason: 'no_search_needed' };
     }
     
-    SmartLogger.route(`🔍 Выполняем поиск + AI для: "${userQuery}"`);
+    SmartLogger.route(`✅ Выполняем поиск + AI для: "${userQuery}"`);
     
     // Получаем данные из интернета
     const searchResults = await webSearchProvider.performWebSearch(userQuery);
