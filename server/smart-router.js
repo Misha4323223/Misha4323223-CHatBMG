@@ -386,10 +386,17 @@ async function routeMessage(message, options = {}) {
       if (searchResults.success && searchResults.results.length > 0) {
         // Формируем контекст для AI с результатами поиска
         const searchContext = webSearchProvider.formatSearchResultsForAI(searchResults);
-        const enhancedMessage = `${message}\n\nДополнительная актуальная информация из интернета:\n${searchContext}`;
+        const enhancedMessage = `ВАЖНО: Ты ДОЛЖЕН использовать информацию из интернета ниже для ответа пользователю!
+
+Пользователь спрашивает: ${message}
+
+${searchContext}
+
+ОБЯЗАТЕЛЬНО используй эту актуальную информацию в своём ответе. НЕ говори, что не можешь предоставить данные в реальном времени - у тебя есть свежая информация выше!`;
         
         // Продолжаем обработку с обогащенным сообщением
         SmartLogger.route(`Веб-поиск успешен, найдено результатов: ${searchResults.results.length}`);
+        SmartLogger.route(`Отправляем AI обогащенное сообщение: "${enhancedMessage.substring(0, 200)}..."`);
         
         // Используем специализированные провайдеры для ответа с актуальной информацией
         const searchProviders = ["Qwen_Qwen_2_72B", "You", "PerplexityApi", "Qwen_Qwen_2_5_Max"];
