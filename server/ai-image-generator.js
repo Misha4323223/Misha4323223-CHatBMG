@@ -35,9 +35,10 @@ function generateId() {
  * Генерирует изображение, используя различные свободные API
  * @param {string} prompt - Текстовый запрос для генерации изображения
  * @param {string} style - Стиль изображения (realistic, artistic, etc.)
+ * @param {string} quality - Качество изображения (standard, hd, ultra)
  * @returns {Promise<{success: boolean, imageUrl: string, error?: string}>}
  */
-async function generateImage(prompt, style = 'realistic', previousImage = null, sessionId = null, userId = null) {
+async function generateImage(prompt, style = 'realistic', previousImage = null, sessionId = null, userId = null, quality = 'hd') {
   // Проверяем существование модуля логирования
   let imageLogger;
   try {
@@ -461,12 +462,28 @@ function enhancePromptForEdit(editRequest, previousImage, style) {
 }
 
 /**
+ * Определяет параметры качества для генерации изображений
+ * @param {string} quality - Уровень качества (standard, hd, ultra)
+ * @returns {Object} Параметры для генерации
+ */
+function getQualitySettings(quality) {
+  const settings = {
+    standard: { width: 1024, height: 1024, model: 'flux', enhance: true },
+    hd: { width: 2048, height: 2048, model: 'flux', enhance: true, quality: 'high' },
+    ultra: { width: 3072, height: 3072, model: 'flux-pro', enhance: true, quality: 'ultra' }
+  };
+  
+  return settings[quality] || settings.hd;
+}
+
+/**
  * Генерирует изображение с помощью Pollinations.ai API
  * @param {string} prompt - Текстовый запрос
  * @param {string} imageId - Уникальный ID изображения
+ * @param {string} quality - Качество изображения
  * @returns {Promise<string>} URL сгенерированного изображения
  */
-async function generateWithPollinations(prompt, imageId) {
+async function generateWithPollinations(prompt, imageId, quality = 'hd') {
   // Убеждаемся что промпт не пустой
   if (!prompt || prompt.trim() === '') {
     throw new Error('Пустой промпт для генерации изображения');
@@ -479,8 +496,22 @@ async function generateWithPollinations(prompt, imageId) {
     throw new Error('Промпт слишком короткий после очистки');
   }
   
-  const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(cleanPrompt)}?width=1024&height=1024&nologo=true&enhance=true&seed=${Date.now()}`;
-  console.log(`🔗 [Pollinations] Создан URL: ${imageUrl}`);
+  const qualitySettings = getQualitySettings(quality);
+  const params = new URLSearchParams({
+    width: qualitySettings.width.toString(),
+    height: qualitySettings.height.toString(),
+    nologo: 'true',
+    enhance: qualitySettings.enhance.toString(),
+    model: qualitySettings.model,
+    seed: Date.now().toString()
+  });
+  
+  if (qualitySettings.quality) {
+    params.append('quality', qualitySettings.quality);
+  }
+  
+  const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(cleanPrompt)}?${params.toString()}`;
+  console.log(`🔗 [Pollinations] Создан URL (${quality}): ${qualitySettings.width}x${qualitySettings.height}`);
   
   return imageUrl;
 }
