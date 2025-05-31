@@ -141,10 +141,23 @@ async function generateAndConvertToEmbroidery(message, options = {}) {
     
     console.log('🖼️ Изображение сгенерировано:', imageResult.imageUrl);
     
-    // Читаем сгенерированное изображение
-    const imagePath = imageResult.imageUrl.replace('/output/', '');
-    const fullImagePath = path.join(process.cwd(), 'output', imagePath);
-    const imageBuffer = await fs.readFile(fullImagePath);
+    // Скачиваем сгенерированное изображение
+    let imageBuffer;
+    if (imageResult.imageUrl.startsWith('http')) {
+      // Если это URL, скачиваем изображение
+      console.log('📥 Скачиваем изображение по URL:', imageResult.imageUrl);
+      const fetch = require('node-fetch');
+      const response = await fetch(imageResult.imageUrl);
+      if (!response.ok) {
+        throw new Error(`Не удалось скачать изображение: ${response.status}`);
+      }
+      imageBuffer = await response.buffer();
+    } else {
+      // Если это локальный путь
+      const imagePath = imageResult.imageUrl.replace('/output/', '');
+      const fullImagePath = path.join(process.cwd(), 'output', imagePath);
+      imageBuffer = await fs.readFile(fullImagePath);
+    }
     
     // Анализируем изображение для вышивки
     const analysis = await analyzeImageForEmbroidery(imageBuffer);
