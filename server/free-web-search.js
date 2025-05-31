@@ -22,6 +22,10 @@ async function searchRealTimeInfo(query) {
             searchTerms.includes('адрес')) {
             const placeResults = await searchPlaces(query);
             results.push(...placeResults);
+            
+            // Дополнительно пробуем общий поиск для мест
+            const generalResults = await searchGeneral(query);
+            results.push(...generalResults);
         }
         
         // 2. Поиск погоды
@@ -71,10 +75,19 @@ async function searchPlaces(query) {
         
         // Извлекаем город из запроса
         const cityMatch = query.match(/(в|около|рядом|в городе)\s+([а-яё\w]+)/i);
-        const city = cityMatch ? cityMatch[2] : 'Москва';
+        const city = cityMatch ? cityMatch[2] : 'Воронеж';
         
-        const searchQuery = encodeURIComponent(`${query} ${city}`);
-        const url = `https://nominatim.openstreetmap.org/search?q=${searchQuery}&format=json&limit=5&addressdetails=1`;
+        // Формируем более точный поисковый запрос
+        let searchTerms = [];
+        if (query.includes('магазин')) searchTerms.push('shop');
+        if (query.includes('одежд')) searchTerms.push('clothes');
+        if (query.includes('уличн')) searchTerms.push('streetwear');
+        
+        const searchQuery = searchTerms.length > 0 ? 
+            encodeURIComponent(`${searchTerms.join(' ')} ${city} Russia`) :
+            encodeURIComponent(`shop clothes ${city} Russia`);
+            
+        const url = `https://nominatim.openstreetmap.org/search?q=${searchQuery}&format=json&limit=10&addressdetails=1&countrycodes=ru`;
         
         const response = await fetch(url, {
             headers: {
