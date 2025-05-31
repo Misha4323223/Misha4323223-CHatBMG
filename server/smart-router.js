@@ -384,9 +384,42 @@ async function routeMessage(message, options = {}) {
       });
       
       if (result.success) {
+        // Формируем полный ответ с AI-анализом
+        let fullResponse = result.message;
+        
+        // Добавляем информацию о файлах для скачивания
+        if (result.files && result.files.length > 0) {
+          fullResponse += '\n\n📁 **Файлы для скачивания:**\n';
+          result.files.forEach(file => {
+            const emoji = file.path.includes('.dst') ? '🧵' : 
+                         file.path.includes('.png') ? '🖼️' : '🎨';
+            const shortName = file.path.includes('.dst') ? 'DST файл' :
+                             file.path.includes('.png') ? 'PNG превью' : 'JSON схема';
+            fullResponse += `\n${emoji} [${shortName}](${file.path})`;
+          });
+        }
+        
+        // Добавляем детали
+        if (result.details) {
+          fullResponse += '\n\n📋 **Детали:**\n';
+          fullResponse += `\n• Цветов: ${result.details.colors}`;
+          fullResponse += `\n• Размер: ${result.details.size}`;
+          fullResponse += `\n• Формат: ${result.details.machineFormat}`;
+        }
+        
+        // Добавляем изображение
+        if (result.generatedImage) {
+          fullResponse += `\n\n![Сгенерированное изображение](${result.generatedImage})`;
+        }
+        
+        // Добавляем AI-отчет об оптимизации, если он есть
+        if (result.aiOptimizationReport) {
+          fullResponse += '\n\n' + result.aiOptimizationReport;
+        }
+        
         return {
           success: true,
-          response: result.message,
+          response: fullResponse,
           provider: 'AI-EmbroideryPipeline',
           model: 'ai-embroidery-generator',
           type: 'embroidery_generation',

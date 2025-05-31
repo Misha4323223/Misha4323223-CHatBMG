@@ -5,6 +5,7 @@
 
 const aiImageGenerator = require('./ai-image-generator');
 const { convertToEmbroidery, analyzeImageForEmbroidery } = require('./embroidery-converter');
+const { analyzeImageForEmbroidery: aiAnalyzeImage, applyAIOptimizations, generateOptimizationReport } = require('./ai-embroidery-optimizer');
 const fs = require('fs').promises;
 const path = require('path');
 const https = require('https');
@@ -196,17 +197,28 @@ async function generateAndConvertToEmbroidery(message, options = {}) {
       imageBuffer = await fs.readFile(fullImagePath);
     }
     
-    // Анализируем изображение для вышивки
-    const analysis = await analyzeImageForEmbroidery(imageBuffer);
+    // Проводим AI-анализ изображения для оптимизации
+    console.log('🤖 Запускаем AI-анализ для оптимизации...');
+    const aiAnalysis = await aiAnalyzeImage(imageBuffer, designDescription);
+    
+    // Применяем AI-оптимизации к изображению
+    let optimizedImageBuffer = imageBuffer;
+    if (aiAnalysis) {
+      console.log('🎨 Применяем AI-оптимизации...');
+      optimizedImageBuffer = await applyAIOptimizations(imageBuffer, aiAnalysis);
+    }
+    
+    // Анализируем изображение для вышивки (старый анализ)
+    const analysis = await analyzeImageForEmbroidery(optimizedImageBuffer);
     console.log('🔍 Анализ для вышивки:', analysis);
     
     // Определяем целевой формат
     const targetFormat = determineTargetFormat(message, analysis);
     console.log('🎯 Целевой формат:', targetFormat);
     
-    // Конвертируем в формат вышивки
+    // Конвертируем в формат вышивки (используем оптимизированное изображение)
     const conversionResult = await convertToEmbroidery(
-      imageBuffer,
+      optimizedImageBuffer,
       `generated_embroidery_${Date.now()}.png`,
       targetFormat,
       options.conversionOptions || {}
@@ -223,6 +235,9 @@ async function generateAndConvertToEmbroidery(message, options = {}) {
     
     console.log('🧵 Конвертация в формат вышивки завершена');
     
+    // Генерируем AI-отчет об оптимизации
+    const aiOptimizationReport = aiAnalysis ? generateOptimizationReport(aiAnalysis, designDescription) : '';
+    
     return {
       success: true,
       step: 'complete',
@@ -234,6 +249,7 @@ async function generateAndConvertToEmbroidery(message, options = {}) {
       colorPalette: conversionResult.colorPalette,
       files: conversionResult.files,
       instructions: conversionResult.instructions,
+      aiOptimizationReport: aiOptimizationReport,
       message: `Дизайн "${designDescription}" создан и готов для вышивки в формате ${conversionResult.format.name}`,
       details: {
         colors: conversionResult.colorPalette.length,
