@@ -148,19 +148,47 @@ async function generateAndConvertToEmbroidery(message, options = {}) {
       // Если это URL, скачиваем изображение
       console.log('📥 Скачиваем изображение по URL:', imageResult.imageUrl);
       
-      imageBuffer = await new Promise((resolve, reject) => {
-        https.get(imageResult.imageUrl, (response) => {
-          if (response.statusCode !== 200) {
-            reject(new Error(`Не удалось скачать изображение: ${response.statusCode}`));
-            return;
+      // Пробуем скачать изображение с повторными попытками
+      let attempts = 0;
+      const maxAttempts = 3;
+      
+      while (attempts < maxAttempts) {
+        try {
+          imageBuffer = await new Promise((resolve, reject) => {
+            const timeout = setTimeout(() => {
+              reject(new Error('Таймаут скачивания изображения'));
+            }, 10000); // 10 секунд таймаут
+            
+            https.get(imageResult.imageUrl, (response) => {
+              clearTimeout(timeout);
+              
+              if (response.statusCode !== 200) {
+                reject(new Error(`Сервис генерации изображений временно недоступен (код: ${response.statusCode})`));
+                return;
+              }
+              
+              const chunks = [];
+              response.on('data', (chunk) => chunks.push(chunk));
+              response.on('end', () => resolve(Buffer.concat(chunks)));
+              response.on('error', reject);
+            }).on('error', (error) => {
+              clearTimeout(timeout);
+              reject(error);
+            });
+          });
+          break; // Успешно скачали, выходим из цикла
+        } catch (error) {
+          attempts++;
+          console.log(`❌ Попытка ${attempts} не удалась: ${error.message}`);
+          
+          if (attempts >= maxAttempts) {
+            throw new Error(`Не удалось скачать изображение после ${maxAttempts} попыток. Сервис генерации изображений временно недоступен. Попробуйте позже.`);
           }
           
-          const chunks = [];
-          response.on('data', (chunk) => chunks.push(chunk));
-          response.on('end', () => resolve(Buffer.concat(chunks)));
-          response.on('error', reject);
-        }).on('error', reject);
-      });
+          // Ждем перед следующей попыткой
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+      }
     } else {
       // Если это локальный путь
       const imagePath = imageResult.imageUrl.replace('/output/', '');
