@@ -34,6 +34,7 @@ const deepInfraProvider = require('./deepinfra-provider');
 const pythonProviderRoutes = require('./python_provider_routes');
 const embroideryHandler = require('./embroidery-chat-handler');
 const aiEmbroideryPipeline = require('./ai-embroidery-pipeline');
+const webSearchProvider = require('./web-search-provider');
 
 // Специализации провайдеров
 const PROVIDER_SPECIALTIES = {
@@ -371,6 +372,58 @@ async function routeMessage(message, options = {}) {
     hasImage: !!options.imageUrl,
     options: Object.keys(options)
   });
+
+  // Проверяем, нужен ли веб-поиск для актуальной информации
+  if (webSearchProvider.needsWebSearch(message)) {
+    SmartLogger.route(`Обнаружен запрос, требующий веб-поиска`);
+    
+    try {
+      const searchResults = await webSearchProvider.performWebSearch(message);
+      
+      if (searchResults.success && searchResults.results.length > 0) {
+        // Формируем контекст для AI с результатами поиска
+        const searchContext = webSearchProvider.formatSearchResultsForAI(searchResults);
+        const enhancedMessage = `${message}\n\nДополнительная актуальная информация из интернета:\n${searchContext}`;
+        
+        // Продолжаем обработку с обогащенным сообщением
+        SmartLogger.route(`Веб-поиск успешен, найдено результатов: ${searchResults.results.length}`);
+        
+        // Используем специализированные провайдеры для ответа с актуальной информацией
+        const searchProviders = ["Qwen_Qwen_2_72B", "You", "PerplexityApi", "Qwen_Qwen_2_5_Max"];
+        
+        for (const provider of searchProviders) {
+          try {
+            const pythonProvider = require('./python_provider_routes');
+            const result = await pythonProvider.getChatResponse(enhancedMessage, { provider });
+            
+            if (result.success) {
+              SmartLogger.success(`Веб-поиск + AI ответ готов от провайдера: ${provider}`);
+              
+              return {
+                success: true,
+                response: result.response,
+                provider: `WebSearch+${provider}`,
+                model: result.model || provider,
+                category: 'web_search',
+                searchResults: searchResults.results,
+                processingTime: Date.now() - startTime
+              };
+            }
+          } catch (providerError) {
+            SmartLogger.error(`Ошибка провайдера ${provider} с веб-поиском:`, providerError);
+            continue;
+          }
+        }
+        
+        SmartLogger.error(`Не удалось получить ответ от AI провайдеров с веб-поиском`);
+      } else {
+        SmartLogger.route(`Веб-поиск не дал результатов, продолжаем обычную обработку`);
+      }
+    } catch (searchError) {
+      SmartLogger.error(`Ошибка веб-поиска:`, searchError);
+      // Продолжаем обычную обработку при ошибке поиска
+    }
+  }
 
   // Проверяем запросы на генерацию изображений для вышивки
   if (aiEmbroideryPipeline.isEmbroideryGenerationRequest(message)) {
