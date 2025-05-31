@@ -76,6 +76,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Статические файлы из корневой директории
   app.use(express.static(path.join(process.cwd())));
   
+  // Специальный маршрут для файлов вышивки с правильными заголовками скачивания
+  app.get('/output/embroidery/:filename', (req, res) => {
+    const filename = req.params.filename;
+    const filePath = path.join(process.cwd(), 'output', 'embroidery', filename);
+    
+    // Определяем тип контента на основе расширения
+    const ext = path.extname(filename).toLowerCase();
+    let contentType = 'application/octet-stream';
+    
+    if (ext === '.exp') contentType = 'application/x-melco-exp';
+    else if (ext === '.dst') contentType = 'application/x-tajima-dst';
+    else if (ext === '.pes') contentType = 'application/x-brother-pes';
+    else if (ext === '.jef') contentType = 'application/x-janome-jef';
+    else if (ext === '.vp3') contentType = 'application/x-husqvarna-vp3';
+    else if (ext === '.png') contentType = 'image/png';
+    else if (ext === '.json') contentType = 'application/json';
+    
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.sendFile(filePath);
+  });
+  
   // Подключаем генератор изображений
   app.use('/image-generator', (req, res) => {
     res.redirect('/api/svg');
