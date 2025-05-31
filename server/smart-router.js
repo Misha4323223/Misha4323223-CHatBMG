@@ -59,9 +59,8 @@ async function getAIResponseWithSearch(userQuery, options = {}) {
     SmartLogger.route(`🔍 Анализ запроса:`, requestAnalysis);
 
     // Сначала проверяем локально на SVG конвертацию
-    const lowerQuery = userQuery.toLowerCase();
     const svgKeywords = ['сохрани в svg', 'сохрани svg', 'экспорт в svg', 'конверт в svg', 'сделай svg', 'сохрани в свг', 'сохрани свг'];
-    const isSvgRequest = svgKeywords.some(keyword => lowerQuery.includes(keyword));
+    const isSvgRequest = svgKeywords.some(keyword => queryLower.includes(keyword));
 
     if (isSvgRequest) {
       SmartLogger.route(`🎨 Обнаружен запрос на SVG конвертацию локально`);
