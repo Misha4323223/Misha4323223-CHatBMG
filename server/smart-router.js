@@ -175,25 +175,65 @@ ${searchContext}
       
       // Проверяем ключевые слова для генерации изображений
       const imageKeywords = ['нарисуй', 'создай', 'сгенерируй', 'принт', 'дизайн', 'картинка', 'изображение', 'логотип', 'баннер'];
+      const embroideryKeywords = ['вышивк', 'dst', 'pes', 'jef', 'exp', 'vp3'];
+      
       const isImageRequest = imageKeywords.some(keyword => lowerQuery.includes(keyword));
+      const isEmbroideryRequest = embroideryKeywords.some(keyword => lowerQuery.includes(keyword));
       
       if (isImageRequest) {
         SmartLogger.route(`🎨 Обнаружен запрос на генерацию изображения через ключевые слова`);
         
-        // Импортируем генератор изображений
+        // Проверяем, нужна ли конвертация в формат вышивки
+        if (isEmbroideryRequest) {
+          SmartLogger.route(`🧵 Запрос включает создание вышивки`);
+          
+          try {
+            const aiEmbroideryPipeline = require('./ai-embroidery-pipeline');
+            const embroideryResult = await aiEmbroideryPipeline.generateAndConvertToEmbroidery(userQuery, options);
+            
+            if (embroideryResult.success) {
+              return {
+                success: true,
+                response: embroideryResult.response,
+                provider: 'AI_Embroidery_Pipeline',
+                searchUsed: false,
+                imageGenerated: true,
+                embroideryGenerated: true,
+                imageUrl: embroideryResult.imageUrl,
+                embroideryFiles: embroideryResult.files
+              };
+            } else {
+              // Если пайплайн вышивки не сработал, делаем обычное изображение
+              SmartLogger.route(`⚠️ Пайплайн вышивки не сработал, создаем обычное изображение`);
+            }
+          } catch (error) {
+            SmartLogger.error('Ошибка пайплайна вышивки:', error);
+            SmartLogger.route(`⚠️ Ошибка пайплайна вышивки, создаем обычное изображение`);
+          }
+        }
+        
+        // Обычная генерация изображения
         const aiImageGenerator = require('./ai-image-generator');
         
         try {
           const imageResult = await aiImageGenerator.generateImage(userQuery, 'realistic');
           
           if (imageResult.success && imageResult.imageUrl) {
-            return {
-              success: true,
-              response: `Я создал изображение по вашему запросу! Вот результат:
+            let response = `Я создал изображение по вашему запросу! Вот результат:
 
 ![Сгенерированное изображение](${imageResult.imageUrl})
 
-Изображение сохранено и готово к использованию. Если нужно что-то изменить, просто опишите что хотите поправить.`,
+Изображение сохранено и готово к использованию.`;
+
+            if (isEmbroideryRequest) {
+              response += `\n\n🧵 Чтобы конвертировать это изображение в формат для вышивальной машины (DST, PES, JEF), загрузите его и попросите "конвертируй в DST".`;
+            } else {
+              response += ` Если нужно что-то изменить, просто опишите что хотите поправить.`;
+            }
+            
+            return {
+              success: true,
+              response: response,
               provider: 'AI_Image_Generator',
               searchUsed: false,
               imageGenerated: true,
