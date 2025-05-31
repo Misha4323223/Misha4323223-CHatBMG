@@ -198,16 +198,53 @@ async function searchNews(query) {
                 });
                 
                 if (response.ok) {
-                    return {
-                        success: true,
-                        results: [{
-                            title: 'Актуальные новости',
-                            snippet: 'Для получения актуальных новостей рекомендуем посетить новостные сайты напрямую.',
-                            url: feedUrl,
-                            source: 'News RSS'
-                        }],
-                        provider: 'News'
-                    };
+                    const xmlText = await response.text();
+                    console.log(`🔍 [NEWS] Получили RSS данные, размер: ${xmlText.length} символов`);
+                    
+                    // Извлекаем заголовки новостей из RSS
+                    const titleRegex = /<title><!\[CDATA\[(.*?)\]\]><\/title>/g;
+                    const altTitleRegex = /<title>(.*?)<\/title>/g;
+                    
+                    let matches = [];
+                    let match;
+                    
+                    // Пробуем CDATA формат
+                    while ((match = titleRegex.exec(xmlText)) !== null) {
+                        matches.push(match[1]);
+                    }
+                    
+                    // Если не нашли, пробуем обычный формат
+                    if (matches.length === 0) {
+                        while ((match = altTitleRegex.exec(xmlText)) !== null) {
+                            matches.push(match[1]);
+                        }
+                    }
+                    
+                    console.log(`🔍 [NEWS] Найдено заголовков: ${matches.length}`);
+                    
+                    if (matches.length > 1) { // Пропускаем первый элемент (название канала)
+                        const news = [];
+                        for (let i = 1; i < Math.min(4, matches.length); i++) {
+                            const title = matches[i].trim();
+                            if (title && title.length > 10) {
+                                news.push({
+                                    title: title,
+                                    snippet: `Новость от ${new Date().toLocaleDateString('ru-RU')}`,
+                                    url: feedUrl,
+                                    source: 'RSS Feed'
+                                });
+                            }
+                        }
+                        
+                        if (news.length > 0) {
+                            console.log(`🔍 [NEWS] Успешно получено ${news.length} новостей`);
+                            return {
+                                success: true,
+                                results: news,
+                                provider: 'News'
+                            };
+                        }
+                    }
                 }
             } catch (err) {
                 continue;
