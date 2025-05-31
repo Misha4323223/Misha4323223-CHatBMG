@@ -33,6 +33,7 @@ const claudeProvider = require('./claude-provider');
 const deepInfraProvider = require('./deepinfra-provider');
 const pythonProviderRoutes = require('./python_provider_routes');
 const embroideryHandler = require('./embroidery-chat-handler');
+const aiEmbroideryPipeline = require('./ai-embroidery-pipeline');
 
 // Специализации провайдеров
 const PROVIDER_SPECIALTIES = {
@@ -370,6 +371,50 @@ async function routeMessage(message, options = {}) {
     hasImage: !!options.imageUrl,
     options: Object.keys(options)
   });
+
+  // Проверяем запросы на генерацию изображений для вышивки
+  if (aiEmbroideryPipeline.isEmbroideryGenerationRequest(message)) {
+    SmartLogger.route(`Обнаружен запрос на создание дизайна для вышивки`);
+    
+    try {
+      const result = await aiEmbroideryPipeline.generateAndConvertToEmbroidery(message, {
+        sessionId: options.sessionId,
+        userId: options.userId,
+        conversionOptions: {}
+      });
+      
+      if (result.success) {
+        return {
+          success: true,
+          response: result.message,
+          provider: 'AI-EmbroideryPipeline',
+          model: 'ai-embroidery-generator',
+          type: 'embroidery_generation',
+          details: result.details,
+          files: result.files,
+          instructions: result.instructions,
+          generatedImage: result.generatedImage,
+          embroideryFormat: result.embroideryFormat
+        };
+      } else {
+        return {
+          success: false,
+          response: `Ошибка создания дизайна: ${result.error}`,
+          provider: 'AI-EmbroideryPipeline',
+          error: result.error,
+          step: result.step
+        };
+      }
+    } catch (error) {
+      SmartLogger.error('Ошибка пайплайна создания дизайна для вышивки', error);
+      return {
+        success: false,
+        response: 'Произошла ошибка при создании дизайна для вышивки',
+        provider: 'AI-EmbroideryPipeline',
+        error: error.message
+      };
+    }
+  }
 
   // Проверяем запросы на конвертацию в форматы вышивки
   if (embroideryHandler.isEmbroideryRequest(message)) {
