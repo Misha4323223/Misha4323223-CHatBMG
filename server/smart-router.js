@@ -72,6 +72,8 @@ ${searchContext}
       const pythonProvider = require('./python_provider_routes');
       const result = await pythonProvider.callPythonAI(prompt, 'Qwen_Qwen_2_72B');
       
+      SmartLogger.route(`📊 Результат AI: success=${result.success}, response="${result.response ? result.response.substring(0, 100) : 'пусто'}..."`);
+      
       if (result.success && result.response) {
         // Проверяем, что ответ содержит полезную информацию
         const hasWeatherData = result.response.includes('°C') || 
@@ -81,6 +83,9 @@ ${searchContext}
                               result.response.includes('влажность');
         
         const isRefusal = result.response.toLowerCase().includes('не могу предоставить');
+        
+        SmartLogger.route(`🔍 Анализ ответа: hasWeatherData=${hasWeatherData}, isRefusal=${isRefusal}`);
+        SmartLogger.route(`📝 Полный ответ: "${result.response}"`);
         
         if (hasWeatherData && !isRefusal) {
           SmartLogger.success(`✅ Упрощенная интеграция получила реальные данные!`);
@@ -93,6 +98,8 @@ ${searchContext}
         }
         
         SmartLogger.route(`⚠️ Ответ не содержит реальных данных: hasWeatherData=${hasWeatherData}, isRefusal=${isRefusal}`);
+      } else {
+        SmartLogger.route(`❌ AI не вернул успешный результат`);
       }
     }
     
