@@ -36,7 +36,15 @@ function needsWebSearch(query) {
     ];
     
     const lowerQuery = query.toLowerCase();
-    return searchKeywords.some(keyword => lowerQuery.includes(keyword));
+    console.log(`🔍 [SEARCH CHECK] Проверяем запрос: "${lowerQuery}"`);
+    
+    const foundKeywords = searchKeywords.filter(keyword => lowerQuery.includes(keyword));
+    console.log(`🔍 [SEARCH CHECK] Найденные ключевые слова: [${foundKeywords.join(', ')}]`);
+    
+    const needsSearch = searchKeywords.some(keyword => lowerQuery.includes(keyword));
+    console.log(`🔍 [SEARCH CHECK] Нужен ли поиск: ${needsSearch}`);
+    
+    return needsSearch;
 }
 
 /**

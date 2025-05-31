@@ -374,8 +374,12 @@ async function routeMessage(message, options = {}) {
   });
 
   // Проверяем, нужен ли веб-поиск для актуальной информации
+  SmartLogger.route(`=== ДЕТАЛЬНАЯ ПРОВЕРКА ВЕБ-ПОИСКА ===`);
+  SmartLogger.route(`Исходное сообщение: "${message}"`);
+  SmartLogger.route(`Сообщение в нижнем регистре: "${message.toLowerCase()}"`);
+  
   const needsSearch = webSearchProvider.needsWebSearch(message);
-  SmartLogger.route(`Проверка веб-поиска для сообщения "${message}": ${needsSearch}`);
+  SmartLogger.route(`Результат needsWebSearch: ${needsSearch}`);
   
   if (needsSearch) {
     SmartLogger.route(`Обнаружен запрос, требующий веб-поиска`);
