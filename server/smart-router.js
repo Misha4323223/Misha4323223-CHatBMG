@@ -407,11 +407,21 @@ ${searchContext}
             const result = await pythonProvider.callPythonAI(enhancedMessage, provider);
             
             // Проверяем, что ответ содержит реальную информацию, а не отказ
+            const hasRealData = result.response && (
+              result.response.includes('°C') ||
+              result.response.includes('градус') ||
+              result.response.includes('температура') ||
+              result.response.includes('влажность') ||
+              result.response.includes('ветер') ||
+              result.response.includes('дождь') ||
+              result.response.includes('снег') ||
+              result.response.includes('новости') ||
+              result.response.includes('событи')
+            );
+            
             const isRefusal = result.response && (
-              result.response.toLowerCase().includes('не могу предоставить') ||
-              result.response.toLowerCase().includes('не имею доступа') ||
-              result.response.toLowerCase().includes('проверьте на сайте') ||
-              result.response.toLowerCase().includes('обратитесь к специализированным')
+              result.response.toLowerCase().includes('не могу предоставить') &&
+              !hasRealData
             );
             
             if (result.success && result.response && !isRefusal) {
