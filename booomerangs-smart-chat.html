@@ -1875,6 +1875,29 @@
             if (jsonResponse.success) {
               let embroideryResponse = jsonResponse.response;
               
+              // Добавляем ссылки на файлы для скачивания
+              if (jsonResponse.files) {
+                embroideryResponse += `\n\n📁 **Файлы для скачивания:**\n`;
+                
+                if (jsonResponse.files.embroidery) {
+                  const fileName = jsonResponse.files.embroidery.split('/').pop();
+                  const fileUrl = `/output/embroidery/${fileName}`;
+                  embroideryResponse += `\n🧵 [Скачать файл вышивки (${fileName})](${fileUrl})`;
+                }
+                
+                if (jsonResponse.files.image) {
+                  const fileName = jsonResponse.files.image.split('/').pop();
+                  const fileUrl = `/output/embroidery/${fileName}`;
+                  embroideryResponse += `\n🖼️ [Скачать подготовленное изображение (${fileName})](${fileUrl})`;
+                }
+                
+                if (jsonResponse.files.colorScheme) {
+                  const fileName = jsonResponse.files.colorScheme.split('/').pop();
+                  const fileUrl = `/output/embroidery/${fileName}`;
+                  embroideryResponse += `\n🎨 [Скачать цветовую схему (${fileName})](${fileUrl})`;
+                }
+              }
+              
               // Добавляем информацию о файлах и деталях
               if (jsonResponse.details) {
                 embroideryResponse += `\n\n**Детали дизайна:**\n`;
