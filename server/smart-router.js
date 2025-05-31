@@ -134,19 +134,44 @@ ${sessionContext.context}
       
       // Ищем последнее изображение в контексте сессии
       let lastImageUrl = null;
+      
+      SmartLogger.route(`🔍 Ищем изображения в контексте:`, {
+        hasSessionContext: !!sessionContext,
+        hasMessages: !!(sessionContext && sessionContext.messages),
+        messagesCount: sessionContext?.messages?.length || 0
+      });
+      
       if (sessionContext && sessionContext.messages) {
         for (let i = sessionContext.messages.length - 1; i >= 0; i--) {
           const msg = sessionContext.messages[i];
-          if (msg.content && msg.content.includes('![') && msg.content.includes('https://image.pollinations.ai')) {
-            const imageMatch = msg.content.match(/!\[.*?\]\((https:\/\/image\.pollinations\.ai[^)]+)\)/);
+          SmartLogger.route(`🔍 Проверяем сообщение ${i}:`, {
+            sender: msg.sender,
+            hasContent: !!msg.content,
+            contentLength: msg.content?.length || 0,
+            hasImage: msg.content?.includes('![') || false,
+            hasPollinations: msg.content?.includes('https://image.pollinations.ai') || false
+          });
+          
+          if (msg.content && (msg.content.includes('![') || msg.content.includes('https://image.pollinations.ai'))) {
+            // Проверяем разные форматы изображений
+            const imageMatch1 = msg.content.match(/!\[.*?\]\((https:\/\/image\.pollinations\.ai[^)]+)\)/);
+            const imageMatch2 = msg.content.match(/(https:\/\/image\.pollinations\.ai[^\s\)]+)/);
+            
+            const imageMatch = imageMatch1 || imageMatch2;
+            
             if (imageMatch) {
               lastImageUrl = imageMatch[1];
-              SmartLogger.route(`🖼️ Найдено последнее изображение: ${lastImageUrl.substring(0, 50)}...`);
+              SmartLogger.route(`🖼️ Найдено последнее изображение: ${lastImageUrl.substring(0, 80)}...`);
               break;
             }
           }
         }
       }
+      
+      SmartLogger.route(`🔍 Результат поиска изображения:`, {
+        found: !!lastImageUrl,
+        url: lastImageUrl ? lastImageUrl.substring(0, 50) + '...' : null
+      });
       
       if (lastImageUrl) {
         try {
