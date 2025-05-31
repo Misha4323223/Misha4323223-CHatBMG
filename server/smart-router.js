@@ -28,6 +28,7 @@ const SmartLogger = {
 
 // Импортируем провайдеры
 const chatFreeProvider = require('./chatfree-provider');
+const printOptimizer = require('./print-optimizer');
 const deepspeekProvider = require('./deepspeek-provider');
 const claudeProvider = require('./claude-provider');
 const deepInfraProvider = require('./deepinfra-provider');
@@ -62,6 +63,21 @@ async function getAIResponseWithSearch(userQuery, options = {}) {
     const queryLowerForSvg = userQuery.toLowerCase();
     const svgKeywords = ['сохрани в svg', 'сохрани svg', 'экспорт в svg', 'конверт в svg', 'сделай svg', 'сохрани в свг', 'сохрани свг'];
     const isSvgRequest = svgKeywords.some(keyword => queryLowerForSvg.includes(keyword));
+    
+    // Проверяем запросы на оптимизацию для печати
+    const printKeywords = [
+      'оптимизируй для печати', 'подготовь для печати', 'оптимизация печати',
+      'для шелкографии', 'для dtf', 'для трафаретной печати', 'для сублимации',
+      'печать на футболке', 'печать на ткани', 'подготовка к печати'
+    ];
+    const isPrintOptRequest = printKeywords.some(keyword => queryLowerForSvg.includes(keyword));
+    
+    // Проверяем запросы на векторизацию
+    const vectorKeywords = [
+      'векторизуй', 'сделай вектор', 'создай контуры', 'векторная версия',
+      'трафарет', 'контуры для печати', 'черно-белый вариант'
+    ];
+    const isVectorRequest = vectorKeywords.some(keyword => queryLowerForSvg.includes(keyword));
 
     if (isSvgRequest) {
       SmartLogger.route(`🎨 Обнаружен запрос на SVG конвертацию локально`);
@@ -187,6 +203,130 @@ async function getAIResponseWithSearch(userQuery, options = {}) {
           provider: 'SVG_Print_Converter',
           searchUsed: false,
           svgGenerated: false
+        };
+      }
+    }
+
+    // Обработка запросов оптимизации для печати
+    if (isPrintOptRequest || isVectorRequest) {
+      SmartLogger.route(`🖨️ Обнаружен запрос на оптимизацию для печати`);
+      
+      // Ищем последнее изображение в контексте сессии
+      let lastImageUrl = null;
+      
+      // Получаем сообщения напрямую из базы данных через SQL
+      const { db } = require('./db');
+      const { aiMessages } = require('../shared/schema');
+      const { eq } = require('drizzle-orm');
+      
+      const messages = await db
+        .select()
+        .from(aiMessages)
+        .where(eq(aiMessages.sessionId, sessionId))
+        .orderBy(aiMessages.createdAt);
+      
+      SmartLogger.route(`🔍 Ищем изображения для оптимизации:`, {
+        sessionId,
+        messagesCount: messages?.length || 0
+      });
+      
+      if (messages && messages.length > 0) {
+        // Ищем последнее изображение в сообщениях AI
+        for (let i = messages.length - 1; i >= 0; i--) {
+          const msg = messages[i];
+          
+          if (msg.content && msg.sender === 'ai' && (msg.content.includes('![') || msg.content.includes('https://image.pollinations.ai'))) {
+            // Проверяем разные форматы изображений
+            const imageMatch1 = msg.content.match(/!\[.*?\]\((https:\/\/image\.pollinations\.ai[^)]+)\)/);
+            const imageMatch2 = msg.content.match(/(https:\/\/image\.pollinations\.ai[^\s\)]+)/);
+            
+            const imageMatch = imageMatch1 || imageMatch2;
+            
+            if (imageMatch) {
+              lastImageUrl = imageMatch[1];
+              SmartLogger.route(`🖼️ Найдено изображение для оптимизации: ${lastImageUrl.substring(0, 80)}...`);
+              break;
+            }
+          }
+        }
+      }
+      
+      if (lastImageUrl) {
+        try {
+          SmartLogger.route(`🖨️ Начинаем оптимизацию изображения для печати`);
+          
+          // Определяем тип печати из запроса
+          let printType = 'both'; // по умолчанию и шелкография и DTF
+          if (queryLowerForSvg.includes('шелкографи') || queryLowerForSvg.includes('трафарет')) {
+            printType = 'screen-print';
+          } else if (queryLowerForSvg.includes('dtf') || queryLowerForSvg.includes('сублимаци')) {
+            printType = 'dtf';
+          }
+          
+          const optimization = await printOptimizer.optimizeImageForPrint(lastImageUrl, printType);
+          
+          if (optimization.success) {
+            let response = `Готово! Я оптимизировал ваше изображение для профессиональной печати:\n\n📁 **Созданы файлы:**`;
+            
+            if (optimization.optimizations.screenPrint) {
+              response += `\n\n🖨️ **Для шелкографии:**`;
+              response += `\n• Улучшенная версия (3000x3000)`;
+              response += `\n• Высококонтрастная версия`;
+              response += `\n• Версия с ограниченной палитрой`;
+              response += `\n• Контуры для трафаретов`;
+            }
+            
+            if (optimization.optimizations.dtf) {
+              response += `\n\n🎨 **Для DTF печати:**`;
+              response += `\n• Основная версия (3600x3600)`;
+              response += `\n• Увеличенная версия (5400x5400)`;
+              response += `\n• Версия с прозрачным фоном`;
+              if (optimization.optimizations.dtf.files.whiteBase) {
+                response += `\n• Белая подложка для темных тканей`;
+              }
+            }
+            
+            if (optimization.optimizations.vector) {
+              response += `\n\n📐 **Векторные версии:**`;
+              response += `\n• Черно-белая версия (2048x2048)`;
+              response += `\n• Контурная версия`;
+            }
+            
+            response += `\n\nВсе файлы оптимизированы для профессиональной печати и готовы к использованию.`;
+            
+            return {
+              success: true,
+              response: response,
+              provider: 'Print_Optimizer',
+              searchUsed: false,
+              printOptimized: true
+            };
+          } else {
+            return {
+              success: true,
+              response: `Извините, произошла ошибка при оптимизации изображения: ${optimization.error}`,
+              provider: 'Print_Optimizer',
+              searchUsed: false,
+              printOptimized: false
+            };
+          }
+        } catch (error) {
+          SmartLogger.error('Ошибка при оптимизации изображения:', error);
+          return {
+            success: true,
+            response: `Извините, произошла ошибка при обработке изображения. Попробуйте позже.`,
+            provider: 'Print_Optimizer',
+            searchUsed: false,
+            printOptimized: false
+          };
+        }
+      } else {
+        return {
+          success: true,
+          response: `Я не нашел изображений в нашей беседе для оптимизации. Сначала создайте изображение, а затем попросите оптимизировать его для печати.`,
+          provider: 'Print_Optimizer',
+          searchUsed: false,
+          printOptimized: false
         };
       }
     }
