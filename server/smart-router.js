@@ -58,79 +58,13 @@ async function getAIResponseWithSearch(userQuery, options = {}) {
     const requestAnalysis = chatMemory.analyzeRequestWithContext(userQuery, sessionContext);
     SmartLogger.route(`🔍 Анализ запроса:`, requestAnalysis);
 
-    const pythonProvider = require('./python_provider_routes');
-    const prompt = `Проанализируй запрос пользователя и определи тип действия:
+    // Сначала проверяем локально на SVG конвертацию
+    const lowerQuery = userQuery.toLowerCase();
+    const svgKeywords = ['сохрани в svg', 'сохрани svg', 'экспорт в svg', 'конверт в svg', 'сделай svg', 'сохрани в свг', 'сохрани свг'];
+    const isSvgRequest = svgKeywords.some(keyword => lowerQuery.includes(keyword));
 
-Запрос: "${userQuery}"
-
-КОНТЕКСТ СЕССИИ:
-${sessionContext.context}
-
-СТРОГО СЛЕДУЙ ЭТИМ ПРАВИЛАМ:
-1. Если пользователь просит НАРИСОВАТЬ, СОЗДАТЬ ИЗОБРАЖЕНИЕ, СГЕНЕРИРОВАТЬ КАРТИНКУ, ПРИНТ или ДИЗАЙН - отвечай ТОЛЬКО: "ГЕНЕРАЦИЯ_ИЗОБРАЖЕНИЯ"
-2. Если это запрос о текущей информации (погода, новости, курсы валют) - отвечай ТОЛЬКО: "НУЖЕН_ПОИСК"
-3. Иначе дай обычный ответ
-
-Ключевые слова для генерации изображений: нарисуй, создай, сгенерируй, принт, дизайн, картинка, изображение, логотип, баннер`;
-
-    const initialResult = await pythonProvider.callPythonAI(prompt, 'Qwen_Qwen_2_72B');
-    
-    let responseText = '';
-    if (typeof initialResult === 'string') {
-      responseText = initialResult;
-    } else if (initialResult && initialResult.response) {
-      responseText = initialResult.response;
-    }
-    
-    SmartLogger.route(`🤖 AI ответил: "${responseText.substring(0, 50)}..."`);
-    
-    // Если AI говорит, что нужна генерация изображения
-    if (responseText.includes('ГЕНЕРАЦИЯ_ИЗОБРАЖЕНИЯ')) {
-      SmartLogger.route(`🎨 AI запросил генерацию изображения`);
-      
-      // Импортируем генератор изображений
-      const aiImageGenerator = require('./ai-image-generator');
-      
-      try {
-        const imageResult = await aiImageGenerator.generateImage(userQuery, 'realistic');
-        
-        if (imageResult.success && imageResult.imageUrl) {
-          return {
-            success: true,
-            response: `Я создал изображение по вашему запросу! Вот результат:
-
-![Сгенерированное изображение](${imageResult.imageUrl})
-
-Изображение сохранено и готово к использованию. Если нужно что-то изменить, просто опишите что хотите поправить.`,
-            provider: 'AI_Image_Generator',
-            searchUsed: false,
-            imageGenerated: true,
-            imageUrl: imageResult.imageUrl
-          };
-        } else {
-          return {
-            success: true,
-            response: `К сожалению, произошла ошибка при генерации изображения. Попробуйте переформулировать запрос или попробовать позже.`,
-            provider: 'AI_Image_Generator',
-            searchUsed: false,
-            imageGenerated: false
-          };
-        }
-      } catch (error) {
-        SmartLogger.error('Ошибка генерации изображения:', error);
-        return {
-          success: true,
-          response: `Извините, система генерации изображений временно недоступна. Попробуйте позже.`,
-          provider: 'AI_Image_Generator',
-          searchUsed: false,
-          imageGenerated: false
-        };
-      }
-    }
-    
-    // Если AI определил, что нужно создать SVG
-    if (responseText.includes('СОЗДАНИЕ SVG ДЛЯ ПЕЧАТИ')) {
-      SmartLogger.route(`🎨 AI запросил создание SVG для печати`);
+    if (isSvgRequest) {
+      SmartLogger.route(`🎨 Обнаружен запрос на SVG конвертацию локально`);
       
       // Ищем последнее изображение в контексте сессии
       let lastImageUrl = null;
@@ -245,6 +179,78 @@ ${sessionContext.context}
         };
       }
     }
+
+    const pythonProvider = require('./python_provider_routes');
+    const prompt = `Проанализируй запрос пользователя и определи тип действия:
+
+Запрос: "${userQuery}"
+
+КОНТЕКСТ СЕССИИ:
+${sessionContext.context}
+
+СТРОГО СЛЕДУЙ ЭТИМ ПРАВИЛАМ:
+1. Если пользователь просит НАРИСОВАТЬ, СОЗДАТЬ ИЗОБРАЖЕНИЕ, СГЕНЕРИРОВАТЬ КАРТИНКУ, ПРИНТ или ДИЗАЙН - отвечай ТОЛЬКО: "ГЕНЕРАЦИЯ_ИЗОБРАЖЕНИЯ"
+2. Если это запрос о текущей информации (погода, новости, курсы валют) - отвечай ТОЛЬКО: "НУЖЕН_ПОИСК"
+3. Иначе дай обычный ответ
+
+Ключевые слова для генерации изображений: нарисуй, создай, сгенерируй, принт, дизайн, картинка, изображение, логотип, баннер`;
+
+    const initialResult = await pythonProvider.callPythonAI(prompt, 'Qwen_Qwen_2_72B');
+    
+    let responseText = '';
+    if (typeof initialResult === 'string') {
+      responseText = initialResult;
+    } else if (initialResult && initialResult.response) {
+      responseText = initialResult.response;
+    }
+    
+    SmartLogger.route(`🤖 AI ответил: "${responseText.substring(0, 50)}..."`);
+    
+    // Если AI говорит, что нужна генерация изображения
+    if (responseText.includes('ГЕНЕРАЦИЯ_ИЗОБРАЖЕНИЯ')) {
+      SmartLogger.route(`🎨 AI запросил генерацию изображения`);
+      
+      // Импортируем генератор изображений
+      const aiImageGenerator = require('./ai-image-generator');
+      
+      try {
+        const imageResult = await aiImageGenerator.generateImage(userQuery, 'realistic');
+        
+        if (imageResult.success && imageResult.imageUrl) {
+          return {
+            success: true,
+            response: `Я создал изображение по вашему запросу! Вот результат:
+
+![Сгенерированное изображение](${imageResult.imageUrl})
+
+Изображение сохранено и готово к использованию. Если нужно что-то изменить, просто опишите что хотите поправить.`,
+            provider: 'AI_Image_Generator',
+            searchUsed: false,
+            imageGenerated: true,
+            imageUrl: imageResult.imageUrl
+          };
+        } else {
+          return {
+            success: true,
+            response: `К сожалению, произошла ошибка при генерации изображения. Попробуйте переформулировать запрос или попробовать позже.`,
+            provider: 'AI_Image_Generator',
+            searchUsed: false,
+            imageGenerated: false
+          };
+        }
+      } catch (error) {
+        SmartLogger.error('Ошибка генерации изображения:', error);
+        return {
+          success: true,
+          response: `Извините, система генерации изображений временно недоступна. Попробуйте позже.`,
+          provider: 'AI_Image_Generator',
+          searchUsed: false,
+          imageGenerated: false
+        };
+      }
+    }
+    
+
     
     // Если AI говорит, что нужен поиск
     if (responseText.includes('НУЖЕН_ПОИСК')) {
