@@ -72,28 +72,36 @@ ${searchContext}
       const pythonProvider = require('./python_provider_routes');
       const result = await pythonProvider.callPythonAI(prompt, 'Qwen_Qwen_2_72B');
       
+      SmartLogger.route(`📊 Тип результата: ${typeof result}`);
       SmartLogger.route(`📊 Полная структура результата:`, result);
-      SmartLogger.route(`📊 Результат AI: success=${result.success}, response="${result.response ? result.response.substring(0, 100) : 'пусто'}..."`);
       
-      // Проверяем и success, и наличие response
-      if (result && result.response && result.response.length > 10) {
+      // Если result - это строка (прямой ответ), используем её
+      let responseText = '';
+      if (typeof result === 'string') {
+        responseText = result;
+      } else if (result && result.response) {
+        responseText = result.response;
+      }
+      
+      SmartLogger.route(`📝 Извлеченный текст ответа: "${responseText.substring(0, 100)}..."`);
+      
+      if (responseText && responseText.length > 20) {
         // Проверяем, что ответ содержит полезную информацию
-        const hasWeatherData = result.response.includes('°C') || 
-                              result.response.includes('градус') || 
-                              result.response.includes('температура') ||
-                              result.response.includes('дождь') ||
-                              result.response.includes('влажность');
+        const hasWeatherData = responseText.includes('°C') || 
+                              responseText.includes('градус') || 
+                              responseText.includes('температура') ||
+                              responseText.includes('дождь') ||
+                              responseText.includes('влажность');
         
-        const isRefusal = result.response.toLowerCase().includes('не могу предоставить');
+        const isRefusal = responseText.toLowerCase().includes('не могу предоставить');
         
         SmartLogger.route(`🔍 Анализ ответа: hasWeatherData=${hasWeatherData}, isRefusal=${isRefusal}`);
-        SmartLogger.route(`📝 Полный ответ: "${result.response}"`);
         
         if (hasWeatherData && !isRefusal) {
           SmartLogger.success(`✅ Упрощенная интеграция получила реальные данные!`);
           return {
             success: true,
-            response: result.response,
+            response: responseText,
             provider: 'Qwen_Qwen_2_72B',
             searchUsed: true
           };
@@ -101,7 +109,7 @@ ${searchContext}
         
         SmartLogger.route(`⚠️ Ответ не содержит реальных данных: hasWeatherData=${hasWeatherData}, isRefusal=${isRefusal}`);
       } else {
-        SmartLogger.route(`❌ AI не вернул успешный результат`);
+        SmartLogger.route(`❌ AI не вернул текст или текст слишком короткий`);
       }
     }
     
