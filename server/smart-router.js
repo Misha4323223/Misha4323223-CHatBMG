@@ -69,15 +69,19 @@ async function getAIResponseWithSearch(userQuery, options = {}) {
       // Ищем последнее изображение в контексте сессии
       let lastImageUrl = null;
       
-      SmartLogger.route(`🔍 Ищем изображения в контексте:`, {
-        hasSessionContext: !!sessionContext,
-        hasMessages: !!(sessionContext && sessionContext.messages),
-        messagesCount: sessionContext?.messages?.length || 0
+      // Получаем сообщения напрямую из базы данных
+      const chatHistory = require('./chat-history');
+      const messages = await chatHistory.getSessionMessages(sessionId);
+      
+      SmartLogger.route(`🔍 Ищем изображения в базе данных:`, {
+        sessionId,
+        messagesCount: messages?.length || 0
       });
       
-      if (sessionContext && sessionContext.messages) {
-        for (let i = sessionContext.messages.length - 1; i >= 0; i--) {
-          const msg = sessionContext.messages[i];
+      if (messages && messages.length > 0) {
+        // Ищем последнее изображение в сообщениях AI
+        for (let i = messages.length - 1; i >= 0; i--) {
+          const msg = messages[i];
           SmartLogger.route(`🔍 Проверяем сообщение ${i}:`, {
             sender: msg.sender,
             hasContent: !!msg.content,
@@ -86,7 +90,7 @@ async function getAIResponseWithSearch(userQuery, options = {}) {
             hasPollinations: msg.content?.includes('https://image.pollinations.ai') || false
           });
           
-          if (msg.content && (msg.content.includes('![') || msg.content.includes('https://image.pollinations.ai'))) {
+          if (msg.content && msg.sender === 'ai' && (msg.content.includes('![') || msg.content.includes('https://image.pollinations.ai'))) {
             // Проверяем разные форматы изображений
             const imageMatch1 = msg.content.match(/!\[.*?\]\((https:\/\/image\.pollinations\.ai[^)]+)\)/);
             const imageMatch2 = msg.content.match(/(https:\/\/image\.pollinations\.ai[^\s\)]+)/);
