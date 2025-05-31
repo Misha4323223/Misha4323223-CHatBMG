@@ -7,7 +7,7 @@ const aiImageGenerator = require('./ai-image-generator');
 const { convertToEmbroidery, analyzeImageForEmbroidery } = require('./embroidery-converter');
 const fs = require('fs').promises;
 const path = require('path');
-const fetch = require('node-fetch');
+const https = require('https');
 
 /**
  * Определяет, является ли запрос генерацией изображения для вышивки
@@ -147,12 +147,20 @@ async function generateAndConvertToEmbroidery(message, options = {}) {
     if (imageResult.imageUrl.startsWith('http')) {
       // Если это URL, скачиваем изображение
       console.log('📥 Скачиваем изображение по URL:', imageResult.imageUrl);
-      // Уже импортирован в начале файла
-      const response = await fetch(imageResult.imageUrl);
-      if (!response.ok) {
-        throw new Error(`Не удалось скачать изображение: ${response.status}`);
-      }
-      imageBuffer = await response.buffer();
+      
+      imageBuffer = await new Promise((resolve, reject) => {
+        https.get(imageResult.imageUrl, (response) => {
+          if (response.statusCode !== 200) {
+            reject(new Error(`Не удалось скачать изображение: ${response.statusCode}`));
+            return;
+          }
+          
+          const chunks = [];
+          response.on('data', (chunk) => chunks.push(chunk));
+          response.on('end', () => resolve(Buffer.concat(chunks)));
+          response.on('error', reject);
+        }).on('error', reject);
+      });
     } else {
       // Если это локальный путь
       const imagePath = imageResult.imageUrl.replace('/output/', '');
