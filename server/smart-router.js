@@ -36,6 +36,7 @@ const embroideryHandler = require('./embroidery-chat-handler');
 const aiEmbroideryPipeline = require('./ai-embroidery-pipeline');
 const webSearchProvider = require('./web-search-provider');
 const chatMemory = require('./chat-memory');
+const svgPrintConverter = require('./svg-print-converter');
 
 /**
  * AI с автоматическим поиском при необходимости
@@ -225,9 +226,56 @@ ${searchContext}
 
 Изображение сохранено и готово к использованию.`;
 
+            // Проверяем, нужно ли создать SVG файлы для печати
+            const needsPrintFiles = svgPrintConverter.isPrintConversionRequest(userQuery) || 
+                                   userQuery.toLowerCase().includes('принт') ||
+                                   userQuery.toLowerCase().includes('футболка') ||
+                                   userQuery.toLowerCase().includes('печать');
+
+            let svgFiles = [];
+            if (needsPrintFiles) {
+              try {
+                SmartLogger.route(`🎨 Создаем SVG файлы для печати`);
+                const printType = svgPrintConverter.detectPrintTypeFromRequest(userQuery);
+                const svgResult = await svgPrintConverter.convertImageToPrintSVG(
+                  imageResult.imageUrl, 
+                  `design-${Date.now()}`, 
+                  printType
+                );
+                
+                if (svgResult.success) {
+                  svgFiles = svgResult.result.files;
+                  response += `\n\n📄 **Файлы для печати созданы:**`;
+                  
+                  svgResult.result.files.forEach(file => {
+                    if (file.type === 'screenprint') {
+                      response += `\n• [SVG для шелкографии](${file.url}) - ${(file.size / 1024).toFixed(1)} КБ`;
+                    } else if (file.type === 'dtf') {
+                      response += `\n• [SVG для DTF печати](${file.url}) - ${(file.size / 1024).toFixed(1)} КБ`;
+                    } else if (file.type === 'colorscheme') {
+                      response += `\n• [Цветовая схема](${file.url}) - палитра цветов`;
+                    }
+                  });
+                  
+                  if (svgResult.result.recommendations.screenprint) {
+                    response += `\n\n**Рекомендации для шелкографии:** ${svgResult.result.recommendations.screenprint.notes}`;
+                  }
+                  if (svgResult.result.recommendations.dtf) {
+                    response += `\n**Рекомендации для DTF:** ${svgResult.result.recommendations.dtf.notes}`;
+                  }
+                  
+                  SmartLogger.success(`SVG файлы созданы: ${svgFiles.length} файлов`);
+                } else {
+                  SmartLogger.error('Ошибка создания SVG файлов:', svgResult.error);
+                }
+              } catch (error) {
+                SmartLogger.error('Ошибка при создании SVG файлов:', error);
+              }
+            }
+
             if (isEmbroideryRequest) {
               response += `\n\n🧵 Чтобы конвертировать это изображение в формат для вышивальной машины (DST, PES, JEF), загрузите его и попросите "конвертируй в DST".`;
-            } else {
+            } else if (!needsPrintFiles) {
               response += ` Если нужно что-то изменить, просто опишите что хотите поправить.`;
             }
             
@@ -237,7 +285,8 @@ ${searchContext}
               provider: 'AI_Image_Generator',
               searchUsed: false,
               imageGenerated: true,
-              imageUrl: imageResult.imageUrl
+              imageUrl: imageResult.imageUrl,
+              svgFiles: svgFiles
             };
           } else {
             return {

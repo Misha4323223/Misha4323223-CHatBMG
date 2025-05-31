@@ -959,6 +959,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   }
   
+  // API для конвертации изображений в SVG для печати
+  app.post('/api/convert/svg-print', upload.single('image'), async (req, res) => {
+    try {
+      const { printType = 'both', designName } = req.body;
+      const uploadedImage = req.file;
+      
+      if (!uploadedImage) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Изображение для конвертации не предоставлено' 
+        });
+      }
+
+      const svgPrintConverter = require('./svg-print-converter');
+      
+      // Используем путь к загруженному файлу
+      const imagePath = uploadedImage.path;
+      const baseName = designName || `uploaded-design-${Date.now()}`;
+      
+      console.log(`🎨 [SVG-CONVERT] Конвертируем загруженное изображение: ${imagePath}`);
+      
+      const result = await svgPrintConverter.convertImageToPrintSVG(
+        imagePath, 
+        baseName, 
+        printType
+      );
+      
+      if (result.success) {
+        res.json({
+          success: true,
+          message: 'Изображение успешно конвертировано в SVG',
+          files: result.result.files,
+          colorScheme: result.result.colorScheme,
+          recommendations: result.result.recommendations
+        });
+      } else {
+        res.status(500).json({
+          success: false,
+          error: result.error
+        });
+      }
+      
+    } catch (error) {
+      console.error('Ошибка конвертации в SVG:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Внутренняя ошибка сервера при конвертации'
+      });
+    }
+  });
+
   // API для работы с BOOOMERANGS AI интеграцией (с поддержкой Qwen и других провайдеров)
   app.post('/api/ai/chat', upload.single('image'), async (req, res) => {
     try {
