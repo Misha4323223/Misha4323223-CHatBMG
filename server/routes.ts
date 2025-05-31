@@ -456,7 +456,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             res.json({ 
               success: true, 
               message: userMessage,
-              aiResponse: processedResponse,
+              aiResponse: aiResponse.response,
               provider: aiResponse.provider
             });
             return;
