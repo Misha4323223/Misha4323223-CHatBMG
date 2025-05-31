@@ -2296,6 +2296,27 @@
         this.style.height = (this.scrollHeight) + 'px';
       });
       
+      // Функция для обработки markdown и преобразования ссылок
+      function parseMarkdown(text) {
+        if (!text) return '';
+        
+        let html = text;
+        
+        // Обработка markdown ссылок [текст](url)
+        html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" style="color: #6c63ff; text-decoration: underline;">$1</a>');
+        
+        // Обработка жирного текста **текст**
+        html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+        
+        // Обработка изображений ![alt](url)
+        html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" style="max-width: 100%; height: auto; border-radius: 8px; margin: 10px 0;" />');
+        
+        // Обработка переносов строк
+        html = html.replace(/\n/g, '<br>');
+        
+        return html;
+      }
+
       // Инициализация приложения - загружаем историю чатов
       loadChatHistory();
       

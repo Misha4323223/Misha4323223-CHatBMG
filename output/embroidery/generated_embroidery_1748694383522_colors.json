@@ -1,0 +1,237 @@
+{
+  "format": "dst",
+  "totalColors": 15,
+  "colors": [
+    {
+      "index": 1,
+      "hex": "#ffffff",
+      "rgb": {
+        "r": 255,
+        "g": 255,
+        "b": 255
+      },
+      "threadColor": {
+        "hex": "#FFFFFF",
+        "name": "Белый",
+        "distance": 0
+      },
+      "usage": 156823
+    },
+    {
+      "index": 2,
+      "hex": "#000003",
+      "rgb": {
+        "r": 0,
+        "g": 0,
+        "b": 3
+      },
+      "threadColor": {
+        "hex": "#000000",
+        "name": "Черный",
+        "distance": 3
+      },
+      "usage": 1462
+    },
+    {
+      "index": 3,
+      "hex": "#1d1d1f",
+      "rgb": {
+        "r": 29,
+        "g": 29,
+        "b": 31
+      },
+      "threadColor": {
+        "hex": "#000000",
+        "name": "Черный",
+        "distance": 51
+      },
+      "usage": 198
+    },
+    {
+      "index": 4,
+      "hex": "#2c2d2e",
+      "rgb": {
+        "r": 44,
+        "g": 45,
+        "b": 46
+      },
+      "threadColor": {
+        "hex": "#000000",
+        "name": "Черный",
+        "distance": 78
+      },
+      "usage": 183
+    },
+    {
+      "index": 5,
+      "hex": "#3c3d3e",
+      "rgb": {
+        "r": 60,
+        "g": 61,
+        "b": 62
+      },
+      "threadColor": {
+        "hex": "#000000",
+        "name": "Черный",
+        "distance": 106
+      },
+      "usage": 178
+    },
+    {
+      "index": 6,
+      "hex": "#606163",
+      "rgb": {
+        "r": 96,
+        "g": 97,
+        "b": 99
+      },
+      "threadColor": {
+        "hex": "#808080",
+        "name": "Серый",
+        "distance": 53
+      },
+      "usage": 136
+    },
+    {
+      "index": 7,
+      "hex": "#4e4f50",
+      "rgb": {
+        "r": 78,
+        "g": 79,
+        "b": 80
+      },
+      "threadColor": {
+        "hex": "#808080",
+        "name": "Серый",
+        "distance": 85
+      },
+      "usage": 129
+    },
+    {
+      "index": 8,
+      "hex": "#101112",
+      "rgb": {
+        "r": 16,
+        "g": 17,
+        "b": 18
+      },
+      "threadColor": {
+        "hex": "#000000",
+        "name": "Черный",
+        "distance": 29
+      },
+      "usage": 123
+    },
+    {
+      "index": 9,
+      "hex": "#747576",
+      "rgb": {
+        "r": 116,
+        "g": 117,
+        "b": 118
+      },
+      "threadColor": {
+        "hex": "#808080",
+        "name": "Серый",
+        "distance": 19
+      },
+      "usage": 105
+    },
+    {
+      "index": 10,
+      "hex": "#c6c7c8",
+      "rgb": {
+        "r": 198,
+        "g": 199,
+        "b": 200
+      },
+      "threadColor": {
+        "hex": "#C0C0C0",
+        "name": "Серебристый",
+        "distance": 12
+      },
+      "usage": 104
+    },
+    {
+      "index": 11,
+      "hex": "#b5b6b7",
+      "rgb": {
+        "r": 181,
+        "g": 182,
+        "b": 183
+      },
+      "threadColor": {
+        "hex": "#C0C0C0",
+        "name": "Серебристый",
+        "distance": 17
+      },
+      "usage": 103
+    },
+    {
+      "index": 12,
+      "hex": "#d6d7d8",
+      "rgb": {
+        "r": 214,
+        "g": 215,
+        "b": 216
+      },
+      "threadColor": {
+        "hex": "#C0C0C0",
+        "name": "Серебристый",
+        "distance": 40
+      },
+      "usage": 98
+    },
+    {
+      "index": 13,
+      "hex": "#e6e7e8",
+      "rgb": {
+        "r": 230,
+        "g": 231,
+        "b": 232
+      },
+      "threadColor": {
+        "hex": "#FFFFFF",
+        "name": "Белый",
+        "distance": 42
+      },
+      "usage": 93
+    },
+    {
+      "index": 14,
+      "hex": "#8b8c8e",
+      "rgb": {
+        "r": 139,
+        "g": 140,
+        "b": 142
+      },
+      "threadColor": {
+        "hex": "#808080",
+        "name": "Серый",
+        "distance": 21
+      },
+      "usage": 92
+    },
+    {
+      "index": 15,
+      "hex": "#f3f4f5",
+      "rgb": {
+        "r": 243,
+        "g": 244,
+        "b": 245
+      },
+      "threadColor": {
+        "hex": "#FFFFFF",
+        "name": "Белый",
+        "distance": 19
+      },
+      "usage": 91
+    }
+  ],
+  "instructions": [
+    "1. Подготовьте нити указанных цветов",
+    "2. Загрузите файл в вышивальную машину",
+    "3. Следуйте порядку цветов",
+    "4. Меняйте нить при появлении сигнала"
+  ]
+}
