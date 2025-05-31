@@ -1712,11 +1712,37 @@
         console.log('➕ [CHAT] Добавляем сообщение пользователя в UI...');
         addMessage(messageText, true);
         
-        // Сохраняем сообщение пользователя в истории
+        // Сохраняем сообщение пользователя в истории и получаем AI ответ
         console.log('💾 [CHAT] Сохраняем сообщение пользователя в БД...');
         try {
-          await saveMessageToHistory(messageText, 'user');
+          const response = await fetch(`/api/chat/sessions/${currentSessionId}/messages`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              content: messageText,
+              sender: 'user',
+              provider: null,
+              category: null
+            })
+          });
+          
           console.log('✅ [CHAT] Сообщение пользователя сохранено в БД');
+          
+          // Если API вернул AI ответ, отображаем его
+          if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.aiResponse) {
+              console.log('🤖 [CHAT] Получен AI ответ:', data.aiResponse);
+              addMessage(data.aiResponse, false, {
+                provider: data.provider || 'AI',
+                category: 'general'
+              });
+              hideStatus();
+              return; // Выходим, не запускаем потоковый режим
+            }
+          }
         } catch (error) {
           console.error('❌ [CHAT] Ошибка сохранения сообщения пользователя:', error);
         }
