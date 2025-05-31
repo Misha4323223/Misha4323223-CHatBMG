@@ -71,6 +71,9 @@ async function getAIResponseWithSearch(userQuery) {
       if (searchResults.success && searchResults.results && searchResults.results.length > 0) {
         const searchContext = webSearchProvider.formatSearchResultsForAI(searchResults);
         
+        SmartLogger.route(`🔍 Найдено результатов поиска: ${searchResults.results.length}`);
+        SmartLogger.route(`🔍 Форматированный контекст: ${searchContext.substring(0, 200)}...`);
+        
         // Отправляем AI данные из поиска
         const searchPrompt = `Пользователь спрашивает: "${userQuery}"
 
@@ -79,6 +82,7 @@ ${searchContext}
 
 Ответь на основе этих данных.`;
 
+        SmartLogger.route(`🔍 Отправляем AI промпт с данными поиска`);
         const finalResult = await pythonProvider.callPythonAI(searchPrompt, 'Qwen_Qwen_2_72B');
         
         let finalText = '';
