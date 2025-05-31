@@ -1735,7 +1735,33 @@
             const data = await response.json();
             if (data.success && data.aiResponse) {
               console.log('🤖 [CHAT] Получен AI ответ:', data.aiResponse);
-              addMessage(data.aiResponse, false, {
+              
+              let displayResponse = data.aiResponse;
+              
+              // Добавляем ссылки на файлы, если они есть
+              if (data.files) {
+                displayResponse += `\n\n📁 **Файлы для скачивания:**\n`;
+                
+                if (data.files.embroidery) {
+                  const fileName = data.files.embroidery.split('/').pop();
+                  const fileUrl = `/output/embroidery/${fileName}`;
+                  displayResponse += `\n🧵 [Скачать файл вышивки (${fileName})](${fileUrl})`;
+                }
+                
+                if (data.files.image) {
+                  const fileName = data.files.image.split('/').pop();
+                  const fileUrl = `/output/embroidery/${fileName}`;
+                  displayResponse += `\n🖼️ [Скачать подготовленное изображение (${fileName})](${fileUrl})`;
+                }
+                
+                if (data.files.colorScheme) {
+                  const fileName = data.files.colorScheme.split('/').pop();
+                  const fileUrl = `/output/embroidery/${fileName}`;
+                  displayResponse += `\n🎨 [Скачать цветовую схему (${fileName})](${fileUrl})`;
+                }
+              }
+              
+              addMessage(displayResponse, false, {
                 provider: data.provider || 'AI',
                 category: 'general'
               });

@@ -457,7 +457,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
               success: true, 
               message: userMessage,
               aiResponse: aiResponse.response,
-              provider: aiResponse.provider
+              provider: aiResponse.provider,
+              files: aiResponse.files || null,
+              details: aiResponse.details || null
             });
             return;
           } else {
