@@ -186,19 +186,23 @@ async function generateImage(prompt, style = 'realistic', previousImage = null, 
 async function getAIEnhancedPrompt(prompt, style) {
   const smartRouter = require('./smart-router.js');
   
-  const systemPrompt = `Ты эксперт по созданию промптов для генерации изображений. 
-Переведи русский запрос на английский и улучши его для качественной генерации изображения.
+  const systemPrompt = `Ты эксперт по созданию промптов для генерации изображений для вышивки. 
+Переведи русский запрос на английский и оптимизируй для создания четких дизайнов вышивки.
 
 Правила:
-1. Переводи точно, сохраняя смысл
-2. Добавляй технические детали для качества: "high quality", "detailed", "professional"
-3. Указывай стиль: ${style}
-4. Для персонажей добавляй детали внешности
-5. Отвечай ТОЛЬКО улучшенным английским промптом, без пояснений
+1. Переводи точно и детально (роза = "beautiful detailed rose with petals and leaves")
+2. Добавляй элементы для вышивки: "embroidery design", "clean lines", "simple shapes", "vector art style"
+3. Убирай сложные детали: НЕ добавляй "photorealistic", "detailed shadows", "gradients"
+4. Для цветов указывай основные части (лепестки, стебель, листья)
+5. Для объектов добавляй четкие контуры и простые формы
+6. Отвечай ТОЛЬКО оптимизированным английским промптом для вышивки
 
-Пример:
-Вход: "кот в сапогах"
-Выход: "high quality detailed cat wearing boots, professional photography, realistic style"`;
+Примеры:
+Вход: "роза"
+Выход: "beautiful detailed red rose flower with petals and green stem, embroidery design, clean lines, vector art style, simple shapes"
+
+Вход: "самурай"  
+Выход: "japanese samurai warrior with armor and sword, embroidery design, bold outlines, simple details, vector art style"`;
 
   try {
     const response = await smartRouter.getChatResponse(
@@ -235,24 +239,41 @@ async function getAIEnhancedPrompt(prompt, style) {
 const SIMPLE_TRANSLATE = {
   'кот в сапогах': 'cat wearing boots',
   'кота в сапогах': 'cat wearing boots',
-  'кот': 'cat',
-  'кота': 'cat',
+  'красная роза': 'beautiful red rose flower with green stem and leaves',
+  'белая роза': 'beautiful white rose flower with green stem and leaves', 
+  'розовая роза': 'beautiful pink rose flower with green stem and leaves',
+  'роза': 'beautiful red rose flower with green stem and leaves',
+  'розы': 'beautiful roses bouquet with green leaves',
+  'цветок': 'flower with detailed petals and center',
+  'цветы': 'flowers with colorful petals',
+  'кот': 'cat with detailed fur',
+  'кота': 'cat with detailed fur',
   'сапоги': 'boots',
   'сапогах': 'boots',
   'в сапогах': 'wearing boots',
   'кибер': 'cyber',
   'техно': 'techno',
-  'самурай': 'samurai',
+  'самурай': 'japanese samurai warrior with armor and sword',
   'принт': 'print design',
   'футболка': 't-shirt',
-  'дракон': 'dragon',
-  'робот': 'robot',
-  'собака': 'dog',
-  'машина': 'car',
-  'дом': 'house',
-  'природа': 'nature',
-  'город': 'city',
-  'космос': 'space',
+  'дракон': 'detailed dragon with scales and wings',
+  'робот': 'robot with mechanical details',
+  'собака': 'dog with detailed features',
+  'машина': 'car vehicle',
+  'дом': 'house building',
+  'природа': 'nature landscape',
+  'город': 'city urban',
+  'космос': 'space cosmic',
+  'лев': 'majestic lion with mane',
+  'орел': 'eagle bird with spread wings',
+  'сердце': 'heart shape with decorative elements',
+  'звезда': 'star with pointed rays',
+  'солнце': 'sun with radiating rays',
+  'луна': 'crescent moon',
+  'бабочка': 'butterfly with detailed wing patterns',
+  'птица': 'bird with feathers and wings',
+  'дерево': 'tree with branches and leaves',
+  'листья': 'green leaves with vein patterns',
   'создай': 'create',
   'нарисуй': 'draw',
   'сделай': 'make',
