@@ -2142,42 +2142,9 @@
         
         const messageText = document.createElement('div');
         
-        // Проверяем на markdown изображения
-        console.log('🔍 [HTML] Проверяем текст на изображения:', text);
-        if (text.includes('![') && text.includes('](')) {
-          console.log('✅ [HTML] НАЙДЕН MARKDOWN ИЗОБРАЖЕНИЯ!');
-          // Обрабатываем markdown изображения
-          const imageRegex = /!\[([^\]]*)\]\(([^)]+)\)/g;
-          let processedText = text;
-          let match;
-          
-          while ((match = imageRegex.exec(text)) !== null) {
-            const [fullMatch, altText, imageUrl] = match;
-            console.log('🎨 [HTML] НАЙДЕНО ИЗОБРАЖЕНИЕ:', imageUrl);
-            console.log('📝 [HTML] Alt текст:', altText);
-            console.log('🔗 [HTML] Полное совпадение:', fullMatch);
-            
-            // Создаем HTML для изображения
-            const imageHTML = `
-              <div style="margin: 10px 0; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 8px;">
-                <img src="${imageUrl}" 
-                     alt="${altText || 'Сгенерированное изображение'}" 
-                     style="max-width: 100%; height: auto; border-radius: 8px; display: block; margin: 0 auto; max-height: 300px; object-fit: contain;"
-                     onload="console.log('✅ Изображение загружено:', '${imageUrl}')"
-                     onerror="console.error('❌ Ошибка загрузки:', '${imageUrl}'); this.style.display='none';">
-                <p style="text-align: center; margin-top: 8px; font-size: 0.8rem; color: #ccc;">${altText || 'Сгенерированное AI изображение'}</p>
-              </div>
-            `;
-            
-            // Заменяем markdown на HTML
-            processedText = processedText.replace(fullMatch, imageHTML);
-          }
-          
-          messageText.innerHTML = processedText;
-        } else {
-          // Обрабатываем текст через parseMarkdown для ссылок и форматирования
-          messageText.innerHTML = parseMarkdown(text);
-        }
+        // Обрабатываем все сообщения через parseMarkdown для полной поддержки markdown
+        console.log('🔍 [HTML] Обрабатываем сообщение через parseMarkdown:', text.substring(0, 100) + '...');
+        messageText.innerHTML = parseMarkdown(text);
         
         messageText.style.color = isUser ? '#ffffff' : '#ffffff';
         messageText.style.fontSize = '0.95rem';
