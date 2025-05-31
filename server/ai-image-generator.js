@@ -191,22 +191,34 @@ async function getAIEnhancedPrompt(prompt, style) {
   // Используем простой переводчик без рекурсии
   let englishPrompt = prompt.toLowerCase();
   
-  // Базовый перевод ключевых слов
+  // Расширенный словарь для перевода
   const translations = {
     'техносамурай': 'cyberpunk techno samurai warrior with futuristic armor',
     'техно самурай': 'cyberpunk techno samurai warrior with futuristic armor',
     'принт': 't-shirt design',
     'самурай': 'samurai warrior',
+    'принцесса': 'princess',
+    'принцессу': 'princess',
     'роза': 'red rose flower',
-    'создай': ''
+    'дракон': 'dragon',
+    'дракона': 'dragon',
+    'кот': 'cat',
+    'кота': 'cat',
+    'собака': 'dog',
+    'собаки': 'dog',
+    'воин': 'warrior',
+    'рыцарь': 'knight',
+    'создай': '',
+    'нарисуй': '',
+    'сделай': ''
   };
   
   for (const [ru, en] of Object.entries(translations)) {
     englishPrompt = englishPrompt.replace(new RegExp(ru, 'g'), en);
   }
   
-  // Добавляем базовые термины качества
-  englishPrompt = `${englishPrompt} vector art style, clean design, professional`.trim();
+  // Добавляем реалистичные характеристики
+  englishPrompt = `photorealistic, hyperrealistic, ${englishPrompt}, detailed skin texture, natural proportions, professional portrait photography, studio lighting, authentic materials, lifelike details, real anatomy`.trim();
   
   console.log(`✅ [AI-PROMPT] Результат: "${englishPrompt}"`);
   return englishPrompt;
@@ -368,7 +380,7 @@ function enhanceRussianPromptBasic(prompt, style) {
   
   // Добавляем качественные характеристики в зависимости от типа
   if (isTshirtDesign) {
-    enhancedPrompt = `high quality t-shirt design, vector style, bold graphics, clean background, print-ready, ${translatedPrompt}`;
+    enhancedPrompt = `photorealistic t-shirt design with realistic textures, detailed fabric, natural lighting, ${translatedPrompt}`;
   } else if (isCharacter && isCyberpunk) {
     enhancedPrompt = `photorealistic cyberpunk character, real human features, detailed skin texture, realistic futuristic armor, natural proportions, professional portrait photography, ${translatedPrompt}`;
   } else if (isCharacter) {
