@@ -192,6 +192,31 @@ async function getAIResponseWithSearch(userQuery, options = {}) {
     }
 
     const pythonProvider = require('./python_provider_routes');
+    // Проверяем запросы времени/даты напрямую
+    const queryLower = userQuery.toLowerCase();
+    const timeQueries = ['время', 'сейчас время', 'какое время', 'который час', 'сегодня число', 'какое число', 'какая дата'];
+    const isTimeQuery = timeQueries.some(q => queryLower.includes(q));
+    
+    if (isTimeQuery) {
+      const now = new Date();
+      const timeStr = now.toLocaleString('ru-RU', { 
+        timeZone: 'Europe/Moscow',
+        year: 'numeric',
+        month: 'long', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        weekday: 'long'
+      });
+      
+      return {
+        success: true,
+        response: `Сейчас: ${timeStr} (московское время)`,
+        provider: 'TimeProvider',
+        searchUsed: false
+      };
+    }
+
     const prompt = `Проанализируй запрос пользователя и определи тип действия:
 
 Запрос: "${userQuery}"
@@ -201,7 +226,7 @@ ${sessionContext.context}
 
 СТРОГО СЛЕДУЙ ЭТИМ ПРАВИЛАМ:
 1. Если пользователь просит НАРИСОВАТЬ, СОЗДАТЬ ИЗОБРАЖЕНИЕ, СГЕНЕРИРОВАТЬ КАРТИНКУ, ПРИНТ или ДИЗАЙН - отвечай ТОЛЬКО: "ГЕНЕРАЦИЯ_ИЗОБРАЖЕНИЯ"
-2. Если это запрос о текущей информации (погода, новости, курсы валют) - отвечай ТОЛЬКО: "НУЖЕН_ПОИСК"
+2. Если это запрос о текущей информации (погода, новости, курсы валют) НО НЕ ВРЕМЯ/ДАТА - отвечай ТОЛЬКО: "НУЖЕН_ПОИСК"
 3. Иначе дай обычный ответ
 
 Ключевые слова для генерации изображений: нарисуй, создай, сгенерируй, принт, дизайн, картинка, изображение, логотип, баннер`;
@@ -312,14 +337,13 @@ ${searchContext}
       return { success: false, reason: 'search_failed' };
     } else {
       // AI дал обычный ответ - но нужно проверить, не является ли это запросом на генерацию
-      const lowerQuery = userQuery.toLowerCase();
       
       // Проверяем ключевые слова для генерации изображений
       const imageKeywords = ['нарисуй', 'создай', 'сгенерируй', 'принт', 'дизайн', 'картинка', 'изображение', 'логотип', 'баннер'];
       const embroideryKeywords = ['вышивк', 'dst', 'pes', 'jef', 'exp', 'vp3'];
       
-      const isImageRequest = imageKeywords.some(keyword => lowerQuery.includes(keyword));
-      const isEmbroideryRequest = embroideryKeywords.some(keyword => lowerQuery.includes(keyword));
+      const isImageRequest = imageKeywords.some(keyword => queryLower.includes(keyword));
+      const isEmbroideryRequest = embroideryKeywords.some(keyword => queryLower.includes(keyword));
       
       if (isImageRequest) {
         SmartLogger.route(`🎨 Обнаружен запрос на генерацию изображения через ключевые слова`);

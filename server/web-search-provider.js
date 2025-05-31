@@ -3,9 +3,9 @@
  * Использует несколько бесплатных поисковых API и сервисов
  */
 
-// Используем require для совместимости с CommonJS
-const fetchModule = require('node-fetch');
-const fetch = fetchModule.default || fetchModule;
+// Используем встроенные модули Node.js для HTTP запросов
+const https = require('https');
+const http = require('http');
 
 /**
  * Определяет требуется ли веб-поиск для запроса
@@ -56,28 +56,31 @@ function needsWebSearch(query) {
  * @returns {Promise<Object>} Результаты поиска
  */
 async function searchDuckDuckGo(query) {
-    try {
-        console.log('🔍 [SEARCH] === НАЧИНАЕМ DUCKDUCKGO ПОИСК ===');
-        console.log('🔍 [SEARCH] Тип fetch:', typeof fetch);
-        console.log('🔍 [SEARCH] Fetch объект:', fetch);
-        
-        const encodedQuery = encodeURIComponent(query);
-        const url = `https://api.duckduckgo.com/?q=${encodedQuery}&format=json&no_html=1&skip_disambig=1`;
-        console.log('🔍 [SEARCH] URL для запроса:', url);
-        
-        const response = await fetch(url, {
-            headers: {
-                'User-Agent': 'BOOOMERANGS-Search/1.0'
-            }
-        });
-        
-        console.log('🔍 [SEARCH] Ответ получен, статус:', response.status);
-        
-        if (!response.ok) {
-            throw new Error(`DuckDuckGo API error: ${response.status}`);
-        }
-        
-        const data = await response.json();
+    return new Promise((resolve, reject) => {
+        try {
+            console.log('🔍 [SEARCH] === НАЧИНАЕМ DUCKDUCKGO ПОИСК ===');
+            
+            const encodedQuery = encodeURIComponent(query);
+            const url = `https://api.duckduckgo.com/?q=${encodedQuery}&format=json&no_html=1&skip_disambig=1`;
+            console.log('🔍 [SEARCH] URL для запроса:', url);
+            
+            const options = {
+                headers: {
+                    'User-Agent': 'BOOOMERANGS-Search/1.0'
+                }
+            };
+            
+            https.get(url, options, (response) => {
+                if (response.statusCode !== 200) {
+                    reject(new Error(`DuckDuckGo API error: ${response.statusCode}`));
+                    return;
+                }
+                
+                let data = '';
+                response.on('data', chunk => data += chunk);
+                response.on('end', () => {
+                    try {
+                        const jsonData = JSON.parse(data);
         console.log('🔍 [SEARCH] DuckDuckGo данные:', JSON.stringify(data, null, 2));
         
         let results = [];
