@@ -2057,17 +2057,20 @@
                 
                 if (data.files.embroidery) {
                   const fileName = data.files.embroidery.split('/').pop();
-                  responseWithFiles += `\n🧵 [Скачать файл вышивки (${fileName})](${data.files.embroidery})`;
+                  const fileUrl = `/output/embroidery/${fileName}`;
+                  responseWithFiles += `\n🧵 [Скачать файл вышивки (${fileName})](${fileUrl})`;
                 }
                 
                 if (data.files.image) {
                   const fileName = data.files.image.split('/').pop();
-                  responseWithFiles += `\n🖼️ [Скачать подготовленное изображение (${fileName})](${data.files.image})`;
+                  const fileUrl = `/output/embroidery/${fileName}`;
+                  responseWithFiles += `\n🖼️ [Скачать подготовленное изображение (${fileName})](${fileUrl})`;
                 }
                 
                 if (data.files.colorScheme) {
                   const fileName = data.files.colorScheme.split('/').pop();
-                  responseWithFiles += `\n🎨 [Скачать цветовую схему (${fileName})](${data.files.colorScheme})`;
+                  const fileUrl = `/output/embroidery/${fileName}`;
+                  responseWithFiles += `\n🎨 [Скачать цветовую схему (${fileName})](${fileUrl})`;
                 }
                 
                 // Добавляем информацию о деталях
