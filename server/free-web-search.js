@@ -110,8 +110,19 @@ async function searchWeather(query) {
     try {
         console.log('🔍 [WEATHER] Поиск погоды для:', query);
         
-        const cityMatch = query.match(/(в|для|в городе)\s+([а-яё\w]+)/i);
-        const city = cityMatch ? cityMatch[2] : 'Moscow';
+        // Улучшенное извлечение города из запроса
+        let city = 'Moscow';
+        
+        // Ищем паттерны: "в городе", "в районе", просто "в ..."
+        const cityMatch1 = query.match(/в\s+([а-яё]+(?:\s+[а-яё]+)*)/i);
+        const cityMatch2 = query.match(/для\s+([а-яё]+(?:\s+[а-яё]+)*)/i);
+        const cityMatch3 = query.match(/погода\s+([а-яё]+(?:\s+[а-яё]+)*)/i);
+        
+        if (cityMatch1) city = cityMatch1[1].trim();
+        else if (cityMatch2) city = cityMatch2[1].trim();
+        else if (cityMatch3) city = cityMatch3[1].trim();
+        
+        console.log('🔍 [WEATHER] Определен город:', city);
         
         const url = `http://wttr.in/${encodeURIComponent(city)}?format=j1`;
         
