@@ -260,13 +260,14 @@ async function searchGeneral(query) {
     try {
         console.log('🔍 [GENERAL] Общий поиск для:', query);
         
-        // Пробуем DuckDuckGo Instant Answer API (бесплатный)
+        // Пробуем Brave Search API (бесплатный веб-поиск)
         try {
-            const ddgUrl = `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1&skip_disambig=1`;
+            const braveUrl = `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(query)}&count=5&offset=0&mkt=ru-RU`;
             
-            const response = await fetch(ddgUrl, {
-                timeout: 5000,
+            const response = await fetch(braveUrl, {
+                timeout: 8000,
                 headers: {
+                    'X-Subscription-Token': process.env.BRAVE_SEARCH_API_KEY || 'BSAqOKKN2cjgn83A5K5iQB8uUGDdLdTBwc',
                     'User-Agent': 'BOOOMERANGS-Search/1.0'
                 }
             });
@@ -275,38 +276,81 @@ async function searchGeneral(query) {
                 const data = await response.json();
                 const results = [];
                 
-                // Добавляем абстракт если есть
-                if (data.Abstract && data.Abstract.length > 20) {
-                    results.push({
-                        title: data.Heading || query,
-                        snippet: data.Abstract,
-                        url: data.AbstractURL || `https://duckduckgo.com/?q=${encodeURIComponent(query)}`,
-                        source: 'DuckDuckGo'
-                    });
-                }
-                
-                // Добавляем связанные темы
-                if (data.RelatedTopics && data.RelatedTopics.length > 0) {
-                    for (let i = 0; i < Math.min(2, data.RelatedTopics.length); i++) {
-                        const topic = data.RelatedTopics[i];
-                        if (topic.Text && topic.Text.length > 20) {
+                if (data.web && data.web.results && data.web.results.length > 0) {
+                    for (const result of data.web.results.slice(0, 3)) {
+                        if (result.title && result.description) {
                             results.push({
-                                title: topic.Text.split(' - ')[0] || 'Связанная информация',
-                                snippet: topic.Text,
-                                url: topic.FirstURL || `https://duckduckgo.com/?q=${encodeURIComponent(query)}`,
-                                source: 'DuckDuckGo Related'
+                                title: result.title,
+                                snippet: result.description,
+                                url: result.url,
+                                source: 'Brave Search'
                             });
                         }
                     }
                 }
                 
                 if (results.length > 0) {
-                    console.log('🔍 [GENERAL] Найдено через DuckDuckGo:', results.length, 'результатов');
+                    console.log('🔍 [GENERAL] Найдено через Brave Search:', results.length, 'результатов');
                     return results;
                 }
             }
-        } catch (ddgError) {
-            console.log('🔍 [GENERAL] DuckDuckGo недоступен:', ddgError.message);
+        } catch (braveError) {
+            console.log('🔍 [GENERAL] Brave Search недоступен:', braveError.message);
+        }
+        
+        // Fallback: пробуем простой поиск через HTML парсинг
+        try {
+            const searchUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
+            
+            const response = await fetch(searchUrl, {
+                timeout: 8000,
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                }
+            });
+            
+            if (response.ok) {
+                const html = await response.text();
+                
+                // Простой парсинг результатов
+                const titleRegex = /<a[^>]+class="result__a"[^>]*>([^<]+)<\/a>/g;
+                const linkRegex = /<a[^>]+class="result__a"[^>]+href="([^"]+)"/g;
+                const snippetRegex = /<a[^>]+class="result__snippet"[^>]*>([^<]+)<\/a>/g;
+                
+                const titles = [];
+                const links = [];
+                const snippets = [];
+                
+                let match;
+                while ((match = titleRegex.exec(html)) !== null) {
+                    titles.push(match[1].trim());
+                }
+                while ((match = linkRegex.exec(html)) !== null) {
+                    links.push(match[1]);
+                }
+                while ((match = snippetRegex.exec(html)) !== null) {
+                    snippets.push(match[1].trim());
+                }
+                
+                const results = [];
+                for (let i = 0; i < Math.min(3, titles.length); i++) {
+                    if (titles[i] && links[i]) {
+                        results.push({
+                            title: titles[i],
+                            snippet: snippets[i] || 'Найдено через веб-поиск',
+                            url: links[i],
+                            source: 'Web Search'
+                        });
+                    }
+                }
+                
+                if (results.length > 0) {
+                    console.log('🔍 [GENERAL] Найдено через HTML парсинг:', results.length, 'результатов');
+                    return results;
+                }
+            }
+        } catch (htmlError) {
+            console.log('🔍 [GENERAL] HTML парсинг недоступен:', htmlError.message);
         }
         
         // Fallback - возвращаем информативный результат
