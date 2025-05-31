@@ -456,7 +456,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             res.json({ 
               success: true, 
               message: userMessage,
-              aiResponse: aiResponse.response,
+              aiResponse: processedResponse,
               provider: aiResponse.provider
             });
             return;
@@ -519,10 +519,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log('🎯 AI ответил:', aiResponse);
           
           if (aiResponse && aiResponse.response) {
+            // Делаем ссылки более компактными
+            let processedResponse = aiResponse.response;
+            
+            // Заменяем длинные описания файлов на короткие
+            processedResponse = processedResponse.replace(/🧵 \[Скачать файл вышивки \([^)]+\)\]/g, '🧵 [DST файл]');
+            processedResponse = processedResponse.replace(/🖼️ \[Скачать подготовленное изображение \([^)]+\)\]/g, '🖼️ [PNG превью]');
+            processedResponse = processedResponse.replace(/🎨 \[Скачать цветовую схему \([^)]+\)\]/g, '🎨 [JSON схема]');
+            
             // Сохраняем ответ AI
             const aiMessageData = {
               ...messageData,
-              content: aiResponse.response,
+              content: processedResponse,
               sender: 'ai',
               provider: aiResponse.provider,
               timestamp: new Date().toISOString()
