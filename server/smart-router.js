@@ -58,9 +58,10 @@ async function getAIResponseWithSearch(userQuery, options = {}) {
     const requestAnalysis = chatMemory.analyzeRequestWithContext(userQuery, sessionContext);
     SmartLogger.route(`🔍 Анализ запроса:`, requestAnalysis);
 
-    // Сначала проверяем локально на SVG конвертацию
+    // Сначала проверяем локально на SVG конвертацию  
+    const queryLowerForSvg = userQuery.toLowerCase();
     const svgKeywords = ['сохрани в svg', 'сохрани svg', 'экспорт в svg', 'конверт в svg', 'сделай svg', 'сохрани в свг', 'сохрани свг'];
-    const isSvgRequest = svgKeywords.some(keyword => queryLower.includes(keyword));
+    const isSvgRequest = svgKeywords.some(keyword => queryLowerForSvg.includes(keyword));
 
     if (isSvgRequest) {
       SmartLogger.route(`🎨 Обнаружен запрос на SVG конвертацию локально`);
@@ -192,9 +193,8 @@ async function getAIResponseWithSearch(userQuery, options = {}) {
 
     const pythonProvider = require('./python_provider_routes');
     // Проверяем запросы времени/даты напрямую
-    const queryLower = userQuery.toLowerCase();
     const timeQueries = ['время', 'сейчас время', 'какое время', 'который час', 'сегодня число', 'какое число', 'какая дата'];
-    const isTimeQuery = timeQueries.some(q => queryLower.includes(q));
+    const isTimeQuery = timeQueries.some(q => queryLowerForSvg.includes(q));
     
     if (isTimeQuery) {
       const now = new Date();
@@ -341,8 +341,8 @@ ${searchContext}
       const imageKeywords = ['нарисуй', 'создай', 'сгенерируй', 'принт', 'дизайн', 'картинка', 'изображение', 'логотип', 'баннер'];
       const embroideryKeywords = ['вышивк', 'dst', 'pes', 'jef', 'exp', 'vp3'];
       
-      const isImageRequest = imageKeywords.some(keyword => queryLower.includes(keyword));
-      const isEmbroideryRequest = embroideryKeywords.some(keyword => queryLower.includes(keyword));
+      const isImageRequest = imageKeywords.some(keyword => queryLowerForSvg.includes(keyword));
+      const isEmbroideryRequest = embroideryKeywords.some(keyword => queryLowerForSvg.includes(keyword));
       
       if (isImageRequest) {
         SmartLogger.route(`🎨 Обнаружен запрос на генерацию изображения через ключевые слова`);
