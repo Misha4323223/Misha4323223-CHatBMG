@@ -2175,8 +2175,8 @@
           
           messageText.innerHTML = processedText;
         } else {
-          // Обычный текст
-          messageText.textContent = text;
+          // Обрабатываем текст через parseMarkdown для ссылок и форматирования
+          messageText.innerHTML = parseMarkdown(text);
         }
         
         messageText.style.color = isUser ? '#ffffff' : '#ffffff';
