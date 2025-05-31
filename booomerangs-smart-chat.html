@@ -2302,14 +2302,24 @@
         
         let html = text;
         
-        // Обработка markdown ссылок [текст](url)
-        html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" style="color: #6c63ff; text-decoration: underline;">$1</a>');
+        // Обработка изображений ![alt](url) (должно быть первым)
+        html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" style="max-width: 100%; height: auto; border-radius: 8px; margin: 10px 0;" />');
+        
+        // Обработка markdown ссылок [текст](url) - улучшенное регулярное выражение
+        html = html.replace(/(?:^|[^!])\[([^\]]+)\]\(([^)]+)\)/gm, function(match, text, url, offset, string) {
+          // Проверяем, что это не часть ![...](...)
+          if (string[offset - 1] === '!') {
+            return match;
+          }
+          const prefix = match.charAt(0) === '[' ? '' : match.charAt(0);
+          return prefix + '<a href="' + url + '" target="_blank" style="color: #6c63ff; text-decoration: underline; font-weight: 500;">' + text + '</a>';
+        });
         
         // Обработка жирного текста **текст**
-        html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+        html = html.replace(/\*\*([^*]+)\*\*/g, '<strong style="font-weight: 600;">$1</strong>');
         
-        // Обработка изображений ![alt](url)
-        html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" style="max-width: 100%; height: auto; border-radius: 8px; margin: 10px 0;" />');
+        // Обработка маркированных списков
+        html = html.replace(/^• (.+)$/gm, '<li style="margin-left: 20px;">$1</li>');
         
         // Обработка переносов строк
         html = html.replace(/\n/g, '<br>');
