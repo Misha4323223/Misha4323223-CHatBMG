@@ -2047,8 +2047,48 @@
             
             if (data.success) {
               console.log(`✅ [FALLBACK] Успешный ответ от ${data.provider}: "${data.response}"`);
-              messageElement.textContent = data.response;
-              await saveMessageToHistory(data.response, 'ai', data.provider);
+              
+              // Проверяем, есть ли файлы для скачивания (результаты вышивки)
+              if (data.files && (data.files.embroidery || data.files.image || data.files.colorScheme)) {
+                let responseWithFiles = data.response;
+                
+                // Добавляем ссылки на файлы
+                responseWithFiles += '\n\n📁 **Файлы для скачивания:**\n';
+                
+                if (data.files.embroidery) {
+                  const fileName = data.files.embroidery.split('/').pop();
+                  responseWithFiles += `\n🧵 [Скачать файл вышивки (${fileName})](${data.files.embroidery})`;
+                }
+                
+                if (data.files.image) {
+                  const fileName = data.files.image.split('/').pop();
+                  responseWithFiles += `\n🖼️ [Скачать подготовленное изображение (${fileName})](${data.files.image})`;
+                }
+                
+                if (data.files.colorScheme) {
+                  const fileName = data.files.colorScheme.split('/').pop();
+                  responseWithFiles += `\n🎨 [Скачать цветовую схему (${fileName})](${data.files.colorScheme})`;
+                }
+                
+                // Добавляем информацию о деталях
+                if (data.details) {
+                  responseWithFiles += '\n\n📋 **Детали:**\n';
+                  if (data.details.colors) responseWithFiles += `\n• Цветов: ${data.details.colors}`;
+                  if (data.details.size) responseWithFiles += `\n• Размер: ${data.details.size}`;
+                  if (data.details.machineFormat) responseWithFiles += `\n• Формат: ${data.details.machineFormat}`;
+                }
+                
+                // Добавляем сгенерированное изображение
+                if (data.generatedImage) {
+                  responseWithFiles += `\n\n![Сгенерированное изображение](${data.generatedImage})`;
+                }
+                
+                messageElement.innerHTML = processMarkdownToHTML(responseWithFiles);
+                await saveMessageToHistory(responseWithFiles, 'ai', data.provider);
+              } else {
+                messageElement.textContent = data.response;
+                await saveMessageToHistory(data.response, 'ai', data.provider);
+              }
             } else {
               console.error('❌ [FALLBACK] Неуспешный ответ:', data);
               messageElement.textContent = 'Произошла ошибка при получении ответа';
@@ -2060,6 +2100,34 @@
           
           hideStatus();
         }
+      }
+
+      // Функция для обработки markdown в HTML
+      function processMarkdownToHTML(text) {
+        // Обрабатываем ссылки [текст](url)
+        text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" style="color: #6c63ff; text-decoration: none; border-bottom: 1px solid #6c63ff;">$1</a>');
+        
+        // Обрабатываем жирный текст **текст**
+        text = text.replace(/\*\*([^*]+)\*\*/g, '<strong style="font-weight: 600;">$1</strong>');
+        
+        // Обрабатываем изображения ![alt](url)
+        text = text.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, function(match, alt, url) {
+          return `
+            <div style="margin: 10px 0; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 8px;">
+              <img src="${url}" 
+                   alt="${alt || 'Изображение'}" 
+                   style="max-width: 100%; height: auto; border-radius: 8px; display: block; margin: 0 auto; max-height: 300px; object-fit: contain;"
+                   onload="console.log('✅ Изображение загружено:', '${url}')"
+                   onerror="console.error('❌ Ошибка загрузки:', '${url}'); this.style.display='none';">
+              <p style="text-align: center; margin-top: 8px; font-size: 0.8rem; color: #ccc;">${alt || 'Изображение'}</p>
+            </div>
+          `;
+        });
+        
+        // Обрабатываем переносы строк
+        text = text.replace(/\n/g, '<br>');
+        
+        return text;
       }
 
       // Функция для добавления сообщения в чат
