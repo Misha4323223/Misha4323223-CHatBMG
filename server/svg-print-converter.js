@@ -7,7 +7,15 @@ const sharp = require('sharp');
 const potrace = require('potrace');
 const fs = require('fs').promises;
 const path = require('path');
-const fetch = require('node-fetch');
+
+// Импорт fetch с проверкой версии Node.js
+let fetch;
+try {
+  fetch = require('node-fetch');
+} catch (error) {
+  // Fallback для более новых версий Node.js
+  fetch = globalThis.fetch;
+}
 
 // Импортируем AI провайдеры для улучшения SVG
 const chatFreeProvider = require('./chatfree-provider');
@@ -448,7 +456,8 @@ function isPrintConversionRequest(message) {
   ];
   
   const conversionKeywords = [
-    'конверт', 'преобразуй', 'сделай svg', 'в вектор'
+    'конверт', 'преобразуй', 'сделай svg', 'в вектор', 'сохрани в svg',
+    'сохрани svg', 'экспорт в svg', 'сделай векторным'
   ];
   
   const lowerMessage = message.toLowerCase();
@@ -460,7 +469,7 @@ function isPrintConversionRequest(message) {
     message: lowerMessage.substring(0, 50),
     hasPrintKeyword,
     hasConversionKeyword,
-    foundKeywords: printKeywords.filter(keyword => lowerMessage.includes(keyword))
+    foundKeywords: [...printKeywords, ...conversionKeywords].filter(keyword => lowerMessage.includes(keyword))
   });
   
   return hasPrintKeyword || hasConversionKeyword;
