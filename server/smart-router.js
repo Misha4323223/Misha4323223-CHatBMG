@@ -406,7 +406,15 @@ ${searchContext}
             const pythonProvider = require('./python_provider_routes');
             const result = await pythonProvider.callPythonAI(enhancedMessage, provider);
             
-            if (result.success) {
+            // Проверяем, что ответ содержит реальную информацию, а не отказ
+            const isRefusal = result.response && (
+              result.response.toLowerCase().includes('не могу предоставить') ||
+              result.response.toLowerCase().includes('не имею доступа') ||
+              result.response.toLowerCase().includes('проверьте на сайте') ||
+              result.response.toLowerCase().includes('обратитесь к специализированным')
+            );
+            
+            if (result.success && result.response && !isRefusal) {
               SmartLogger.success(`Веб-поиск + AI ответ готов от провайдера: ${provider}`);
               
               return {
@@ -418,6 +426,8 @@ ${searchContext}
                 searchResults: searchResults.results,
                 processingTime: Date.now() - startTime
               };
+            } else {
+              SmartLogger.route(`Провайдер ${provider} дал стандартный отказ, пробуем следующий`);
             }
           } catch (providerError) {
             SmartLogger.error(`Ошибка провайдера ${provider} с веб-поиском:`, providerError);
