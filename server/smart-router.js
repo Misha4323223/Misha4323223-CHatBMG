@@ -35,19 +35,35 @@ const pythonProviderRoutes = require('./python_provider_routes');
 const embroideryHandler = require('./embroidery-chat-handler');
 const aiEmbroideryPipeline = require('./ai-embroidery-pipeline');
 const webSearchProvider = require('./web-search-provider');
+const chatMemory = require('./chat-memory');
 
 /**
  * AI с автоматическим поиском при необходимости
  */
-async function getAIResponseWithSearch(userQuery) {
+async function getAIResponseWithSearch(userQuery, options = {}) {
   try {
-    SmartLogger.route(`🤖 Сначала пробуем получить ответ от AI`);
+    SmartLogger.route(`🤖 Получаем ответ AI с памятью и контекстом`);
     
-    // Сначала спрашиваем AI напрямую
+    // Получаем контекст сессии
+    const sessionId = options.sessionId;
+    let sessionContext = { context: chatMemory.AI_CAPABILITIES, messageCount: 0 };
+    
+    if (sessionId) {
+      sessionContext = await chatMemory.getSessionContext(sessionId, 5);
+      SmartLogger.route(`📋 Загружен контекст сессии ${sessionId}: ${sessionContext.messageCount} сообщений`);
+    }
+
+    // Анализируем запрос с учетом контекста
+    const requestAnalysis = chatMemory.analyzeRequestWithContext(userQuery, sessionContext);
+    SmartLogger.route(`🔍 Анализ запроса:`, requestAnalysis);
+
     const pythonProvider = require('./python_provider_routes');
     const prompt = `Проанализируй запрос пользователя и определи тип действия:
 
 Запрос: "${userQuery}"
+
+КОНТЕКСТ СЕССИИ:
+${sessionContext.context}
 
 СТРОГО СЛЕДУЙ ЭТИМ ПРАВИЛАМ:
 1. Если пользователь просит НАРИСОВАТЬ, СОЗДАТЬ ИЗОБРАЖЕНИЕ, СГЕНЕРИРОВАТЬ КАРТИНКУ, ПРИНТ или ДИЗАЙН - отвечай ТОЛЬКО: "ГЕНЕРАЦИЯ_ИЗОБРАЖЕНИЯ"
@@ -204,21 +220,10 @@ ${searchContext}
         }
       }
       
-      // Если не генерация изображения, даем обычный ответ с информацией о возможностях
-      const enhancedPrompt = `Ты - AI ассистент с расширенными возможностями:
+      // Если не генерация изображения, даем обычный ответ с полным контекстом
+      const enhancedPrompt = chatMemory.createEnhancedPrompt(userQuery, sessionContext);
 
-ТВОИ ВОЗМОЖНОСТИ:
-✅ Генерация изображений (скажи "нарисуй", "создай изображение", "сгенерируй")
-✅ Поиск актуальной информации в интернете
-✅ Анализ изображений
-✅ Конвертация в форматы вышивки (DST, PES, JEF)
-✅ Помощь с кодом и программированием
-
-Пользователь спрашивает: "${userQuery}"
-
-Отвечай как полноценный AI с этими возможностями. Предлагай использовать свои функции когда это уместно.`;
-
-      // Получаем новый ответ с информацией о возможностях
+      // Получаем новый ответ с информацией о возможностях и контекстом
       const enhancedResult = await pythonProvider.callPythonAI(enhancedPrompt, 'Qwen_Qwen_2_72B');
       
       let enhancedText = '';
@@ -676,9 +681,19 @@ async function routeMessage(message, options = {}) {
   SmartLogger.route(`🤖 Отправляем запрос AI с возможностью поиска`);
   
   try {
-    const aiWithSearchResult = await getAIResponseWithSearch(message);
+    const aiWithSearchResult = await getAIResponseWithSearch(message, options);
     if (aiWithSearchResult.success) {
       SmartLogger.success(`Получен ответ от AI ${aiWithSearchResult.searchUsed ? 'с поиском' : 'без поиска'}`);
+      
+      // Сохраняем информацию об операции
+      if (options.sessionId) {
+        await chatMemory.saveOperationInfo(options.sessionId, 'ai_response', {
+          provider: aiWithSearchResult.provider,
+          searchUsed: aiWithSearchResult.searchUsed,
+          imageGenerated: aiWithSearchResult.imageGenerated
+        });
+      }
+      
       return aiWithSearchResult;
     }
   } catch (error) {
