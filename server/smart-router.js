@@ -69,9 +69,16 @@ async function getAIResponseWithSearch(userQuery, options = {}) {
       // Ищем последнее изображение в контексте сессии
       let lastImageUrl = null;
       
-      // Получаем сообщения напрямую из базы данных
-      const chatHistory = require('./chat-history');
-      const messages = await chatHistory.getSessionMessages(sessionId);
+      // Получаем сообщения напрямую из базы данных через SQL
+      const { db } = require('./db');
+      const { aiMessages } = require('../shared/schema');
+      const { eq } = require('drizzle-orm');
+      
+      const messages = await db
+        .select()
+        .from(aiMessages)
+        .where(eq(aiMessages.sessionId, sessionId))
+        .orderBy(aiMessages.createdAt);
       
       SmartLogger.route(`🔍 Ищем изображения в базе данных:`, {
         sessionId,
