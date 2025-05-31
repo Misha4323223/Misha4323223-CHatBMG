@@ -2349,28 +2349,21 @@
         console.log('📝 [parseMarkdown] Входной текст:', text.substring(0, 100) + '...');
         let html = text;
         
-        // Сначала сокращаем длинные описания файлов для вышивки
+        // Сначала обрабатываем переносы строк, НО сохраняем маркеры для изображений
+        html = html.replace(/\n/g, '<br>');
+        
+        // Сокращаем длинные описания файлов для вышивки
         html = html.replace(/🧵 \[Скачать файл вышивки \([^)]+\)\]/g, '🧵 [DST файл]');
         html = html.replace(/🖼️ \[Скачать подготовленное изображение \([^)]+\)\]/g, '🖼️ [PNG превью]');
         html = html.replace(/🎨 \[Скачать цветовую схему \([^)]+\)\]/g, '🎨 [JSON схема]');
         
-        // Затем обрабатываем изображения ![alt](url)
+        // Обрабатываем изображения ![alt](url) - ПОСЛЕ обработки переносов строк
         html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, function(match, alt, url) {
           console.log('🖼️ [HTML] Обрабатываем изображение:', { alt, url });
-          return `<div style="margin: 15px 0; text-align: center;">
-            <img src="${url}" 
-                 alt="${alt || 'Изображение'}" 
-                 style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); max-height: 400px;"
-                 onload="console.log('✅ [HTML] Изображение загружено:', '${url}')"
-                 onerror="console.error('❌ [HTML] Ошибка загрузки изображения:', '${url}'); this.style.display='none'; this.nextElementSibling.style.display='block';">
-            <div style="display: none; padding: 10px; background: rgba(255,0,0,0.1); border-radius: 4px; color: #ff6b6b;">
-              ❌ Не удалось загрузить изображение
-            </div>
-            ${alt ? `<p style="margin-top: 8px; font-size: 0.9rem; color: #888;">${alt}</p>` : ''}
-          </div>`;
+          return `<div style="margin: 15px 0; text-align: center;"><img src="${url}" alt="${alt || 'Изображение'}" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); max-height: 400px;" onload="console.log('✅ [HTML] Изображение загружено:', '${url}')" onerror="console.error('❌ [HTML] Ошибка загрузки изображения:', '${url}'); this.style.display='none'; this.nextElementSibling.style.display='block';"><div style="display: none; padding: 10px; background: rgba(255,0,0,0.1); border-radius: 4px; color: #ff6b6b;">❌ Не удалось загрузить изображение</div>${alt ? `<p style="margin-top: 8px; font-size: 0.9rem; color: #888;">${alt}</p>` : ''}</div>`;
         });
         
-        // Затем обрабатываем обычные ссылки [текст](url) - простая версия
+        // Обрабатываем обычные ссылки [текст](url)
         html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" style="color: #4CAF50; text-decoration: underline; font-weight: 500; padding: 2px 4px; background: rgba(76, 175, 80, 0.1); border-radius: 3px;">$1</a>');
         
         // Обработка жирного текста **текст**
@@ -2378,9 +2371,6 @@
         
         // Обработка маркированных списков
         html = html.replace(/^• (.+)$/gm, '<div style="margin-left: 20px; margin-bottom: 5px;">• $1</div>');
-        
-        // Обработка переносов строк
-        html = html.replace(/\n/g, '<br>');
         
         console.log('📝 [parseMarkdown] Финальный HTML:', html.substring(0, 200) + '...');
         return html;
