@@ -1624,9 +1624,9 @@
         }
         
         // Проверяем запросы на создание дизайнов для вышивки
-        if ((lowerMessage.includes('создай') || lowerMessage.includes('сгенерируй') || 
+        if ((lowerMessage.includes('создай') || lowerMessage.includes('создаг') || lowerMessage.includes('сгенерируй') || 
              lowerMessage.includes('нарисуй')) && 
-            (lowerMessage.includes('вышивк') || lowerMessage.includes('dst') || 
+            (lowerMessage.includes('вышивк') || lowerMessage.includes('вышивку') || lowerMessage.includes('dst') || 
              lowerMessage.includes('pes') || lowerMessage.includes('jef'))) {
           return {
             title: '🧵 Создание дизайна для вышивки',
@@ -1796,9 +1796,9 @@
         
         // Проверяем, является ли это запросом на вышивку
         const lowerMessage = message.toLowerCase();
-        const isEmbroideryRequest = (lowerMessage.includes('вышивк') || lowerMessage.includes('dst') || 
+        const isEmbroideryRequest = (lowerMessage.includes('вышивк') || lowerMessage.includes('вышивку') || lowerMessage.includes('dst') || 
                                    lowerMessage.includes('pes') || lowerMessage.includes('jef')) &&
-                                  (lowerMessage.includes('создай') || lowerMessage.includes('сгенерируй') || 
+                                  (lowerMessage.includes('создай') || lowerMessage.includes('создаг') || lowerMessage.includes('сгенерируй') || 
                                    lowerMessage.includes('нарисуй') || lowerMessage.includes('конвертир'));
         
         try {
