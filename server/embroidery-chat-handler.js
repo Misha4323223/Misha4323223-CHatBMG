@@ -1,0 +1,203 @@
+/**
+ * Обработчик команд для конвертации изображений в форматы вышивки через чат
+ */
+
+const { convertToEmbroidery, getSupportedFormats, analyzeImageForEmbroidery } = require('./embroidery-converter');
+const path = require('path');
+
+/**
+ * Определяет, является ли сообщение запросом на конвертацию в формат вышивки
+ */
+function isEmbroideryRequest(message) {
+  const embroideryKeywords = [
+    'dst', 'pes', 'jef', 'exp', 'vp3',
+    'вышивка', 'вышить', 'шелкография', 
+    'конвертировать', 'конвертация',
+    'формат вышивки', 'файл для вышивки',
+    'embroidery', 'convert', 'stitch'
+  ];
+  
+  const lowerMessage = message.toLowerCase();
+  return embroideryKeywords.some(keyword => lowerMessage.includes(keyword));
+}
+
+/**
+ * Определяет целевой формат из сообщения
+ */
+function extractTargetFormat(message) {
+  const lowerMessage = message.toLowerCase();
+  
+  // Проверяем упоминание конкретных форматов
+  if (lowerMessage.includes('dst')) return 'dst';
+  if (lowerMessage.includes('pes')) return 'pes';
+  if (lowerMessage.includes('jef')) return 'jef';
+  if (lowerMessage.includes('exp')) return 'exp';
+  if (lowerMessage.includes('vp3')) return 'vp3';
+  
+  // По умолчанию DST как самый универсальный
+  return 'dst';
+}
+
+/**
+ * Извлекает параметры конвертации из сообщения
+ */
+function extractConversionOptions(message) {
+  const options = {};
+  
+  // Поиск размеров
+  const sizeMatch = message.match(/(\d+)\s*[x×]\s*(\d+)/);
+  if (sizeMatch) {
+    options.width = parseInt(sizeMatch[1]);
+    options.height = parseInt(sizeMatch[2]);
+  }
+  
+  // Поиск количества цветов
+  const colorsMatch = message.match(/(\d+)\s*(цвет|color)/i);
+  if (colorsMatch) {
+    options.colors = parseInt(colorsMatch[1]);
+  }
+  
+  return options;
+}
+
+/**
+ * Обработка запроса на конвертацию через чат
+ */
+async function handleEmbroideryRequest(message, imageData = null) {
+  try {
+    // Если нет изображения, возвращаем инструкции
+    if (!imageData) {
+      const formats = getSupportedFormats();
+      return {
+        success: true,
+        type: 'instructions',
+        message: 'Для конвертации в формат вышивки загрузите изображение и укажите команду.',
+        supportedFormats: formats,
+        examples: [
+          'Конвертировать в DST',
+          'Сделать файл для вышивки PES',
+          'Преобразовать в формат JEF размером 200x150',
+          'Создать вышивку с 10 цветами'
+        ]
+      };
+    }
+    
+    const targetFormat = extractTargetFormat(message);
+    const options = extractConversionOptions(message);
+    
+    console.log(`Конвертация в формат ${targetFormat} с параметрами:`, options);
+    
+    // Выполняем конвертацию
+    const result = await convertToEmbroidery(
+      imageData.buffer,
+      imageData.filename || 'uploaded_image.png',
+      targetFormat,
+      options
+    );
+    
+    if (result.success) {
+      return {
+        success: true,
+        type: 'conversion_complete',
+        format: result.format,
+        analysis: result.analysis,
+        colorPalette: result.colorPalette,
+        files: result.files,
+        instructions: result.instructions,
+        message: `Изображение успешно конвертировано в формат ${result.format.name}`,
+        details: {
+          colors: result.colorPalette.length,
+          size: `${result.analysis.width}x${result.analysis.height}мм`,
+          threadsNeeded: result.colorPalette.map(c => c.threadColor.name).join(', ')
+        }
+      };
+    } else {
+      return {
+        success: false,
+        type: 'conversion_error',
+        error: result.error,
+        supportedFormats: result.supportedFormats
+      };
+    }
+    
+  } catch (error) {
+    console.error('Ошибка обработки запроса на вышивку:', error);
+    return {
+      success: false,
+      type: 'processing_error',
+      error: 'Ошибка при обработке запроса на конвертацию'
+    };
+  }
+}
+
+/**
+ * Анализ изображения для вышивки через чат
+ */
+async function analyzeImageForChat(imageData) {
+  try {
+    const analysis = await analyzeImageForEmbroidery(imageData.buffer);
+    const { extractColorPalette } = require('./embroidery-converter');
+    const colorPalette = await extractColorPalette(imageData.buffer, 15);
+    
+    return {
+      success: true,
+      type: 'analysis',
+      filename: imageData.filename,
+      analysis: analysis,
+      colorPalette: colorPalette,
+      recommendations: {
+        recommendedFormat: analysis.recommendedFormat,
+        sizeStatus: analysis.width <= 400 && analysis.height <= 400 ? 'Размер подходит для вышивки' : 'Рекомендуется уменьшить размер',
+        colorStatus: colorPalette.length <= 15 ? 'Цветовая схема подходит' : 'Слишком много цветов, упростите схему',
+        complexity: colorPalette.length <= 5 ? 'Простой дизайн' : colorPalette.length <= 10 ? 'Средний дизайн' : 'Сложный дизайн'
+      },
+      message: `Анализ завершен. Найдено ${colorPalette.length} цветов. Рекомендуемый формат: ${analysis.recommendedFormat.toUpperCase()}`
+    };
+    
+  } catch (error) {
+    console.error('Ошибка анализа изображения:', error);
+    return {
+      success: false,
+      type: 'analysis_error',
+      error: 'Ошибка анализа изображения для вышивки'
+    };
+  }
+}
+
+/**
+ * Получение справки по форматам вышивки
+ */
+function getEmbroideryHelp() {
+  const formats = getSupportedFormats();
+  
+  return {
+    success: true,
+    type: 'help',
+    message: 'Доступные форматы для конвертации в вышивку',
+    formats: formats,
+    commands: [
+      'анализ изображения - проверить подходит ли изображение для вышивки',
+      'конвертировать в DST - создать файл для большинства машин',
+      'сделать PES - для машин Brother',
+      'формат JEF - для машин Janome',
+      'создать EXP - для машин Melco',
+      'размер 200x150 - указать нужный размер',
+      '10 цветов - ограничить количество цветов'
+    ],
+    tips: [
+      'Лучше всего подходят простые изображения с четкими контурами',
+      'Рекомендуемый размер: не более 400x400 пикселей',
+      'Оптимальное количество цветов: 5-15',
+      'Формат DST поддерживается большинством машин'
+    ]
+  };
+}
+
+module.exports = {
+  isEmbroideryRequest,
+  handleEmbroideryRequest,
+  analyzeImageForChat,
+  getEmbroideryHelp,
+  extractTargetFormat,
+  extractConversionOptions
+};

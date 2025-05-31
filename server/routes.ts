@@ -291,6 +291,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // API для мультимодального анализа изображений
   const multimodalProvider = require('./multimodal-provider');
   app.use('/api/multimodal', multimodalProvider);
+
+  // API для конвертации в форматы вышивки
+  const embroideryRoutes = require('./embroidery-routes');
+  app.use('/api/embroidery', embroideryRoutes);
   
   // API для тестирования провайдеров (отключено)
   

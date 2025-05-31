@@ -32,6 +32,7 @@ const deepspeekProvider = require('./deepspeek-provider');
 const claudeProvider = require('./claude-provider');
 const deepInfraProvider = require('./deepinfra-provider');
 const pythonProviderRoutes = require('./python_provider_routes');
+const embroideryHandler = require('./embroidery-chat-handler');
 
 // Специализации провайдеров
 const PROVIDER_SPECIALTIES = {
@@ -369,6 +370,55 @@ async function routeMessage(message, options = {}) {
     hasImage: !!options.imageUrl,
     options: Object.keys(options)
   });
+
+  // Проверяем запросы на конвертацию в форматы вышивки
+  if (embroideryHandler.isEmbroideryRequest(message)) {
+    SmartLogger.route(`Обнаружен запрос на конвертацию в формат вышивки`);
+    
+    try {
+      let imageData = null;
+      if (options.imageUrl) {
+        // Подготавливаем данные изображения для обработки
+        const fs = require('fs');
+        const path = require('path');
+        const imageBuffer = fs.readFileSync(options.imageUrl);
+        imageData = {
+          buffer: imageBuffer,
+          filename: path.basename(options.imageUrl)
+        };
+      }
+      
+      const result = await embroideryHandler.handleEmbroideryRequest(message, imageData);
+      
+      if (result.success) {
+        return {
+          success: true,
+          response: result.message,
+          provider: 'EmbroideryConverter',
+          model: 'embroidery-processor',
+          type: result.type,
+          details: result.details || {},
+          files: result.files,
+          instructions: result.instructions
+        };
+      } else {
+        return {
+          success: false,
+          response: `Ошибка конвертации: ${result.error}`,
+          provider: 'EmbroideryConverter',
+          error: result.error
+        };
+      }
+    } catch (error) {
+      SmartLogger.error('Ошибка обработки запроса на вышивку', error);
+      return {
+        success: false,
+        response: 'Произошла ошибка при обработке запроса на конвертацию в формат вышивки',
+        provider: 'EmbroideryConverter',
+        error: error.message
+      };
+    }
+  }
 
   // Если изображение, используем наш собственный детектор объектов
   if (options.imageUrl) {
