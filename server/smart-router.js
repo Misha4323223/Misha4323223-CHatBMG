@@ -72,13 +72,27 @@ ${searchContext}
       const pythonProvider = require('./python_provider_routes');
       const result = await pythonProvider.callPythonAI(prompt, 'Qwen_Qwen_2_72B');
       
-      if (result.success && result.response && result.response.length > 30) {
-        return {
-          success: true,
-          response: result.response,
-          provider: 'Qwen_Qwen_2_72B',
-          searchUsed: true
-        };
+      if (result.success && result.response) {
+        // Проверяем, что ответ содержит полезную информацию
+        const hasWeatherData = result.response.includes('°C') || 
+                              result.response.includes('градус') || 
+                              result.response.includes('температура') ||
+                              result.response.includes('дождь') ||
+                              result.response.includes('влажность');
+        
+        const isRefusal = result.response.toLowerCase().includes('не могу предоставить');
+        
+        if (hasWeatherData && !isRefusal) {
+          SmartLogger.success(`✅ Упрощенная интеграция получила реальные данные!`);
+          return {
+            success: true,
+            response: result.response,
+            provider: 'Qwen_Qwen_2_72B',
+            searchUsed: true
+          };
+        }
+        
+        SmartLogger.route(`⚠️ Ответ не содержит реальных данных: hasWeatherData=${hasWeatherData}, isRefusal=${isRefusal}`);
       }
     }
     
