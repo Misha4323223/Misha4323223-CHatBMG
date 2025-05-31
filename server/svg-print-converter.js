@@ -8,14 +8,8 @@ const potrace = require('potrace');
 const fs = require('fs').promises;
 const path = require('path');
 
-// Импорт fetch с проверкой версии Node.js
-let fetch;
-try {
-  fetch = require('node-fetch');
-} catch (error) {
-  // Fallback для более новых версий Node.js
-  fetch = globalThis.fetch;
-}
+// Импорт fetch
+const fetch = require('node-fetch');
 
 // Импортируем AI провайдеры для улучшения SVG
 const chatFreeProvider = require('./chatfree-provider');
