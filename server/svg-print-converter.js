@@ -365,8 +365,9 @@ function detectPrintTypeFromRequest(message) {
  */
 function isPrintConversionRequest(message) {
   const printKeywords = [
-    'svg', 'векторизация', 'шелкография', 'dtf', 'печать на ткани',
-    'screenprint', 'принт', 'термотрансфер', 'трафарет'
+    'принт', 'футболка', 'печать', 'svg', 'векторизация', 'шелкография', 
+    'dtf', 'печать на ткани', 'screenprint', 'термотрансфер', 'трафарет',
+    'дизайн для', 'принт на', 'одежда', 'textile', 'майка', 'рубашка'
   ];
   
   const conversionKeywords = [
@@ -377,6 +378,13 @@ function isPrintConversionRequest(message) {
   
   const hasPrintKeyword = printKeywords.some(keyword => lowerMessage.includes(keyword));
   const hasConversionKeyword = conversionKeywords.some(keyword => lowerMessage.includes(keyword));
+  
+  console.log(`🔍 [SVG-PRINT] Проверка запроса на печать:`, {
+    message: lowerMessage.substring(0, 50),
+    hasPrintKeyword,
+    hasConversionKeyword,
+    foundKeywords: printKeywords.filter(keyword => lowerMessage.includes(keyword))
+  });
   
   return hasPrintKeyword || hasConversionKeyword;
 }
