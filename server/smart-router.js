@@ -394,7 +394,7 @@ async function routeMessage(message, options = {}) {
         for (const provider of searchProviders) {
           try {
             const pythonProvider = require('./python_provider_routes');
-            const result = await pythonProvider.getChatResponse(enhancedMessage, { provider });
+            const result = await pythonProvider.callPythonAI(enhancedMessage, provider);
             
             if (result.success) {
               SmartLogger.success(`Веб-поиск + AI ответ готов от провайдера: ${provider}`);
