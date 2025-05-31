@@ -2219,8 +2219,11 @@
         const messageText = document.createElement('div');
         
         // Обрабатываем все сообщения через parseMarkdown для полной поддержки markdown
-        console.log('🔍 [HTML] Обрабатываем сообщение через parseMarkdown:', text.substring(0, 100) + '...');
-        messageText.innerHTML = parseMarkdown(text);
+        console.log('🔍 [HTML] Исходный текст сообщения:', text.substring(0, 200) + '...');
+        const processedHtml = parseMarkdown(text);
+        console.log('🔍 [HTML] Результат parseMarkdown:', processedHtml.substring(0, 200) + '...');
+        messageText.innerHTML = processedHtml;
+        console.log('🔍 [HTML] Содержимое messageText.innerHTML:', messageText.innerHTML.substring(0, 200) + '...');
         
         messageText.style.color = isUser ? '#ffffff' : '#ffffff';
         messageText.style.fontSize = '0.95rem';
@@ -2343,6 +2346,7 @@
       function parseMarkdown(text) {
         if (!text) return '';
         
+        console.log('📝 [parseMarkdown] Входной текст:', text.substring(0, 100) + '...');
         let html = text;
         
         // Сначала сокращаем длинные описания файлов для вышивки
@@ -2378,6 +2382,7 @@
         // Обработка переносов строк
         html = html.replace(/\n/g, '<br>');
         
+        console.log('📝 [parseMarkdown] Финальный HTML:', html.substring(0, 200) + '...');
         return html;
       }
 
