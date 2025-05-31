@@ -220,6 +220,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.sendFile('public/image-generator.html', { root: '.' });
   });
   
+  // Статические файлы для скачивания обработанных изображений
+  app.use('/output', express.static('output', {
+    setHeaders: (res, path) => {
+      // Разрешаем скачивание файлов
+      res.set('Content-Disposition', 'attachment');
+    }
+  }));
+  
   // BOOOMERANGS AI генератор изображений
   app.get('/ai-images', (req, res) => {
     res.sendFile('public/ai-image-app.html', { root: '.' });

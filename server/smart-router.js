@@ -266,33 +266,64 @@ async function getAIResponseWithSearch(userQuery, options = {}) {
           const optimization = await printOptimizer.optimizeImageForPrint(lastImageUrl, printType);
           
           if (optimization.success) {
-            let response = `Готово! Я оптимизировал ваше изображение для профессиональной печати:\n\n📁 **Созданы файлы:**`;
+            let response = `Готово! Я оптимизировал ваше изображение для профессиональной печати:\n\n📁 **Созданы файлы с прямыми ссылками:**`;
             
             if (optimization.optimizations.screenPrint) {
               response += `\n\n🖨️ **Для шелкографии:**`;
-              response += `\n• Улучшенная версия (3000x3000)`;
-              response += `\n• Высококонтрастная версия`;
-              response += `\n• Версия с ограниченной палитрой`;
-              response += `\n• Контуры для трафаретов`;
+              const screenFiles = optimization.optimizations.screenPrint.files;
+              if (screenFiles.enhanced) {
+                const filename = screenFiles.enhanced.split('/').pop();
+                response += `\n• [Улучшенная версия (3000x3000)](/output/screen-print/${filename})`;
+              }
+              if (screenFiles.highContrast) {
+                const filename = screenFiles.highContrast.split('/').pop();
+                response += `\n• [Высококонтрастная версия](/output/screen-print/${filename})`;
+              }
+              if (screenFiles.limitedPalette) {
+                const filename = screenFiles.limitedPalette.split('/').pop();
+                response += `\n• [Версия с ограниченной палитрой](/output/screen-print/${filename})`;
+              }
+              if (screenFiles.edges) {
+                const filename = screenFiles.edges.split('/').pop();
+                response += `\n• [Контуры для трафаретов](/output/screen-print/${filename})`;
+              }
             }
             
             if (optimization.optimizations.dtf) {
-              response += `\n\n🎨 **Для DTF печати:**`;
-              response += `\n• Основная версия (3600x3600)`;
-              response += `\n• Увеличенная версия (5400x5400)`;
-              response += `\n• Версия с прозрачным фоном`;
-              if (optimization.optimizations.dtf.files.whiteBase) {
-                response += `\n• Белая подложка для темных тканей`;
+              response += `\n\n🎨 **Для DTF печати (цветные):**`;
+              const dtfFiles = optimization.optimizations.dtf.files;
+              if (dtfFiles.main) {
+                const filename = dtfFiles.main.split('/').pop();
+                response += `\n• [Основная версия (3600x3600)](/output/dtf-print/${filename})`;
+              }
+              if (dtfFiles.large) {
+                const filename = dtfFiles.large.split('/').pop();
+                response += `\n• [Увеличенная версия (5400x5400)](/output/dtf-print/${filename})`;
+              }
+              if (dtfFiles.transparent) {
+                const filename = dtfFiles.transparent.split('/').pop();
+                response += `\n• [Версия с прозрачным фоном](/output/dtf-print/${filename})`;
+              }
+              if (dtfFiles.whiteBase) {
+                const filename = dtfFiles.whiteBase.split('/').pop();
+                response += `\n• [Белая подложка для темных тканей](/output/dtf-print/${filename})`;
               }
             }
             
             if (optimization.optimizations.vector) {
               response += `\n\n📐 **Векторные версии:**`;
-              response += `\n• Черно-белая версия (2048x2048)`;
-              response += `\n• Контурная версия`;
+              const vectorFiles = optimization.optimizations.vector.files;
+              if (vectorFiles.blackWhite) {
+                const filename = vectorFiles.blackWhite.split('/').pop();
+                response += `\n• [Черно-белая версия (2048x2048)](/output/vector/${filename})`;
+              }
+              if (vectorFiles.contours) {
+                const filename = vectorFiles.contours.split('/').pop();
+                response += `\n• [Контурная версия](/output/vector/${filename})`;
+              }
             }
             
-            response += `\n\nВсе файлы оптимизированы для профессиональной печати и готовы к использованию.`;
+            response += `\n\n✅ Все файлы готовы к скачиванию по ссылкам выше. DTF файлы сохранили полную цветовую гамму для качественной печати.`;
             
             return {
               success: true,
