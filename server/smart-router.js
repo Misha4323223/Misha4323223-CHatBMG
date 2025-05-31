@@ -240,7 +240,8 @@ ${searchContext}
                 const svgResult = await svgPrintConverter.convertImageToPrintSVG(
                   imageResult.imageUrl, 
                   `design-${Date.now()}`, 
-                  printType
+                  printType,
+                  userQuery
                 );
                 
                 if (svgResult.success) {
@@ -262,6 +263,11 @@ ${searchContext}
                   }
                   if (svgResult.result.recommendations.dtf) {
                     response += `\n**Рекомендации для DTF:** ${svgResult.result.recommendations.dtf.notes}`;
+                  }
+                  
+                  // Добавляем AI рекомендации
+                  if (svgResult.result.aiAnalysis && svgResult.result.aiAnalysis.recommendations) {
+                    response += `\n\n🤖 **Экспертные рекомендации AI:** ${svgResult.result.aiAnalysis.recommendations}`;
                   }
                   
                   SmartLogger.success(`SVG файлы созданы: ${svgFiles.length} файлов`);

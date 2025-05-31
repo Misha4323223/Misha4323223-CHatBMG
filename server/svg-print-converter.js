@@ -9,6 +9,9 @@ const fs = require('fs').promises;
 const path = require('path');
 const fetch = require('node-fetch');
 
+// Импортируем AI провайдеры для улучшения SVG
+const chatFreeProvider = require('./chatfree-provider');
+
 // Создание необходимых директорий
 async function ensureDirectories() {
   const dirs = ['temp', 'output', 'output/svg', 'output/print'];
@@ -18,6 +21,75 @@ async function ensureDirectories() {
     } catch (error) {
       // Директория уже существует
     }
+  }
+}
+
+/**
+ * AI-анализ изображения для оптимизации SVG конвертации
+ */
+async function analyzeImageWithAI(imageBuffer, userRequest) {
+  try {
+    console.log(`🤖 [SVG-AI] Анализируем изображение с помощью AI...`);
+    
+    const prompt = `Ты эксперт по векторной графике и печати на текстиле. Проанализируй запрос пользователя: "${userRequest}"
+
+Твоя задача - дать рекомендации для оптимальной конвертации изображения в SVG для печати:
+
+1. Определи тип дизайна (логотип, иллюстрация, текст, паттерн)
+2. Рекомендуй метод трассировки (простой контур, детализированный, смешанный)
+3. Предложи оптимальную цветовую палитру для печати
+4. Определи лучший тип печати (шелкография или DTF)
+5. Дай технические рекомендации
+
+Ответь в формате JSON:
+{
+  "designType": "логотип|иллюстрация|текст|паттерн",
+  "traceMethod": "simple|detailed|mixed",
+  "printType": "screenprint|dtf|both",
+  "colorReduction": true|false,
+  "maxColors": число,
+  "recommendations": "текстовые рекомендации"
+}`;
+
+    const aiResponse = await chatFreeProvider.getChatFreeResponse(prompt, {
+      systemPrompt: "Ты эксперт по векторной графике и печати на текстиле. Отвечай только в формате JSON.",
+      temperature: 0.3
+    });
+
+    if (aiResponse.success && aiResponse.response) {
+      try {
+        // Пытаемся извлечь JSON из ответа
+        const jsonMatch = aiResponse.response.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const analysis = JSON.parse(jsonMatch[0]);
+          console.log(`✅ [SVG-AI] AI анализ получен:`, analysis);
+          return analysis;
+        }
+      } catch (parseError) {
+        console.log(`⚠️ [SVG-AI] Ошибка парсинга AI ответа, используем базовые настройки`);
+      }
+    }
+
+    // Возвращаем базовые настройки если AI не сработал
+    return {
+      designType: "иллюстрация",
+      traceMethod: "detailed",
+      printType: "both",
+      colorReduction: true,
+      maxColors: 6,
+      recommendations: "Стандартная конвертация для универсального использования"
+    };
+
+  } catch (error) {
+    console.error(`❌ [SVG-AI] Ошибка AI анализа:`, error);
+    return {
+      designType: "иллюстрация",
+      traceMethod: "detailed", 
+      printType: "both",
+      colorReduction: true,
+      maxColors: 6,
+      recommendations: "Базовые настройки из-за ошибки AI анализа"
+    };
   }
 }
 
@@ -244,7 +316,7 @@ async function generateColorScheme(imageBuffer) {
 /**
  * Главная функция конвертации
  */
-async function convertImageToPrintSVG(imageSource, outputName, printType = 'both') {
+async function convertImageToPrintSVG(imageSource, outputName, printType = 'both', userRequest = '') {
   await ensureDirectories();
   
   const id = Date.now().toString(36) + Math.random().toString(36).substring(2, 9);
@@ -257,6 +329,10 @@ async function convertImageToPrintSVG(imageSource, outputName, printType = 'both
     const imageBuffer = await loadImage(imageSource);
     console.log(`📁 [SVG-PRINT] Изображение загружено: ${imageBuffer.length} байт`);
     
+    // AI-анализ для оптимизации конвертации
+    const aiAnalysis = await analyzeImageWithAI(imageBuffer, userRequest);
+    console.log(`🤖 [SVG-PRINT] AI рекомендации получены: ${aiAnalysis.recommendations}`);
+    
     // Генерируем цветовую схему
     const colorScheme = await generateColorScheme(imageBuffer);
     console.log(`🎨 [SVG-PRINT] Цветовая схема: ${colorScheme.palette.length} цветов`);
@@ -266,7 +342,8 @@ async function convertImageToPrintSVG(imageSource, outputName, printType = 'both
       name: baseName,
       colorScheme,
       files: [],
-      recommendations: {}
+      recommendations: {},
+      aiAnalysis: aiAnalysis
     };
 
     // Создаем SVG для шелкографии
