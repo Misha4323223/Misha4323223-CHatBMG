@@ -88,7 +88,7 @@ async function generateImage(prompt, style = 'realistic', previousImage = null, 
       const aiStartTime = Date.now();
       
       try {
-        enhancedPrompt = enhancePromptWithAI(prompt, style);
+        enhancedPrompt = await getAIEnhancedPrompt(prompt, style);
         const aiDuration = Date.now() - aiStartTime;
         
         console.log(`🤖 [AI] AI улучшил промпт: "${enhancedPrompt}"`);
@@ -97,7 +97,7 @@ async function generateImage(prompt, style = 'realistic', previousImage = null, 
           imageLogger.aiEnhancement(prompt, enhancedPrompt, 'Qwen_Qwen_2_72B', aiDuration, sessionId);
         }
       } catch (error) {
-        console.log(`⚠️ [AI] AI недоступен, используем простое улучшение`);
+        console.log(`⚠️ [AI] AI недоступен (${error.message}), используем простое улучшение`);
         enhancedPrompt = enhancePromptWithAI(prompt, style);
         
         if (sessionId) {
@@ -253,7 +253,13 @@ const SIMPLE_TRANSLATE = {
   'в сапогах': 'wearing boots',
   'кибер': 'cyber',
   'техно': 'techno',
+  'техносамурай': 'cyberpunk techno samurai warrior with futuristic armor',
+  'техно самурай': 'cyberpunk techno samurai warrior with futuristic armor',
   'самурай': 'japanese samurai warrior with armor and sword',
+  'мухомор': 'red mushroom amanita',
+  'мухоморы': 'red mushrooms amanita',
+  'грибы': 'mushrooms',
+  'гриб': 'mushroom',
   'принт': 'print design',
   'футболка': 't-shirt',
   'дракон': 'detailed dragon with scales and wings',
@@ -307,6 +313,14 @@ function enhancePromptWithAI(prompt, style) {
   if (prompt.toLowerCase().includes('принт') || prompt.toLowerCase().includes('футболка')) {
     englishPrompt = `t-shirt design, vector style, ${englishPrompt}`;
   }
+  
+  // Если это техно/кибер дизайн, добавляем соответствующие термины
+  if (prompt.toLowerCase().includes('техно') || prompt.toLowerCase().includes('кибер')) {
+    englishPrompt = `cyberpunk style, futuristic, neon colors, ${englishPrompt}`;
+  }
+  
+  // Убираем русские символы, которые могли остаться
+  englishPrompt = englishPrompt.replace(/[а-яё]/gi, '').replace(/\s+/g, ' ').trim();
   
   console.log(`✅ [SIMPLE] Результат: "${englishPrompt}"`);
   return englishPrompt;
