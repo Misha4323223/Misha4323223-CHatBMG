@@ -37,7 +37,86 @@ const aiEmbroideryPipeline = require('./ai-embroidery-pipeline');
 const webSearchProvider = require('./web-search-provider');
 
 /**
- * Упрощенная интеграция веб-поиска и AI
+ * AI с автоматическим поиском при необходимости
+ */
+async function getAIResponseWithSearch(userQuery) {
+  try {
+    SmartLogger.route(`🤖 Сначала пробуем получить ответ от AI`);
+    
+    // Сначала спрашиваем AI напрямую
+    const pythonProvider = require('./python_provider_routes');
+    const prompt = `Пользователь спрашивает: "${userQuery}"
+
+Если это запрос о текущей информации (погода, новости, курсы валют, время работы), ответь: "НУЖЕН_ПОИСК"
+Иначе дай обычный ответ.`;
+
+    const initialResult = await pythonProvider.callPythonAI(prompt, 'Qwen_Qwen_2_72B');
+    
+    let responseText = '';
+    if (typeof initialResult === 'string') {
+      responseText = initialResult;
+    } else if (initialResult && initialResult.response) {
+      responseText = initialResult.response;
+    }
+    
+    SmartLogger.route(`🤖 AI ответил: "${responseText.substring(0, 50)}..."`);
+    
+    // Если AI говорит, что нужен поиск
+    if (responseText.includes('НУЖЕН_ПОИСК')) {
+      SmartLogger.route(`🔍 AI запросил веб-поиск`);
+      
+      // Выполняем поиск
+      const searchResults = await webSearchProvider.performWebSearch(userQuery);
+      
+      if (searchResults.success && searchResults.results && searchResults.results.length > 0) {
+        const searchContext = webSearchProvider.formatSearchResultsForAI(searchResults);
+        
+        // Отправляем AI данные из поиска
+        const searchPrompt = `Пользователь спрашивает: "${userQuery}"
+
+Актуальная информация:
+${searchContext}
+
+Ответь на основе этих данных.`;
+
+        const finalResult = await pythonProvider.callPythonAI(searchPrompt, 'Qwen_Qwen_2_72B');
+        
+        let finalText = '';
+        if (typeof finalResult === 'string') {
+          finalText = finalResult;
+        } else if (finalResult && finalResult.response) {
+          finalText = finalResult.response;
+        }
+        
+        if (finalText && finalText.length > 20) {
+          return {
+            success: true,
+            response: finalText,
+            provider: 'Qwen_Qwen_2_72B',
+            searchUsed: true
+          };
+        }
+      }
+      
+      return { success: false, reason: 'search_failed' };
+    } else {
+      // AI дал обычный ответ
+      return {
+        success: true,
+        response: responseText,
+        provider: 'Qwen_Qwen_2_72B',
+        searchUsed: false
+      };
+    }
+    
+  } catch (error) {
+    SmartLogger.error(`Ошибка AI с поиском: ${error.message}`);
+    return { success: false, reason: 'error' };
+  }
+}
+
+/**
+ * Упрощенная интеграция веб-поиска и AI (старая версия)
  */
 async function getSmartResponse(userQuery) {
   try {
@@ -466,14 +545,17 @@ async function routeMessage(message, options = {}) {
   const needsSearch = webSearchProvider.needsWebSearch(message);
   SmartLogger.route(`Результат needsWebSearch: ${needsSearch}`);
   
-  // Сначала пробуем упрощенную интеграцию поиска + AI
-  if (needsSearch) {
-    const smartResult = await getSmartResponse(message);
-    if (smartResult.success) {
-      SmartLogger.success(`Получен ответ через упрощенную интеграцию`);
-      return smartResult;
+  // Новый подход: AI сам определяет, нужен ли поиск
+  SmartLogger.route(`🤖 Отправляем запрос AI с возможностью поиска`);
+  
+  try {
+    const aiWithSearchResult = await getAIResponseWithSearch(message);
+    if (aiWithSearchResult.success) {
+      SmartLogger.success(`Получен ответ от AI ${aiWithSearchResult.searchUsed ? 'с поиском' : 'без поиска'}`);
+      return aiWithSearchResult;
     }
-    SmartLogger.route(`Упрощенная интеграция не сработала, переходим к стандартному поиску`);
+  } catch (error) {
+    SmartLogger.error(`Ошибка AI с поиском: ${error.message}`);
   }
   
   if (needsSearch) {
