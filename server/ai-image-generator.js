@@ -180,54 +180,35 @@ async function generateImage(prompt, style = 'realistic', previousImage = null, 
  * @returns {Promise<string>} Улучшенный английский промпт
  */
 async function getAIEnhancedPrompt(prompt, style) {
-  const smartRouter = require('./smart-router.js');
+  console.log(`🤖 [AI-PROMPT] Простая обработка: "${prompt}"`);
   
-  const systemPrompt = `Ты эксперт по созданию промптов для генерации изображений для вышивки. 
-Переведи русский запрос на английский и оптимизируй для создания четких дизайнов вышивки.
-
-Правила:
-1. Переводи точно и детально (роза = "beautiful detailed rose with petals and leaves")
-2. Добавляй элементы для вышивки: "embroidery design", "clean lines", "simple shapes", "vector art style"
-3. Убирай сложные детали: НЕ добавляй "photorealistic", "detailed shadows", "gradients"
-4. Для цветов указывай основные части (лепестки, стебель, листья)
-5. Для объектов добавляй четкие контуры и простые формы
-6. Отвечай ТОЛЬКО оптимизированным английским промптом для вышивки
-
-Примеры:
-Вход: "роза"
-Выход: "beautiful detailed red rose flower with petals and green stem, embroidery design, clean lines, vector art style, simple shapes"
-
-Вход: "самурай"  
-Выход: "japanese samurai warrior with armor and sword, embroidery design, bold outlines, simple details, vector art style"`;
-
-  try {
-    const response = await smartRouter.getChatResponse(
-      `${systemPrompt}\n\nЗапрос: "${prompt}"`,
-      { 
-        systemPrompt,
-        preferredProvider: 'Qwen_Qwen_2_72B',
-        maxLength: 300,
-        temperature: 0.3
-      }
-    );
-    
-    if (response && response.response) {
-      // Извлекаем только текст промпта, убираем лишнее
-      let enhancedPrompt = response.response.trim();
-      
-      // Убираем возможные префиксы ответа
-      enhancedPrompt = enhancedPrompt.replace(/^(Выход:|Output:|Result:)/i, '').trim();
-      enhancedPrompt = enhancedPrompt.replace(/^["']|["']$/g, ''); // убираем кавычки
-      
-      return enhancedPrompt;
-    }
-    
-    throw new Error('AI не вернул ответ');
-    
-  } catch (error) {
-    console.log(`⚠️ Ошибка AI улучшения: ${error.message}`);
-    throw error;
+  // Проверяем, что промпт не пустой
+  if (!prompt || prompt.trim().length === 0) {
+    throw new Error('Пустой промпт');
   }
+  
+  // Используем простой переводчик без рекурсии
+  let englishPrompt = prompt.toLowerCase();
+  
+  // Базовый перевод ключевых слов
+  const translations = {
+    'техносамурай': 'cyberpunk techno samurai warrior with futuristic armor',
+    'техно самурай': 'cyberpunk techno samurai warrior with futuristic armor',
+    'принт': 't-shirt design',
+    'самурай': 'samurai warrior',
+    'роза': 'red rose flower',
+    'создай': ''
+  };
+  
+  for (const [ru, en] of Object.entries(translations)) {
+    englishPrompt = englishPrompt.replace(new RegExp(ru, 'g'), en);
+  }
+  
+  // Добавляем базовые термины качества
+  englishPrompt = `${englishPrompt} vector art style, clean design, professional`.trim();
+  
+  console.log(`✅ [AI-PROMPT] Результат: "${englishPrompt}"`);
+  return englishPrompt;
 }
 
 /**
