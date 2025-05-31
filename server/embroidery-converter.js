@@ -83,18 +83,14 @@ async function analyzeImageForEmbroidery(imageBuffer) {
  * Определяет рекомендуемый формат на основе характеристик изображения
  */
 function determineRecommendedFormat(width, height, colorCount) {
-  // Простые логотипы - DST
-  if (width <= 200 && height <= 200 && colorCount <= 4) {
-    return 'dst';
-  }
+  // По умолчанию всегда используем DST - самый универсальный формат
+  return 'dst';
   
-  // Средние дизайны - PES
-  if (width <= 300 && height <= 250 && colorCount <= 10) {
-    return 'pes';
-  }
-  
-  // Сложные дизайны - EXP
-  return 'exp';
+  // Альтернативная логика (закомментирована):
+  // - PES для машин Brother
+  // - JEF для машин Janome  
+  // - EXP для машин Melco
+  // - VP3 для машин Husqvarna
 }
 
 /**
