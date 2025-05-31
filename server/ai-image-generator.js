@@ -97,12 +97,8 @@ async function generateImage(prompt, style = 'realistic', previousImage = null, 
           imageLogger.aiEnhancement(prompt, enhancedPrompt, 'Qwen_Qwen_2_72B', aiDuration, sessionId);
         }
       } catch (error) {
-        console.log(`⚠️ [AI] AI недоступен (${error.message}), используем простое улучшение`);
-        enhancedPrompt = enhancePromptWithAI(prompt, style);
-        
-        if (sessionId) {
-          imageLogger.promptTranslation(prompt, enhancedPrompt, 'SIMPLE_TRANSLATION', sessionId);
-        }
+        console.log(`❌ [AI] AI недоступен (${error.message}), прерываем генерацию`);
+        throw new Error(`Система перевода промптов недоступна. Попробуйте позже. Ошибка: ${error.message}`);
       }
       console.log(`🎨 [DEBUG] Промпт для новой генерации: "${enhancedPrompt}"`);
     }
@@ -210,7 +206,8 @@ async function getAIEnhancedPrompt(prompt, style) {
       { 
         systemPrompt,
         preferredProvider: 'Qwen_Qwen_2_72B',
-        maxLength: 200
+        maxLength: 300,
+        temperature: 0.3
       }
     );
     
