@@ -227,10 +227,22 @@ ${searchContext}
 Изображение сохранено и готово к использованию.`;
 
             // Проверяем, нужно ли создать SVG файлы для печати
-            const needsPrintFiles = svgPrintConverter.isPrintConversionRequest(userQuery) || 
-                                   userQuery.toLowerCase().includes('принт') ||
-                                   userQuery.toLowerCase().includes('футболка') ||
-                                   userQuery.toLowerCase().includes('печать');
+            const lowerQuery = userQuery.toLowerCase();
+            const hasPrint = lowerQuery.includes('принт');
+            const hasShirt = lowerQuery.includes('футболка');
+            const hasPrinting = lowerQuery.includes('печать');
+            const svgCheck = svgPrintConverter.isPrintConversionRequest(userQuery);
+            
+            const needsPrintFiles = svgCheck || hasPrint || hasShirt || hasPrinting;
+            
+            SmartLogger.route(`🔍 Проверка на создание SVG файлов:`, {
+              userQuery: userQuery.substring(0, 50),
+              hasPrint,
+              hasShirt, 
+              hasPrinting,
+              svgCheck,
+              needsPrintFiles
+            });
 
             let svgFiles = [];
             if (needsPrintFiles) {
