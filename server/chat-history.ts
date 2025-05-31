@@ -75,6 +75,7 @@ async function getSessionMessages(sessionId) {
   // Преобразуем в формат для отображения в чате
   const formattedMessages = aiMessagesData.map(msg => ({
     id: msg.id,
+    content: msg.content, // Используем content для совместимости
     text: msg.content,
     sender: msg.sender, // 'user' или 'ai'
     timestamp: msg.createdAt,
