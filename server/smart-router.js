@@ -36,6 +36,54 @@ const embroideryHandler = require('./embroidery-chat-handler');
 const aiEmbroideryPipeline = require('./ai-embroidery-pipeline');
 const webSearchProvider = require('./web-search-provider');
 
+/**
+ * Упрощенная интеграция веб-поиска и AI
+ */
+async function getSmartResponse(userQuery) {
+  try {
+    // Проверяем, нужен ли поиск
+    if (!webSearchProvider.needsWebSearch(userQuery)) {
+      return { success: false, reason: 'no_search_needed' };
+    }
+    
+    SmartLogger.route(`🔍 Выполняем поиск + AI для: "${userQuery}"`);
+    
+    // Получаем данные из интернета
+    const searchResults = await webSearchProvider.performWebSearch(userQuery);
+    
+    if (searchResults.success && searchResults.results && searchResults.results.length > 0) {
+      const searchContext = webSearchProvider.formatSearchResultsForAI(searchResults);
+      
+      // Простой промпт для AI
+      const prompt = `Вопрос: ${userQuery}
+
+Актуальные данные:
+${searchContext}
+
+Ответь на основе этих данных на русском языке.`;
+
+      // Пробуем получить ответ от AI
+      const pythonProvider = require('./python_provider_routes');
+      const result = await pythonProvider.callPythonAI(prompt, 'Qwen_Qwen_2_72B');
+      
+      if (result.success && result.response && result.response.length > 30) {
+        return {
+          success: true,
+          response: result.response,
+          provider: 'Qwen_Qwen_2_72B',
+          searchUsed: true
+        };
+      }
+    }
+    
+    return { success: false, reason: 'search_failed' };
+    
+  } catch (error) {
+    SmartLogger.error(`Ошибка поиска: ${error.message}`);
+    return { success: false, reason: 'error' };
+  }
+}
+
 // Специализации провайдеров
 const PROVIDER_SPECIALTIES = {
   technical: {
@@ -380,6 +428,16 @@ async function routeMessage(message, options = {}) {
   
   const needsSearch = webSearchProvider.needsWebSearch(message);
   SmartLogger.route(`Результат needsWebSearch: ${needsSearch}`);
+  
+  // Сначала пробуем упрощенную интеграцию поиска + AI
+  if (needsSearch) {
+    const smartResult = await getSmartResponse(message);
+    if (smartResult.success) {
+      SmartLogger.success(`Получен ответ через упрощенную интеграцию`);
+      return smartResult;
+    }
+    SmartLogger.route(`Упрощенная интеграция не сработала, переходим к стандартному поиску`);
+  }
   
   if (needsSearch) {
     SmartLogger.route(`Обнаружен запрос, требующий веб-поиска`);
