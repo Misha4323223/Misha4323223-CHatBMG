@@ -158,7 +158,7 @@ async function generateAndConvertToEmbroidery(message, options = {}) {
           imageBuffer = await new Promise((resolve, reject) => {
             const timeout = setTimeout(() => {
               reject(new Error('Таймаут скачивания изображения'));
-            }, 10000); // 10 секунд таймаут
+            }, 60000); // 60 секунд таймаут для генерации
             
             https.get(imageResult.imageUrl, (response) => {
               clearTimeout(timeout);
@@ -186,8 +186,8 @@ async function generateAndConvertToEmbroidery(message, options = {}) {
             throw new Error(`Не удалось скачать изображение после ${maxAttempts} попыток. Сервис генерации изображений временно недоступен. Попробуйте позже.`);
           }
           
-          // Ждем перед следующей попыткой
-          await new Promise(resolve => setTimeout(resolve, 2000));
+          // Ждем перед следующей попыткой (увеличиваем время)
+          await new Promise(resolve => setTimeout(resolve, 5000));
         }
       }
     } else {
