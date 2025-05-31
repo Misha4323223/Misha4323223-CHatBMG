@@ -128,6 +128,99 @@ ${sessionContext.context}
       }
     }
     
+    // Если AI определил, что нужно создать SVG
+    if (responseText.includes('СОЗДАНИЕ SVG ДЛЯ ПЕЧАТИ')) {
+      SmartLogger.route(`🎨 AI запросил создание SVG для печати`);
+      
+      // Ищем последнее изображение в контексте сессии
+      let lastImageUrl = null;
+      if (sessionContext && sessionContext.messages) {
+        for (let i = sessionContext.messages.length - 1; i >= 0; i--) {
+          const msg = sessionContext.messages[i];
+          if (msg.content && msg.content.includes('![') && msg.content.includes('https://image.pollinations.ai')) {
+            const imageMatch = msg.content.match(/!\[.*?\]\((https:\/\/image\.pollinations\.ai[^)]+)\)/);
+            if (imageMatch) {
+              lastImageUrl = imageMatch[1];
+              SmartLogger.route(`🖼️ Найдено последнее изображение: ${lastImageUrl.substring(0, 50)}...`);
+              break;
+            }
+          }
+        }
+      }
+      
+      if (lastImageUrl) {
+        try {
+          SmartLogger.route(`🎨 Создаем SVG файлы для найденного изображения`);
+          const printType = svgPrintConverter.detectPrintTypeFromRequest(userQuery);
+          const svgResult = await svgPrintConverter.convertImageToPrintSVG(
+            lastImageUrl, 
+            `converted-${Date.now()}`, 
+            printType,
+            userQuery
+          );
+          
+          if (svgResult.success) {
+            let response = `Готово! Я преобразовал ваше изображение в SVG формат для печати:\n\n📄 **Файлы для печати созданы:**`;
+            
+            svgResult.result.files.forEach(file => {
+              if (file.type === 'screenprint') {
+                response += `\n• [SVG для шелкографии](${file.url}) - ${(file.size / 1024).toFixed(1)} КБ`;
+              } else if (file.type === 'dtf') {
+                response += `\n• [SVG для DTF печати](${file.url}) - ${(file.size / 1024).toFixed(1)} КБ`;
+              } else if (file.type === 'colorscheme') {
+                response += `\n• [Цветовая схема](${file.url}) - палитра цветов`;
+              }
+            });
+            
+            if (svgResult.result.recommendations.screenprint) {
+              response += `\n\n**Рекомендации для шелкографии:** ${svgResult.result.recommendations.screenprint.notes}`;
+            }
+            if (svgResult.result.recommendations.dtf) {
+              response += `\n**Рекомендации для DTF:** ${svgResult.result.recommendations.dtf.notes}`;
+            }
+            
+            if (svgResult.result.aiAnalysis && svgResult.result.aiAnalysis.recommendations) {
+              response += `\n\n🤖 **Экспертные рекомендации AI:** ${svgResult.result.aiAnalysis.recommendations}`;
+            }
+            
+            return {
+              success: true,
+              response: response,
+              provider: 'SVG_Print_Converter',
+              searchUsed: false,
+              svgGenerated: true,
+              svgFiles: svgResult.result.files
+            };
+          } else {
+            return {
+              success: true,
+              response: `Извините, произошла ошибка при создании SVG файлов: ${svgResult.error}`,
+              provider: 'SVG_Print_Converter',
+              searchUsed: false,
+              svgGenerated: false
+            };
+          }
+        } catch (error) {
+          SmartLogger.error('Ошибка при создании SVG файлов:', error);
+          return {
+            success: true,
+            response: `Извините, произошла ошибка при обработке изображения. Попробуйте позже.`,
+            provider: 'SVG_Print_Converter',
+            searchUsed: false,
+            svgGenerated: false
+          };
+        }
+      } else {
+        return {
+          success: true,
+          response: `Я не нашел изображений в нашей беседе для конвертации в SVG. Сначала создайте изображение, а затем попросите сохранить его в SVG формате.`,
+          provider: 'SVG_Print_Converter',
+          searchUsed: false,
+          svgGenerated: false
+        };
+      }
+    }
+    
     // Если AI говорит, что нужен поиск
     if (responseText.includes('НУЖЕН_ПОИСК')) {
       SmartLogger.route(`🔍 AI запросил веб-поиск`);
