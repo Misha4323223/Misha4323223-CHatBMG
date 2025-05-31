@@ -185,13 +185,47 @@ async function searchNews(query) {
                 });
                 
                 if (response.ok) {
-                    console.log('🔍 [NEWS] Получили новостную ленту');
-                    return [{
-                        title: '📰 Актуальные новости',
-                        snippet: 'Последние новости и события. Проверьте новостные сайты для получения свежей информации.',
-                        url: feedUrl,
-                        source: 'News RSS'
-                    }];
+                    const xmlText = await response.text();
+                    console.log('🔍 [NEWS] Получили RSS данные, размер:', xmlText.length);
+                    
+                    // Парсим заголовки новостей
+                    const titleRegex = /<title><!\[CDATA\[(.*?)\]\]><\/title>/g;
+                    const altTitleRegex = /<title>(.*?)<\/title>/g;
+                    
+                    let matches = [];
+                    let match;
+                    
+                    while ((match = titleRegex.exec(xmlText)) !== null) {
+                        matches.push(match[1]);
+                    }
+                    
+                    if (matches.length === 0) {
+                        while ((match = altTitleRegex.exec(xmlText)) !== null) {
+                            matches.push(match[1]);
+                        }
+                    }
+                    
+                    console.log('🔍 [NEWS] Найдено заголовков:', matches.length);
+                    
+                    if (matches.length > 1) {
+                        const news = [];
+                        for (let i = 1; i < Math.min(4, matches.length); i++) {
+                            const title = matches[i].trim();
+                            if (title && title.length > 10) {
+                                news.push({
+                                    title: title,
+                                    snippet: `Актуальная новость от ${new Date().toLocaleDateString('ru-RU')}`,
+                                    url: feedUrl,
+                                    source: 'RSS News'
+                                });
+                            }
+                        }
+                        
+                        if (news.length > 0) {
+                            console.log('🔍 [NEWS] Возвращаем', news.length, 'новостей');
+                            return news;
+                        }
+                    }
                 }
             } catch (err) {
                 continue;
@@ -213,11 +247,61 @@ async function searchGeneral(query) {
     try {
         console.log('🔍 [GENERAL] Общий поиск для:', query);
         
+        // Пробуем DuckDuckGo Instant Answer API (бесплатный)
+        try {
+            const ddgUrl = `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1&skip_disambig=1`;
+            
+            const response = await fetch(ddgUrl, {
+                timeout: 5000,
+                headers: {
+                    'User-Agent': 'BOOOMERANGS-Search/1.0'
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                const results = [];
+                
+                // Добавляем абстракт если есть
+                if (data.Abstract && data.Abstract.length > 20) {
+                    results.push({
+                        title: data.Heading || query,
+                        snippet: data.Abstract,
+                        url: data.AbstractURL || `https://duckduckgo.com/?q=${encodeURIComponent(query)}`,
+                        source: 'DuckDuckGo'
+                    });
+                }
+                
+                // Добавляем связанные темы
+                if (data.RelatedTopics && data.RelatedTopics.length > 0) {
+                    for (let i = 0; i < Math.min(2, data.RelatedTopics.length); i++) {
+                        const topic = data.RelatedTopics[i];
+                        if (topic.Text && topic.Text.length > 20) {
+                            results.push({
+                                title: topic.Text.split(' - ')[0] || 'Связанная информация',
+                                snippet: topic.Text,
+                                url: topic.FirstURL || `https://duckduckgo.com/?q=${encodeURIComponent(query)}`,
+                                source: 'DuckDuckGo Related'
+                            });
+                        }
+                    }
+                }
+                
+                if (results.length > 0) {
+                    console.log('🔍 [GENERAL] Найдено через DuckDuckGo:', results.length, 'результатов');
+                    return results;
+                }
+            }
+        } catch (ddgError) {
+            console.log('🔍 [GENERAL] DuckDuckGo недоступен:', ddgError.message);
+        }
+        
+        // Fallback - возвращаем информативный результат
         return [{
-            title: `🔍 Поиск: ${query}`,
-            snippet: `Поиск информации по запросу "${query}". Рекомендуем использовать специализированные сервисы для получения актуальных данных.`,
+            title: `Поиск: ${query}`,
+            snippet: `Информация по запросу "${query}" может быть найдена через поисковые системы. Проверьте актуальные источники для получения свежих данных.`,
             url: `https://duckduckgo.com/?q=${encodeURIComponent(query)}`,
-            source: 'GeneralSearch'
+            source: 'Search Suggestion'
         }];
         
     } catch (error) {
