@@ -437,11 +437,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           console.log('🎯 AI ответил:', aiResponse);
           
-          if (aiResponse && aiResponse.success && aiResponse.response) {
+          if (aiResponse && aiResponse.success) {
+            // Формируем ответ для пользователя
+            let responseContent = aiResponse.response;
+            
+            // Если это результат вышивки без текстового ответа
+            if (!responseContent && aiResponse.embroideryGenerated && aiResponse.embroideryFiles) {
+              responseContent = `🧵 Создана вышивка по вашему запросу!
+
+✅ Изображение: готово
+✅ Файл вышивки (DST): готов 
+✅ Цветовая схема: готова
+
+Файлы сохранены и готовы к использованию на вышивальной машине.`;
+            }
+            
+            // Если все еще нет контента, используем fallback
+            if (!responseContent) {
+              responseContent = 'Запрос обработан успешно.';
+            }
+            
             // Сохраняем ответ AI в ту же сессию
             const aiMessageData = {
               sessionId,
-              content: aiResponse.response,
+              content: responseContent,
               sender: 'ai',
               provider: aiResponse.provider,
               timestamp: new Date().toISOString()
@@ -456,10 +475,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             res.json({ 
               success: true, 
               message: userMessage,
-              aiResponse: aiResponse.response,
+              aiResponse: responseContent,
               provider: aiResponse.provider,
-              files: aiResponse.files || null,
-              details: aiResponse.details || null
+              files: aiResponse.embroideryFiles || aiResponse.files || null,
+              details: aiResponse.details || null,
+              embroideryGenerated: aiResponse.embroideryGenerated || false,
+              imageGenerated: aiResponse.imageGenerated || false
             });
             return;
           } else {
