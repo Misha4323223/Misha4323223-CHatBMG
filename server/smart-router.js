@@ -72,9 +72,11 @@ ${searchContext}
       const pythonProvider = require('./python_provider_routes');
       const result = await pythonProvider.callPythonAI(prompt, 'Qwen_Qwen_2_72B');
       
+      SmartLogger.route(`📊 Полная структура результата:`, result);
       SmartLogger.route(`📊 Результат AI: success=${result.success}, response="${result.response ? result.response.substring(0, 100) : 'пусто'}..."`);
       
-      if (result.success && result.response) {
+      // Проверяем и success, и наличие response
+      if (result && result.response && result.response.length > 10) {
         // Проверяем, что ответ содержит полезную информацию
         const hasWeatherData = result.response.includes('°C') || 
                               result.response.includes('градус') || 
