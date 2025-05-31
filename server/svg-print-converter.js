@@ -8,8 +8,9 @@ const potrace = require('potrace');
 const fs = require('fs').promises;
 const path = require('path');
 
-// Импорт fetch
-const fetch = require('node-fetch');
+// Импорт для загрузки изображений
+const https = require('https');
+const http = require('http');
 
 // Импортируем AI провайдеры для улучшения SVG
 const chatFreeProvider = require('./chatfree-provider');
@@ -101,9 +102,21 @@ async function analyzeImageWithAI(imageBuffer, userRequest) {
 async function loadImage(imageSource) {
   try {
     if (imageSource.startsWith('http')) {
-      const response = await fetch(imageSource);
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      return await response.buffer();
+      return new Promise((resolve, reject) => {
+        const protocol = imageSource.startsWith('https:') ? https : http;
+        
+        protocol.get(imageSource, (response) => {
+          if (response.statusCode !== 200) {
+            reject(new Error(`HTTP ${response.statusCode}`));
+            return;
+          }
+          
+          const chunks = [];
+          response.on('data', chunk => chunks.push(chunk));
+          response.on('end', () => resolve(Buffer.concat(chunks)));
+          response.on('error', error => reject(error));
+        }).on('error', error => reject(error));
+      });
     } else {
       return await fs.readFile(imageSource);
     }
