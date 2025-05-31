@@ -38,7 +38,7 @@ function generateId() {
  * @param {string} quality - Качество изображения (standard, hd, ultra)
  * @returns {Promise<{success: boolean, imageUrl: string, error?: string}>}
  */
-async function generateImage(prompt, style = 'realistic', previousImage = null, sessionId = null, userId = null, quality = 'hd') {
+async function generateImage(prompt, style = 'realistic', previousImage = null, sessionId = null, userId = null, quality = 'ultra') {
   // Проверяем существование модуля логирования
   let imageLogger;
   try {
@@ -108,7 +108,7 @@ async function generateImage(prompt, style = 'realistic', previousImage = null, 
     
     // Пробуем разные генераторы по очереди для надежности
     const generators = [
-      () => generateWithPollinations(enhancedPrompt, imageId),
+      () => generateWithPollinations(enhancedPrompt, imageId, quality),
       () => generateWithCraiyon(enhancedPrompt, imageId)
     ];
     
@@ -483,7 +483,7 @@ function getQualitySettings(quality) {
  * @param {string} quality - Качество изображения
  * @returns {Promise<string>} URL сгенерированного изображения
  */
-async function generateWithPollinations(prompt, imageId, quality = 'hd') {
+async function generateWithPollinations(prompt, imageId, quality = 'ultra') {
   // Убеждаемся что промпт не пустой
   if (!prompt || prompt.trim() === '') {
     throw new Error('Пустой промпт для генерации изображения');
