@@ -398,10 +398,25 @@ async function getAIResponseWithSearch(userQuery, options = {}) {
               if (embroideryResult.success && embroideryResult.files && embroideryResult.files.length > 0) {
                 response += `\n\n📄 **Файлы для вышивки созданы:**`;
                 
-                embroideryResult.files.forEach(file => {
+                // Группируем файлы по типу
+                const embroideryFiles = embroideryResult.files.filter(f => f.type === 'embroidery');
+                const preparedImage = embroideryResult.files.find(f => f.type === 'prepared_image');
+                const colorScheme = embroideryResult.files.find(f => f.type === 'color_scheme');
+                
+                embroideryFiles.forEach(file => {
                   const sizeKB = (file.size / 1024).toFixed(1);
                   response += `\n• [${file.format.toUpperCase()} файл](${file.url}) - ${sizeKB} КБ`;
                 });
+                
+                if (preparedImage) {
+                  const sizeKB = (preparedImage.size / 1024).toFixed(1);
+                  response += `\n• [Подготовленное изображение](${preparedImage.url}) - ${sizeKB} КБ`;
+                }
+                
+                if (colorScheme) {
+                  const sizeKB = (colorScheme.size / 1024).toFixed(1);
+                  response += `\n• [Цветовая схема](${colorScheme.url}) - ${sizeKB} КБ`;
+                }
                 
                 if (embroideryResult.recommendations) {
                   response += `\n\n🧵 **Рекомендации для вышивки:** ${embroideryResult.recommendations}`;

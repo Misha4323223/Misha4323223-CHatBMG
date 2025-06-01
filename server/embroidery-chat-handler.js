@@ -194,6 +194,19 @@ function getEmbroideryHelp() {
 }
 
 /**
+ * Получение размера файла
+ */
+async function getFileSize(filePath) {
+  try {
+    const fs = require('fs').promises;
+    const stats = await fs.stat(filePath);
+    return stats.size;
+  } catch (error) {
+    return 0;
+  }
+}
+
+/**
  * Автоматическая конвертация изображения по URL в файлы вышивки
  */
 async function processEmbroideryGeneration(imageUrl) {
@@ -219,11 +232,31 @@ async function processEmbroideryGeneration(imageUrl) {
           stitchDensity: 'medium'
         });
         
-        if (result.success && result.files && result.files.length > 0) {
+        if (result.success && result.files) {
+          // Конвертируем локальные пути в URL для скачивания
+          const embroideryUrl = `/output/${path.basename(result.files.embroidery)}`;
+          const imageUrl = `/output/${path.basename(result.files.image)}`;
+          const schemeUrl = `/output/${path.basename(result.files.colorScheme)}`;
+          
           results.push({
             format: format,
-            url: result.files[0].url,
-            size: result.files[0].size || 0
+            url: embroideryUrl,
+            size: await getFileSize(result.files.embroidery),
+            type: 'embroidery'
+          });
+          
+          results.push({
+            format: 'png',
+            url: imageUrl,
+            size: await getFileSize(result.files.image),
+            type: 'prepared_image'
+          });
+          
+          results.push({
+            format: 'json',
+            url: schemeUrl,
+            size: await getFileSize(result.files.colorScheme),
+            type: 'color_scheme'
           });
         }
       } catch (formatError) {
