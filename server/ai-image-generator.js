@@ -300,9 +300,9 @@ function enhancePromptWithAI(prompt, style) {
   // Добавляем базовые характеристики качества с акцентом на реализм
   englishPrompt = `photorealistic, hyperrealistic, ${englishPrompt}, detailed skin texture, natural proportions, professional portrait photography, studio lighting, authentic materials, lifelike details`;
   
-  // Если это принт, добавляем специфические характеристики
-  if (prompt.toLowerCase().includes('принт') || prompt.toLowerCase().includes('футболка')) {
-    englishPrompt = `photorealistic t-shirt design, realistic textures, ${englishPrompt}`;
+  // Если это принт для футболки, используем векторный стиль
+  if (prompt.toLowerCase().includes('принт') || prompt.toLowerCase().includes('футболка') || prompt.toLowerCase().includes('дизайн')) {
+    englishPrompt = `vector art style, t-shirt design, bold graphics, simple shapes, limited color palette, high contrast, clean lines, print-ready design, ${englishPrompt.replace('photorealistic, hyperrealistic,', '').replace('detailed skin texture, natural proportions, professional portrait photography, studio lighting, authentic materials, lifelike details, real anatomy', '')}`;
   }
   
   // Если это техно/кибер дизайн, добавляем соответствующие термины с реализмом
@@ -380,7 +380,7 @@ function enhanceRussianPromptBasic(prompt, style) {
   
   // Добавляем качественные характеристики в зависимости от типа
   if (isTshirtDesign) {
-    enhancedPrompt = `photorealistic t-shirt design with realistic textures, detailed fabric, natural lighting, ${translatedPrompt}`;
+    enhancedPrompt = `vector art style t-shirt design, bold graphics, simple shapes, limited color palette, high contrast, clean lines, print-ready design, ${translatedPrompt}`;
   } else if (isCharacter && isCyberpunk) {
     enhancedPrompt = `photorealistic cyberpunk character, real human features, detailed skin texture, realistic futuristic armor, natural proportions, professional portrait photography, ${translatedPrompt}`;
   } else if (isCharacter) {
