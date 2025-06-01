@@ -296,27 +296,27 @@ function applyStyleModifiers(prompt, style) {
     
     // Самурайский/японский стиль
     if (lowerPrompt.includes('самурай') || lowerPrompt.includes('samurai') || lowerPrompt.includes('катана') || lowerPrompt.includes('ниндзя') || lowerPrompt.includes('ninja') || lowerPrompt.includes('японский') || lowerPrompt.includes('гриб')) {
-      selectedStyle = `vector illustration, t-shirt design, solid black background, bold thick black outlines, flat colors no gradients, limited color palette red beige black gray, samurai skull wearing red mushroom hat with white spots, detailed armor plates, crossed scythes behind skull, red maple leaves, japanese horror aesthetic`;
+      selectedStyle = `realistic t-shirt print design, maximum 5 colors only, bold screen printing style, solid black background, detailed realistic illustration, red white gray black color scheme, samurai warrior elements, mushroom motifs, armor details, japanese aesthetic, print-ready design`;
     }
     // Подводный/морской стиль
-    else if (lowerPrompt.includes('дайвер') || lowerPrompt.includes('diver') || lowerPrompt.includes('море') || lowerPrompt.includes('sea') || lowerPrompt.includes('подводный') || lowerPrompt.includes('underwater') || lowerPrompt.includes('щупальца') || lowerPrompt.includes('tentacle') || lowerPrompt.includes('осьминог') || lowerPrompt.includes('octopus')) {
-      selectedStyle = `vector illustration, t-shirt design, dark teal background, bold thick outlines, flat colors no gradients, limited color palette teal purple magenta black, cyberpunk diver with octopus tentacles, underwater horror aesthetic, diving mask and gear, sea creatures, neon accents`;
+    else if (lowerPrompt.includes('дайвер') || lowerPrompt.includes('diver') || lowerPrompt.includes('море') || lowerPrompt.includes('sea') || lowerPrompt.includes('подводный') || lowerPrompt.includes('underwater') || lowerPrompt.includes('щупальца') || lowerPrompt.includes('tentacle') || lowerPrompt.includes('осьминог') || lowerPrompt.includes('octopus') || lowerPrompt.includes('русалка') || lowerPrompt.includes('mermaid')) {
+      selectedStyle = `realistic t-shirt print design, maximum 5 colors only, bold screen printing style, dark teal background, detailed realistic illustration, teal purple white black color scheme, underwater creatures, sea elements, diving gear, oceanic aesthetic, print-ready design`;
     }
     // Современный/уличный стиль
-    else if (lowerPrompt.includes('демон') || lowerPrompt.includes('demon') || lowerPrompt.includes('толстовка') || lowerPrompt.includes('hoodie') || lowerPrompt.includes('уличный') || lowerPrompt.includes('street') || lowerPrompt.includes('urban') || lowerPrompt.includes('неон') || lowerPrompt.includes('neon')) {
-      selectedStyle = `vector illustration, t-shirt design, solid black background, bold thick outlines, flat colors no gradients, limited color palette teal purple magenta black, modern demon in hoodie, third eye, horns, evil grin, urban streetwear aesthetic, neon highlights`;
+    else if (lowerPrompt.includes('демон') || lowerPrompt.includes('demon') || lowerPrompt.includes('толстовка') || lowerPrompt.includes('hoodie') || lowerPrompt.includes('уличный') || lowerPrompt.includes('street') || lowerPrompt.includes('urban') || lowerPrompt.includes('неон') || lowerPrompt.includes('neon') || lowerPrompt.includes('панк') || lowerPrompt.includes('punk')) {
+      selectedStyle = `realistic t-shirt print design, maximum 5 colors only, bold screen printing style, solid black background, detailed realistic illustration, cyan purple white black color scheme, modern urban elements, street style, punk aesthetic, neon accents, print-ready design`;
     }
     // Киберпанк/техно стиль
     else if (lowerPrompt.includes('киберпанк') || lowerPrompt.includes('cyberpunk') || lowerPrompt.includes('техно') || lowerPrompt.includes('techno') || lowerPrompt.includes('робот') || lowerPrompt.includes('robot') || lowerPrompt.includes('машина') || lowerPrompt.includes('machine')) {
-      selectedStyle = `vector illustration, t-shirt design, dark background, bold thick outlines, flat colors no gradients, limited color palette cyan purple black, cyberpunk aesthetic, mechanical elements, neon lights, futuristic horror design, tech details`;
+      selectedStyle = `realistic t-shirt print design, maximum 5 colors only, bold screen printing style, dark background, detailed realistic illustration, cyan purple silver black color scheme, cyberpunk technology, mechanical elements, futuristic design, print-ready layout`;
     }
     // Животные/природа
     else if (lowerPrompt.includes('кот') || lowerPrompt.includes('cat') || lowerPrompt.includes('животное') || lowerPrompt.includes('animal') || lowerPrompt.includes('волк') || lowerPrompt.includes('wolf') || lowerPrompt.includes('змей') || lowerPrompt.includes('dragon')) {
-      selectedStyle = `vector illustration, t-shirt design, solid black background, bold thick black outlines, flat colors no gradients, limited color palette red orange black, mythical creature design, detailed beast elements, fierce expression, horror aesthetic with animal features`;
+      selectedStyle = `realistic t-shirt print design, maximum 5 colors only, bold screen printing style, solid black background, detailed realistic illustration, red orange white black color scheme, mythical creatures, animal features, fierce expression, print-ready design`;
     }
     // Базовый стиль для всех остальных случаев
     else {
-      selectedStyle = `vector illustration, t-shirt design, solid black background, bold thick black outlines, flat colors no gradients, limited color palette, japanese horror aesthetic, clean vector art style, screen printing ready, high contrast, detailed elements, strong graphic design`;
+      selectedStyle = `realistic t-shirt print design, maximum 5 colors only, bold screen printing style, solid black background, detailed realistic illustration, limited color palette, high contrast, print-ready design, professional apparel graphic`;
     }
     
     return `${selectedStyle}, ${prompt}`;
