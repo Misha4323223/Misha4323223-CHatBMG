@@ -1809,10 +1809,20 @@
           chatMessages.appendChild(aiMessageDiv);
           scrollToBottom();
           
-          // Добавляем анимацию печатания
+          // Определяем тип запроса и добавляем соответствующий индикатор
+          const isSearchQuery = /найди|найти|поиск|новости|курс|погода|что происходит|события|информация/i.test(messageText);
+          
           const typingIndicator = document.createElement('span');
           typingIndicator.className = 'typing-indicator';
-          typingIndicator.innerHTML = '●●●';
+          
+          if (isSearchQuery) {
+            typingIndicator.innerHTML = '🔍 Поиск информации...';
+            typingIndicator.style.color = '#6c63ff';
+            typingIndicator.style.fontWeight = '500';
+          } else {
+            typingIndicator.innerHTML = '●●●';
+          }
+          
           aiMessageText.appendChild(typingIndicator);
           
           // Запускаем потоковую генерацию
@@ -2042,6 +2052,13 @@
                     
                     // ВАЖНО: Всегда используем innerHTML для корректного отображения
                     console.log(`📝 [STREAMING] Обновляем текст: "${fullResponse}"`);
+                    
+                    // Быстрое отображение для поисковых результатов
+                    if (data.searchUsed && fullResponse.includes('🔍')) {
+                      console.log('🔍 [SEARCH] Быстрое отображение результатов поиска');
+                      messageElement.innerHTML = parseMarkdown(fullResponse);
+                      scrollToBottom();
+                    }
                     
                     // Обрабатываем markdown изображения
                     let processedText = fullResponse;
