@@ -296,27 +296,27 @@ function applyStyleModifiers(prompt, style) {
     
     // Самурайский/японский стиль
     if (lowerPrompt.includes('самурай') || lowerPrompt.includes('samurai') || lowerPrompt.includes('катана') || lowerPrompt.includes('ниндзя') || lowerPrompt.includes('ninja') || lowerPrompt.includes('японский') || lowerPrompt.includes('гриб')) {
-      selectedStyle = `hyperrealistic professional t-shirt print, exactly 5 colors maximum, photorealistic illustration style, dramatic lighting, solid black background, adult mature design, red white gray black silver color scheme, detailed samurai warrior, authentic armor textures, weapon details, serious masculine aesthetic, commercial print quality`;
+      selectedStyle = `professional t-shirt print design, exactly 5 colors maximum, bold clean illustration style, no shadows no gradients, solid black background, sharp crisp lines, adult mature design, red white gray black silver color scheme, detailed samurai warrior, clear defined edges, weapon details, serious aesthetic, screen printing ready, commercial quality`;
     }
     // Подводный/морской стиль
     else if (lowerPrompt.includes('дайвер') || lowerPrompt.includes('diver') || lowerPrompt.includes('море') || lowerPrompt.includes('sea') || lowerPrompt.includes('подводный') || lowerPrompt.includes('underwater') || lowerPrompt.includes('щупальца') || lowerPrompt.includes('tentacle') || lowerPrompt.includes('осьминог') || lowerPrompt.includes('octopus') || lowerPrompt.includes('русалка') || lowerPrompt.includes('mermaid')) {
-      selectedStyle = `hyperrealistic professional t-shirt print, exactly 5 colors maximum, photorealistic illustration style, dramatic underwater lighting, dark oceanic background, adult mature design, deep teal purple white black silver color scheme, realistic sea creatures, detailed scales and textures, serious oceanic aesthetic, no cartoon elements, commercial print quality`;
+      selectedStyle = `professional t-shirt print design, exactly 5 colors maximum, bold clean illustration style, no shadows no gradients, dark oceanic background, sharp crisp lines, adult mature design, deep teal purple white black silver color scheme, realistic sea creatures, clear defined edges, detailed scales, serious oceanic aesthetic, screen printing ready, commercial quality`;
     }
     // Современный/уличный стиль
     else if (lowerPrompt.includes('демон') || lowerPrompt.includes('demon') || lowerPrompt.includes('толстовка') || lowerPrompt.includes('hoodie') || lowerPrompt.includes('уличный') || lowerPrompt.includes('street') || lowerPrompt.includes('urban') || lowerPrompt.includes('неон') || lowerPrompt.includes('neon') || lowerPrompt.includes('панк') || lowerPrompt.includes('punk')) {
-      selectedStyle = `hyperrealistic professional t-shirt print, exactly 5 colors maximum, photorealistic illustration style, dramatic urban lighting, solid black background, adult mature design, cyan purple white black silver color scheme, gritty street elements, detailed textures, serious punk aesthetic, no childish elements, commercial print quality`;
+      selectedStyle = `professional t-shirt print design, exactly 5 colors maximum, bold clean illustration style, no shadows no gradients, solid black background, sharp crisp lines, adult mature design, cyan purple white black silver color scheme, street elements, clear defined edges, serious punk aesthetic, screen printing ready, commercial quality`;
     }
     // Киберпанк/техно стиль
     else if (lowerPrompt.includes('киберпанк') || lowerPrompt.includes('cyberpunk') || lowerPrompt.includes('техно') || lowerPrompt.includes('techno') || lowerPrompt.includes('робот') || lowerPrompt.includes('robot') || lowerPrompt.includes('машина') || lowerPrompt.includes('machine')) {
-      selectedStyle = `hyperrealistic professional t-shirt print, exactly 5 colors maximum, photorealistic illustration style, dramatic neon lighting, dark futuristic background, adult mature design, cyan purple silver black white color scheme, detailed mechanical textures, serious cyberpunk aesthetic, high-tech elements, commercial print quality`;
+      selectedStyle = `professional t-shirt print design, exactly 5 colors maximum, bold clean illustration style, no shadows no gradients, dark futuristic background, sharp crisp lines, adult mature design, cyan purple silver black white color scheme, mechanical elements, clear defined edges, serious cyberpunk aesthetic, screen printing ready, commercial quality`;
     }
     // Животные/природа
     else if (lowerPrompt.includes('кот') || lowerPrompt.includes('cat') || lowerPrompt.includes('животное') || lowerPrompt.includes('animal') || lowerPrompt.includes('волк') || lowerPrompt.includes('wolf') || lowerPrompt.includes('змей') || lowerPrompt.includes('dragon')) {
-      selectedStyle = `hyperrealistic professional t-shirt print, exactly 5 colors maximum, photorealistic illustration style, dramatic natural lighting, solid black background, adult mature design, red orange white black gray color scheme, detailed fur and scale textures, fierce realistic expression, serious nature aesthetic, commercial print quality`;
+      selectedStyle = `professional t-shirt print design, exactly 5 colors maximum, bold clean illustration style, no shadows no gradients, solid black background, sharp crisp lines, adult mature design, red orange white black gray color scheme, detailed creature features, clear defined edges, fierce expression, screen printing ready, commercial quality`;
     }
     // Базовый стиль для всех остальных случаев
     else {
-      selectedStyle = `hyperrealistic professional t-shirt print, exactly 5 colors maximum, photorealistic illustration style, dramatic lighting, solid black background, adult mature design, limited color palette, high contrast details, serious aesthetic, no cartoon elements, commercial print quality`;
+      selectedStyle = `professional t-shirt print design, exactly 5 colors maximum, bold clean illustration style, no shadows no gradients, solid black background, sharp crisp lines, adult mature design, limited color palette, clear defined edges, serious aesthetic, screen printing ready, commercial quality`;
     }
     
     return `${selectedStyle}, ${prompt}`;
