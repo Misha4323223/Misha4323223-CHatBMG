@@ -288,21 +288,38 @@ function applyStyleModifiers(prompt, style) {
   if (isEmbroideryDesign || style === 'embroidery') {
     return `embroidery design pattern, machine embroidery ready, clear defined areas, limited color palette, vector style, clean lines, flat colors, no gradients, simplified shapes, embroidery friendly design, suitable for needlework, ${prompt}`;
   } else if (isTshirtDesign || style === 'vector') {
-    // Расширенная палитра стилей BOOOMERANGS
-    const styleVariants = [
-      // Классический самурайский стиль с грибом
-      `vector illustration, t-shirt design, solid black background, bold thick black outlines, flat colors no gradients, limited color palette red beige black gray, samurai skull wearing red mushroom hat with white spots, detailed armor plates, crossed scythes behind skull, red maple leaves, japanese horror aesthetic`,
-      // Киберпанк подводный стиль
-      `vector illustration, t-shirt design, dark teal background, bold thick outlines, flat colors no gradients, limited color palette teal purple magenta black, cyberpunk diver with octopus tentacles, underwater horror aesthetic, diving mask and gear, sea creatures, neon accents`,
-      // Современный демон в уличной одежде
-      `vector illustration, t-shirt design, solid black background, bold thick outlines, flat colors no gradients, limited color palette teal purple magenta black, modern demon in hoodie, third eye, horns, evil grin, urban streetwear aesthetic, neon highlights`,
-      // Базовый японский хоррор стиль
-      `vector illustration, t-shirt design, solid black background, bold thick black outlines, flat colors no gradients, limited color palette, japanese horror aesthetic, clean vector art style, screen printing ready, high contrast, detailed elements, strong graphic design`
-    ];
+    // Анализируем запрос для выбора подходящего стиля
+    const lowerPrompt = prompt.toLowerCase();
     
-    // Выбираем случайный стиль или базовый
-    const randomStyle = styleVariants[Math.floor(Math.random() * styleVariants.length)];
-    return `${randomStyle}, ${prompt}`;
+    // Расширенная палитра стилей BOOOMERANGS
+    let selectedStyle = '';
+    
+    // Самурайский/японский стиль
+    if (lowerPrompt.includes('самурай') || lowerPrompt.includes('samurai') || lowerPrompt.includes('катана') || lowerPrompt.includes('ниндзя') || lowerPrompt.includes('ninja') || lowerPrompt.includes('японский') || lowerPrompt.includes('гриб')) {
+      selectedStyle = `vector illustration, t-shirt design, solid black background, bold thick black outlines, flat colors no gradients, limited color palette red beige black gray, samurai skull wearing red mushroom hat with white spots, detailed armor plates, crossed scythes behind skull, red maple leaves, japanese horror aesthetic`;
+    }
+    // Подводный/морской стиль
+    else if (lowerPrompt.includes('дайвер') || lowerPrompt.includes('diver') || lowerPrompt.includes('море') || lowerPrompt.includes('sea') || lowerPrompt.includes('подводный') || lowerPrompt.includes('underwater') || lowerPrompt.includes('щупальца') || lowerPrompt.includes('tentacle') || lowerPrompt.includes('осьминог') || lowerPrompt.includes('octopus')) {
+      selectedStyle = `vector illustration, t-shirt design, dark teal background, bold thick outlines, flat colors no gradients, limited color palette teal purple magenta black, cyberpunk diver with octopus tentacles, underwater horror aesthetic, diving mask and gear, sea creatures, neon accents`;
+    }
+    // Современный/уличный стиль
+    else if (lowerPrompt.includes('демон') || lowerPrompt.includes('demon') || lowerPrompt.includes('толстовка') || lowerPrompt.includes('hoodie') || lowerPrompt.includes('уличный') || lowerPrompt.includes('street') || lowerPrompt.includes('urban') || lowerPrompt.includes('неон') || lowerPrompt.includes('neon')) {
+      selectedStyle = `vector illustration, t-shirt design, solid black background, bold thick outlines, flat colors no gradients, limited color palette teal purple magenta black, modern demon in hoodie, third eye, horns, evil grin, urban streetwear aesthetic, neon highlights`;
+    }
+    // Киберпанк/техно стиль
+    else if (lowerPrompt.includes('киберпанк') || lowerPrompt.includes('cyberpunk') || lowerPrompt.includes('техно') || lowerPrompt.includes('techno') || lowerPrompt.includes('робот') || lowerPrompt.includes('robot') || lowerPrompt.includes('машина') || lowerPrompt.includes('machine')) {
+      selectedStyle = `vector illustration, t-shirt design, dark background, bold thick outlines, flat colors no gradients, limited color palette cyan purple black, cyberpunk aesthetic, mechanical elements, neon lights, futuristic horror design, tech details`;
+    }
+    // Животные/природа
+    else if (lowerPrompt.includes('кот') || lowerPrompt.includes('cat') || lowerPrompt.includes('животное') || lowerPrompt.includes('animal') || lowerPrompt.includes('волк') || lowerPrompt.includes('wolf') || lowerPrompt.includes('змей') || lowerPrompt.includes('dragon')) {
+      selectedStyle = `vector illustration, t-shirt design, solid black background, bold thick black outlines, flat colors no gradients, limited color palette red orange black, mythical creature design, detailed beast elements, fierce expression, horror aesthetic with animal features`;
+    }
+    // Базовый стиль для всех остальных случаев
+    else {
+      selectedStyle = `vector illustration, t-shirt design, solid black background, bold thick black outlines, flat colors no gradients, limited color palette, japanese horror aesthetic, clean vector art style, screen printing ready, high contrast, detailed elements, strong graphic design`;
+    }
+    
+    return `${selectedStyle}, ${prompt}`;
   } else {
     return `photorealistic, hyperrealistic, ${prompt}, detailed skin texture, natural proportions, professional portrait photography, studio lighting, authentic materials, lifelike details`;
   }
