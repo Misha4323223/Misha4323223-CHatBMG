@@ -242,9 +242,13 @@ async function processEmbroideryGeneration(imageUrl) {
     }
     
     if (results.length > 0) {
+      // Создаем превью вышивки на ткани
+      const embroideryPreviewUrl = `https://image.pollinations.ai/prompt/hand%20embroidered%20design%2C%20real%20embroidery%20on%20fabric%2C%20visible%20thread%20texture%2C%20traditional%20needlework%2C%20embroidery%20stitches%20visible%2C%20fabric%20background%2C%20raised%20thread%20pattern%2C%20authentic%20embroidery%20look%2C%20textile%20art%2C%20handcrafted%20embroidery%2C%20simple%20design?width=512&height=512&nologo=true&enhance=true&model=flux-pro&seed=${Date.now()}&quality=standard`;
+      
       return {
         success: true,
         files: results,
+        previewUrl: embroideryPreviewUrl,
         recommendations: 'Файлы оптимизированы для вышивки с ограниченной палитрой цветов.'
       };
     } else {

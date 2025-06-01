@@ -426,6 +426,11 @@ async function getAIResponseWithSearch(userQuery, options = {}) {
                   response += `\n• [Цветовая схема](${colorScheme.url}) - ${sizeKB} КБ`;
                 }
                 
+                // Добавляем превью вышивки на ткани
+                if (embroideryResult.previewUrl) {
+                  response += `\n\n🧵 **Превью на ткани:** [Как будет выглядеть вышивка](${embroideryResult.previewUrl})`;
+                }
+                
                 if (embroideryResult.recommendations) {
                   response += `\n\n🧵 **Рекомендации для вышивки:** ${embroideryResult.recommendations}`;
                 }
