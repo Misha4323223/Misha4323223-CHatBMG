@@ -401,7 +401,7 @@ async function getAIResponseWithSearch(userQuery, options = {}) {
           if (isEmbroideryRequest) {
             try {
               const embroideryHandler = require('./embroidery-chat-handler');
-              const embroideryResult = await embroideryHandler.processEmbroideryGeneration(imageResult.imageUrl);
+              const embroideryResult = await embroideryHandler.processEmbroideryGeneration(imageResult.imageUrl, userQuery);
               
               if (embroideryResult.success && embroideryResult.files && embroideryResult.files.length > 0) {
                 response += `\n\n📄 **Файлы для вышивки созданы:**`;
