@@ -820,23 +820,34 @@ ${searchContext}
     } else {
       // AI дал обычный ответ - но нужно проверить, не является ли это запросом на генерацию
       
-      // Проверяем ключевые слова для генерации изображений (исключаем анализ трендов)
-      const imageKeywords = ['нарисуй', 'создай', 'сгенерируй', 'картинка', 'изображение', 'логотип', 'баннер'];
-      const embroideryKeywords = ['вышивк', 'dst', 'pes', 'jef', 'exp', 'vp3'];
+      // Проверяем специфичные промпты для разных типов генерации
+      const isGeneralImageRequest = queryLowerForSvg.includes('создай изображение');
+      const isPrintRequest = queryLowerForSvg.includes('создай принт');
+      const isEmbroideryGeneration = queryLowerForSvg.includes('создай вышивку');
       
-      // Исключаем запросы на анализ трендов
+      // Дополнительные ключевые слова для совместимости
+      const additionalImageKeywords = ['нарисуй', 'сгенерируй', 'картинка', 'логотип', 'баннер'];
+      const embroideryKeywords = ['dst', 'pes', 'jef', 'exp', 'vp3'];
+      
+      // Исключаем запросы на анализ трендов и бизнес-функции
       const isTrendAnalysis = queryLowerForSvg.includes('тренд') || queryLowerForSvg.includes('анализ') || queryLowerForSvg.includes('популярн');
-      const isPrintRequest = (queryLowerForSvg.includes('принт') || queryLowerForSvg.includes('дизайн')) && 
-                            (queryLowerForSvg.includes('создай') || queryLowerForSvg.includes('нарисуй') || queryLowerForSvg.includes('сгенерируй'));
+      const isBusinessFunction = queryLowerForSvg.includes('рассчит') || queryLowerForSvg.includes('калькул') || queryLowerForSvg.includes('предложение');
       
-      const isImageRequest = !isTrendAnalysis && (imageKeywords.some(keyword => queryLowerForSvg.includes(keyword)) || isPrintRequest);
-      const isEmbroideryRequest = embroideryKeywords.some(keyword => queryLowerForSvg.includes(keyword));
+      const hasEmbroideryFormats = embroideryKeywords.some(keyword => queryLowerForSvg.includes(keyword));
+      const needsEmbroideryConversion = isEmbroideryGeneration || hasEmbroideryFormats;
+      
+      const isImageRequest = !isTrendAnalysis && !isBusinessFunction && (
+        isGeneralImageRequest || 
+        isPrintRequest || 
+        isEmbroideryGeneration ||
+        additionalImageKeywords.some(keyword => queryLowerForSvg.includes(keyword))
+      );
       
       if (isImageRequest) {
         SmartLogger.route(`🎨 Обнаружен запрос на генерацию изображения через ключевые слова`);
         
         // Проверяем, нужна ли конвертация в формат вышивки
-        if (isEmbroideryRequest) {
+        if (needsEmbroideryConversion) {
           SmartLogger.route(`🧵 Запрос включает создание вышивки`);
           
           try {

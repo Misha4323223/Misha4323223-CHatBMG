@@ -191,16 +191,32 @@ async function getAIEnhancedPrompt(prompt, style) {
   try {
     const fetch = require('node-fetch');
     
-    // Создаем запрос на перевод и улучшение промпта
-    let translationRequest = `Translate this from Russian to English and improve for image generation: ${prompt}`;
+    // Определяем тип запроса по ключевым словам
+    const isGeneralImage = prompt.includes('создай изображение');
+    const isPrintDesign = prompt.includes('создай принт');
+    const isEmbroideryDesign = prompt.includes('создай вышивку');
     
-    // Добавляем контекст стиля для лучшего перевода
-    if (style === 'embroidery') {
-      translationRequest += '. This is for embroidery design, use simple descriptive terms.';
-    } else if (style === 'vector') {
-      translationRequest += '. This is for t-shirt vector design, use bold graphic terms.';
+    // Создаем запрос на перевод и улучшение промпта
+    let translationRequest;
+    
+    if (isEmbroideryDesign) {
+      translationRequest = `Translate this embroidery design request from Russian to English and optimize for embroidery: ${prompt.replace('создай вышивку', '').trim()}. Create prompt for simple, clean embroidery design with minimal colors, clear lines, suitable for machine embroidery.`;
+    } else if (isPrintDesign) {
+      translationRequest = `Translate this t-shirt print request from Russian to English and optimize for printing: ${prompt.replace('создай принт', '').trim()}. Create prompt for t-shirt print design with maximum 5 colors, sharp clean lines, no shadows or gradients, suitable for screen printing.`;
+    } else if (isGeneralImage) {
+      translationRequest = `Translate this image request from Russian to English and improve for photorealistic generation: ${prompt.replace('создай изображение', '').trim()}. Create detailed descriptive prompt for high-quality photorealistic image.`;
     } else {
-      translationRequest += '. This is for photorealistic image, use detailed descriptive terms.';
+      // Обратная совместимость для старых запросов
+      translationRequest = `Translate this from Russian to English and improve for image generation: ${prompt}`;
+      
+      // Добавляем контекст стиля для лучшего перевода
+      if (style === 'embroidery') {
+        translationRequest += '. This is for embroidery design, use simple descriptive terms.';
+      } else if (style === 'vector') {
+        translationRequest += '. This is for t-shirt vector design, use bold graphic terms.';
+      } else {
+        translationRequest += '. This is for photorealistic image, use detailed descriptive terms.';
+      }
     }
     
     const response = await fetch('http://localhost:5001/stream', {
