@@ -276,6 +276,13 @@ async function processEmbroideryGeneration(imageUrl, originalPrompt = '') {
           .replace(/звезда/g, 'star')
           .replace(/солнце/g, 'sun')
           .replace(/луна/g, 'moon')
+          .replace(/гриб/g, 'mushroom')
+          .replace(/грибок/g, 'mushroom')
+          .replace(/дерево/g, 'tree')
+          .replace(/рыба/g, 'fish')
+          .replace(/птица/g, 'bird')
+          .replace(/змея/g, 'snake')
+          .replace(/медведь/g, 'bear')
           .trim();
         
         if (cleanPrompt) {
