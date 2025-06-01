@@ -50,71 +50,99 @@ function needsWebSearch(query) {
 }
 
 /**
- * Поиск через DuckDuckGo Instant Answer API (бесплатный)
+ * Поиск через Python DuckDuckGo модуль (бесплатный)
  * @param {string} query - Поисковый запрос
  * @returns {Promise<Object>} Результаты поиска
  */
 async function searchDuckDuckGo(query) {
     try {
-        console.log('🔍 [SEARCH] === НАЧИНАЕМ DUCKDUCKGO ПОИСК ===');
+        console.log('🔍 [SEARCH] === НАЧИНАЕМ PYTHON DUCKDUCKGO ПОИСК ===');
+        console.log('🔍 [SEARCH] Запрос:', query);
         
-        const encodedQuery = encodeURIComponent(query);
-        const url = `https://api.duckduckgo.com/?q=${encodedQuery}&format=json&no_html=1&skip_disambig=1`;
-        console.log('🔍 [SEARCH] URL для запроса:', url);
+        // Используем Python скрипт для поиска
+        const { spawn } = require('child_process');
         
-        const response = await fetch(url, {
-            headers: {
-                'User-Agent': 'BOOOMERANGS-Search/1.0'
-            }
-        });
-        
-        console.log('🔍 [SEARCH] Ответ получен, статус:', response.status);
-        
-        if (!response.ok) {
-            throw new Error(`DuckDuckGo API error: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        console.log('🔍 [SEARCH] DuckDuckGo данные:', JSON.stringify(data, null, 2));
-        
-        let results = [];
-        
-        // Основной ответ
-        if (data.Abstract) {
-            results.push({
-                title: data.Heading || 'Информация',
-                snippet: data.Abstract,
-                url: data.AbstractURL,
-                source: 'DuckDuckGo'
+        return new Promise((resolve, reject) => {
+            const pythonScript = `
+import sys
+import json
+try:
+    from duckduckgo_search import DDGS
+    
+    query = "${query.replace(/"/g, '\\"')}"
+    results = []
+    
+    with DDGS() as ddgs:
+        search_results = list(ddgs.text(query, max_results=10))
+        for result in search_results:
+            results.append({
+                'title': result.get('title', ''),
+                'snippet': result.get('body', ''),
+                'url': result.get('href', ''),
+                'source': 'DuckDuckGo'
+            })
+    
+    print(json.dumps({
+        'success': True,
+        'results': results,
+        'total': len(results)
+    }))
+    
+except Exception as e:
+    print(json.dumps({
+        'success': False,
+        'error': str(e),
+        'results': []
+    }))
+`;
+
+            const python = spawn('python3', ['-c', pythonScript]);
+            let output = '';
+            let errorOutput = '';
+            
+            python.stdout.on('data', (data) => {
+                output += data.toString();
             });
-        }
-        
-        // Связанные темы
-        if (data.RelatedTopics && data.RelatedTopics.length > 0) {
-            data.RelatedTopics.slice(0, 3).forEach(topic => {
-                if (topic.Text) {
-                    results.push({
-                        title: topic.FirstURL ? 'Связанная тема' : 'Информация',
-                        snippet: topic.Text,
-                        url: topic.FirstURL,
-                        source: 'DuckDuckGo'
+            
+            python.stderr.on('data', (data) => {
+                errorOutput += data.toString();
+            });
+            
+            python.on('close', (code) => {
+                console.log('🔍 [SEARCH] Python завершен с кодом:', code);
+                console.log('🔍 [SEARCH] Вывод:', output);
+                if (errorOutput) console.log('🔍 [SEARCH] Ошибки:', errorOutput);
+                
+                try {
+                    const result = JSON.parse(output.trim());
+                    console.log('🔍 [SEARCH] Результатов найдено:', result.results?.length || 0);
+                    resolve(result);
+                } catch (parseError) {
+                    console.error('🔍 [SEARCH] Ошибка парсинга:', parseError);
+                    resolve({
+                        success: false,
+                        error: 'Ошибка парсинга результатов поиска',
+                        results: []
                     });
                 }
             });
-        }
-        
-        return {
-            success: true,
-            results: results,
-            provider: 'DuckDuckGo'
-        };
+            
+            python.on('error', (error) => {
+                console.error('🔍 [SEARCH] Ошибка Python:', error);
+                resolve({
+                    success: false,
+                    error: error.message,
+                    results: []
+                });
+            });
+        });
         
     } catch (error) {
-        console.error('🔍 [SEARCH] Ошибка DuckDuckGo:', error.message);
+        console.error('🔍 [SEARCH] Общая ошибка поиска:', error);
         return {
             success: false,
             error: error.message,
-            provider: 'DuckDuckGo'
+            results: []
         };
     }
 }
