@@ -55,22 +55,29 @@ function extractDesignDescription(message) {
  */
 function optimizePromptForEmbroidery(description) {
   // Проверяем, не содержит ли уже промпт ключевые слова вышивки
-  if (description.includes('simple design') || description.includes('embroidery')) {
+  if (description.includes('embroidery style') || description.includes('embroidered')) {
     return description; // Уже оптимизирован
   }
   
-  // Добавляем ключевые слова для получения четких контуров
+  // Добавляем ключевые слова для имитации настоящей вышивки
   const embroideryOptimizations = [
-    'simple design',
-    'clear outlines', 
-    'bold lines'
+    'embroidery style',
+    'hand embroidered look',
+    'thread texture visible',
+    'fabric background',
+    'embroidered pattern',
+    'stitched design',
+    'traditional needlework',
+    'embroidery thread details',
+    'raised embroidery effect',
+    'textile art style'
   ];
   
-  // Убираем элементы, которые плохо подходят для вышивки
+  // Убираем элементы, которые мешают реалистичной вышивке
   const removeElements = [
-    'photo realistic', 'photorealistic', 'realistic photo',
-    'detailed shadows', 'gradient', 'gradients',
-    'fine details', 'texture', 'textures'
+    'flat design', 'vector illustration', 'clipart style',
+    'digital art', 'graphic design', 'logo style',
+    'minimalist', 'geometric pattern', 'solid colors'
   ];
   
   let optimizedPrompt = description;
@@ -81,7 +88,7 @@ function optimizePromptForEmbroidery(description) {
     optimizedPrompt = optimizedPrompt.replace(regex, '');
   });
   
-  // Добавляем оптимизации для вышивки только один раз
+  // Добавляем оптимизации для реалистичной вышивки
   optimizedPrompt += ', ' + embroideryOptimizations.join(', ');
   
   return optimizedPrompt.trim();
