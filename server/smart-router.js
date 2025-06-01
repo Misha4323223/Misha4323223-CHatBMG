@@ -371,6 +371,11 @@ async function getAIResponseWithSearch(userQuery, options = {}) {
     if (isImageRequest) {
       SmartLogger.route(`🎨 Обнаружен запрос на генерацию изображения`);
       
+      // Проверяем, это запрос на вышивку
+      const isEmbroideryRequest = userQuery.toLowerCase().includes('вышивка') || 
+                                 userQuery.toLowerCase().includes('вышивку') || 
+                                 userQuery.toLowerCase().includes('embroidery');
+      
       // Импортируем генератор изображений
       const aiImageGenerator = require('./ai-image-generator');
       
@@ -378,13 +383,41 @@ async function getAIResponseWithSearch(userQuery, options = {}) {
         const imageResult = await aiImageGenerator.generateImage(userQuery, 'realistic');
         
         if (imageResult.success && imageResult.imageUrl) {
-          return {
-            success: true,
-            response: `Я создал изображение по вашему запросу! Вот результат:
+          let response = `Я создал изображение по вашему запросу! Вот результат:
 
 ![Сгенерированное изображение](${imageResult.imageUrl})
 
-Изображение сохранено и готово к использованию. Если нужно что-то изменить, просто опишите что хотите поправить.`,
+Изображение сохранено и готово к использованию.`;
+
+          // Если это запрос на вышивку, добавляем конвертацию в файлы вышивки
+          if (isEmbroideryRequest) {
+            try {
+              const embroideryHandler = require('./embroidery-chat-handler');
+              const embroideryResult = await embroideryHandler.processEmbroideryGeneration(imageResult.imageUrl);
+              
+              if (embroideryResult.success && embroideryResult.files && embroideryResult.files.length > 0) {
+                response += `\n\n📄 **Файлы для вышивки созданы:**`;
+                
+                embroideryResult.files.forEach(file => {
+                  const sizeKB = (file.size / 1024).toFixed(1);
+                  response += `\n• [${file.format.toUpperCase()} файл](${file.url}) - ${sizeKB} КБ`;
+                });
+                
+                if (embroideryResult.recommendations) {
+                  response += `\n\n🧵 **Рекомендации для вышивки:** ${embroideryResult.recommendations}`;
+                }
+              }
+            } catch (embError) {
+              SmartLogger.error('Ошибка конвертации в файлы вышивки:', embError);
+              response += `\n\nДля конвертации в файлы вышивки напишите "конвертировать в вышивку".`;
+            }
+          } else {
+            response += ` Если нужно что-то изменить, просто опишите что хотите поправить.`;
+          }
+          
+          return {
+            success: true,
+            response: response,
             provider: 'AI_Image_Generator',
             searchUsed: false,
             imageGenerated: true,
