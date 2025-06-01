@@ -220,11 +220,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.sendFile('public/image-generator.html', { root: '.' });
   });
   
-  // Статические файлы для скачивания обработанных изображений
+  // Статические файлы для просмотра и скачивания обработанных изображений
   app.use('/output', express.static('output', {
     setHeaders: (res, path) => {
-      // Разрешаем скачивание файлов
-      res.set('Content-Disposition', 'attachment');
+      // Для изображений разрешаем просмотр в браузере
+      if (path.endsWith('.png') || path.endsWith('.jpg') || path.endsWith('.jpeg')) {
+        res.set('Content-Type', 'image/' + path.split('.').pop());
+      } else {
+        // Для файлов вышивки принудительное скачивание
+        res.set('Content-Disposition', 'attachment');
+      }
     }
   }));
   
