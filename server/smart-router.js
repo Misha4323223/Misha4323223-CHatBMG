@@ -496,6 +496,13 @@ async function getAIResponseWithSearch(userQuery, options = {}) {
       };
     }
 
+    // Проверяем запросы автоматизации BOOOMERANGS
+    const automationResult = await handleAutomationRequest(userQuery);
+    if (automationResult) {
+      SmartLogger.route(`🤖 Обработан запрос автоматизации`);
+      return automationResult;
+    }
+
     // Сначала проверяем поисковые запросы напрямую
     const searchKeywords = [
       'найди', 'поищи', 'найти', 'поиск', 'новости', 'последние', 
@@ -2045,6 +2052,215 @@ router.post('/analyze', (req, res) => {
     });
   }
 });
+
+/**
+ * Обработка запросов автоматизации BOOOMERANGS
+ */
+async function handleAutomationRequest(query) {
+  const lowerQuery = query.toLowerCase();
+  
+  // Детекция запросов автоматизации
+  const automationPatterns = {
+    priceCalculation: /рассчит|стоимость|цен|калькул|сколько стоит|прайс|расценк/,
+    proposal: /предложение|кп|коммерческое|договор|смет/,
+    trends: /тренд|мод|популярн|стиль|что носят|актуальн/
+  };
+
+  try {
+    const { BOOOMERANGSAutomation } = require('./booomerangs-automation');
+    const automation = new BOOOMERANGSAutomation();
+
+    // Расчет стоимости
+    if (automationPatterns.priceCalculation.test(lowerQuery)) {
+      return await handlePriceCalculation(query, automation);
+    }
+
+    // Генерация КП
+    if (automationPatterns.proposal.test(lowerQuery)) {
+      return await handleProposalGeneration(query, automation);
+    }
+
+    // Анализ трендов
+    if (automationPatterns.trends.test(lowerQuery)) {
+      return await handleTrendAnalysis(query, automation);
+    }
+
+    return null; // Не автоматизационный запрос
+    
+  } catch (error) {
+    SmartLogger.error(`Ошибка автоматизации: ${error.message}`);
+    return null;
+  }
+}
+
+/**
+ * Обработка расчета стоимости
+ */
+async function handlePriceCalculation(query, automation) {
+  SmartLogger.route(`💰 Обрабатываем запрос расчета стоимости`);
+  
+  // Извлекаем параметры из запроса
+  const params = extractCalculationParams(query);
+  
+  if (!params.width || !params.height || !params.quantity) {
+    return {
+      success: true,
+      response: `**Калькулятор стоимости BOOOMERANGS**
+
+Для расчета укажите:
+• Размер дизайна (например: 20x15 см)
+• Количество цветов (или "полноцвет")
+• Тираж (количество изделий)
+• Тип изделия (футболка, худи, кепка)
+
+**Пример:** "Рассчитай стоимость печати 25x20 см, 3 цвета, 50 футболок"
+
+**Доступные методы:**
+• DTF печать - полноцветная, любые тиражи
+• Трафаретная печать - от 50 шт, до 6 цветов  
+• Машинная вышивка - для простых дизайнов`,
+      provider: 'BOOOMERANGS_Calculator',
+      searchUsed: false
+    };
+  }
+
+  const result = automation.priceCalculator.getRecommendation(
+    params.width,
+    params.height,
+    params.colors,
+    params.quantity,
+    params.hasDetails
+  );
+
+  const formattedResponse = `**Расчет стоимости производства**
+
+**Рекомендуем: ${result.recommendation.method}**
+• Размер: ${params.width}x${params.height} см
+• Тираж: ${params.quantity} шт.
+• Цена за единицу: ${result.recommendation.pricePerUnit} руб.
+• **Общая стоимость: ${result.recommendation.totalCost.toLocaleString()} руб.**
+
+${result.alternatives.length > 0 ? `**Альтернативные варианты:**
+${result.alternatives.map(alt => `• ${alt.method}: ${alt.pricePerUnit || Math.round(alt.totalCost / params.quantity)} руб/шт`).join('\n')}` : ''}
+
+${result.summary}
+
+*Цены указаны без учета стоимости изделий*`;
+
+  return {
+    success: true,
+    response: formattedResponse,
+    provider: 'BOOOMERANGS_Calculator',
+    searchUsed: false
+  };
+}
+
+/**
+ * Извлечение параметров расчета из запроса
+ */
+function extractCalculationParams(query) {
+  const params = {
+    width: null,
+    height: null,
+    colors: 'full',
+    quantity: null,
+    hasDetails: false
+  };
+
+  // Размеры (20x15, 25*20, 30 на 25)
+  const sizeMatch = query.match(/(\d+)[x*х на ]+(\d+)/i);
+  if (sizeMatch) {
+    params.width = parseInt(sizeMatch[1]);
+    params.height = parseInt(sizeMatch[2]);
+  }
+
+  // Количество изделий
+  const qtyMatch = query.match(/(\d+)\s*(шт|штук|футбол|худи|кепок|изделий)/i);
+  if (qtyMatch) {
+    params.quantity = parseInt(qtyMatch[1]);
+  }
+
+  // Цвета
+  const colorMatch = query.match(/(\d+)\s*цвет/i);
+  if (colorMatch) {
+    params.colors = parseInt(colorMatch[1]);
+  } else if (query.includes('полноцвет') || query.includes('фулл')) {
+    params.colors = 'full';
+  }
+
+  return params;
+}
+
+/**
+ * Обработка генерации коммерческого предложения
+ */
+async function handleProposalGeneration(query, automation) {
+  return {
+    success: true,
+    response: `**Генератор коммерческих предложений**
+
+Для создания КП укажите:
+
+**Данные клиента:**
+• Имя контактного лица
+• Название компании
+• Email и телефон
+
+**Параметры заказа:**
+• Тип изделия (футболка, худи, кепка)
+• Описание дизайнов с размерами
+• Количество и срок изготовления
+
+**Пример:** "Создай КП для ООО Ромашка, контакт Иван Петров, 50 футболок с логотипом 15x10 см, срок 10 дней"`,
+    provider: 'BOOOMERANGS_Proposals',
+    searchUsed: false
+  };
+}
+
+/**
+ * Обработка анализа трендов
+ */
+async function handleTrendAnalysis(query, automation) {
+  SmartLogger.route(`📈 Анализируем тренды для: ${query}`);
+  
+  const trendQuery = query.replace(/тренд|мод|популярн|стиль|что носят|актуальн/gi, '').trim();
+  const result = await automation.trendAnalyzer.analyzeTrends(trendQuery || 'дизайн одежды');
+
+  if (result.error) {
+    return {
+      success: true,
+      response: `**Анализ трендов**
+
+${result.recommendation}
+
+**Рекомендуем отслеживать:**
+• Pinterest - актуальные дизайны
+• Behance - профессиональные работы  
+• Instagram - уличная мода
+• Dribbble - графический дизайн`,
+      provider: 'BOOOMERANGS_Trends',
+      searchUsed: false
+    };
+  }
+
+  const formattedResponse = `**Анализ трендов: ${result.query}**
+
+**Актуальные направления:**
+${result.trends.length > 0 ? result.trends.map(trend => `• ${trend}`).join('\n') : '• Минимализм и чистота линий\n• Экологичность и натуральность\n• Персонализация и уникальность'}
+
+**Рекомендации для дизайна:**
+${result.recommendations.map(rec => `• ${rec}`).join('\n')}
+
+**Источников проанализировано:** ${result.sources}
+**Обновлено:** ${result.lastUpdated}`;
+
+  return {
+    success: true,
+    response: formattedResponse,
+    provider: 'BOOOMERANGS_Trends',
+    searchUsed: true
+  };
+}
 
 module.exports = router;
 module.exports.routeMessage = routeMessage;
