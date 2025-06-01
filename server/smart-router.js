@@ -2006,5 +2006,5 @@ router.post('/analyze', (req, res) => {
 
 module.exports = router;
 module.exports.routeMessage = routeMessage;
-module.exports.getChatResponse = routeMessage;
+module.exports.getChatResponse = getAIResponseWithSearch;
 module.exports.analyzeMessage = analyzeMessage;
