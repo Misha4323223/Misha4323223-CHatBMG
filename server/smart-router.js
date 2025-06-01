@@ -514,35 +514,87 @@ async function getAIResponseWithSearch(userQuery, options = {}) {
       SmartLogger.route(`🔍 АКТИВИРОВАН ПРЯМОЙ ПОИСК!`);
       
       try {
-        // Используем простой веб-поиск для начала
-        SmartLogger.route(`🔍 Выполняем веб-поиск для: "${userQuery}"`);
-        const searchResults = await webSearchProvider.performWebSearch(userQuery);
+        // Выполняем поиск напрямую через Python
+        SmartLogger.route(`🔍 Выполняем Python поиск для: "${userQuery}"`);
         
-        SmartLogger.route(`🔍 Результаты поиска:`, searchResults);
+        const { spawn } = require('child_process');
         
-        if (searchResults && searchResults.success && searchResults.results && searchResults.results.length > 0) {
-          const searchContext = webSearchProvider.formatSearchResultsForAI(searchResults);
-          
-          SmartLogger.route(`🔍 Найдено результатов: ${searchResults.results.length}`);
-          SmartLogger.route(`🔍 Формируем контекст для AI`);
-          
-          // Отправляем AI данные из поиска
-          const searchPrompt = `Пользователь ищет информацию: "${userQuery}"
+        const searchResult = await new Promise((resolve) => {
+          const pythonScript = `
+import sys
+import json
+try:
+    from duckduckgo_search import DDGS
+    
+    query = "${userQuery.replace(/"/g, '\\"')}"
+    results = []
+    
+    with DDGS() as ddgs:
+        search_results = list(ddgs.text(query, max_results=10))
+        for result in search_results:
+            results.append({
+                'title': result.get('title', ''),
+                'snippet': result.get('body', ''),
+                'url': result.get('href', ''),
+                'source': 'DuckDuckGo'
+            })
+    
+    print(json.dumps({
+        'success': True,
+        'results': results,
+        'total': len(results)
+    }))
+    
+except Exception as e:
+    print(json.dumps({
+        'success': False,
+        'error': str(e),
+        'results': []
+    }))
+`;
 
-Вот актуальные данные из интернета:
+          const python = spawn('python3', ['-c', pythonScript]);
+          let output = '';
+          
+          python.stdout.on('data', (data) => {
+            output += data.toString();
+          });
+          
+          python.on('close', (code) => {
+            SmartLogger.route(`🔍 Python поиск завершен с кодом: ${code}`);
+            try {
+              const result = JSON.parse(output.trim());
+              SmartLogger.route(`🔍 Результатов найдено: ${result.results?.length || 0}`);
+              resolve(result);
+            } catch (parseError) {
+              SmartLogger.error(`🔍 Ошибка парсинга: ${parseError}`);
+              resolve({ success: false, error: 'Ошибка парсинга', results: [] });
+            }
+          });
+          
+          python.on('error', (error) => {
+            SmartLogger.error(`🔍 Ошибка Python: ${error}`);
+            resolve({ success: false, error: error.message, results: [] });
+          });
+        });
+        
+        if (searchResult && searchResult.success && searchResult.results && searchResult.results.length > 0) {
+          SmartLogger.route(`🔍 ПОИСК УСПЕШЕН! Найдено ${searchResult.results.length} результатов`);
+          
+          // Формируем контекст для AI
+          const searchContext = searchResult.results.map(r => 
+            `• ${r.title}\n  ${r.snippet}\n  Источник: ${r.url}`
+          ).join('\n\n');
+          
+          const searchPrompt = `Пользователь ищет: "${userQuery}"
+
+Актуальная информация из интернета:
 ${searchContext}
 
-ВАЖНО:
-- Используй ТОЛЬКО эти актуальные данные для ответа
-- Упомяни источники информации
-- Дай структурированный ответ с ключевыми фактами
-- НЕ говори, что не можешь найти информацию - она УЖЕ найдена выше
+ВАЖНО: Используй ТОЛЬКО эти данные для ответа. Упомяни источники.`;
 
-Ответь подробно на основе найденной информации.`;
-
-          SmartLogger.route(`🔍 Отправляем AI промпт с данными поиска`);
+          SmartLogger.route(`🔍 Отправляем AI данные для анализа`);
           
-          // Импортируем pythonProvider
           const pythonProvider = require('./g4f-provider');
           const finalResult = await pythonProvider.callPythonAI(searchPrompt, 'Qwen_Qwen_2_72B');
           
@@ -553,19 +605,19 @@ ${searchContext}
             finalText = finalResult.response;
           }
           
-          SmartLogger.route(`🔍 AI ответ с поиском: "${finalText.substring(0, 100)}..."`);
+          SmartLogger.route(`🔍 ВОЗВРАЩАЕМ РЕЗУЛЬТАТ ПОИСКА!`);
           
           if (finalText && finalText.length > 20) {
             return {
               success: true,
               response: finalText,
-              provider: 'Qwen_Qwen_2_72B',
+              provider: 'Search_AI',
               searchUsed: true,
-              searchType: 'web_search'
+              searchType: 'duckduckgo'
             };
           }
         } else {
-          SmartLogger.route(`🔍 Поиск не дал результатов или ошибка`);
+          SmartLogger.route(`🔍 Поиск не дал результатов`);
         }
       } catch (error) {
         SmartLogger.error(`🔍 Ошибка поиска: ${error.message}`);
