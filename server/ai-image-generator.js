@@ -310,9 +310,15 @@ function enhancePromptWithAI(prompt, style) {
     englishPrompt = `photorealistic, hyperrealistic, ${englishPrompt}, detailed skin texture, natural proportions, professional portrait photography, studio lighting, authentic materials, lifelike details`;
   }
   
-  // Если это техно/кибер дизайн, добавляем соответствующие термины с реализмом
+  // Если это техно/кибер дизайн, добавляем соответствующие термины
   if (prompt.toLowerCase().includes('техно') || prompt.toLowerCase().includes('кибер')) {
-    englishPrompt = `photorealistic cyberpunk style, realistic futuristic armor, real human features, ${englishPrompt}`;
+    if (isTshirtDesign) {
+      // Для футболочного техно-дизайна используем векторный стиль
+      englishPrompt = `cyberpunk vector art, futuristic t-shirt design, tech graphics, ${englishPrompt}`;
+    } else {
+      // Для обычных техно изображений используем фотореализм
+      englishPrompt = `photorealistic cyberpunk style, realistic futuristic armor, real human features, ${englishPrompt}`;
+    }
   }
   
   // Убираем русские символы, которые могли остаться
