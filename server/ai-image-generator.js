@@ -288,7 +288,7 @@ function applyStyleModifiers(prompt, style) {
   if (isEmbroideryDesign || style === 'embroidery') {
     return `embroidery design pattern, machine embroidery ready, clear defined areas, limited color palette, vector style, clean lines, flat colors, no gradients, simplified shapes, embroidery friendly design, suitable for needlework, ${prompt}`;
   } else if (isTshirtDesign || style === 'vector') {
-    return `vector illustration, t-shirt design, solid black background, bold thick black outlines, flat colors no gradients, limited color palette red beige black gray, samurai skull wearing red mushroom hat with white spots, detailed armor plates, crossed scythes behind skull, red maple leaves, japanese horror aesthetic, clean vector art style, screen printing ready, high contrast, ${prompt}`;
+    return `vector illustration, t-shirt design, solid black background, bold thick black outlines, flat colors no gradients, limited color palette, japanese horror aesthetic, clean vector art style, screen printing ready, high contrast, detailed elements, strong graphic design, ${prompt}`;
   } else {
     return `photorealistic, hyperrealistic, ${prompt}, detailed skin texture, natural proportions, professional portrait photography, studio lighting, authentic materials, lifelike details`;
   }
