@@ -820,11 +820,16 @@ ${searchContext}
     } else {
       // AI дал обычный ответ - но нужно проверить, не является ли это запросом на генерацию
       
-      // Проверяем ключевые слова для генерации изображений
-      const imageKeywords = ['нарисуй', 'создай', 'сгенерируй', 'принт', 'дизайн', 'картинка', 'изображение', 'логотип', 'баннер'];
+      // Проверяем ключевые слова для генерации изображений (исключаем анализ трендов)
+      const imageKeywords = ['нарисуй', 'создай', 'сгенерируй', 'картинка', 'изображение', 'логотип', 'баннер'];
       const embroideryKeywords = ['вышивк', 'dst', 'pes', 'jef', 'exp', 'vp3'];
       
-      const isImageRequest = imageKeywords.some(keyword => queryLowerForSvg.includes(keyword));
+      // Исключаем запросы на анализ трендов
+      const isTrendAnalysis = queryLowerForSvg.includes('тренд') || queryLowerForSvg.includes('анализ') || queryLowerForSvg.includes('популярн');
+      const isPrintRequest = (queryLowerForSvg.includes('принт') || queryLowerForSvg.includes('дизайн')) && 
+                            (queryLowerForSvg.includes('создай') || queryLowerForSvg.includes('нарисуй') || queryLowerForSvg.includes('сгенерируй'));
+      
+      const isImageRequest = !isTrendAnalysis && (imageKeywords.some(keyword => queryLowerForSvg.includes(keyword)) || isPrintRequest);
       const isEmbroideryRequest = embroideryKeywords.some(keyword => queryLowerForSvg.includes(keyword));
       
       if (isImageRequest) {
