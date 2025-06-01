@@ -265,6 +265,17 @@ async function processEmbroideryGeneration(imageUrl, originalPrompt = '') {
           .replace(/робот/g, 'robot')
           .replace(/воин/g, 'warrior')
           .replace(/принцесса/g, 'princess')
+          .replace(/катана/g, 'katana')
+          .replace(/меч/g, 'sword')
+          .replace(/нож/g, 'knife')
+          .replace(/тигр/g, 'tiger')
+          .replace(/лев/g, 'lion')
+          .replace(/волк/g, 'wolf')
+          .replace(/орел/g, 'eagle')
+          .replace(/сердце/g, 'heart')
+          .replace(/звезда/g, 'star')
+          .replace(/солнце/g, 'sun')
+          .replace(/луна/g, 'moon')
           .trim();
         
         if (cleanPrompt) {

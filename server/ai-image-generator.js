@@ -286,7 +286,7 @@ function applyStyleModifiers(prompt, style) {
                         lowerPrompt.includes('логотип');
   
   if (isEmbroideryDesign || style === 'embroidery') {
-    return `simple black line drawing, white background, coloring book outline, no fill, no shading, no texture, just black outline, ${prompt}`;
+    return `embroidery design pattern, machine embroidery ready, clear defined areas, limited color palette, vector style, clean lines, flat colors, no gradients, simplified shapes, embroidery friendly design, suitable for needlework, ${prompt}`;
   } else if (isTshirtDesign || style === 'vector') {
     return `cyberpunk vector art, t-shirt design, neon colors, dark background, high contrast, bold outlines, limited color palette, teal and purple highlights, professional print design, ${prompt}`;
   } else {
