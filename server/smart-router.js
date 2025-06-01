@@ -380,7 +380,15 @@ async function getAIResponseWithSearch(userQuery, options = {}) {
       const aiImageGenerator = require('./ai-image-generator');
       
       try {
-        const imageResult = await aiImageGenerator.generateImage(userQuery, 'realistic');
+        // Определяем правильный стиль для генерации
+        let imageStyle = 'realistic';
+        if (isEmbroideryRequest) {
+          imageStyle = 'embroidery';
+        } else if (userQuery.toLowerCase().includes('принт') || userQuery.toLowerCase().includes('футболка') || userQuery.toLowerCase().includes('дизайн')) {
+          imageStyle = 'vector';
+        }
+        
+        const imageResult = await aiImageGenerator.generateImage(userQuery, imageStyle);
         
         if (imageResult.success && imageResult.imageUrl) {
           let response = `Я создал изображение по вашему запросу! Вот результат:
