@@ -303,8 +303,8 @@ class TrendAnalyzer {
    */
   async analyzeTrends(query) {
     try {
-      // Используем поиск для анализа трендов
-      const { performPythonSearch } = require('./smart-router');
+      // Используем расширенный поиск для анализа трендов
+      const { performAdvancedSearch } = require('./advanced-search-provider');
       
       const searchQueries = [
         `${query} тренды 2024 дизайн одежды`,
@@ -315,7 +315,13 @@ class TrendAnalyzer {
       const results = [];
       
       for (const searchQuery of searchQueries) {
-        const searchResult = await performPythonSearch(searchQuery);
+        const searchResult = await performAdvancedSearch(searchQuery, {
+          searchType: 'comprehensive',
+          language: 'ru',
+          maxResults: 5,
+          includeAnalysis: false
+        });
+        
         if (searchResult.success && searchResult.results) {
           results.push(...searchResult.results.slice(0, 3));
         }
@@ -324,6 +330,7 @@ class TrendAnalyzer {
       return this.processTrendData(results, query);
       
     } catch (error) {
+      console.error('Ошибка анализа трендов:', error);
       return {
         error: 'Ошибка анализа трендов',
         recommendation: 'Проверьте актуальные тренды вручную на Pinterest, Behance'
