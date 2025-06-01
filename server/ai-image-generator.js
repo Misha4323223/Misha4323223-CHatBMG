@@ -181,55 +181,23 @@ async function generateImage(prompt, style = 'realistic', previousImage = null, 
  * @returns {Promise<string>} Улучшенный английский промпт
  */
 async function getAIEnhancedPrompt(prompt, style) {
-  console.log(`🤖 [AI-PROMPT] Простая обработка: "${prompt}"`);
+  console.log(`🤖 [AI-PROMPT] Обработка промпта: "${prompt}"`);
   
   // Проверяем, что промпт не пустой
   if (!prompt || prompt.trim().length === 0) {
     throw new Error('Пустой промпт');
   }
   
-  // Используем простой переводчик без рекурсии
-  let englishPrompt = prompt.toLowerCase();
-  
-  // Расширенный словарь для перевода
-  const translations = {
-    'техносамурай': 'cyberpunk techno samurai warrior with futuristic armor',
-    'техно самурай': 'cyberpunk techno samurai warrior with futuristic armor',
-    'принт': 't-shirt design',
-    'самурай': 'samurai warrior',
-    'принцесса': 'princess',
-    'принцессу': 'princess',
-    'роза': 'red rose flower',
-    'дракон': 'dragon',
-    'дракона': 'dragon',
-    'кот': 'cat',
-    'кота': 'cat',
-    'собака': 'dog',
-    'собаки': 'dog',
-    'воин': 'warrior',
-    'рыцарь': 'knight',
-    'создай': '',
-    'нарисуй': '',
-    'сделай': ''
-  };
-  
-  for (const [ru, en] of Object.entries(translations)) {
-    englishPrompt = englishPrompt.replace(new RegExp(ru, 'g'), en);
-  }
-  
-  // Добавляем реалистичные характеристики
-  englishPrompt = `photorealistic, hyperrealistic, ${englishPrompt}, detailed skin texture, natural proportions, professional portrait photography, studio lighting, authentic materials, lifelike details, real anatomy`.trim();
-  
-  console.log(`✅ [AI-PROMPT] Результат: "${englishPrompt}"`);
-  return englishPrompt;
+  // Используем улучшенную функцию обработки
+  return enhancePromptWithAI(prompt, style);
 }
 
 /**
  * Простой словарь для перевода ключевых слов
  */
 const SIMPLE_TRANSLATE = {
-  'кот в сапогах': 'cat wearing boots',
-  'кота в сапогах': 'cat wearing boots',
+  'кот в сапогах': 'puss in boots, orange tabby cat character wearing leather boots and hat, fairy tale character',
+  'кота в сапогах': 'puss in boots, orange tabby cat character wearing leather boots and hat, fairy tale character',
   'красная роза': 'beautiful red rose flower with green stem and leaves',
   'белая роза': 'beautiful white rose flower with green stem and leaves', 
   'розовая роза': 'beautiful pink rose flower with green stem and leaves',
@@ -237,8 +205,8 @@ const SIMPLE_TRANSLATE = {
   'розы': 'beautiful roses bouquet with green leaves',
   'цветок': 'flower with detailed petals and center',
   'цветы': 'flowers with colorful petals',
-  'кот': 'cat with detailed fur',
-  'кота': 'cat with detailed fur',
+  'кот': 'domestic cat with detailed fur and whiskers',
+  'кота': 'domestic cat with detailed fur and whiskers',
   'сапоги': 'boots',
   'сапогах': 'boots',
   'в сапогах': 'wearing boots',
