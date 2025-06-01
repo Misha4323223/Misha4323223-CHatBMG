@@ -363,6 +363,54 @@ async function getAIResponseWithSearch(userQuery, options = {}) {
     }
 
     const pythonProvider = require('./python_provider_routes');
+    
+    // Проверяем запросы на генерацию изображений напрямую
+    const imageKeywords = ['нарисуй', 'создай', 'сгенерируй', 'принт', 'дизайн', 'картинка', 'изображение', 'логотип', 'баннер', 'футболка', 'рисунок'];
+    const isImageRequest = imageKeywords.some(keyword => queryLowerForSvg.includes(keyword));
+    
+    if (isImageRequest) {
+      SmartLogger.route(`🎨 Обнаружен запрос на генерацию изображения`);
+      
+      // Импортируем генератор изображений
+      const aiImageGenerator = require('./ai-image-generator');
+      
+      try {
+        const imageResult = await aiImageGenerator.generateImage(userQuery, 'realistic');
+        
+        if (imageResult.success && imageResult.imageUrl) {
+          return {
+            success: true,
+            response: `Я создал изображение по вашему запросу! Вот результат:
+
+![Сгенерированное изображение](${imageResult.imageUrl})
+
+Изображение сохранено и готово к использованию. Если нужно что-то изменить, просто опишите что хотите поправить.`,
+            provider: 'AI_Image_Generator',
+            searchUsed: false,
+            imageGenerated: true,
+            imageUrl: imageResult.imageUrl
+          };
+        } else {
+          return {
+            success: true,
+            response: `К сожалению, произошла ошибка при генерации изображения. Попробуйте переформулировать запрос или попробовать позже.`,
+            provider: 'AI_Image_Generator',
+            searchUsed: false,
+            imageGenerated: false
+          };
+        }
+      } catch (error) {
+        SmartLogger.error('Ошибка генерации изображения:', error);
+        return {
+          success: true,
+          response: `Извините, система генерации изображений временно недоступна. Попробуйте позже.`,
+          provider: 'AI_Image_Generator',
+          searchUsed: false,
+          imageGenerated: false
+        };
+      }
+    }
+    
     // Проверяем запросы времени/даты напрямую
     const timeQueries = ['время', 'сейчас время', 'какое время', 'который час', 'сегодня число', 'какое число', 'какая дата'];
     const isTimeQuery = timeQueries.some(q => queryLowerForSvg.includes(q));
