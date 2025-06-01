@@ -3,7 +3,7 @@
  * Поддерживает поиск в реальном времени, анализ веб-страниц и базы знаний
  */
 
-const { searchWeb } = require('./web-search-provider');
+const webSearchProvider = require('./web-search-provider');
 
 /**
  * Основная функция расширенного поиска
@@ -30,7 +30,8 @@ async function performAdvancedSearch(query, options = {}) {
         searchResults = await performComprehensiveSearch(query, language, maxResults);
         break;
       case 'web':
-        searchResults = await performWebSearch(query, language, maxResults);
+        const webResult = await performWebSearch(query);
+        searchResults = webResult.success ? webResult.results : [];
         break;
       case 'academic':
         searchResults = await performAcademicSearch(query, language, maxResults);
@@ -42,7 +43,8 @@ async function performAdvancedSearch(query, options = {}) {
         searchResults = await performImageSearch(query, language, maxResults);
         break;
       default:
-        searchResults = await performWebSearch(query, language, maxResults);
+        const defaultWebResult = await performWebSearch(query);
+        searchResults = defaultWebResult.success ? defaultWebResult.results : [];
     }
 
     // Анализируем результаты если требуется
@@ -80,8 +82,10 @@ async function performComprehensiveSearch(query, language, maxResults) {
   
   try {
     // Основной веб-поиск
-    const webResults = await performWebSearch(query, language, Math.ceil(maxResults * 0.6));
-    results.push(...webResults);
+    const webSearchResult = await performWebSearch(query);
+    if (webSearchResult.success) {
+      results.push(...webSearchResult.results.slice(0, Math.ceil(maxResults * 0.6)));
+    }
 
     // Поиск новостей
     const newsResults = await performNewsSearch(query, language, Math.ceil(maxResults * 0.2));
