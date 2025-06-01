@@ -2259,16 +2259,29 @@ ${result.recommendation}
     };
   }
 
-  const formattedResponse = `**Анализ трендов: ${result.query}**
+  let formattedResponse = `**Анализ трендов: ${result.query}**\n\n`;
 
-**Актуальные направления:**
-${result.trends.length > 0 ? result.trends.map(trend => `• ${trend}`).join('\n') : '• Минимализм и чистота линий\n• Экологичность и натуральность\n• Персонализация и уникальность'}
+  if (result.trends.length > 0) {
+    formattedResponse += `**Актуальные направления:**\n`;
+    result.trends.forEach(trend => {
+      formattedResponse += `• **${trend.category}** (найдено совпадений: ${trend.strength})\n`;
+    });
+    formattedResponse += '\n';
+  }
 
-**Рекомендации для дизайна:**
-${result.recommendations.map(rec => `• ${rec}`).join('\n')}
+  if (result.recommendations.length > 0) {
+    formattedResponse += `**Детальные рекомендации:**\n\n`;
+    result.recommendations.forEach((rec, index) => {
+      formattedResponse += `**${index + 1}. ${rec.trend}**\n`;
+      formattedResponse += `${rec.description}\n\n`;
+      formattedResponse += `🎨 **Цветовая палитра:** ${rec.colors.join(', ')}\n`;
+      formattedResponse += `⚙️ **Техники:** ${rec.techniques.join(', ')}\n`;
+      formattedResponse += `💡 **Примеры:** ${rec.examples.join(', ')}\n\n`;
+    });
+  }
 
-**Источников проанализировано:** ${result.sources}
-**Обновлено:** ${result.lastUpdated}`;
+  formattedResponse += `**Источников проанализировано:** ${result.sources}\n`;
+  formattedResponse += `**Обновлено:** ${result.lastUpdated}`;
 
   return {
     success: true,
