@@ -59,25 +59,23 @@ function optimizePromptForEmbroidery(description) {
     return description; // Уже оптимизирован
   }
   
-  // Добавляем ключевые слова для имитации настоящей вышивки
+  // Добавляем ключевые слова для простого дизайна вышивки
   const embroideryOptimizations = [
-    'embroidery style',
-    'hand embroidered look',
-    'thread texture visible',
-    'fabric background',
-    'embroidered pattern',
-    'stitched design',
-    'traditional needlework',
-    'embroidery thread details',
-    'raised embroidery effect',
-    'textile art style'
+    'simple embroidery design',
+    'clean vector art',
+    'bold outlines',
+    'flat colors only',
+    'no gradients',
+    'minimal details',
+    'embroidery pattern',
+    'limited color palette'
   ];
   
-  // Убираем элементы, которые мешают реалистичной вышивке
+  // Убираем элементы, которые усложняют дизайн
   const removeElements = [
-    'flat design', 'vector illustration', 'clipart style',
-    'digital art', 'graphic design', 'logo style',
-    'minimalist', 'geometric pattern', 'solid colors'
+    'photorealistic', 'realistic', 'detailed',
+    'texture', 'shadows', 'lighting effects',
+    'complex details', 'fine details', 'gradients'
   ];
   
   let optimizedPrompt = description;
