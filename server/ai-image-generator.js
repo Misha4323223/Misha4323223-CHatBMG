@@ -188,8 +188,105 @@ async function getAIEnhancedPrompt(prompt, style) {
     throw new Error('Пустой промпт');
   }
   
-  // Используем улучшенную функцию обработки
-  return enhancePromptWithAI(prompt, style);
+  try {
+    const fetch = require('node-fetch');
+    
+    // Создаем запрос на перевод и улучшение промпта
+    let translationRequest = `Translate this from Russian to English and improve for image generation: ${prompt}`;
+    
+    // Добавляем контекст стиля для лучшего перевода
+    if (style === 'embroidery') {
+      translationRequest += '. This is for embroidery design, use simple descriptive terms.';
+    } else if (style === 'vector') {
+      translationRequest += '. This is for t-shirt vector design, use bold graphic terms.';
+    } else {
+      translationRequest += '. This is for photorealistic image, use detailed descriptive terms.';
+    }
+    
+    const response = await fetch('http://localhost:5001/stream', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: translationRequest,
+        provider: 'Qwen_Qwen_2_72B'
+      }),
+      timeout: 10000
+    });
+    
+    if (!response.ok) {
+      throw new Error(`AI сервер недоступен: ${response.status}`);
+    }
+    
+    const responseText = await response.text();
+    
+    // Парсим SSE ответ и извлекаем финальный текст
+    const lines = responseText.split('\n');
+    let finalText = '';
+    
+    for (const line of lines) {
+      if (line.startsWith('data: ') && line.includes('"text"')) {
+        try {
+          const data = JSON.parse(line.substring(6));
+          if (data.text) {
+            finalText = data.text;
+          }
+        } catch (e) {
+          // Игнорируем ошибки парсинга отдельных строк
+        }
+      }
+    }
+    
+    if (finalText) {
+      // Очищаем ответ от лишних фраз
+      let cleanedPrompt = finalText
+        .replace(/^translate\s+to\s+english:\s*/i, '')
+        .replace(/^translation:\s*/i, '')
+        .replace(/^english:\s*/i, '')
+        .replace(/^result:\s*/i, '')
+        .trim();
+      
+      // Добавляем стилевые модификаторы
+      cleanedPrompt = applyStyleModifiers(cleanedPrompt, style);
+      
+      console.log(`✅ [AI-TRANSLATE] Переведено: "${cleanedPrompt}"`);
+      return cleanedPrompt;
+    } else {
+      throw new Error('AI не вернул перевод');
+    }
+    
+  } catch (error) {
+    console.log(`❌ [AI-TRANSLATE] Ошибка перевода (${error.message}), используем локальный перевод`);
+    // Fallback на локальный перевод
+    return enhancePromptWithAI(prompt, style);
+  }
+}
+
+/**
+ * Применяет стилевые модификаторы к переведенному промпту
+ * @param {string} prompt - Переведенный промпт
+ * @param {string} style - Стиль изображения  
+ * @returns {string} Промпт со стилевыми модификаторами
+ */
+function applyStyleModifiers(prompt, style) {
+  // Определяем стиль автоматически если не указан
+  const lowerPrompt = prompt.toLowerCase();
+  
+  const isEmbroideryDesign = lowerPrompt.includes('embroidery') || 
+                            lowerPrompt.includes('вышивка') || 
+                            lowerPrompt.includes('вышивку');
+  
+  const isTshirtDesign = lowerPrompt.includes('t-shirt') || 
+                        lowerPrompt.includes('принт') || 
+                        lowerPrompt.includes('футболка') || 
+                        lowerPrompt.includes('дизайн');
+  
+  if (isEmbroideryDesign || style === 'embroidery') {
+    return `embroidery design style, simple geometric shapes, bold outlines, limited color palette, flat design, clean lines, textile art, needlework pattern, ${prompt}`;
+  } else if (isTshirtDesign || style === 'vector') {
+    return `vector art style, t-shirt design, bold graphics, simple shapes, limited color palette, high contrast, clean lines, print-ready design, ${prompt}`;
+  } else {
+    return `photorealistic, hyperrealistic, ${prompt}, detailed skin texture, natural proportions, professional portrait photography, studio lighting, authentic materials, lifelike details`;
+  }
 }
 
 /**
