@@ -106,6 +106,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // API для генератора изображений
   app.use('/api/svg', svgGenerator);
   
+  // Расширенный поиск
+  app.use('/api/search', require('./search-routes'));
+  
   // Импортируем модуль генерации изображений с AI
   const aiImageGenerator = require('./ai-image-generator');
 

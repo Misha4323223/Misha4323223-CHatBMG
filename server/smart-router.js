@@ -569,29 +569,78 @@ ${sessionContext.context}
     
     // Если AI говорит, что нужен поиск
     if (responseText.includes('НУЖЕН_ПОИСК')) {
-      SmartLogger.route(`🔍 AI запросил веб-поиск`);
+      SmartLogger.route(`🔍 AI запросил поиск`);
       
-      // Выполняем поиск
-      const searchResults = await webSearchProvider.performWebSearch(userQuery);
+      // Определяем тип поиска
+      const advancedSearchKeywords = [
+        'найди подробно', 'полный поиск', 'всестороннее исследование', 
+        'академический поиск', 'научные статьи', 'последние новости',
+        'поиск в реальном времени', 'свежая информация', 'актуальные данные',
+        'комплексный анализ', 'детальное исследование'
+      ];
+      
+      const needsAdvancedSearch = advancedSearchKeywords.some(keyword => 
+        userQuery.toLowerCase().includes(keyword)
+      );
+      
+      let searchResults;
+      
+      if (needsAdvancedSearch) {
+        SmartLogger.route(`🔍 Выполняем расширенный поиск`);
+        const { performAdvancedSearch } = require('./advanced-search-provider');
+        
+        // Определяем тип расширенного поиска
+        let searchType = 'comprehensive';
+        if (userQuery.toLowerCase().includes('новости')) searchType = 'news';
+        if (userQuery.toLowerCase().includes('академический') || userQuery.toLowerCase().includes('научны')) searchType = 'academic';
+        if (userQuery.toLowerCase().includes('изображени') || userQuery.toLowerCase().includes('картинк')) searchType = 'images';
+        
+        searchResults = await performAdvancedSearch(userQuery, {
+          searchType,
+          maxResults: 15,
+          includeAnalysis: true
+        });
+      } else {
+        SmartLogger.route(`🔍 Выполняем обычный веб-поиск`);
+        searchResults = await webSearchProvider.performWebSearch(userQuery);
+      }
       
       if (searchResults.success && searchResults.results && searchResults.results.length > 0) {
-        const searchContext = webSearchProvider.formatSearchResultsForAI(searchResults);
+        let searchContext;
         
-        SmartLogger.route(`🔍 Найдено результатов поиска: ${searchResults.results.length}`);
-        SmartLogger.route(`🔍 Форматированный контекст: ${searchContext.substring(0, 200)}...`);
+        if (needsAdvancedSearch && searchResults.analysis) {
+          // Формируем расширенный контекст с анализом
+          searchContext = `РЕЗУЛЬТАТЫ РАСШИРЕННОГО ПОИСКА:
+Найдено ${searchResults.totalResults} результатов из ${searchResults.analysis.sources.length} источников.
+
+КРАТКИЙ АНАЛИЗ: ${searchResults.analysis.summary}
+
+КЛЮЧЕВЫЕ ФАКТЫ:
+${searchResults.analysis.keyFacts.join('\n')}
+
+ТОП РЕЗУЛЬТАТЫ:
+${searchResults.analysis.topResults.map(r => `• ${r.title}: ${r.snippet} (${r.url})`).join('\n')}
+
+УРОВЕНЬ ДОСТОВЕРНОСТИ: ${searchResults.analysis.confidence}%`;
+        } else {
+          searchContext = webSearchProvider.formatSearchResultsForAI(searchResults);
+        }
+        
+        SmartLogger.route(`🔍 Найдено результатов: ${searchResults.results.length}`);
+        SmartLogger.route(`🔍 Контекст: ${searchContext.substring(0, 200)}...`);
         
         // Отправляем AI данные из поиска
-        const searchPrompt = `Ты - AI ассистент с доступом к веб-поиску. Пользователь спрашивает: "${userQuery}"
+        const searchPrompt = `Ты - AI ассистент с доступом к расширенному поиску. Пользователь спрашивает: "${userQuery}"
 
-Актуальная информация из интернета:
 ${searchContext}
 
 ОБЯЗАТЕЛЬНО:
 - Отвечай на основе ТОЛЬКО актуальных данных выше
-- Упоминай, что информация получена через поиск в интернете
-- Если данных недостаточно, скажи что можешь найти больше информации через поиск
+- Упоминай источники информации и уровень достоверности
+- Если использовался расширенный поиск, укажи это
+- Структурируй ответ логично с ключевыми фактами
 
-Ответь подробно на основе этих свежих данных.`;
+Ответь подробно на основе этих данных.`;
 
         SmartLogger.route(`🔍 Отправляем AI промпт с данными поиска`);
         const finalResult = await pythonProvider.callPythonAI(searchPrompt, 'Qwen_Qwen_2_72B');
@@ -608,7 +657,8 @@ ${searchContext}
             success: true,
             response: finalText,
             provider: 'Qwen_Qwen_2_72B',
-            searchUsed: true
+            searchUsed: true,
+            searchType: needsAdvancedSearch ? 'advanced' : 'basic'
           };
         }
       }
