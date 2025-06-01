@@ -631,14 +631,39 @@ ${searchContext}
             const embroideryResult = await aiEmbroideryPipeline.generateAndConvertToEmbroidery(userQuery, options);
             
             if (embroideryResult.success) {
+              // Формируем ответ с изображением и файлами вышивки
+              let response = `Готово! Я создал дизайн для вышивки по вашему запросу.
+
+![Дизайн для вышивки](${embroideryResult.generatedImage})
+
+🧵 **Файлы для вышивальной машины:**`;
+
+              if (embroideryResult.files && embroideryResult.files.length > 0) {
+                embroideryResult.files.forEach(file => {
+                  response += `\n• [${file.filename}](${file.url}) - ${file.format} (${(file.size / 1024).toFixed(1)} КБ)`;
+                });
+              }
+
+              response += `\n\n📊 **Характеристики:**
+• Формат: ${embroideryResult.embroideryFormat.name}
+• Размер: ${embroideryResult.details.size}
+• Цветов: ${embroideryResult.details.colors}
+• Нити: ${embroideryResult.details.threadsNeeded}
+
+${embroideryResult.instructions.join('\n')}`;
+
+              if (embroideryResult.aiOptimizationReport) {
+                response += `\n\n🤖 **AI Рекомендации:**\n${embroideryResult.aiOptimizationReport}`;
+              }
+
               return {
                 success: true,
-                response: embroideryResult.response,
+                response: response,
                 provider: 'AI_Embroidery_Pipeline',
                 searchUsed: false,
                 imageGenerated: true,
                 embroideryGenerated: true,
-                imageUrl: embroideryResult.imageUrl,
+                imageUrl: embroideryResult.generatedImage,
                 embroideryFiles: embroideryResult.files
               };
             } else {
