@@ -278,12 +278,17 @@ function applyStyleModifiers(prompt, style) {
   const isTshirtDesign = lowerPrompt.includes('t-shirt') || 
                         lowerPrompt.includes('принт') || 
                         lowerPrompt.includes('футболка') || 
-                        lowerPrompt.includes('дизайн');
+                        lowerPrompt.includes('дизайн') ||
+                        lowerPrompt.includes('демон') ||
+                        lowerPrompt.includes('киберпанк') ||
+                        lowerPrompt.includes('неон') ||
+                        lowerPrompt.includes('booomerangs') ||
+                        lowerPrompt.includes('логотип');
   
   if (isEmbroideryDesign || style === 'embroidery') {
     return `simple black line drawing, white background, coloring book outline, no fill, no shading, no texture, just black outline, ${prompt}`;
   } else if (isTshirtDesign || style === 'vector') {
-    return `vector art style, t-shirt design, bold graphics, simple shapes, limited color palette, high contrast, clean lines, print-ready design, ${prompt}`;
+    return `cyberpunk vector art, t-shirt design, neon colors, dark background, high contrast, bold outlines, limited color palette, teal and purple highlights, professional print design, ${prompt}`;
   } else {
     return `photorealistic, hyperrealistic, ${prompt}, detailed skin texture, natural proportions, professional portrait photography, studio lighting, authentic materials, lifelike details`;
   }
