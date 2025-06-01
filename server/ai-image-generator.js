@@ -281,7 +281,7 @@ function applyStyleModifiers(prompt, style) {
                         lowerPrompt.includes('дизайн');
   
   if (isEmbroideryDesign || style === 'embroidery') {
-    return `embroidery pattern design, line art, black outline on white background, very simple shapes, no shading, no details, coloring book style, bold thick lines, ${prompt}`;
+    return `simple black line drawing, white background, coloring book outline, no fill, no shading, no texture, just black outline, ${prompt}`;
   } else if (isTshirtDesign || style === 'vector') {
     return `vector art style, t-shirt design, bold graphics, simple shapes, limited color palette, high contrast, clean lines, print-ready design, ${prompt}`;
   } else {
