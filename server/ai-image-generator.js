@@ -281,7 +281,7 @@ function applyStyleModifiers(prompt, style) {
                         lowerPrompt.includes('дизайн');
   
   if (isEmbroideryDesign || style === 'embroidery') {
-    return `embroidery design style, simple geometric shapes, bold outlines, limited color palette, flat design, clean lines, textile art, needlework pattern, ${prompt}`;
+    return `flat design, solid colors, no gradients, simple shapes, bold black outlines, clipart style, vector illustration, limited 5-color palette, geometric pattern, ${prompt}. NOT embroidered texture, NOT stitching effects, NOT thread texture`;
   } else if (isTshirtDesign || style === 'vector') {
     return `vector art style, t-shirt design, bold graphics, simple shapes, limited color palette, high contrast, clean lines, print-ready design, ${prompt}`;
   } else {
