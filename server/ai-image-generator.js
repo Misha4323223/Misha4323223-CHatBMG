@@ -288,7 +288,7 @@ function applyStyleModifiers(prompt, style) {
   if (isEmbroideryDesign || style === 'embroidery') {
     return `embroidery design pattern, machine embroidery ready, clear defined areas, limited color palette, vector style, clean lines, flat colors, no gradients, simplified shapes, embroidery friendly design, suitable for needlework, ${prompt}`;
   } else if (isTshirtDesign || style === 'vector') {
-    return `cyberpunk vector art, t-shirt design, neon colors, dark background, high contrast, bold outlines, limited color palette, teal and purple highlights, professional print design, ${prompt}`;
+    return `BOOOMERANGS style vector art, t-shirt screen printing design, dark background, bold thick outlines, high contrast, limited color palette, cyberpunk aesthetic, demon samurai warrior theme, neon teal and purple highlights, detailed armor elements, japanese horror style, matrix code background, professional print ready design, ${prompt}`;
   } else {
     return `photorealistic, hyperrealistic, ${prompt}, detailed skin texture, natural proportions, professional portrait photography, studio lighting, authentic materials, lifelike details`;
   }
