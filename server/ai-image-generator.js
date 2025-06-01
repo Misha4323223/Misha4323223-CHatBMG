@@ -296,27 +296,27 @@ function applyStyleModifiers(prompt, style) {
     
     // Самурайский/японский стиль
     if (lowerPrompt.includes('самурай') || lowerPrompt.includes('samurai') || lowerPrompt.includes('катана') || lowerPrompt.includes('ниндзя') || lowerPrompt.includes('ninja') || lowerPrompt.includes('японский') || lowerPrompt.includes('гриб')) {
-      selectedStyle = `realistic t-shirt print design, maximum 5 colors only, bold screen printing style, solid black background, detailed realistic illustration, red white gray black color scheme, samurai warrior elements, mushroom motifs, armor details, japanese aesthetic, print-ready design`;
+      selectedStyle = `hyperrealistic professional t-shirt print, exactly 5 colors maximum, photorealistic illustration style, dramatic lighting, solid black background, adult mature design, red white gray black silver color scheme, detailed samurai warrior, authentic armor textures, weapon details, serious masculine aesthetic, commercial print quality`;
     }
     // Подводный/морской стиль
     else if (lowerPrompt.includes('дайвер') || lowerPrompt.includes('diver') || lowerPrompt.includes('море') || lowerPrompt.includes('sea') || lowerPrompt.includes('подводный') || lowerPrompt.includes('underwater') || lowerPrompt.includes('щупальца') || lowerPrompt.includes('tentacle') || lowerPrompt.includes('осьминог') || lowerPrompt.includes('octopus') || lowerPrompt.includes('русалка') || lowerPrompt.includes('mermaid')) {
-      selectedStyle = `realistic t-shirt print design, maximum 5 colors only, bold screen printing style, dark teal background, detailed realistic illustration, teal purple white black color scheme, underwater creatures, sea elements, diving gear, oceanic aesthetic, print-ready design`;
+      selectedStyle = `hyperrealistic professional t-shirt print, exactly 5 colors maximum, photorealistic illustration style, dramatic underwater lighting, dark oceanic background, adult mature design, deep teal purple white black silver color scheme, realistic sea creatures, detailed scales and textures, serious oceanic aesthetic, no cartoon elements, commercial print quality`;
     }
     // Современный/уличный стиль
     else if (lowerPrompt.includes('демон') || lowerPrompt.includes('demon') || lowerPrompt.includes('толстовка') || lowerPrompt.includes('hoodie') || lowerPrompt.includes('уличный') || lowerPrompt.includes('street') || lowerPrompt.includes('urban') || lowerPrompt.includes('неон') || lowerPrompt.includes('neon') || lowerPrompt.includes('панк') || lowerPrompt.includes('punk')) {
-      selectedStyle = `realistic t-shirt print design, maximum 5 colors only, bold screen printing style, solid black background, detailed realistic illustration, cyan purple white black color scheme, modern urban elements, street style, punk aesthetic, neon accents, print-ready design`;
+      selectedStyle = `hyperrealistic professional t-shirt print, exactly 5 colors maximum, photorealistic illustration style, dramatic urban lighting, solid black background, adult mature design, cyan purple white black silver color scheme, gritty street elements, detailed textures, serious punk aesthetic, no childish elements, commercial print quality`;
     }
     // Киберпанк/техно стиль
     else if (lowerPrompt.includes('киберпанк') || lowerPrompt.includes('cyberpunk') || lowerPrompt.includes('техно') || lowerPrompt.includes('techno') || lowerPrompt.includes('робот') || lowerPrompt.includes('robot') || lowerPrompt.includes('машина') || lowerPrompt.includes('machine')) {
-      selectedStyle = `realistic t-shirt print design, maximum 5 colors only, bold screen printing style, dark background, detailed realistic illustration, cyan purple silver black color scheme, cyberpunk technology, mechanical elements, futuristic design, print-ready layout`;
+      selectedStyle = `hyperrealistic professional t-shirt print, exactly 5 colors maximum, photorealistic illustration style, dramatic neon lighting, dark futuristic background, adult mature design, cyan purple silver black white color scheme, detailed mechanical textures, serious cyberpunk aesthetic, high-tech elements, commercial print quality`;
     }
     // Животные/природа
     else if (lowerPrompt.includes('кот') || lowerPrompt.includes('cat') || lowerPrompt.includes('животное') || lowerPrompt.includes('animal') || lowerPrompt.includes('волк') || lowerPrompt.includes('wolf') || lowerPrompt.includes('змей') || lowerPrompt.includes('dragon')) {
-      selectedStyle = `realistic t-shirt print design, maximum 5 colors only, bold screen printing style, solid black background, detailed realistic illustration, red orange white black color scheme, mythical creatures, animal features, fierce expression, print-ready design`;
+      selectedStyle = `hyperrealistic professional t-shirt print, exactly 5 colors maximum, photorealistic illustration style, dramatic natural lighting, solid black background, adult mature design, red orange white black gray color scheme, detailed fur and scale textures, fierce realistic expression, serious nature aesthetic, commercial print quality`;
     }
     // Базовый стиль для всех остальных случаев
     else {
-      selectedStyle = `realistic t-shirt print design, maximum 5 colors only, bold screen printing style, solid black background, detailed realistic illustration, limited color palette, high contrast, print-ready design, professional apparel graphic`;
+      selectedStyle = `hyperrealistic professional t-shirt print, exactly 5 colors maximum, photorealistic illustration style, dramatic lighting, solid black background, adult mature design, limited color palette, high contrast details, serious aesthetic, no cartoon elements, commercial print quality`;
     }
     
     return `${selectedStyle}, ${prompt}`;
