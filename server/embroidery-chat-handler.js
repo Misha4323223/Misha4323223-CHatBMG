@@ -246,10 +246,25 @@ async function processEmbroideryGeneration(imageUrl, originalPrompt = '') {
       let previewPrompt = 'hand embroidered design, real embroidery on fabric, visible thread texture, traditional needlework, embroidery stitches visible, fabric background, raised thread pattern, authentic embroidery look, textile art, handcrafted embroidery';
       
       if (originalPrompt) {
-        // Извлекаем ключевые слова из оригинального промпта для превью
-        const cleanPrompt = originalPrompt.toLowerCase()
+        // Переводим ключевые слова из русского промпта в английский для превью
+        let cleanPrompt = originalPrompt.toLowerCase()
           .replace(/вышивк[а-я]*/g, '')
           .replace(/создай|нарисуй|сгенерируй/g, '')
+          .replace(/кота/g, 'cat')
+          .replace(/кот/g, 'cat') 
+          .replace(/самурая/g, 'samurai')
+          .replace(/самурай/g, 'samurai')
+          .replace(/дракона/g, 'dragon')
+          .replace(/дракон/g, 'dragon')
+          .replace(/феникса/g, 'phoenix')
+          .replace(/феникс/g, 'phoenix')
+          .replace(/цветок/g, 'flower')
+          .replace(/цветы/g, 'flowers')
+          .replace(/логотип/g, 'logo')
+          .replace(/демон/g, 'demon')
+          .replace(/робот/g, 'robot')
+          .replace(/воин/g, 'warrior')
+          .replace(/принцесса/g, 'princess')
           .trim();
         
         if (cleanPrompt) {
