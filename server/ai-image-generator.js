@@ -288,7 +288,21 @@ function applyStyleModifiers(prompt, style) {
   if (isEmbroideryDesign || style === 'embroidery') {
     return `embroidery design pattern, machine embroidery ready, clear defined areas, limited color palette, vector style, clean lines, flat colors, no gradients, simplified shapes, embroidery friendly design, suitable for needlework, ${prompt}`;
   } else if (isTshirtDesign || style === 'vector') {
-    return `vector illustration, t-shirt design, solid black background, bold thick black outlines, flat colors no gradients, limited color palette, japanese horror aesthetic, clean vector art style, screen printing ready, high contrast, detailed elements, strong graphic design, ${prompt}`;
+    // Расширенная палитра стилей BOOOMERANGS
+    const styleVariants = [
+      // Классический самурайский стиль с грибом
+      `vector illustration, t-shirt design, solid black background, bold thick black outlines, flat colors no gradients, limited color palette red beige black gray, samurai skull wearing red mushroom hat with white spots, detailed armor plates, crossed scythes behind skull, red maple leaves, japanese horror aesthetic`,
+      // Киберпанк подводный стиль
+      `vector illustration, t-shirt design, dark teal background, bold thick outlines, flat colors no gradients, limited color palette teal purple magenta black, cyberpunk diver with octopus tentacles, underwater horror aesthetic, diving mask and gear, sea creatures, neon accents`,
+      // Современный демон в уличной одежде
+      `vector illustration, t-shirt design, solid black background, bold thick outlines, flat colors no gradients, limited color palette teal purple magenta black, modern demon in hoodie, third eye, horns, evil grin, urban streetwear aesthetic, neon highlights`,
+      // Базовый японский хоррор стиль
+      `vector illustration, t-shirt design, solid black background, bold thick black outlines, flat colors no gradients, limited color palette, japanese horror aesthetic, clean vector art style, screen printing ready, high contrast, detailed elements, strong graphic design`
+    ];
+    
+    // Выбираем случайный стиль или базовый
+    const randomStyle = styleVariants[Math.floor(Math.random() * styleVariants.length)];
+    return `${randomStyle}, ${prompt}`;
   } else {
     return `photorealistic, hyperrealistic, ${prompt}, detailed skin texture, natural proportions, professional portrait photography, studio lighting, authentic materials, lifelike details`;
   }
