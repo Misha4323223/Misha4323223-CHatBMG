@@ -507,97 +507,68 @@ async function getAIResponseWithSearch(userQuery, options = {}) {
       userQuery.toLowerCase().includes(keyword)
     );
     
+    SmartLogger.route(`🔍 ПРОВЕРКА ПОИСКА: "${userQuery}"`);
+    SmartLogger.route(`🔍 Найдены ключевые слова: ${needsSearchDirect}`);
+    
     if (needsSearchDirect) {
-      SmartLogger.route(`🔍 Прямое определение поискового запроса`);
+      SmartLogger.route(`🔍 АКТИВИРОВАН ПРЯМОЙ ПОИСК!`);
       
-      // Определяем тип поиска
-      const advancedSearchKeywords = [
-        'найди подробно', 'полный поиск', 'всестороннее исследование', 
-        'академический поиск', 'научные статьи', 'последние новости',
-        'поиск в реальном времени', 'свежая информация', 'актуальные данные',
-        'комплексный анализ', 'детальное исследование'
-      ];
-      
-      const needsAdvancedSearch = advancedSearchKeywords.some(keyword => 
-        userQuery.toLowerCase().includes(keyword)
-      );
-      
-      let searchResults;
-      
-      if (needsAdvancedSearch) {
-        SmartLogger.route(`🔍 Выполняем расширенный поиск`);
-        const { performAdvancedSearch } = require('./advanced-search-provider');
+      try {
+        // Используем простой веб-поиск для начала
+        SmartLogger.route(`🔍 Выполняем веб-поиск для: "${userQuery}"`);
+        const searchResults = await webSearchProvider.performWebSearch(userQuery);
         
-        // Определяем тип расширенного поиска
-        let searchType = 'comprehensive';
-        if (userQuery.toLowerCase().includes('новости')) searchType = 'news';
-        if (userQuery.toLowerCase().includes('академический') || userQuery.toLowerCase().includes('научны')) searchType = 'academic';
-        if (userQuery.toLowerCase().includes('изображени') || userQuery.toLowerCase().includes('картинк')) searchType = 'images';
+        SmartLogger.route(`🔍 Результаты поиска:`, searchResults);
         
-        searchResults = await performAdvancedSearch(userQuery, {
-          searchType,
-          maxResults: 15,
-          includeAnalysis: true
-        });
-      } else {
-        SmartLogger.route(`🔍 Выполняем обычный веб-поиск`);
-        searchResults = await webSearchProvider.performWebSearch(userQuery);
-      }
-      
-      if (searchResults.success && searchResults.results && searchResults.results.length > 0) {
-        let searchContext;
-        
-        if (needsAdvancedSearch && searchResults.analysis) {
-          // Формируем расширенный контекст с анализом
-          searchContext = `РЕЗУЛЬТАТЫ РАСШИРЕННОГО ПОИСКА:
-Найдено ${searchResults.totalResults} результатов из ${searchResults.analysis.sources.length} источников.
+        if (searchResults && searchResults.success && searchResults.results && searchResults.results.length > 0) {
+          const searchContext = webSearchProvider.formatSearchResultsForAI(searchResults);
+          
+          SmartLogger.route(`🔍 Найдено результатов: ${searchResults.results.length}`);
+          SmartLogger.route(`🔍 Формируем контекст для AI`);
+          
+          // Отправляем AI данные из поиска
+          const searchPrompt = `Пользователь ищет информацию: "${userQuery}"
 
-КРАТКИЙ АНАЛИЗ: ${searchResults.analysis.summary}
-
-КЛЮЧЕВЫЕ ФАКТЫ:
-${searchResults.analysis.keyFacts.join('\n')}
-
-ТОП РЕЗУЛЬТАТЫ:
-${searchResults.analysis.topResults.map(r => `• ${r.title}: ${r.snippet} (${r.url})`).join('\n')}
-
-УРОВЕНЬ ДОСТОВЕРНОСТИ: ${searchResults.analysis.confidence}%`;
-        } else {
-          searchContext = webSearchProvider.formatSearchResultsForAI(searchResults);
-        }
-        
-        SmartLogger.route(`🔍 Найдено результатов: ${searchResults.results.length}`);
-        
-        // Отправляем AI данные из поиска
-        const searchPrompt = `Ты - AI ассистент с доступом к поиску. Пользователь спрашивает: "${userQuery}"
-
+Вот актуальные данные из интернета:
 ${searchContext}
 
-ОБЯЗАТЕЛЬНО:
-- Отвечай на основе ТОЛЬКО актуальных данных выше
-- Упоминай источники информации
-- Структурируй ответ логично с ключевыми фактами
+ВАЖНО:
+- Используй ТОЛЬКО эти актуальные данные для ответа
+- Упомяни источники информации
+- Дай структурированный ответ с ключевыми фактами
+- НЕ говори, что не можешь найти информацию - она УЖЕ найдена выше
 
-Ответь подробно на основе этих данных.`;
+Ответь подробно на основе найденной информации.`;
 
-        SmartLogger.route(`🔍 Отправляем AI промпт с данными поиска`);
-        const finalResult = await pythonProvider.callPythonAI(searchPrompt, 'Qwen_Qwen_2_72B');
-        
-        let finalText = '';
-        if (typeof finalResult === 'string') {
-          finalText = finalResult;
-        } else if (finalResult && finalResult.response) {
-          finalText = finalResult.response;
+          SmartLogger.route(`🔍 Отправляем AI промпт с данными поиска`);
+          
+          // Импортируем pythonProvider
+          const pythonProvider = require('./g4f-provider');
+          const finalResult = await pythonProvider.callPythonAI(searchPrompt, 'Qwen_Qwen_2_72B');
+          
+          let finalText = '';
+          if (typeof finalResult === 'string') {
+            finalText = finalResult;
+          } else if (finalResult && finalResult.response) {
+            finalText = finalResult.response;
+          }
+          
+          SmartLogger.route(`🔍 AI ответ с поиском: "${finalText.substring(0, 100)}..."`);
+          
+          if (finalText && finalText.length > 20) {
+            return {
+              success: true,
+              response: finalText,
+              provider: 'Qwen_Qwen_2_72B',
+              searchUsed: true,
+              searchType: 'web_search'
+            };
+          }
+        } else {
+          SmartLogger.route(`🔍 Поиск не дал результатов или ошибка`);
         }
-        
-        if (finalText && finalText.length > 20) {
-          return {
-            success: true,
-            response: finalText,
-            provider: 'Qwen_Qwen_2_72B',
-            searchUsed: true,
-            searchType: needsAdvancedSearch ? 'advanced' : 'basic'
-          };
-        }
+      } catch (error) {
+        SmartLogger.error(`🔍 Ошибка поиска: ${error.message}`);
       }
     }
 
