@@ -233,31 +233,8 @@ async function processEmbroideryGeneration(imageUrl) {
         });
         
         if (result.success && result.files) {
-          // Конвертируем локальные пути в URL для скачивания
-          const embroideryUrl = `/output/${path.basename(result.files.embroidery)}`;
-          const imageUrl = `/output/${path.basename(result.files.image)}`;
-          const schemeUrl = `/output/${path.basename(result.files.colorScheme)}`;
-          
-          results.push({
-            format: format,
-            url: embroideryUrl,
-            size: await getFileSize(result.files.embroidery),
-            type: 'embroidery'
-          });
-          
-          results.push({
-            format: 'png',
-            url: imageUrl,
-            size: await getFileSize(result.files.image),
-            type: 'prepared_image'
-          });
-          
-          results.push({
-            format: 'json',
-            url: schemeUrl,
-            size: await getFileSize(result.files.colorScheme),
-            type: 'color_scheme'
-          });
+          // Новый формат данных - files уже массив с URL
+          results.push(...result.files);
         }
       } catch (formatError) {
         console.error(`Ошибка конвертации в формат ${format}:`, formatError);
