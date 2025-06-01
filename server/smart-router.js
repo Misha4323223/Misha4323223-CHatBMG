@@ -581,38 +581,60 @@ except Exception as e:
         if (searchResult && searchResult.success && searchResult.results && searchResult.results.length > 0) {
           SmartLogger.route(`🔍 ПОИСК УСПЕШЕН! Найдено ${searchResult.results.length} результатов`);
           
-          // Формируем контекст для AI
-          const searchContext = searchResult.results.map(r => 
-            `• ${r.title}\n  ${r.snippet}\n  Источник: ${r.url}`
-          ).join('\n\n');
-          
-          const searchPrompt = `Пользователь ищет: "${userQuery}"
+          try {
+            // Загружаем и парсим содержимое найденных страниц
+            const { enrichSearchResults } = require('./web-content-parser');
+            SmartLogger.route(`🔍 Загружаем содержимое страниц...`);
+            
+            const enrichedResults = await enrichSearchResults(searchResult.results);
+            
+            SmartLogger.route(`🔍 СОДЕРЖИМОЕ ЗАГРУЖЕНО! Обработано ${enrichedResults.length} страниц`);
+            
+            // Формируем ответ с актуальным содержимым
+            const formattedResponse = `🔍 **Актуальная информация:**
 
-Актуальная информация из интернета:
-${searchContext}
+${enrichedResults.slice(0, 3).map((r, i) => 
+`**${i + 1}. ${r.title}**
 
-ВАЖНО: Используй ТОЛЬКО эти данные для ответа. Упомяни источники.`;
+${r.content}
 
-          SmartLogger.route(`🔍 БЫСТРОЕ ОТОБРАЖЕНИЕ РЕЗУЛЬТАТОВ ПОИСКА!`);
-          
-          // Формируем структурированный ответ из найденных данных с улучшенным форматированием
-          const formattedResponse = `🔍 **Найдена актуальная информация:**
+*Источник: ${new URL(r.source).hostname}*
+
+---
+
+`).join('')}📊 **Обработано источников:** ${enrichedResults.length}`;
+
+            return {
+              success: true,
+              response: formattedResponse,
+              provider: 'Search_Content',
+              searchUsed: true,
+              searchType: 'content_parsed',
+              resultsCount: enrichedResults.length
+            };
+            
+          } catch (parseError) {
+            SmartLogger.route(`❌ Ошибка парсинга: ${parseError.message}, используем базовые результаты`);
+            
+            // Fallback к обычному отображению
+            const formattedResponse = `🔍 **Найдена актуальная информация:**
 
 ${searchResult.results.slice(0, 5).map((r, i) => 
 `**${i + 1}. ${r.title}**  
 ${r.snippet}  
-🔗 [Перейти к источнику](${r.url})
+🔗 [Источник](${r.url})
 
-`).join('')}📊 **Всего найдено:** ${searchResult.results.length} результатов | **Показано:** ${Math.min(5, searchResult.results.length)}`;
+`).join('')}📊 **Всего найдено:** ${searchResult.results.length} результатов`;
 
-          return {
-            success: true,
-            response: formattedResponse,
-            provider: 'Search_DuckDuckGo',
-            searchUsed: true,
-            searchType: 'duckduckgo',
-            resultsCount: searchResult.results.length
-          };
+            return {
+              success: true,
+              response: formattedResponse,
+              provider: 'Search_DuckDuckGo',
+              searchUsed: true,
+              searchType: 'duckduckgo',
+              resultsCount: searchResult.results.length
+            };
+          }
         } else {
           SmartLogger.route(`🔍 Поиск не дал результатов`);
         }
