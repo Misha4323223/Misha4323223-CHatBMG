@@ -193,11 +193,72 @@ function getEmbroideryHelp() {
   };
 }
 
+/**
+ * Автоматическая конвертация изображения по URL в файлы вышивки
+ */
+async function processEmbroideryGeneration(imageUrl) {
+  try {
+    const fetch = require('node-fetch');
+    const response = await fetch(imageUrl);
+    
+    if (!response.ok) {
+      throw new Error(`Не удалось загрузить изображение: ${response.status}`);
+    }
+    
+    const imageBuffer = await response.buffer();
+    const filename = `generated_embroidery_${Date.now()}.png`;
+    
+    // Конвертируем в несколько популярных форматов
+    const formats = ['dst', 'pes', 'jef'];
+    const results = [];
+    
+    for (const format of formats) {
+      try {
+        const result = await convertToEmbroidery(imageBuffer, filename, format, {
+          maxColors: 8,
+          stitchDensity: 'medium'
+        });
+        
+        if (result.success && result.files && result.files.length > 0) {
+          results.push({
+            format: format,
+            url: result.files[0].url,
+            size: result.files[0].size || 0
+          });
+        }
+      } catch (formatError) {
+        console.error(`Ошибка конвертации в формат ${format}:`, formatError);
+      }
+    }
+    
+    if (results.length > 0) {
+      return {
+        success: true,
+        files: results,
+        recommendations: 'Файлы оптимизированы для вышивки с ограниченной палитрой цветов.'
+      };
+    } else {
+      return {
+        success: false,
+        error: 'Не удалось создать файлы вышивки'
+      };
+    }
+    
+  } catch (error) {
+    console.error('Ошибка автоматической конвертации:', error);
+    return {
+      success: false,
+      error: 'Ошибка при обработке изображения для вышивки'
+    };
+  }
+}
+
 module.exports = {
   isEmbroideryRequest,
   handleEmbroideryRequest,
   analyzeImageForChat,
   getEmbroideryHelp,
   extractTargetFormat,
-  extractConversionOptions
+  extractConversionOptions,
+  processEmbroideryGeneration
 };
