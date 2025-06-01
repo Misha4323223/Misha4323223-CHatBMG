@@ -496,6 +496,111 @@ async function getAIResponseWithSearch(userQuery, options = {}) {
       };
     }
 
+    // Сначала проверяем поисковые запросы напрямую
+    const searchKeywords = [
+      'найди', 'поищи', 'найти', 'поиск', 'новости', 'последние', 
+      'актуальные', 'свежие', 'что происходит', 'что случилось',
+      'курс', 'цена', 'стоимость', 'погода', 'информация о'
+    ];
+    
+    const needsSearchDirect = searchKeywords.some(keyword => 
+      userQuery.toLowerCase().includes(keyword)
+    );
+    
+    if (needsSearchDirect) {
+      SmartLogger.route(`🔍 Прямое определение поискового запроса`);
+      
+      // Определяем тип поиска
+      const advancedSearchKeywords = [
+        'найди подробно', 'полный поиск', 'всестороннее исследование', 
+        'академический поиск', 'научные статьи', 'последние новости',
+        'поиск в реальном времени', 'свежая информация', 'актуальные данные',
+        'комплексный анализ', 'детальное исследование'
+      ];
+      
+      const needsAdvancedSearch = advancedSearchKeywords.some(keyword => 
+        userQuery.toLowerCase().includes(keyword)
+      );
+      
+      let searchResults;
+      
+      if (needsAdvancedSearch) {
+        SmartLogger.route(`🔍 Выполняем расширенный поиск`);
+        const { performAdvancedSearch } = require('./advanced-search-provider');
+        
+        // Определяем тип расширенного поиска
+        let searchType = 'comprehensive';
+        if (userQuery.toLowerCase().includes('новости')) searchType = 'news';
+        if (userQuery.toLowerCase().includes('академический') || userQuery.toLowerCase().includes('научны')) searchType = 'academic';
+        if (userQuery.toLowerCase().includes('изображени') || userQuery.toLowerCase().includes('картинк')) searchType = 'images';
+        
+        searchResults = await performAdvancedSearch(userQuery, {
+          searchType,
+          maxResults: 15,
+          includeAnalysis: true
+        });
+      } else {
+        SmartLogger.route(`🔍 Выполняем обычный веб-поиск`);
+        searchResults = await webSearchProvider.performWebSearch(userQuery);
+      }
+      
+      if (searchResults.success && searchResults.results && searchResults.results.length > 0) {
+        let searchContext;
+        
+        if (needsAdvancedSearch && searchResults.analysis) {
+          // Формируем расширенный контекст с анализом
+          searchContext = `РЕЗУЛЬТАТЫ РАСШИРЕННОГО ПОИСКА:
+Найдено ${searchResults.totalResults} результатов из ${searchResults.analysis.sources.length} источников.
+
+КРАТКИЙ АНАЛИЗ: ${searchResults.analysis.summary}
+
+КЛЮЧЕВЫЕ ФАКТЫ:
+${searchResults.analysis.keyFacts.join('\n')}
+
+ТОП РЕЗУЛЬТАТЫ:
+${searchResults.analysis.topResults.map(r => `• ${r.title}: ${r.snippet} (${r.url})`).join('\n')}
+
+УРОВЕНЬ ДОСТОВЕРНОСТИ: ${searchResults.analysis.confidence}%`;
+        } else {
+          searchContext = webSearchProvider.formatSearchResultsForAI(searchResults);
+        }
+        
+        SmartLogger.route(`🔍 Найдено результатов: ${searchResults.results.length}`);
+        
+        // Отправляем AI данные из поиска
+        const searchPrompt = `Ты - AI ассистент с доступом к поиску. Пользователь спрашивает: "${userQuery}"
+
+${searchContext}
+
+ОБЯЗАТЕЛЬНО:
+- Отвечай на основе ТОЛЬКО актуальных данных выше
+- Упоминай источники информации
+- Структурируй ответ логично с ключевыми фактами
+
+Ответь подробно на основе этих данных.`;
+
+        SmartLogger.route(`🔍 Отправляем AI промпт с данными поиска`);
+        const finalResult = await pythonProvider.callPythonAI(searchPrompt, 'Qwen_Qwen_2_72B');
+        
+        let finalText = '';
+        if (typeof finalResult === 'string') {
+          finalText = finalResult;
+        } else if (finalResult && finalResult.response) {
+          finalText = finalResult.response;
+        }
+        
+        if (finalText && finalText.length > 20) {
+          return {
+            success: true,
+            response: finalText,
+            provider: 'Qwen_Qwen_2_72B',
+            searchUsed: true,
+            searchType: needsAdvancedSearch ? 'advanced' : 'basic'
+          };
+        }
+      }
+    }
+
     const prompt = `Проанализируй запрос пользователя и определи тип действия:
 
 Запрос: "${userQuery}"
@@ -505,8 +610,7 @@ ${sessionContext.context}
 
 СТРОГО СЛЕДУЙ ЭТИМ ПРАВИЛАМ:
 1. Если пользователь просит НАРИСОВАТЬ, СОЗДАТЬ ИЗОБРАЖЕНИЕ, СГЕНЕРИРОВАТЬ КАРТИНКУ, ПРИНТ или ДИЗАЙН - отвечай ТОЛЬКО: "ГЕНЕРАЦИЯ_ИЗОБРАЖЕНИЯ"
-2. Если это запрос о текущей информации (погода, новости, курсы валют) НО НЕ ВРЕМЯ/ДАТА - отвечай ТОЛЬКО: "НУЖЕН_ПОИСК"
-3. Иначе дай обычный ответ
+2. Иначе дай обычный ответ
 
 Ключевые слова для генерации изображений: нарисуй, создай, сгенерируй, принт, дизайн, картинка, изображение, логотип, баннер`;
 
