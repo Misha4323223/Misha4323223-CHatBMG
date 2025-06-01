@@ -61,14 +61,15 @@ function optimizePromptForEmbroidery(description) {
   
   // Добавляем ключевые слова для простого дизайна вышивки
   const embroideryOptimizations = [
-    'simple embroidery design',
-    'clean vector art',
-    'bold outlines',
-    'flat colors only',
-    'no gradients',
-    'minimal details',
-    'embroidery pattern',
-    'limited color palette'
+    'line art',
+    'coloring book style',
+    'black outline only',
+    'white background',
+    'very simple shapes',
+    'no shading',
+    'no details',
+    'bold thick lines',
+    'embroidery pattern'
   ];
   
   // Убираем элементы, которые усложняют дизайн
