@@ -417,16 +417,42 @@ async function convertToEmbroidery(imageBuffer, filename, targetFormat = 'dst', 
     const schemeOutputPath = path.join(outputDir, `${baseName}_colors.json`);
     await fs.writeFile(schemeOutputPath, colorScheme);
     
+    // Получаем размеры файлов
+    const embroideryStats = await fs.stat(embroideryOutputPath);
+    const imageStats = await fs.stat(imageOutputPath);
+    const schemeStats = await fs.stat(schemeOutputPath);
+
+    // Формируем список файлов с корректными URL
+    const files = [
+      {
+        filename: `${baseName}${formatInfo.extension}`,
+        url: `/output/${baseName}${formatInfo.extension}`,
+        format: formatInfo.name,
+        size: embroideryStats.size,
+        type: 'embroidery'
+      },
+      {
+        filename: `${baseName}_prepared.png`,
+        url: `/output/${baseName}_prepared.png`,
+        format: 'PNG Image',
+        size: imageStats.size,
+        type: 'image'
+      },
+      {
+        filename: `${baseName}_colors.json`,
+        url: `/output/${baseName}_colors.json`,
+        format: 'Color Scheme',
+        size: schemeStats.size,
+        type: 'colorscheme'
+      }
+    ];
+
     return {
       success: true,
       format: formatInfo,
       analysis: analysis,
       colorPalette: colorPalette,
-      files: {
-        embroidery: embroideryOutputPath,
-        image: imageOutputPath,
-        colorScheme: schemeOutputPath
-      },
+      files: files,
       instructions: [
         `Создан файл ${formatInfo.name} для вышивки`,
         `Использовано цветов: ${colorPalette.length}`,
