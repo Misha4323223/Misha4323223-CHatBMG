@@ -30,7 +30,7 @@ async function performAdvancedSearch(query, options = {}) {
         searchResults = await performComprehensiveSearch(query, language, maxResults);
         break;
       case 'web':
-        const webResult = await performWebSearch(query);
+        const webResult = await webSearchProvider.performWebSearch(query);
         searchResults = webResult.success ? webResult.results : [];
         break;
       case 'academic':
@@ -43,7 +43,7 @@ async function performAdvancedSearch(query, options = {}) {
         searchResults = await performImageSearch(query, language, maxResults);
         break;
       default:
-        const defaultWebResult = await performWebSearch(query);
+        const defaultWebResult = await webSearchProvider.performWebSearch(query);
         searchResults = defaultWebResult.success ? defaultWebResult.results : [];
     }
 
@@ -82,7 +82,7 @@ async function performComprehensiveSearch(query, language, maxResults) {
   
   try {
     // Основной веб-поиск
-    const webSearchResult = await performWebSearch(query);
+    const webSearchResult = await webSearchProvider.performWebSearch(query);
     if (webSearchResult.success) {
       results.push(...webSearchResult.results.slice(0, Math.ceil(maxResults * 0.6)));
     }
@@ -107,15 +107,19 @@ async function performComprehensiveSearch(query, language, maxResults) {
 /**
  * Веб-поиск через DuckDuckGo
  */
-async function performWebSearch(query, language, maxResults) {
+async function performLocalWebSearch(query, language, maxResults) {
   try {
-    const webSearchResults = await searchWeb(query, maxResults);
+    const webSearchResult = await webSearchProvider.performWebSearch(query);
     
-    return webSearchResults.map(result => ({
-      ...result,
-      source: 'web',
-      relevanceScore: calculateRelevanceScore(result, query)
-    }));
+    if (webSearchResult.success && webSearchResult.results) {
+      return webSearchResult.results.map(result => ({
+        ...result,
+        source: 'web',
+        relevanceScore: calculateRelevanceScore(result, query)
+      })).slice(0, maxResults);
+    }
+    
+    return [];
     
   } catch (error) {
     console.error('❌ Ошибка веб-поиска:', error);
@@ -130,14 +134,18 @@ async function performNewsSearch(query, language, maxResults) {
   try {
     // Используем специальные операторы для поиска новостей
     const newsQuery = `${query} site:news.google.com OR site:yandex.ru/news OR site:lenta.ru OR site:rbc.ru`;
-    const newsResults = await searchWeb(newsQuery, maxResults);
+    const newsResult = await webSearchProvider.performWebSearch(newsQuery);
     
-    return newsResults.map(result => ({
-      ...result,
-      source: 'news',
-      relevanceScore: calculateRelevanceScore(result, query),
-      category: 'Новости'
-    }));
+    if (newsResult.success && newsResult.results) {
+      return newsResult.results.map(result => ({
+        ...result,
+        source: 'news',
+        relevanceScore: calculateRelevanceScore(result, query),
+        category: 'Новости'
+      })).slice(0, maxResults);
+    }
+    
+    return [];
     
   } catch (error) {
     console.error('❌ Ошибка поиска новостей:', error);
@@ -152,14 +160,18 @@ async function performAcademicSearch(query, language, maxResults) {
   try {
     // Поиск в академических источниках
     const academicQuery = `${query} site:scholar.google.com OR site:elibrary.ru OR site:cyberleninka.ru OR filetype:pdf`;
-    const academicResults = await searchWeb(academicQuery, maxResults);
+    const academicResult = await webSearchProvider.performWebSearch(academicQuery);
     
-    return academicResults.map(result => ({
-      ...result,
-      source: 'academic',
-      relevanceScore: calculateRelevanceScore(result, query),
-      category: 'Научные статьи'
-    }));
+    if (academicResult.success && academicResult.results) {
+      return academicResult.results.map(result => ({
+        ...result,
+        source: 'academic',
+        relevanceScore: calculateRelevanceScore(result, query),
+        category: 'Научные статьи'
+      })).slice(0, maxResults);
+    }
+    
+    return [];
     
   } catch (error) {
     console.error('❌ Ошибка академического поиска:', error);
@@ -353,7 +365,7 @@ async function searchRealTimeWeb(query, options = {}) {
 module.exports = {
   performAdvancedSearch,
   searchRealTimeWeb,
-  performWebSearch,
+  performLocalWebSearch,
   performNewsSearch,
   performAcademicSearch,
   performImageSearch
