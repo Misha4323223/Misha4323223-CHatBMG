@@ -265,12 +265,19 @@ function enhancePromptWithAI(prompt, style) {
     englishPrompt = englishPrompt.replace(new RegExp(russian, 'g'), english);
   }
   
-  // Проверяем, это дизайн для футболки или обычное изображение
+  // Проверяем, это дизайн для футболки, вышивки или обычное изображение
   const isTshirtDesign = prompt.toLowerCase().includes('принт') || 
                         prompt.toLowerCase().includes('футболка') || 
                         prompt.toLowerCase().includes('дизайн');
   
-  if (isTshirtDesign) {
+  const isEmbroideryDesign = prompt.toLowerCase().includes('вышивка') || 
+                            prompt.toLowerCase().includes('вышивку') || 
+                            prompt.toLowerCase().includes('embroidery');
+  
+  if (isEmbroideryDesign) {
+    // Для вышивки используем специальный стиль
+    englishPrompt = `embroidery design style, simple geometric shapes, bold outlines, limited color palette, flat design, clean lines, textile art, needlework pattern, ${englishPrompt}`;
+  } else if (isTshirtDesign) {
     // Для футболок используем векторный стиль
     englishPrompt = `vector art style, t-shirt design, bold graphics, simple shapes, limited color palette, high contrast, clean lines, print-ready design, ${englishPrompt}`;
   } else {

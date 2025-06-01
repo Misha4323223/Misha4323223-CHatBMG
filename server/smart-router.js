@@ -365,7 +365,7 @@ async function getAIResponseWithSearch(userQuery, options = {}) {
     const pythonProvider = require('./python_provider_routes');
     
     // Проверяем запросы на генерацию изображений напрямую
-    const imageKeywords = ['нарисуй', 'создай', 'сгенерируй', 'принт', 'дизайн', 'картинка', 'изображение', 'логотип', 'баннер', 'футболка', 'рисунок'];
+    const imageKeywords = ['нарисуй', 'создай', 'сгенерируй', 'принт', 'дизайн', 'картинка', 'изображение', 'логотип', 'баннер', 'футболка', 'рисунок', 'вышивка', 'вышивку', 'embroidery'];
     const isImageRequest = imageKeywords.some(keyword => queryLowerForSvg.includes(keyword));
     
     if (isImageRequest) {
