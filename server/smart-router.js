@@ -593,29 +593,27 @@ ${searchContext}
 
 ВАЖНО: Используй ТОЛЬКО эти данные для ответа. Упомяни источники.`;
 
-          SmartLogger.route(`🔍 Отправляем AI данные для анализа`);
+          SmartLogger.route(`🔍 ВОЗВРАЩАЕМ РЕЗУЛЬТАТ ПОИСКА БЕЗ AI ОБРАБОТКИ!`);
           
-          const pythonProvider = require('./g4f-provider');
-          const finalResult = await pythonProvider.callPythonAI(searchPrompt, 'Qwen_Qwen_2_72B');
-          
-          let finalText = '';
-          if (typeof finalResult === 'string') {
-            finalText = finalResult;
-          } else if (finalResult && finalResult.response) {
-            finalText = finalResult.response;
-          }
-          
-          SmartLogger.route(`🔍 ВОЗВРАЩАЕМ РЕЗУЛЬТАТ ПОИСКА!`);
-          
-          if (finalText && finalText.length > 20) {
-            return {
-              success: true,
-              response: finalText,
-              provider: 'Search_AI',
-              searchUsed: true,
-              searchType: 'duckduckgo'
-            };
-          }
+          // Формируем структурированный ответ из найденных данных
+          const formattedResponse = `🔍 Найдена актуальная информация:
+
+${searchResult.results.slice(0, 5).map((r, i) => 
+`${i + 1}. **${r.title}**
+   ${r.snippet}
+   🔗 [Источник](${r.url})
+`).join('\n')}
+
+📊 Показано ${Math.min(5, searchResult.results.length)} из ${searchResult.results.length} найденных результатов.`;
+
+          return {
+            success: true,
+            response: formattedResponse,
+            provider: 'Search_DuckDuckGo',
+            searchUsed: true,
+            searchType: 'duckduckgo',
+            resultsCount: searchResult.results.length
+          };
         } else {
           SmartLogger.route(`🔍 Поиск не дал результатов`);
         }
