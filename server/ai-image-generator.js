@@ -297,12 +297,17 @@ function enhancePromptWithAI(prompt, style) {
     englishPrompt = englishPrompt.replace(new RegExp(russian, 'g'), english);
   }
   
-  // Добавляем базовые характеристики качества с акцентом на реализм
-  englishPrompt = `photorealistic, hyperrealistic, ${englishPrompt}, detailed skin texture, natural proportions, professional portrait photography, studio lighting, authentic materials, lifelike details`;
+  // Проверяем, это дизайн для футболки или обычное изображение
+  const isTshirtDesign = prompt.toLowerCase().includes('принт') || 
+                        prompt.toLowerCase().includes('футболка') || 
+                        prompt.toLowerCase().includes('дизайн');
   
-  // Если это принт для футболки, используем векторный стиль
-  if (prompt.toLowerCase().includes('принт') || prompt.toLowerCase().includes('футболка') || prompt.toLowerCase().includes('дизайн')) {
-    englishPrompt = `vector art style, t-shirt design, bold graphics, simple shapes, limited color palette, high contrast, clean lines, print-ready design, ${englishPrompt.replace('photorealistic, hyperrealistic,', '').replace('detailed skin texture, natural proportions, professional portrait photography, studio lighting, authentic materials, lifelike details, real anatomy', '')}`;
+  if (isTshirtDesign) {
+    // Для футболок используем векторный стиль
+    englishPrompt = `vector art style, t-shirt design, bold graphics, simple shapes, limited color palette, high contrast, clean lines, print-ready design, ${englishPrompt}`;
+  } else {
+    // Для обычных изображений используем фотореализм
+    englishPrompt = `photorealistic, hyperrealistic, ${englishPrompt}, detailed skin texture, natural proportions, professional portrait photography, studio lighting, authentic materials, lifelike details`;
   }
   
   // Если это техно/кибер дизайн, добавляем соответствующие термины с реализмом
