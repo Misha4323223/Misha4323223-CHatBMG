@@ -422,25 +422,25 @@ async function convertToEmbroidery(imageBuffer, filename, targetFormat = 'dst', 
     const imageStats = await fs.stat(imageOutputPath);
     const schemeStats = await fs.stat(schemeOutputPath);
 
-    // Формируем список файлов с корректными URL
+    // Формируем список файлов с корректными URL (файлы в подпапке embroidery)
     const files = [
       {
         filename: `${baseName}${formatInfo.extension}`,
-        url: `/output/${baseName}${formatInfo.extension}`,
+        url: `/output/embroidery/${baseName}${formatInfo.extension}`,
         format: formatInfo.name,
         size: embroideryStats.size,
         type: 'embroidery'
       },
       {
         filename: `${baseName}_prepared.png`,
-        url: `/output/${baseName}_prepared.png`,
+        url: `/output/embroidery/${baseName}_prepared.png`,
         format: 'PNG Image',
         size: imageStats.size,
         type: 'image'
       },
       {
         filename: `${baseName}_colors.json`,
-        url: `/output/${baseName}_colors.json`,
+        url: `/output/embroidery/${baseName}_colors.json`,
         format: 'Color Scheme',
         size: schemeStats.size,
         type: 'colorscheme'
