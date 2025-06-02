@@ -311,19 +311,54 @@ async function createColorMask(imageBuffer, targetColor, options = {}) {
     const g = parseInt(hex.substring(2, 4), 16) || 0;
     const b = parseInt(hex.substring(4, 6), 16) || 0;
     
-    // Создаем маску на основе цветового диапазона
-    const mask = await sharp(imageBuffer)
+    // Получаем исходные данные изображения
+    const { data, info } = await sharp(imageBuffer)
       .resize(2048, 2048, { fit: 'inside' })
       .raw()
-      .toBuffer();
+      .toBuffer({ resolveWithObject: true });
     
-    // Упрощенная маска - в реальности нужен более сложный алгоритм
-    const processedMask = await sharp(imageBuffer)
-      .resize(2048, 2048, { fit: 'inside' })
-      .threshold(128)
-      .blur(feather)
-      .png()
-      .toBuffer();
+    console.log(`🎯 [MASK] Создаем маску для цвета RGB(${r}, ${g}, ${b}) с толерантностью ${tolerance}`);
+    
+    // Создаем буфер для маски
+    const maskData = Buffer.alloc(info.width * info.height);
+    let matchedPixels = 0;
+    
+    // Анализируем каждый пиксель
+    for (let i = 0; i < data.length; i += info.channels) {
+      const pixelR = data[i];
+      const pixelG = data[i + 1];
+      const pixelB = data[i + 2];
+      
+      // Вычисляем расстояние до целевого цвета
+      const colorDistance = Math.sqrt(
+        Math.pow(pixelR - r, 2) +
+        Math.pow(pixelG - g, 2) +
+        Math.pow(pixelB - b, 2)
+      );
+      
+      // Если цвет близок к целевому, помечаем пиксель как белый
+      const pixelIndex = Math.floor(i / info.channels);
+      if (colorDistance <= tolerance) {
+        maskData[pixelIndex] = 255; // Белый = этот цвет
+        matchedPixels++;
+      } else {
+        maskData[pixelIndex] = 0;   // Черный = не этот цвет
+      }
+    }
+    
+    console.log(`✅ [MASK] Найдено ${matchedPixels} пикселей для цвета RGB(${r}, ${g}, ${b})`);
+    
+    // Создаем PNG изображение из маски
+    const processedMask = await sharp(maskData, {
+      raw: {
+        width: info.width,
+        height: info.height,
+        channels: 1
+      }
+    })
+    .blur(feather)
+    .png()
+    .toBuffer();
     
     return processedMask;
     

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <style>
+      .primary { fill: #545460; }
+      .secondary { fill: #181818; }
+      .outline { fill: none; stroke: #000000; stroke-width: 2; }
+    </style>
+  </defs>
+  
+  <!-- Основные формы -->
+  <rect class="primary" x="200" y="200" width="624" height="624" rx="50"/>
+  
+  <!-- Детализация -->
+  <circle class="secondary" cx="512" cy="512" r="150"/>
+  
+  <!-- Контуры -->
+  <rect class="outline" x="200" y="200" width="624" height="624" rx="50"/>
+</svg>
