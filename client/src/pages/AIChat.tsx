@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import BooomerangsLogo from "@/components/BooomerangsLogo";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 // Функция для получения иконки провайдера в метаданных
 const getProviderIcon = (provider?: string) => {
@@ -389,7 +391,34 @@ export default function AIChat() {
                           {message.backupInfo}
                         </div>
                       )}
-                      <p className="text-[15px] text-gray-800 whitespace-pre-wrap">{message.text}</p>
+                      <div className="text-[15px] text-gray-800">
+                        <ReactMarkdown 
+                          remarkPlugins={[remarkGfm]}
+                          components={{
+                            img: ({src, alt}) => (
+                              <img 
+                                src={src} 
+                                alt={alt} 
+                                className="max-w-full h-auto rounded-lg mt-2 mb-2 shadow-lg"
+                                style={{maxHeight: '400px'}}
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  target.style.display = 'none';
+                                }}
+                              />
+                            ),
+                            p: ({children}) => <p className="mb-2 last:mb-0">{children}</p>,
+                            ul: ({children}) => <ul className="list-disc ml-4 mb-2">{children}</ul>,
+                            ol: ({children}) => <ol className="list-decimal ml-4 mb-2">{children}</ol>,
+                            strong: ({children}) => <strong className="font-semibold">{children}</strong>,
+                            em: ({children}) => <em className="italic">{children}</em>,
+                            code: ({children}) => <code className="bg-gray-100 px-1 py-0.5 rounded text-sm">{children}</code>,
+                            pre: ({children}) => <pre className="bg-gray-100 p-2 rounded overflow-x-auto text-sm">{children}</pre>
+                          }}
+                        >
+                          {message.text}
+                        </ReactMarkdown>
+                      </div>
                       <div 
                         className="absolute w-3 h-3 transform rotate-45 z-[-1]"
                         style={{
