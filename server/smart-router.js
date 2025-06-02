@@ -97,9 +97,14 @@ async function getAIResponseWithSearch(userQuery, options = {}) {
     // Проверяем запросы специально на цветовую сепарацию
     const colorSeparationKeywords = [
       'сепарация цветов', 'цветовая сепарация', 'разделение цветов',
-      'сепарируй цвета', 'раздели на цвета'
+      'сепарируй цвета', 'раздели на цвета', 'сепарация'
     ];
     const isColorSeparationRequest = colorSeparationKeywords.some(keyword => queryLowerForSvg.includes(keyword));
+    
+    // Отладочная информация
+    if (isColorSeparationRequest) {
+      SmartLogger.route(`🎨 Обнаружен запрос на цветовую сепарацию: "${userQuery}"`);
+    }
 
     if (isSvgRequest) {
       SmartLogger.route(`🎨 Обнаружен запрос на SVG конвертацию локально`);
@@ -232,6 +237,11 @@ async function getAIResponseWithSearch(userQuery, options = {}) {
     // Обработка запросов оптимизации для печати
     if (isPrintOptRequest || isVectorRequest || isFullProcessRequest || isAdvancedPrintRequest || isColorSeparationRequest) {
       SmartLogger.route(`🖨️ Обнаружен запрос на оптимизацию для печати`);
+      
+      // Специальная отладка для цветовой сепарации
+      if (isColorSeparationRequest) {
+        SmartLogger.route(`🎨 Подтверждено: это запрос на цветовую сепарацию!`);
+      }
       
       // Ищем последнее изображение в контексте сессии
       let lastImageUrl = null;
