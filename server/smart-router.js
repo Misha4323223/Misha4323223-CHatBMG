@@ -89,10 +89,17 @@ async function getAIResponseWithSearch(userQuery, options = {}) {
     const vectorKeywords = [
       'векторизуй', 'сделай вектор', 'создай контуры', 'векторная версия',
       'трафарет', 'контуры для печати', 'черно-белый вариант',
-      'векторизация', 'сепарация цветов', 'профессиональное качество',
-      'продвинутая обработка', 'цветовая сепарация', 'высокое качество'
+      'векторизация', 'профессиональное качество',
+      'продвинутая обработка', 'высокое качество'
     ];
     const isVectorRequest = vectorKeywords.some(keyword => queryLowerForSvg.includes(keyword));
+    
+    // Проверяем запросы специально на цветовую сепарацию
+    const colorSeparationKeywords = [
+      'сепарация цветов', 'цветовая сепарация', 'разделение цветов',
+      'сепарируй цвета', 'раздели на цвета'
+    ];
+    const isColorSeparationRequest = colorSeparationKeywords.some(keyword => queryLowerForSvg.includes(keyword));
 
     if (isSvgRequest) {
       SmartLogger.route(`🎨 Обнаружен запрос на SVG конвертацию локально`);
@@ -223,7 +230,7 @@ async function getAIResponseWithSearch(userQuery, options = {}) {
     }
 
     // Обработка запросов оптимизации для печати
-    if (isPrintOptRequest || isVectorRequest || isFullProcessRequest || isAdvancedPrintRequest) {
+    if (isPrintOptRequest || isVectorRequest || isFullProcessRequest || isAdvancedPrintRequest || isColorSeparationRequest) {
       SmartLogger.route(`🖨️ Обнаружен запрос на оптимизацию для печати`);
       
       // Ищем последнее изображение в контексте сессии
@@ -283,7 +290,7 @@ async function getAIResponseWithSearch(userQuery, options = {}) {
           // Проверяем, нужна ли продвинутая обработка
           if (queryLowerForSvg.includes('вектор') || queryLowerForSvg.includes('сепараци') || 
               queryLowerForSvg.includes('профессиональ') || queryLowerForSvg.includes('качеств') ||
-              isFullProcessRequest || isAdvancedPrintRequest) {
+              isFullProcessRequest || isAdvancedPrintRequest || isColorSeparationRequest) {
             useAdvanced = true;
           }
           
@@ -295,7 +302,7 @@ async function getAIResponseWithSearch(userQuery, options = {}) {
             
             const advancedOptions = {
               createVector: isFullProcessRequest || isAdvancedPrintRequest || queryLowerForSvg.includes('вектор') || queryLowerForSvg.includes('svg'),
-              colorSeparation: isFullProcessRequest || isAdvancedPrintRequest || queryLowerForSvg.includes('сепараци') || queryLowerForSvg.includes('цвет'),
+              colorSeparation: isFullProcessRequest || isAdvancedPrintRequest || isColorSeparationRequest || queryLowerForSvg.includes('сепараци') || queryLowerForSvg.includes('цвет'),
               targetColors: 4
             };
             
