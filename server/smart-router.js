@@ -72,10 +72,12 @@ async function getAIResponseWithSearch(userQuery, options = {}) {
     ];
     const isPrintOptRequest = printKeywords.some(keyword => queryLowerForSvg.includes(keyword));
     
-    // Проверяем запросы на векторизацию
+    // Проверяем запросы на векторизацию и продвинутую обработку
     const vectorKeywords = [
       'векторизуй', 'сделай вектор', 'создай контуры', 'векторная версия',
-      'трафарет', 'контуры для печати', 'черно-белый вариант'
+      'трафарет', 'контуры для печати', 'черно-белый вариант',
+      'векторизация', 'сепарация цветов', 'профессиональное качество',
+      'продвинутая обработка', 'цветовая сепарация', 'высокое качество'
     ];
     const isVectorRequest = vectorKeywords.some(keyword => queryLowerForSvg.includes(keyword));
 
