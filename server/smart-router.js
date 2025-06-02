@@ -72,6 +72,13 @@ async function getAIResponseWithSearch(userQuery, options = {}) {
     ];
     const isPrintOptRequest = printKeywords.some(keyword => queryLowerForSvg.includes(keyword));
     
+    // Проверяем запрос на полную обработку (базовая + продвинутая)
+    const fullProcessKeywords = [
+      'создай для печати', 'полная обработка', 'всё для печати',
+      'комплексная обработка', 'полный цикл'
+    ];
+    const isFullProcessRequest = fullProcessKeywords.some(keyword => queryLowerForSvg.includes(keyword));
+    
     // Проверяем запросы на векторизацию и продвинутую обработку
     const vectorKeywords = [
       'векторизуй', 'сделай вектор', 'создай контуры', 'векторная версия',
@@ -210,7 +217,7 @@ async function getAIResponseWithSearch(userQuery, options = {}) {
     }
 
     // Обработка запросов оптимизации для печати
-    if (isPrintOptRequest || isVectorRequest) {
+    if (isPrintOptRequest || isVectorRequest || isFullProcessRequest) {
       SmartLogger.route(`🖨️ Обнаружен запрос на оптимизацию для печати`);
       
       // Ищем последнее изображение в контексте сессии
@@ -269,7 +276,8 @@ async function getAIResponseWithSearch(userQuery, options = {}) {
           
           // Проверяем, нужна ли продвинутая обработка
           if (queryLowerForSvg.includes('вектор') || queryLowerForSvg.includes('сепараци') || 
-              queryLowerForSvg.includes('профессиональ') || queryLowerForSvg.includes('качеств')) {
+              queryLowerForSvg.includes('профессиональ') || queryLowerForSvg.includes('качеств') ||
+              isFullProcessRequest) {
             useAdvanced = true;
           }
           
@@ -295,7 +303,12 @@ async function getAIResponseWithSearch(userQuery, options = {}) {
           }
           
           if (optimization.success) {
-            let response = `Готово! Я оптимизировал ваше изображение для профессиональной печати:\n\n📁 **Созданы файлы с прямыми ссылками:**`;
+            let response;
+            if (isFullProcessRequest) {
+              response = `Готово! Выполнен полный цикл обработки изображения:\n\n📁 **Созданы файлы с прямыми ссылками (базовая + продвинутая обработка):**`;
+            } else {
+              response = `Готово! Я оптимизировал ваше изображение для профессиональной печати:\n\n📁 **Созданы файлы с прямыми ссылками:**`;
+            }
             
             if (optimization.optimizations.screenPrint) {
               response += `\n\n🖨️ **Для шелкографии:**`;
