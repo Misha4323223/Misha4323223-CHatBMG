@@ -288,8 +288,8 @@ async function getAIResponseWithSearch(userQuery, options = {}) {
             const { processImageAdvanced } = require('./advanced-vector-processor');
             
             const advancedOptions = {
-              createVector: queryLowerForSvg.includes('вектор') || queryLowerForSvg.includes('svg'),
-              colorSeparation: queryLowerForSvg.includes('сепараци') || queryLowerForSvg.includes('цвет'),
+              createVector: isFullProcessRequest || queryLowerForSvg.includes('вектор') || queryLowerForSvg.includes('svg'),
+              colorSeparation: isFullProcessRequest || queryLowerForSvg.includes('сепараци') || queryLowerForSvg.includes('цвет'),
               targetColors: 4
             };
             
