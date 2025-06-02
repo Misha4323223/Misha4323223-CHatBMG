@@ -38,11 +38,25 @@ async function downloadImage(imageUrl) {
  * @returns {Promise<Object>} Результат обработки
  */
 async function optimizeForScreenPrint(imageBuffer, options = {}) {
-    const {
+    let {
         maxColors = 6,
         minContrast = 0.3,
         outputDir = './output/screen-print'
     } = options;
+    
+    // Интеллектуальное определение оптимального количества цветов
+    try {
+        const { getOptimalColorCount } = require('./color-analysis-engine');
+        const colorAnalysis = await getOptimalColorCount(imageBuffer, 'screen-print');
+        
+        if (colorAnalysis.colors && colorAnalysis.colors !== maxColors) {
+            console.log(`🎨 [SCREEN-PRINT] Автоопределение цветов: ${colorAnalysis.colors} (было: ${maxColors})`);
+            maxColors = colorAnalysis.colors;
+            options.intelligentAnalysis = colorAnalysis;
+        }
+    } catch (error) {
+        console.log(`⚠️ [SCREEN-PRINT] Используем стандартные настройки цветов: ${error.message}`);
+    }
     
     console.log('🖨️ [SCREEN-PRINT] Начинаем оптимизацию для шелкографии');
     
@@ -118,7 +132,8 @@ async function optimizeForScreenPrint(imageBuffer, options = {}) {
                 maxColors,
                 resolution: '3000x3000',
                 type: 'screen-print'
-            }
+            },
+            intelligentAnalysis: options.intelligentAnalysis || null
         };
         
     } catch (error) {

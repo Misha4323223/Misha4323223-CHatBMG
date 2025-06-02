@@ -297,6 +297,14 @@ async function getAIResponseWithSearch(userQuery, options = {}) {
             
             if (optimization.optimizations.screenPrint) {
               response += `\n\n🖨️ **Для шелкографии:**`;
+              
+              // Добавляем информацию об интеллектуальном анализе
+              if (optimization.optimizations.screenPrint.intelligentAnalysis) {
+                const analysis = optimization.optimizations.screenPrint.intelligentAnalysis;
+                response += `\n📊 *Интеллектуальный анализ: ${analysis.complexity} изображение, рекомендуется ${analysis.colors} цветов*`;
+                response += `\n💡 *${analysis.reason}*`;
+              }
+              
               const screenFiles = optimization.optimizations.screenPrint.files;
               if (screenFiles.enhanced) {
                 const filename = screenFiles.enhanced.split('/').pop();
@@ -347,6 +355,52 @@ async function getAIResponseWithSearch(userQuery, options = {}) {
               if (vectorFiles.contours) {
                 const filename = vectorFiles.contours.split('/').pop();
                 response += `\n• [Контурная версия](/output/vector/${filename})`;
+              }
+            }
+            
+            // Добавляем результаты продвинутой обработки
+            if (optimization.advanced && optimization.advanced.success) {
+              response += `\n\n🎯 **Продвинутая обработка:**`;
+              
+              // Векторные файлы
+              const vectorFiles = optimization.advanced.files.filter(f => f.type === 'vector');
+              if (vectorFiles.length > 0) {
+                response += `\n\n📐 **Векторные файлы:**`;
+                vectorFiles.forEach(file => {
+                  response += `\n• [SVG векторная версия](${file.url})`;
+                  if (file.colors && file.colors.length > 0) {
+                    response += ` (${file.colors.length} цветов)`;
+                  }
+                });
+              }
+              
+              // Цветовые сепарации
+              const separationFiles = optimization.advanced.files.filter(f => f.type === 'color-separation');
+              if (separationFiles.length > 0) {
+                response += `\n\n🎨 **Цветовые сепарации:**`;
+                separationFiles.forEach(sepFile => {
+                  if (sepFile.separations) {
+                    sepFile.separations.forEach((sep, index) => {
+                      response += `\n• [Сепарация цвета ${index + 1}](${sep.url}) - ${sep.color}`;
+                    });
+                  }
+                  if (sepFile.composite) {
+                    response += `\n• [Композитная версия](${sepFile.composite.url})`;
+                  }
+                });
+              }
+              
+              // Анализ цветов
+              if (optimization.advanced.analysis) {
+                const analysis = optimization.advanced.analysis;
+                response += `\n\n📊 **Анализ цветов:**`;
+                response += `\n• Доминирующий цвет: ${analysis.dominant}`;
+                if (analysis.distribution && analysis.distribution.length > 0) {
+                  response += `\n• Распределение цветов:`;
+                  analysis.distribution.slice(0, 3).forEach(color => {
+                    response += `\n  - ${color.hex} (${color.percentage}%)`;
+                  });
+                }
               }
             }
             
