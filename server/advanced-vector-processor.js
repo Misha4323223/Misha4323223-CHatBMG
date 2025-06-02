@@ -77,15 +77,35 @@ async function analyzeColors(imageBuffer) {
       const g = data[i + 1];
       const b = data[i + 2];
       
-      // Группируем похожие цвета
-      const colorKey = `${Math.round(r/16)*16},${Math.round(g/16)*16},${Math.round(b/16)*16}`;
+      // Пропускаем слишком темные и слишком светлые пиксели для лучшей сепарации
+      const brightness = (r + g + b) / 3;
+      if (brightness < 15 || brightness > 240) continue;
+      
+      // Группируем похожие цвета с меньшим шагом для большего разнообразия
+      const colorKey = `${Math.round(r/12)*12},${Math.round(g/12)*12},${Math.round(b/12)*12}`;
       colorMap.set(colorKey, (colorMap.get(colorKey) || 0) + 1);
     }
     
-    // Сортируем по частоте использования
+    // Если недостаточно цветов, добавляем основные цвета для сепарации
+    if (colorMap.size < 4) {
+      const basicColors = [
+        '192,0,0',    // Красный
+        '0,128,0',    // Зеленый  
+        '0,0,192',    // Синий
+        '255,165,0'   // Оранжевый
+      ];
+      
+      basicColors.forEach(color => {
+        if (!colorMap.has(color)) {
+          colorMap.set(color, Math.floor(pixelCount * 0.05)); // 5% для базовых цветов
+        }
+      });
+    }
+    
+    // Сортируем по частоте использования и фильтруем схожие цвета
     const sortedColors = Array.from(colorMap.entries())
       .sort((a, b) => b[1] - a[1])
-      .slice(0, 8)
+      .slice(0, 12) // Берем больше для фильтрации
       .map(([color, count]) => {
         const [r, g, b] = color.split(',').map(Number);
         return {
@@ -93,7 +113,18 @@ async function analyzeColors(imageBuffer) {
           rgb: [r, g, b],
           percentage: Math.round((count / pixelCount) * 100)
         };
-      });
+      })
+      .filter((color, index, array) => {
+        // Фильтруем слишком похожие цвета
+        if (index === 0) return true;
+        return !array.slice(0, index).some(existingColor => {
+          const diff = Math.abs(color.rgb[0] - existingColor.rgb[0]) +
+                      Math.abs(color.rgb[1] - existingColor.rgb[1]) +
+                      Math.abs(color.rgb[2] - existingColor.rgb[2]);
+          return diff < 60; // Минимальная разность между цветами
+        });
+      })
+      .slice(0, 8);
     
     return {
       dominant: sortedColors[0]?.hex || '#000000',
@@ -263,11 +294,22 @@ async function createColorMask(imageBuffer, targetColor, options = {}) {
   const { tolerance = 30, feather = 2 } = options;
   
   try {
-    // Конвертируем hex в RGB
-    const hex = targetColor.replace('#', '');
-    const r = parseInt(hex.substr(0, 2), 16);
-    const g = parseInt(hex.substr(2, 2), 16);
-    const b = parseInt(hex.substr(4, 2), 16);
+    // Обеспечиваем правильный формат hex-кода
+    let hex = targetColor;
+    if (typeof targetColor === 'string' && targetColor.startsWith('#')) {
+      hex = targetColor.substring(1);
+    }
+    
+    // Если hex код слишком длинный или короткий, обрезаем или дополняем
+    if (hex.length < 6) {
+      hex = hex.padEnd(6, '0');
+    } else if (hex.length > 6) {
+      hex = hex.substring(0, 6);
+    }
+    
+    const r = parseInt(hex.substring(0, 2), 16) || 0;
+    const g = parseInt(hex.substring(2, 4), 16) || 0;
+    const b = parseInt(hex.substring(4, 6), 16) || 0;
     
     // Создаем маску на основе цветового диапазона
     const mask = await sharp(imageBuffer)
