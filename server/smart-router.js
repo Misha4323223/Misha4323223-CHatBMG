@@ -255,15 +255,42 @@ async function getAIResponseWithSearch(userQuery, options = {}) {
         try {
           SmartLogger.route(`🖨️ Начинаем оптимизацию изображения для печати`);
           
-          // Определяем тип печати из запроса
+          // Определяем тип обработки из запроса
           let printType = 'both'; // по умолчанию и шелкография и DTF
+          let useAdvanced = false;
+          
           if (queryLowerForSvg.includes('шелкографи') || queryLowerForSvg.includes('трафарет')) {
             printType = 'screen-print';
           } else if (queryLowerForSvg.includes('dtf') || queryLowerForSvg.includes('сублимаци')) {
             printType = 'dtf';
           }
           
-          const optimization = await printOptimizer.optimizeImageForPrint(lastImageUrl, printType);
+          // Проверяем, нужна ли продвинутая обработка
+          if (queryLowerForSvg.includes('вектор') || queryLowerForSvg.includes('сепараци') || 
+              queryLowerForSvg.includes('профессиональ') || queryLowerForSvg.includes('качеств')) {
+            useAdvanced = true;
+          }
+          
+          let optimization;
+          
+          if (useAdvanced) {
+            // Используем продвинутую обработку
+            const { processImageAdvanced } = require('./advanced-vector-processor');
+            
+            const advancedOptions = {
+              createVector: queryLowerForSvg.includes('вектор') || queryLowerForSvg.includes('svg'),
+              colorSeparation: queryLowerForSvg.includes('сепараци') || queryLowerForSvg.includes('цвет'),
+              targetColors: 4
+            };
+            
+            const advancedResult = await processImageAdvanced(lastImageUrl, advancedOptions);
+            
+            // Также выполняем стандартную оптимизацию
+            optimization = await printOptimizer.optimizeImageForPrint(lastImageUrl, printType);
+            optimization.advanced = advancedResult;
+          } else {
+            optimization = await printOptimizer.optimizeImageForPrint(lastImageUrl, printType);
+          }
           
           if (optimization.success) {
             let response = `Готово! Я оптимизировал ваше изображение для профессиональной печати:\n\n📁 **Созданы файлы с прямыми ссылками:**`;
