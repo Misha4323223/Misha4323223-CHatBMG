@@ -97,9 +97,22 @@ async function getAIResponseWithSearch(userQuery, options = {}) {
     // Проверяем запросы специально на цветовую сепарацию
     const colorSeparationKeywords = [
       'сепарация цветов', 'цветовая сепарация', 'разделение цветов',
-      'сепарируй цвета', 'раздели на цвета', 'сепарация'
+      'сепарируй цвета', 'раздели на цвета', 'сепарация',
+      'повторно выполнить цветовую сепарацию', 'повтори сепарацию'
     ];
-    const isColorSeparationRequest = colorSeparationKeywords.some(keyword => queryLowerForSvg.includes(keyword));
+    
+    // Дополнительная проверка точного совпадения
+    const exactColorSeparationMatch = queryLowerForSvg === 'сепарация цветов';
+    const isColorSeparationRequest = colorSeparationKeywords.some(keyword => queryLowerForSvg.includes(keyword)) || exactColorSeparationMatch;
+    
+    // Детальная отладка для всех запросов
+    console.log(`🔍 ПОЛНАЯ ОТЛАДКА:`);
+    console.log(`   Исходный запрос: "${userQuery}"`);
+    console.log(`   Нижний регистр: "${queryLowerForSvg}"`);
+    console.log(`   Содержит "сепарация": ${queryLowerForSvg.includes('сепарация')}`);
+    console.log(`   Содержит "цветов": ${queryLowerForSvg.includes('цветов')}`);
+    console.log(`   Точное совпадение: ${exactColorSeparationMatch}`);
+    console.log(`   Результат проверки: ${isColorSeparationRequest}`);
     
     // Отладочная информация
     if (isColorSeparationRequest) {
