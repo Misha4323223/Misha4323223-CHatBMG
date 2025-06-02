@@ -64,13 +64,19 @@ async function getAIResponseWithSearch(userQuery, options = {}) {
     const svgKeywords = ['сохрани в svg', 'сохрани svg', 'экспорт в svg', 'конверт в svg', 'сделай svg', 'сохрани в свг', 'сохрани свг'];
     const isSvgRequest = svgKeywords.some(keyword => queryLowerForSvg.includes(keyword));
     
-    // Проверяем запросы на оптимизацию для печати
-    const printKeywords = [
-      'оптимизируй для печати', 'подготовь для печати', 'оптимизация печати',
+    // Проверяем запросы на базовую оптимизацию для печати
+    const basicPrintKeywords = [
+      'оптимизируй для печати', 'оптимизация печати',
       'для шелкографии', 'для dtf', 'для трафаретной печати', 'для сублимации',
       'печать на футболке', 'печать на ткани', 'подготовка к печати'
     ];
-    const isPrintOptRequest = printKeywords.some(keyword => queryLowerForSvg.includes(keyword));
+    const isPrintOptRequest = basicPrintKeywords.some(keyword => queryLowerForSvg.includes(keyword));
+    
+    // Команды, которые запускают продвинутую обработку
+    const advancedPrintKeywords = [
+      'подготовь для печати'  // Эта команда теперь запускает полный цикл
+    ];
+    const isAdvancedPrintRequest = advancedPrintKeywords.some(keyword => queryLowerForSvg.includes(keyword));
     
     // Проверяем запрос на полную обработку (базовая + продвинутая)
     const fullProcessKeywords = [
@@ -217,7 +223,7 @@ async function getAIResponseWithSearch(userQuery, options = {}) {
     }
 
     // Обработка запросов оптимизации для печати
-    if (isPrintOptRequest || isVectorRequest || isFullProcessRequest) {
+    if (isPrintOptRequest || isVectorRequest || isFullProcessRequest || isAdvancedPrintRequest) {
       SmartLogger.route(`🖨️ Обнаружен запрос на оптимизацию для печати`);
       
       // Ищем последнее изображение в контексте сессии
@@ -277,7 +283,7 @@ async function getAIResponseWithSearch(userQuery, options = {}) {
           // Проверяем, нужна ли продвинутая обработка
           if (queryLowerForSvg.includes('вектор') || queryLowerForSvg.includes('сепараци') || 
               queryLowerForSvg.includes('профессиональ') || queryLowerForSvg.includes('качеств') ||
-              isFullProcessRequest) {
+              isFullProcessRequest || isAdvancedPrintRequest) {
             useAdvanced = true;
           }
           
@@ -288,8 +294,8 @@ async function getAIResponseWithSearch(userQuery, options = {}) {
             const { processImageAdvanced } = require('./advanced-vector-processor');
             
             const advancedOptions = {
-              createVector: isFullProcessRequest || queryLowerForSvg.includes('вектор') || queryLowerForSvg.includes('svg'),
-              colorSeparation: isFullProcessRequest || queryLowerForSvg.includes('сепараци') || queryLowerForSvg.includes('цвет'),
+              createVector: isFullProcessRequest || isAdvancedPrintRequest || queryLowerForSvg.includes('вектор') || queryLowerForSvg.includes('svg'),
+              colorSeparation: isFullProcessRequest || isAdvancedPrintRequest || queryLowerForSvg.includes('сепараци') || queryLowerForSvg.includes('цвет'),
               targetColors: 4
             };
             
@@ -304,7 +310,7 @@ async function getAIResponseWithSearch(userQuery, options = {}) {
           
           if (optimization.success) {
             let response;
-            if (isFullProcessRequest) {
+            if (isFullProcessRequest || isAdvancedPrintRequest) {
               response = `Готово! Выполнен полный цикл обработки изображения:\n\n📁 **Созданы файлы с прямыми ссылками (базовая + продвинутая обработка):**`;
             } else {
               response = `Готово! Я оптимизировал ваше изображение для профессиональной печати:\n\n📁 **Созданы файлы с прямыми ссылками:**`;
